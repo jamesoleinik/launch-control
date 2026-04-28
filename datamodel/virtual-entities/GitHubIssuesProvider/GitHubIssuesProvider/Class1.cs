@@ -129,8 +129,11 @@ namespace GitHubIssuesProvider
         private static List<GitHubIssue> ParseIssuesJson(string json)
         {
             var issues = new List<GitHubIssue>();
-            // Use DataContractJsonSerializer for basic parsing
-            var serializer = new DataContractJsonSerializer(typeof(GitHubIssueDto[]));
+            var settings = new DataContractJsonSerializerSettings
+            {
+                DateTimeFormat = new System.Runtime.Serialization.DateTimeFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            };
+            var serializer = new DataContractJsonSerializer(typeof(GitHubIssueDto[]), settings);
             using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
             {
                 var dtos = (GitHubIssueDto[])serializer.ReadObject(ms);
