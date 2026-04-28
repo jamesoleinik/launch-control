@@ -1,0 +1,233 @@
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Runtime.Serialization.Json;
+using System.IO;
+using System.Text;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Extensions;
+
+namespace GitHubIssuesProvider
+{
+    /// <summary>
+    /// Virtual entity data provider for GitHub Issues.
+    /// Maps GitHub issues to Dataverse records so they appear alongside
+    /// native launch tasks in the Launch Control dashboard.
+    /// </summary>
+    public class RetrieveMultiplePlugin : IPlugin
+    {
+        // GitHub repo to pull issues from (configurable via data source)
+        private const string DefaultOwner = "jamesoleinik";
+        private const string DefaultRepo = "launch-control";
+
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = serviceProvider.Get<IPluginExecutionContext>();
+            var tracingService = serviceProvider.Get<ITracingService>();
+
+            try
+            {
+                tracingService.Trace("GitHubIssuesProvider: RetrieveMultiple started");
+
+                var query = context.InputParameters["Query"];
+                string entityName = null;
+
+                if (query is QueryExpression qe)
+                    entityName = qe.EntityName;
+                else if (query is FetchExpression)
+                    entityName = context.PrimaryEntityName;
+
+                tracingService.Trace("Entity: {0}", entityName);
+
+                // Fetch issues from GitHub API
+                var issues = FetchGitHubIssues(DefaultOwner, DefaultRepo, tracingService);
+
+                // Build the entity collection
+                var collection = new EntityCollection();
+                collection.EntityName = entityName;
+
+                foreach (var issue in issues)
+                {
+                    var entity = new Entity(entityName);
+                    entity.Id = DeterministicGuid(issue.Number);
+                    entity[entityName + "id"] = entity.Id;
+                    entity["lc_name"] = issue.Title;
+                    entity["lc_description"] = issue.Body ?? "";
+                    entity["lc_issuenumber"] = issue.Number;
+                    entity["lc_state"] = issue.State;
+                    entity["lc_url"] = issue.HtmlUrl;
+                    entity["lc_assignee"] = issue.Assignee ?? "Unassigned";
+                    entity["lc_createdat"] = issue.CreatedAt;
+                    entity["lc_updatedat"] = issue.UpdatedAt;
+                    entity["lc_labels"] = issue.Labels;
+
+                    collection.Entities.Add(entity);
+                }
+
+                collection.TotalRecordCount = collection.Entities.Count;
+                context.OutputParameters["BusinessEntityCollection"] = collection;
+
+                tracingService.Trace("Returned {0} issues", collection.Entities.Count);
+            }
+            catch (Exception ex)
+            {
+                tracingService.Trace("Error: {0}", ex.ToString());
+                throw new InvalidPluginExecutionException(
+                    "Failed to retrieve GitHub issues: " + ex.Message, ex);
+            }
+        }
+
+        /// <summary>
+        /// Generate a deterministic GUID from the issue number so the same
+        /// issue always maps to the same record ID.
+        /// </summary>
+        private static Guid DeterministicGuid(int issueNumber)
+        {
+            var bytes = new byte[16];
+            var numBytes = BitConverter.GetBytes(issueNumber);
+            // Prefix with a namespace to avoid collisions
+            bytes[0] = 0xAB;
+            bytes[1] = 0xCD;
+            Array.Copy(numBytes, 0, bytes, 12, 4);
+            return new Guid(bytes);
+        }
+
+        private static List<GitHubIssue> FetchGitHubIssues(
+            string owner, string repo, ITracingService trace)
+        {
+            var url = string.Format(
+                "https://api.github.com/repos/{0}/{1}/issues?state=all&per_page=50",
+                owner, repo);
+
+            trace.Trace("Fetching: {0}", url);
+
+            var request = (HttpWebRequest)WebRequest.Create(url);
+            request.UserAgent = "DataverseLaunchControl/1.0";
+            request.Accept = "application/vnd.github+json";
+            request.Timeout = 15000;
+
+            var issues = new List<GitHubIssue>();
+
+            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var stream = response.GetResponseStream())
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                var json = reader.ReadToEnd();
+                // Simple JSON parsing without external dependencies
+                issues = ParseIssuesJson(json);
+            }
+
+            trace.Trace("Fetched {0} issues from GitHub", issues.Count);
+            return issues;
+        }
+
+        /// <summary>
+        /// Minimal JSON parser for GitHub issues array.
+        /// Uses basic string parsing to avoid external dependencies.
+        /// </summary>
+        private static List<GitHubIssue> ParseIssuesJson(string json)
+        {
+            var issues = new List<GitHubIssue>();
+            // Use DataContractJsonSerializer for basic parsing
+            var serializer = new DataContractJsonSerializer(typeof(GitHubIssueDto[]));
+            using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(json)))
+            {
+                var dtos = (GitHubIssueDto[])serializer.ReadObject(ms);
+                if (dtos != null)
+                {
+                    foreach (var dto in dtos)
+                    {
+                        // Skip pull requests (GitHub API returns them as issues too)
+                        if (dto.pull_request != null) continue;
+
+                        issues.Add(new GitHubIssue
+                        {
+                            Number = dto.number,
+                            Title = dto.title ?? "",
+                            Body = dto.body ?? "",
+                            State = dto.state ?? "unknown",
+                            HtmlUrl = dto.html_url ?? "",
+                            Assignee = dto.assignee != null ? dto.assignee.login : "Unassigned",
+                            CreatedAt = dto.created_at,
+                            UpdatedAt = dto.updated_at,
+                            Labels = dto.labels != null
+                                ? string.Join(", ", Array.ConvertAll(dto.labels, l => l.name))
+                                : ""
+                        });
+                    }
+                }
+            }
+            return issues;
+        }
+    }
+
+    /// <summary>
+    /// Retrieve a single GitHub issue by its deterministic GUID.
+    /// </summary>
+    public class RetrievePlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = serviceProvider.Get<IPluginExecutionContext>();
+            var tracingService = serviceProvider.Get<ITracingService>();
+
+            tracingService.Trace("GitHubIssuesProvider: Retrieve started");
+
+            var target = (EntityReference)context.InputParameters["Target"];
+            var entity = new Entity(target.LogicalName, target.Id);
+
+            // Extract issue number from the deterministic GUID
+            var bytes = target.Id.ToByteArray();
+            var issueNumber = BitConverter.ToInt32(bytes, 12);
+
+            tracingService.Trace("Looking up issue #{0}", issueNumber);
+
+            entity["lc_name"] = string.Format("GitHub Issue #{0}", issueNumber);
+            entity["lc_issuenumber"] = issueNumber;
+
+            context.OutputParameters["BusinessEntity"] = entity;
+        }
+    }
+
+    // DTO classes for JSON deserialization
+    [System.Runtime.Serialization.DataContract]
+    internal class GitHubIssueDto
+    {
+        [System.Runtime.Serialization.DataMember] public int number;
+        [System.Runtime.Serialization.DataMember] public string title;
+        [System.Runtime.Serialization.DataMember] public string body;
+        [System.Runtime.Serialization.DataMember] public string state;
+        [System.Runtime.Serialization.DataMember] public string html_url;
+        [System.Runtime.Serialization.DataMember] public GitHubUserDto assignee;
+        [System.Runtime.Serialization.DataMember] public DateTime created_at;
+        [System.Runtime.Serialization.DataMember] public DateTime updated_at;
+        [System.Runtime.Serialization.DataMember] public GitHubLabelDto[] labels;
+        [System.Runtime.Serialization.DataMember] public object pull_request;
+    }
+
+    [System.Runtime.Serialization.DataContract]
+    internal class GitHubUserDto
+    {
+        [System.Runtime.Serialization.DataMember] public string login;
+    }
+
+    [System.Runtime.Serialization.DataContract]
+    internal class GitHubLabelDto
+    {
+        [System.Runtime.Serialization.DataMember] public string name;
+    }
+
+    internal class GitHubIssue
+    {
+        public int Number;
+        public string Title;
+        public string Body;
+        public string State;
+        public string HtmlUrl;
+        public string Assignee;
+        public DateTime CreatedAt;
+        public DateTime UpdatedAt;
+        public string Labels;
+    }
+}
