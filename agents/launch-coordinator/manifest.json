@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "version": "1.0.0",
+  "name": {
+    "short": "Launch Coordinator",
+    "full": "Launch Coordinator - Product Launch Management Agent"
+  },
+  "description": {
+    "short": "Track launches, check readiness, escalate blockers using Dataverse data",
+    "full": "The Launch Coordinator helps product managers manage product launches. It uses live Dataverse data to track milestones, check readiness gates against business skills, escalate blockers following your escalation policy, and surface GitHub issues alongside native tasks through virtual entities."
+  },
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0078D4",
+  "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "launchCoordinator",
+        "file": "declarativeAgent.json"
+      }
+    ]
+  }
+}
