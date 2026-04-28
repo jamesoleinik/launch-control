@@ -33,9 +33,8 @@ def get_credential():
         from azure.identity import ClientSecretCredential
         return ClientSecretCredential(tenant_id, client_id, client_secret)
     else:
-        # Try DeviceCodeCredential for interactive auth (works better in terminal)
-        from azure.identity import DeviceCodeCredential
-        return DeviceCodeCredential(tenant_id=tenant_id)
+        from azure.identity import AzureCliCredential
+        return AzureCliCredential(tenant_id=tenant_id)
 
 
 def get_token():
