@@ -38,7 +38,8 @@ namespace CalculateLaunchReadiness
         public void Execute(IServiceProvider serviceProvider)
         {
             var context = serviceProvider.Get<IPluginExecutionContext>();
-            var service = serviceProvider.Get<IOrganizationService>();
+            var factory = serviceProvider.Get<IOrganizationServiceFactory>();
+            var service = factory.CreateOrganizationService(context.UserId);
             var trace = serviceProvider.Get<ITracingService>();
 
             // Get input parameter
@@ -160,7 +161,7 @@ namespace CalculateLaunchReadiness
             trace.Trace("Score: {0}/100, Verdict: {1}", totalScore, verdict);
 
             // Set output parameters
-            context.OutputParameters["lc_ReadinessScore"] = totalScore;
+            context.OutputParameters["lc_ReadinessScore"] = (decimal)totalScore;
             context.OutputParameters["lc_ReadinessSummary"] = summary;
             context.OutputParameters["lc_Verdict"] = verdict;
         }
