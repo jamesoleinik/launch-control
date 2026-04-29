@@ -2,6 +2,8 @@
 .env
 *.local
 a365.config.json
+# Ingest temp payloads
+scripts/cli/.tmp-*.json
 
 # Python
 __pycache__/

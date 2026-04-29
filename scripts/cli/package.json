@@ -1,0 +1,19 @@
+{
+  "name": "launch-control-cli",
+  "private": true,
+  "type": "module",
+  "version": "0.2.0",
+  "description": "Episode 2 — Launch Control CLI orchestration (mapping-driven ingestion).",
+  "scripts": {
+    "setup-auth": "node setup-auth.mjs",
+    "ingest": "node ingest.mjs"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5",
+    "yaml": "^2.5.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

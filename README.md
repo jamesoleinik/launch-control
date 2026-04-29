@@ -34,8 +34,8 @@ Engineering teams are automating code reviews, DRIs, and incident response. But 
 |----|-------|-------------|------|
 | 1 | AI-Powered Data Modeling 🏗️ | Dataverse MCP Server + Prompt Columns | 1 |
 | 2 | Your Playbook & Ingestion 📋 | Business Skills + Dataverse CLI | 1 |
-| 3 | Connecting the Dots 🔗 | Virtual Entities (OOB + custom) | 1 |
-| 4 | Scripting the Ops 🐍 | Python SDK with pandas | 2 |
+| 3 | Promoting the Staging Layer 🐍 | Python SDK with pandas | 1 |
+| 4 | Connecting the Dots 🔗 | Virtual Entities (OOB + custom) | 2 |
 | 5 | The Copilot Studio Agent 🤖 | Copilot Studio + MCP | 2 |
 | 6 | Agent Flows ⚡ | Agent Flows + MCP steps | 2 |
 | 7 | The Native Claude Agent 🧠 | Claude Code + Anthropic business skills | 3 |
