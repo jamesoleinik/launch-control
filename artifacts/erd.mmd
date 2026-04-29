@@ -1,0 +1,92 @@
+erDiagram
+    lc_launch ||--o{ lc_task : "has"
+    lc_launch ||--o{ lc_milestone : "has"
+    lc_milestone ||--o{ lc_task : "groups"
+    lc_importrun ||--o{ lc_sourcefile : "produced"
+    lc_importrun ||--o{ lc_trackera : "ingested"
+    lc_importrun ||--o{ lc_trackerb : "ingested"
+    lc_importrun ||--o{ lc_trackerc : "ingested"
+    lc_importrun ||--o{ lc_trackerd : "ingested"
+    lc_importrun ||--o{ lc_trackere : "ingested"
+    lc_trackera }o..o| lc_task : "promoted"
+    lc_trackerb }o..o| lc_task : "promoted"
+    lc_trackerd }o..o| lc_task : "promoted"
+    lc_trackerc }o..o| lc_milestone : "promoted"
+    lc_trackere }o..o| lc_milestone : "promoted"
+
+    lc_launch {
+        guid lc_launchid PK
+        string lc_name
+        date lc_targetdate
+        choice lc_status
+    }
+    lc_task {
+        guid lc_taskid PK
+        string lc_title
+        choice lc_taskstatus
+        choice lc_priority
+        guid lc_launchid FK
+        guid lc_milestoneid FK
+        string lc_stagingsource
+    }
+    lc_milestone {
+        guid lc_milestoneid PK
+        string lc_title
+        choice lc_milestonestatus
+        date lc_duedate
+        guid lc_launchid FK
+        string lc_stagingsource
+    }
+    lc_importrun {
+        guid lc_importrunid PK
+        string lc_name
+        datetime lc_startedat
+        int lc_recordsprocessed
+        choice lc_status
+    }
+    lc_sourcefile {
+        guid lc_sourcefileid PK
+        string lc_filename
+        guid lc_importrunid FK
+    }
+    lc_trackera {
+        guid lc_trackeraid PK
+        string lc_title
+        choice lc_status
+        choice lc_priority
+        string lc_sourcefilename
+        guid lc_importrunid FK
+    }
+    lc_trackerb {
+        guid lc_trackerbid PK
+        string lc_title
+        choice lc_status
+        choice lc_priority
+        string lc_sourcefilename
+        guid lc_importrunid FK
+    }
+    lc_trackerc {
+        guid lc_trackercid PK
+        string lc_name
+        choice lc_status
+        string lc_quarter
+        string lc_sourcefilename
+        guid lc_importrunid FK
+    }
+    lc_trackerd {
+        guid lc_trackerdid PK
+        string lc_name
+        choice lc_priority
+        string lc_vendor
+        string lc_sourcefilename
+        guid lc_importrunid FK
+    }
+    lc_trackere {
+        guid lc_trackereid PK
+        string lc_name
+        choice lc_status
+        choice lc_priority
+        string lc_release
+        string lc_sourcefilename
+        guid lc_importrunid FK
+    }
