@@ -34,7 +34,7 @@ def get_credential():
         return ClientSecretCredential(tenant_id, client_id, client_secret)
     else:
         from azure.identity import AzureCliCredential
-        return AzureCliCredential(tenant_id=tenant_id)
+        return AzureCliCredential(tenant_id=tenant_id, process_timeout=60)
 
 
 def get_token():

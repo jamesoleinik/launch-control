@@ -1,2 +1,9 @@
 id,initiative,owner,quarter,status
-1,Sample Initiative,owner@example.com,Q4FY26,Planned
+1,Smart Widget Pro GA,chen.wu@example.com,Q1FY27,InProgress
+2,Achieve 99.9% widget API SLA,chen.wu@example.com,Q1FY27,AtRisk
+3,Onboard 50 paying customers in beta,priya.patel@example.com,Q1FY27,InProgress
+4,Reduce widget P95 latency below 200ms,alex.chen@example.com,Q1FY27,Planned
+5,Complete SOC2 Type II for widgets,sam.rivera@example.com,Q2FY27,Planned
+6,Establish widget partner program,chen.wu@example.com,Q2FY27,Planned
+7,Localize widgets for EMEA,jordan.kim@example.com,Q2FY27,Planned
+8,Sunset legacy widget v1 API,alex.chen@example.com,Q2FY27,Planned

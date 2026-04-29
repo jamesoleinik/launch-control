@@ -1,2 +1,9 @@
 id,project,owner,release,priority,status
-1,Sample Project E,owner@example.com,2026Q4,Medium,OnTrack
+1,Smart Widget Pro v1.0 release,taylor.brooks@example.com,2026Q3,High,OnTrack
+2,Widget mobile SDK alpha,taylor.brooks@example.com,2026Q3,Medium,AtRisk
+3,Widget admin portal v2,jordan.kim@example.com,2026Q3,High,OnTrack
+4,Customer telemetry pipeline,riley.nguyen@example.com,2026Q3,High,Delayed
+5,Multi-region failover rollout,riley.nguyen@example.com,2026Q4,Critical,OnTrack
+6,Widget v1 API deprecation,alex.chen@example.com,2027Q1,Medium,OnTrack
+7,EMEA datacenter rollout,riley.nguyen@example.com,2026Q4,High,Delayed
+8,Beta program offboarding,priya.patel@example.com,2026Q4,Low,OnTrack

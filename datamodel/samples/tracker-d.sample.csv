@@ -1,2 +1,9 @@
 id,tool,owner,priority,notes
-1,Sample Tool,owner@example.com,Low,Placeholder
+1,Azure AI Search index for widget catalog,alex.chen@example.com,Critical,Required for search migration (blocks Tracker A #11)
+2,Redis Enterprise cluster,riley.nguyen@example.com,High,For widget cache layer (Tracker A #6)
+3,App Insights workspace for widget telemetry,riley.nguyen@example.com,High,Provisioned in staging; prod next
+4,Adobe XD design system tokens,jordan.kim@example.com,Medium,UX team handoff for admin UI
+5,k6 Cloud subscription,riley.nguyen@example.com,Medium,For perf benchmarks (Tracker A #5)
+6,Snyk for SCA scanning,sam.rivera@example.com,High,Required by security review gate
+7,Stripe sandbox for billing tests,priya.patel@example.com,High,Beta payments validation
+8,GitHub Copilot Enterprise seats,alex.chen@example.com,Low,Productivity boost; not launch-blocking

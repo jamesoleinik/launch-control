@@ -1,2 +1,13 @@
 id,title,owner,priority,due_date,status,notes
-1,Sample agent task,owner@example.com,Medium,2026-06-30,NotStarted,Placeholder row
+1,Implement widget core API,alex.chen@example.com,High,2026-06-30,InProgress,Backend service for widget config payloads
+2,Build admin UI for widget config,jordan.kim@example.com,High,2026-07-10,InProgress,Designer + FE handoff in flight
+3,Add OAuth integration for widget,sam.rivera@example.com,Critical,2026-07-05,Blocked,Waiting on IDP team review of token scopes
+4,Database schema migration for widgets,alex.chen@example.com,High,2026-06-25,Done,Live in staging; rolled to prod next sprint
+5,Performance benchmark for widget load,riley.nguyen@example.com,Medium,2026-07-20,NotStarted,Need k6 scenarios authored
+6,Refactor widget cache layer,alex.chen@example.com,Medium,2026-07-25,InProgress,Move from in-proc cache to Redis Enterprise
+7,Wire widget telemetry to App Insights,riley.nguyen@example.com,High,2026-07-15,InProgress,Pixel events + server traces
+8,Fix widget pagination bug,alex.chen@example.com,High,2026-06-22,Done,PR merged; cherry-picked to release branch
+9,Implement widget bulk delete API,alex.chen@example.com,Low,2026-08-05,NotStarted,V2 feature; deferred if capacity tight
+10,Audit widget API rate limits,riley.nguyen@example.com,Medium,2026-07-12,InProgress,DDoS protection thresholds
+11,Migrate widget search to Azure AI Search,alex.chen@example.com,Critical,2026-07-18,Blocked,Index design pending vector schema review
+12,SDK release for widget customers,alex.chen@example.com,High,2026-08-10,NotStarted,Versioning strategy needs PM signoff

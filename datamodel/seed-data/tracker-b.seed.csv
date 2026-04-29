@@ -1,2 +1,11 @@
 id,name,owner,category,priority,due_date,status
-1,Sample Unified Item,owner@example.com,Planning,High,2026-07-15,InProgress
+1,GTM campaign for Smart Widget Pro,priya.patel@example.com,Marketing,High,2026-08-01,InProgress
+2,Pricing & packaging review,priya.patel@example.com,Planning,Critical,2026-07-08,Done
+3,Sales enablement deck,casey.wright@example.com,Marketing,Medium,2026-07-30,InProgress
+4,Demo environment standup,taylor.brooks@example.com,Engineering,High,2026-07-20,InProgress
+5,Customer beta program,priya.patel@example.com,Operations,High,2026-07-15,InProgress
+6,Privacy review for widget telemetry,robin.foster@example.com,Legal,Critical,2026-06-30,Blocked
+7,Open-source license audit,robin.foster@example.com,Legal,Medium,2026-07-05,Done
+8,Customer-facing widget documentation,casey.wright@example.com,Documentation,High,2026-07-25,InProgress
+9,Launch event logistics,priya.patel@example.com,Marketing,Medium,2026-08-12,NotStarted
+10,Rollback runbook,riley.nguyen@example.com,Operations,High,2026-08-08,NotStarted
