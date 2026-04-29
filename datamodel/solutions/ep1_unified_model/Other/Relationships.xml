@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <EntityRelationship Name="business_unit_lc_importrun" />
+  <EntityRelationship Name="business_unit_lc_launch" />
+  <EntityRelationship Name="business_unit_lc_teammember" />
+  <EntityRelationship Name="lc_importrun_lc_launch_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_milestone_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_sourcefile_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_statusupdate_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_task_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_teammember_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_trackera_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_trackerb_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_trackerc_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_trackerd_lc_ImportRunId" />
+  <EntityRelationship Name="lc_importrun_lc_trackere_lc_ImportRunId" />
+  <EntityRelationship Name="lc_launch_lc_milestone_lc_LaunchId" />
+  <EntityRelationship Name="lc_launch_lc_statusupdate_lc_LaunchId" />
+  <EntityRelationship Name="lc_launch_lc_teammember_lc_LaunchId" />
+  <EntityRelationship Name="lc_milestone_lc_task_lc_MilestoneId" />
+  <EntityRelationship Name="lc_teammember_lc_task_lc_AssignedToId" />
+  <EntityRelationship Name="lk_lc_importrun_createdby" />
+  <EntityRelationship Name="lk_lc_importrun_modifiedby" />
+  <EntityRelationship Name="lk_lc_launch_createdby" />
+  <EntityRelationship Name="lk_lc_launch_modifiedby" />
+  <EntityRelationship Name="lk_lc_teammember_createdby" />
+  <EntityRelationship Name="lk_lc_teammember_modifiedby" />
+  <EntityRelationship Name="owner_lc_importrun" />
+  <EntityRelationship Name="owner_lc_launch" />
+  <EntityRelationship Name="owner_lc_teammember" />
+  <EntityRelationship Name="team_lc_importrun" />
+  <EntityRelationship Name="team_lc_launch" />
+  <EntityRelationship Name="team_lc_teammember" />
+  <EntityRelationship Name="user_lc_importrun" />
+  <EntityRelationship Name="user_lc_launch" />
+  <EntityRelationship Name="user_lc_teammember" />
+</EntityRelationships>

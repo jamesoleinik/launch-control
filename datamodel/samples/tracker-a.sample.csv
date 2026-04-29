@@ -1,0 +1,2 @@
+id,title,owner,priority,due_date,status,notes
+1,Sample agent task,owner@example.com,Medium,2026-06-30,NotStarted,Placeholder row

@@ -1,0 +1,205 @@
+# Unified Mapping for Launch Control
+#
+# Drives BOTH:
+#   - Episode 1 Modeling Skill (scripts/modeling_skill.py): generates Dataverse
+#     staging tables, columns, and provenance fields from this file.
+#   - Episode 2 ingestion (Dataverse CLI + Python sync): maps each tracker
+#     CSV row to its staging table, then promotes to the unified Launch model.
+#
+# Each mapping defines:
+#   source           - filename in datamodel/samples/
+#   target_entity    - Dataverse table schema name (will be lowercased to logical name)
+#   display_name     - friendly table name in Power Apps
+#   description      - shown in maker portal
+#   primary_column   - schema name of the primary column
+#   fields           - source_column -> { schema, type, display, [options] }
+#                      types: string | memo | integer | decimal | datetime | date |
+#                             boolean | choice
+#   promote_to       - which unified entity (lc_Launch | lc_Milestone | lc_Task)
+#                      this tracker normalizes into during Ep2 promotion
+#
+# Each tracker is named generically (TrackerA..TrackerE) so this repo stays
+# product-agnostic. The shapes are representative of common shadow-tracker
+# patterns — feature lists, planning sheets, roadmap tabs, tooling logs,
+# and platform release plans.
+#
+# Provenance fields are added automatically by the modeling skill to every
+# staging table.
+
+mappings:
+  - source: tracker-a.sample.csv
+    target_entity: lc_TrackerA
+    display_name: Tracker A
+    description: Staging table for Tracker A — feature/work-item style sheet.
+    primary_column: lc_Title
+    promote_to: lc_Task
+    fields:
+      id:
+        schema: lc_SourceRowId
+        type: string
+        display: Source Row ID
+      title:
+        schema: lc_Title
+        type: string
+        display: Title
+      owner:
+        schema: lc_OwnerEmail
+        type: string
+        display: Owner Email
+      priority:
+        schema: lc_Priority
+        type: choice
+        display: Priority
+        options: [Low, Medium, High, Critical]
+      due_date:
+        schema: lc_DueDate
+        type: date
+        display: Due Date
+      status:
+        schema: lc_Status
+        type: choice
+        display: Status
+        options: [NotStarted, InProgress, Blocked, Done]
+      notes:
+        schema: lc_Notes
+        type: memo
+        display: Notes
+
+  - source: tracker-b.sample.csv
+    target_entity: lc_TrackerB
+    display_name: Tracker B
+    description: Staging table for Tracker B — planning sheet with categories.
+    primary_column: lc_Title
+    promote_to: lc_Task
+    fields:
+      id:
+        schema: lc_SourceRowId
+        type: string
+        display: Source Row ID
+      name:
+        schema: lc_Title
+        type: string
+        display: Title
+      owner:
+        schema: lc_OwnerEmail
+        type: string
+        display: Owner Email
+      category:
+        schema: lc_Category
+        type: string
+        display: Category
+      priority:
+        schema: lc_Priority
+        type: choice
+        display: Priority
+        options: [Low, Medium, High, Critical]
+      due_date:
+        schema: lc_DueDate
+        type: date
+        display: Due Date
+      status:
+        schema: lc_Status
+        type: choice
+        display: Status
+        options: [NotStarted, InProgress, Blocked, Done]
+
+  - source: tracker-c.sample.csv
+    target_entity: lc_TrackerC
+    display_name: Tracker C
+    description: Staging table for Tracker C — quarterly initiative plan.
+    primary_column: lc_Initiative
+    promote_to: lc_Milestone
+    fields:
+      id:
+        schema: lc_SourceRowId
+        type: string
+        display: Source Row ID
+      initiative:
+        schema: lc_Initiative
+        type: string
+        display: Initiative
+      owner:
+        schema: lc_OwnerEmail
+        type: string
+        display: Owner Email
+      quarter:
+        schema: lc_Quarter
+        type: string
+        display: Quarter
+      status:
+        schema: lc_Status
+        type: choice
+        display: Status
+        options: [Planned, InProgress, AtRisk, Done]
+
+  - source: tracker-d.sample.csv
+    target_entity: lc_TrackerD
+    display_name: Tracker D
+    description: Staging table for Tracker D — tooling/asset list.
+    primary_column: lc_Tool
+    promote_to: lc_Task
+    fields:
+      id:
+        schema: lc_SourceRowId
+        type: string
+        display: Source Row ID
+      tool:
+        schema: lc_Tool
+        type: string
+        display: Tool
+      owner:
+        schema: lc_OwnerEmail
+        type: string
+        display: Owner Email
+      priority:
+        schema: lc_Priority
+        type: choice
+        display: Priority
+        options: [Low, Medium, High, Critical]
+      notes:
+        schema: lc_Notes
+        type: memo
+        display: Notes
+
+  - source: tracker-e.sample.csv
+    target_entity: lc_TrackerE
+    display_name: Tracker E
+    description: Staging table for Tracker E — platform/release plan.
+    primary_column: lc_Project
+    promote_to: lc_Milestone
+    fields:
+      id:
+        schema: lc_SourceRowId
+        type: string
+        display: Source Row ID
+      project:
+        schema: lc_Project
+        type: string
+        display: Project
+      owner:
+        schema: lc_OwnerEmail
+        type: string
+        display: Owner Email
+      release:
+        schema: lc_Release
+        type: string
+        display: Release
+      priority:
+        schema: lc_Priority
+        type: choice
+        display: Priority
+        options: [Low, Medium, High, Critical]
+      status:
+        schema: lc_Status
+        type: choice
+        display: Status
+        options: [OnTrack, AtRisk, Delayed, Done]
+
+# Provenance fields injected onto every staging table by the modeling skill.
+# Listed here for documentation; do not remove.
+provenance_fields:
+  - { schema: lc_SourceSystem,      type: string,  display: Source System }
+  - { schema: lc_SourceFilename,    type: string,  display: Source Filename }
+  - { schema: lc_SourceRowHash,     type: string,  display: Source Row Hash }
+  - { schema: lc_NeedsManualReview, type: boolean, display: Needs Manual Review }
+  # lc_ImportRun lookup is added programmatically after lc_ImportRun exists.

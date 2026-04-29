@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.2.26024.146" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26024.146" OrganizationSchemaType="Full" CRMServerServiceabilityVersion="9.2.26043.00141">
+  <SolutionManifest>
+    <UniqueName>LaunchControl</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Launch Control" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Product Launch Coordinator - companion to the Launch Control LinkedIn series" languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>launchcontrol</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Launch Control" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Publisher for the Launch Control demo project" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress xsi:nil="true"></EMailAddress>
+      <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
+      <CustomizationPrefix>lc</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10600</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City xsi:nil="true"></City>
+          <County xsi:nil="true"></County>
+          <Country xsi:nil="true"></Country>
+          <Fax xsi:nil="true"></Fax>
+          <FreightTermsCode xsi:nil="true"></FreightTermsCode>
+          <ImportSequenceNumber xsi:nil="true"></ImportSequenceNumber>
+          <Latitude xsi:nil="true"></Latitude>
+          <Line1 xsi:nil="true"></Line1>
+          <Line2 xsi:nil="true"></Line2>
+          <Line3 xsi:nil="true"></Line3>
+          <Longitude xsi:nil="true"></Longitude>
+          <Name xsi:nil="true"></Name>
+          <PostalCode xsi:nil="true"></PostalCode>
+          <PostOfficeBox xsi:nil="true"></PostOfficeBox>
+          <PrimaryContactName xsi:nil="true"></PrimaryContactName>
+          <ShippingMethodCode>1</ShippingMethodCode>
+          <StateOrProvince xsi:nil="true"></StateOrProvince>
+          <Telephone1 xsi:nil="true"></Telephone1>
+          <Telephone2 xsi:nil="true"></Telephone2>
+          <Telephone3 xsi:nil="true"></Telephone3>
+          <TimeZoneRuleVersionNumber xsi:nil="true"></TimeZoneRuleVersionNumber>
+          <UPSZone xsi:nil="true"></UPSZone>
+          <UTCOffset xsi:nil="true"></UTCOffset>
+          <UTCConversionTimeZoneCode xsi:nil="true"></UTCConversionTimeZoneCode>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <RootComponent type="1" schemaName="lc_githubdatasource" behavior="0" />
+      <RootComponent type="1" schemaName="lc_githubissue" behavior="0" />
+      <RootComponent type="1" schemaName="lc_importrun" behavior="0" />
+      <RootComponent type="1" schemaName="lc_launch" behavior="0" />
+      <RootComponent type="1" schemaName="lc_milestone" behavior="1" />
+      <RootComponent type="1" schemaName="lc_sourcefile" behavior="1" />
+      <RootComponent type="1" schemaName="lc_statusupdate" behavior="1" />
+      <RootComponent type="1" schemaName="lc_task" behavior="1" />
+      <RootComponent type="1" schemaName="lc_teammember" behavior="0" />
+      <RootComponent type="1" schemaName="lc_trackera" behavior="1" />
+      <RootComponent type="1" schemaName="lc_trackerb" behavior="1" />
+      <RootComponent type="1" schemaName="lc_trackerc" behavior="1" />
+      <RootComponent type="1" schemaName="lc_trackerd" behavior="1" />
+      <RootComponent type="1" schemaName="lc_trackere" behavior="1" />
+      <RootComponent type="181" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" schemaName="GitHubIssuesProvider" behavior="0" />
+    </RootComponents>
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_milestone" displayName="lc_Milestone" solution="Active" />
+        <Dependent type="1" schemaName="lc_milestone" displayName="lc_Milestone" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_sourcefile" displayName="lc_SourceFile" solution="Active" />
+        <Dependent type="1" schemaName="lc_sourcefile" displayName="lc_SourceFile" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_statusupdate" displayName="lc_StatusUpdate" solution="Active" />
+        <Dependent type="1" schemaName="lc_statusupdate" displayName="lc_StatusUpdate" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_task" displayName="lc_Task" solution="Active" />
+        <Dependent type="1" schemaName="lc_task" displayName="lc_Task" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_trackera" displayName="lc_TrackerA" solution="Active" />
+        <Dependent type="1" schemaName="lc_trackera" displayName="lc_TrackerA" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_trackerb" displayName="lc_TrackerB" solution="Active" />
+        <Dependent type="1" schemaName="lc_trackerb" displayName="lc_TrackerB" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_trackerc" displayName="lc_TrackerC" solution="Active" />
+        <Dependent type="1" schemaName="lc_trackerc" displayName="lc_TrackerC" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_trackerd" displayName="lc_TrackerD" solution="Active" />
+        <Dependent type="1" schemaName="lc_trackerd" displayName="lc_TrackerD" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_trackere" displayName="lc_TrackerE" solution="Active" />
+        <Dependent type="1" schemaName="lc_trackere" displayName="lc_TrackerE" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="2" schemaName="lc_name" displayName="Name" parentSchemaName="lc_milestone" parentDisplayName="lc_Milestone" solution="Active" />
+        <Dependent type="10" schemaName="lc_milestone_lc_task_lc_MilestoneId" displayName="lc_milestone_lc_task_lc_MilestoneId" parentSchemaName="lc_milestone" parentDisplayName="lc_Milestone" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="401" displayName="lc_Launch - Risk Summary " solution="Active" id="{1e76f59f-3807-441c-94ef-595e6b595832}" />
+        <Dependent type="2" schemaName="cr88d_risksummary" displayName="Risk Summary" parentSchemaName="lc_launch" parentDisplayName="lc_Launch" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="90" schemaName="GitHubIssuesProvider.RetrieveMultiplePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" displayName="GitHubIssuesProvider.RetrieveMultiplePlugin" solution="Active" id="{07418f71-c142-f111-bec6-000d3a336093}" />
+        <Dependent type="181" schemaName="GitHubIssuesProvider" displayName="GitHubIssuesProvider" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="90" schemaName="GitHubIssuesProvider.RetrievePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" displayName="GitHubIssuesProvider.RetrievePlugin" solution="Active" id="{ffc78678-c142-f111-bec6-000d3a336093}" />
+        <Dependent type="181" schemaName="GitHubIssuesProvider" displayName="GitHubIssuesProvider" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" />
+      </MissingDependency>
+    </MissingDependencies>
+  </SolutionManifest>
+</ImportExportXml>
