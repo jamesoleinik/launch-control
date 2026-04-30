@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -109,51 +110,164 @@ def _to_iso_date(v: Any) -> str | None:
         return None
 
 
-def recipe_tracker_a(row: dict) -> dict:
-    return {
+# ---------------------------------------------------------------------------
+# Quarter / release helpers.
+#
+# Two quarter dialects show up in staging:
+#   * Calendar:  "2026Q3"  -> last day of Sep 2026
+#   * Fiscal:    "Q1FY27"  -> Microsoft fiscal year (Jul-Jun); Q1FY27 = Jul-Sep
+#                              2026 -> 2026-09-30
+# Returns None on anything we don't recognize so the recipe can simply omit
+# the field rather than poison the unified row with a bogus date.
+# ---------------------------------------------------------------------------
+
+_CALENDAR_Q_END = {1: "03-31", 2: "06-30", 3: "09-30", 4: "12-31"}
+# MSFT fiscal year FY{N} starts July 1 of calendar year N-1.
+# Q1FY27 = Jul-Sep 2026, Q2FY27 = Oct-Dec 2026, Q3FY27 = Jan-Mar 2027, Q4FY27 = Apr-Jun 2027.
+_FISCAL_Q_OFFSET = {
+    1: ("09-30", -1),  # cal year = FY - 1
+    2: ("12-31", -1),
+    3: ("03-31", 0),
+    4: ("06-30", 0),
+}
+
+
+def _quarter_to_date(q: str | None) -> str | None:
+    """Translate "2026Q3" or "Q1FY27" to an ISO end-of-quarter date."""
+    if not q or not isinstance(q, str):
+        return None
+    q = q.strip().upper()
+    # Calendar: YYYYQN
+    m = re.match(r"^(\d{4})Q([1-4])$", q)
+    if m:
+        year, qn = int(m.group(1)), int(m.group(2))
+        return f"{year}-{_CALENDAR_Q_END[qn]}"
+    # Fiscal: QNFYYY (2-digit FY) e.g. Q1FY27
+    m = re.match(r"^Q([1-4])FY(\d{2})$", q)
+    if m:
+        qn = int(m.group(1))
+        fy = 2000 + int(m.group(2))
+        suffix, year_off = _FISCAL_Q_OFFSET[qn]
+        return f"{fy + year_off}-{suffix}"
+    return None
+
+
+def _release_to_quarter(release: str | None) -> str | None:
+    """Pull the first calendar quarter token (e.g. 2026Q3) out of a release string."""
+    if not release or not isinstance(release, str):
+        return None
+    m = re.search(r"(\d{4}Q[1-4])", release.upper())
+    return m.group(1) if m else None
+
+
+def _email_local(email: str | None) -> str | None:
+    """Lowercased local-part of an email, or None. Lets us match across domains
+    (staging is @example.com; lc_teammember is @contoso.com)."""
+    if not email or not isinstance(email, str) or "@" not in email:
+        return None
+    return email.split("@", 1)[0].strip().lower()
+
+
+def _resolve_assignee(email: str | None, ctx: dict) -> str | None:
+    """email -> lc_teammemberid GUID, or None if no match."""
+    local = _email_local(email)
+    if not local:
+        return None
+    return ctx.get("email_to_guid", {}).get(local)
+
+
+def recipe_tracker_a(row: dict, ctx: dict) -> dict:
+    status = TRACKER_A_STATUS.get(row.get("lc_status"))
+    body: dict[str, Any] = {
         "lc_title": row.get("lc_title"),
         "lc_description": row.get("lc_notes"),
         "lc_duedate": _to_iso_date(row.get("lc_duedate")),
-        "lc_taskstatus": TRACKER_A_STATUS.get(row.get("lc_status")),
+        "lc_taskstatus": status,
     }
+    if status == TASK_STATUS["Blocked"]:
+        body["lc_isblocked"] = True
+        body["lc_blockerreason"] = row.get("lc_notes")
+    assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
+    if assignee:
+        body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    return body
 
 
-def recipe_tracker_b(row: dict) -> dict:
+def recipe_tracker_b(row: dict, ctx: dict) -> dict:
     cat = row.get("lc_category")
     desc = f"[{cat}]" if cat else None
-    return {
+    status = TRACKER_B_STATUS.get(row.get("lc_status"))
+    body: dict[str, Any] = {
         "lc_title": row.get("lc_title"),
         "lc_description": desc,
         "lc_duedate": _to_iso_date(row.get("lc_duedate")),
-        "lc_taskstatus": TRACKER_B_STATUS.get(row.get("lc_status")),
+        "lc_taskstatus": status,
     }
+    if status == TASK_STATUS["Blocked"]:
+        body["lc_isblocked"] = True
+        # TrackerB has no notes column. Best signal we have is the category,
+        # which is at least better than NULL on a Blocked task.
+        body["lc_blockerreason"] = f"[{cat}] (no detail in source)" if cat else "(no detail in source)"
+    assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
+    if assignee:
+        body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    return body
 
 
-def recipe_tracker_c(row: dict) -> dict:
-    return {
+def recipe_tracker_c(row: dict, ctx: dict) -> dict:
+    body: dict[str, Any] = {
         "lc_name": row.get("lc_initiative"),
         "lc_milestonestatus": TRACKER_C_STATUS.get(row.get("lc_status")),
+        "lc_duedate": _quarter_to_date(row.get("lc_quarter")),
+        "lc_sortorder": _sort_order(row, ctx),
     }
+    if ctx.get("launch_id"):
+        body["lc_LaunchId@odata.bind"] = f"/lc_launchs({ctx['launch_id']})"
+    # lc_milestone has no AssignedTo lookup — owner info is captured on related tasks instead.
+    return body
 
 
-def recipe_tracker_d(row: dict) -> dict:
-    return {
+def recipe_tracker_d(row: dict, ctx: dict) -> dict:
+    body: dict[str, Any] = {
         "lc_title": row.get("lc_tool"),
         "lc_description": row.get("lc_notes"),
         # TrackerD has no status column — default NotStarted so promoted rows
         # are visible on dashboards.
         "lc_taskstatus": TASK_STATUS["NotStarted"],
     }
+    assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
+    if assignee:
+        body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    return body
 
 
-def recipe_tracker_e(row: dict) -> dict:
+def recipe_tracker_e(row: dict, ctx: dict) -> dict:
     project = row.get("lc_project") or ""
     release = row.get("lc_release")
     name = f"{project} ({release})" if release else project
-    return {
+    body: dict[str, Any] = {
         "lc_name": name or None,
         "lc_milestonestatus": TRACKER_E_STATUS.get(row.get("lc_status")),
+        # Release strings can be "2026Q3" itself or "...release (2026Q3)".
+        "lc_duedate": _quarter_to_date(_release_to_quarter(release) or release),
+        "lc_sortorder": _sort_order(row, ctx),
     }
+    if ctx.get("launch_id"):
+        body["lc_LaunchId@odata.bind"] = f"/lc_launchs({ctx['launch_id']})"
+    # lc_milestone has no AssignedTo lookup — owner info is captured on related tasks instead.
+    return body
+
+
+def _sort_order(row: dict, ctx: dict) -> int | None:
+    """Numeric sort key. Prefer staging lc_sourcerowid when it parses as int;
+    else fall back to the per-recipe enumerate index from ctx."""
+    raw = row.get("lc_sourcerowid")
+    if raw is not None:
+        try:
+            return int(str(raw).strip())
+        except (TypeError, ValueError):
+            pass
+    return ctx.get("row_index")
 
 
 RECIPES = {
@@ -174,15 +288,15 @@ PRIMARY_KEY = {"lc_task": "lc_taskid", "lc_milestone": "lc_milestoneid"}
 # Per-source-table select list. Only ask for columns that exist on that table.
 SELECT_BY_SOURCE = {
     "lc_trackera": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_title", "lc_notes", "lc_duedate", "lc_status"],
+                    "lc_title", "lc_notes", "lc_duedate", "lc_status", "lc_owneremail"],
     "lc_trackerb": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_title", "lc_category", "lc_duedate", "lc_status"],
+                    "lc_title", "lc_category", "lc_duedate", "lc_status", "lc_owneremail"],
     "lc_trackerc": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_initiative", "lc_quarter", "lc_status"],
+                    "lc_initiative", "lc_quarter", "lc_status", "lc_owneremail"],
     "lc_trackerd": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_tool", "lc_notes"],
+                    "lc_tool", "lc_notes", "lc_owneremail"],
     "lc_trackere": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_project", "lc_release", "lc_status"],
+                    "lc_project", "lc_release", "lc_status", "lc_owneremail"],
 }
 
 
@@ -209,14 +323,16 @@ def _build_payloads(
     source_table: str,
     target: str,
     recipe,
+    ctx: dict,
 ) -> list[dict]:
     """One payload per staging row, ready for create/update on the unified table."""
     if df_staging.empty:
         return []
     payloads: list[dict] = []
-    for _, row in df_staging.iterrows():
+    for idx, (_, row) in enumerate(df_staging.iterrows()):
         rd = row.to_dict()
-        body = recipe(rd)
+        row_ctx = {**ctx, "row_index": idx}
+        body = recipe(rd, row_ctx)
         body["lc_stagingsource"] = f"{source_table}:{rd.get('lc_sourcerowid')}"
         # Forward the ImportRun lookup for provenance.
         run_id = rd.get("_lc_importrunid_value")
@@ -234,6 +350,7 @@ def _promote_one(
     target: str,
     recipe,
     existing: dict[str, str],
+    ctx: dict,
     dry_run: bool = False,
 ) -> dict[str, int]:
     df = _read_staging(client, source_table)
@@ -248,7 +365,7 @@ def _promote_one(
         df = df.sort_values("modifiedon", ascending=False)
     df = df.drop_duplicates(subset=["lc_sourcerowid"], keep="first")
 
-    payloads = _build_payloads(df, source_table, target, recipe)
+    payloads = _build_payloads(df, source_table, target, recipe, ctx)
 
     created = updated = skipped = 0
     for body in payloads:
@@ -274,6 +391,31 @@ def _promote_one(
             "updated": updated, "skipped": skipped}
 
 
+def _load_context(client: DataverseClient) -> dict:
+    """Read singleton lookups once: the launch row + email->teammember map.
+
+    The demo has exactly one lc_launch ("Q3 Widget Launch"); every promoted
+    milestone rolls up to it. Email keys are normalized to lowercased local-part
+    so staging (@example.com) can match teammember rows (@contoso.com)."""
+    launch_id: str | None = None
+    for batch in client.records.get("lc_launch", select=["lc_launchid", "lc_name"]):
+        for rec in batch:
+            launch_id = rec.get("lc_launchid")
+            break
+        if launch_id:
+            break
+
+    email_to_guid: dict[str, str] = {}
+    for batch in client.records.get("lc_teammember", select=["lc_teammemberid", "lc_email"]):
+        for rec in batch:
+            local = _email_local(rec.get("lc_email"))
+            tid = rec.get("lc_teammemberid")
+            if local and tid:
+                email_to_guid[local] = tid
+
+    return {"launch_id": launch_id, "email_to_guid": email_to_guid}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Promote staging trackers -> unified model")
     parser.add_argument("--tracker", help="Limit to one tracker, e.g. TrackerA")
@@ -296,6 +438,10 @@ def main() -> int:
 
     totals = {"read": 0, "deduped": 0, "created": 0, "updated": 0, "skipped": 0}
     with DataverseClient(env_url, get_credential()) as client:
+        ctx = _load_context(client)
+        print(f"  Context: launch_id={ctx['launch_id']}  "
+              f"teammembers indexed={len(ctx['email_to_guid'])}\n")
+
         # Cache per-target existing-row index.
         existing_cache: dict[str, dict[str, str]] = {}
         for m in mappings:
@@ -314,7 +460,7 @@ def main() -> int:
             print(f"\n-> {source_table}  ->  {target}")
             stats = _promote_one(
                 client, source_table, target, recipe,
-                existing_cache[target], dry_run=args.dry_run,
+                existing_cache[target], ctx, dry_run=args.dry_run,
             )
             print(f"    read={stats['read']}  deduped={stats['deduped']}  "
                   f"created={stats['created']}  updated={stats['updated']}  "
