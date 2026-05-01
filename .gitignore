@@ -49,3 +49,5 @@ out/
 # Custom connector env-specific settings (paconn writes connectorId here)
 connectors/*/settings.json
 connectors/**/settings.local.json
+
+scripts/test_results_*.md
