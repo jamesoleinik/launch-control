@@ -45,3 +45,7 @@ desktop.ini
 # Power Apps
 .pcf/
 out/
+
+# Custom connector env-specific settings (paconn writes connectorId here)
+connectors/*/settings.json
+connectors/**/settings.local.json

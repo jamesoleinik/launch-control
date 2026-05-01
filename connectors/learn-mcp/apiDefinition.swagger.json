@@ -1,0 +1,26 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Launch Control - Learn MCP",
+    "description": "Microsoft Learn remote MCP server, registered as a Power Platform custom connector via paconn. Demonstrates Episode 5 BYO MCP pattern using x-ms-agentic-protocol.",
+    "version": "1.0.0"
+  },
+  "host": "learn.microsoft.com",
+  "basePath": "/",
+  "schemes": ["https"],
+  "paths": {
+    "/api/mcp": {
+      "post": {
+        "operationId": "InvokeServer",
+        "summary": "Launch Control - Learn MCP",
+        "description": "Streamable HTTP entry point for Microsoft Learn MCP.",
+        "x-ms-agentic-protocol": "mcp-streamable-1.0",
+        "responses": {
+          "200": { "description": "Immediate Response" }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {},
+  "security": []
+}

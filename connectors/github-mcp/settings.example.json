@@ -1,0 +1,7 @@
+{
+  "environment": "<your-environment-id>",
+  "apiProperties": "apiProperties.json",
+  "apiDefinition": "apiDefinition.swagger.json",
+  "powerAppsApiVersion": "2016-11-01",
+  "powerAppsUrl": "https://api.powerapps.com"
+}
