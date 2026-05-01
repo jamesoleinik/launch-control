@@ -3,46 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
-using Microsoft.Xrm.Sdk.Extensions;
 
 namespace CalculateLaunchReadiness
 {
     /// <summary>
     /// Custom action plugin: lc_CalculateLaunchReadiness
-    /// 
+    ///
     /// Input: lc_LaunchName (string) - name of the launch to evaluate
-    /// Output: lc_ReadinessScore (int) - 0-100 readiness score
-    /// Output: lc_ReadinessSummary (string) - human-readable gate-by-gate summary
+    /// Output: lc_ReadinessScore (decimal) - 0-100 readiness score
+    /// Output: lc_ReadinessSummary (string) - milestone-by-milestone summary
     /// Output: lc_Verdict (string) - "GO", "NO-GO", or "CONDITIONAL"
-    /// 
-    /// Evaluates all 4 gates: Engineering, QA, Marketing, Legal.
-    /// Each gate is worth 25 points. Blocked gates score 0, at-risk score 12.
+    ///
+    /// Scores every milestone attached to the launch (no hard-coded gate names).
+    /// Per-milestone weight (out of 100):
+    ///   Complete=100, AtRisk=50, InProgress=60, NotStarted=20, Blocked=0.
+    /// Final readiness = average across all milestones.
+    /// Verdict:
+    ///   NO-GO       if any milestone is Blocked
+    ///   GO          if score >= 90 and no AtRisk
+    ///   CONDITIONAL otherwise
     /// </summary>
     public class CalculateLaunchReadinessPlugin : IPlugin
     {
-        private static readonly string[] GateNames = {
-            "Engineering Sign-off", "QA Pass", "Marketing Approval", "Legal Review"
-        };
-
-        // Milestone status codes
+        // Milestone status codes (lc_milestonestatus choice)
         private const int NotStarted = 10600010;
         private const int InProgress = 10600011;
-        private const int Complete = 10600012;
-        private const int AtRisk = 10600013;
-        private const int Blocked = 10600014;
-
-        // Task status codes
-        private const int TaskDone = 10600022;
-        private const int TaskBlocked = 10600023;
+        private const int Complete   = 10600012;
+        private const int AtRisk     = 10600013;
+        private const int Blocked    = 10600014;
 
         public void Execute(IServiceProvider serviceProvider)
         {
-            var context = serviceProvider.Get<IPluginExecutionContext>();
-            var factory = serviceProvider.Get<IOrganizationServiceFactory>();
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var factory = (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
             var service = factory.CreateOrganizationService(context.UserId);
-            var trace = serviceProvider.Get<ITracingService>();
+            var trace   = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
 
-            // Get input parameter
             string launchName = context.InputParameters.Contains("lc_LaunchName")
                 ? (string)context.InputParameters["lc_LaunchName"]
                 : null;
@@ -52,11 +48,11 @@ namespace CalculateLaunchReadiness
 
             trace.Trace("Evaluating readiness for: {0}", launchName);
 
-            // Find the launch
+            // Resolve launch by name
             var launchQuery = new QueryExpression("lc_launch")
             {
                 ColumnSet = new ColumnSet("lc_launchid", "lc_name"),
-                Criteria = new FilterExpression()
+                Criteria  = new FilterExpression()
             };
             launchQuery.Criteria.AddCondition("lc_name", ConditionOperator.Equal, launchName);
             var launches = service.RetrieveMultiple(launchQuery);
@@ -66,104 +62,70 @@ namespace CalculateLaunchReadiness
 
             var launchId = launches.Entities[0].Id;
 
-            // Get milestones for this launch
+            // Pull every milestone for this launch
             var msQuery = new QueryExpression("lc_milestone")
             {
-                ColumnSet = new ColumnSet("lc_name", "lc_milestonestatus", "lc_milestoneid"),
-                Criteria = new FilterExpression()
+                ColumnSet = new ColumnSet("lc_name", "lc_milestonestatus"),
+                Criteria  = new FilterExpression()
             };
             msQuery.Criteria.AddCondition("lc_launchid", ConditionOperator.Equal, launchId);
+            msQuery.AddOrder("lc_sortorder", OrderType.Ascending);
+            msQuery.AddOrder("lc_name",      OrderType.Ascending);
             var milestones = service.RetrieveMultiple(msQuery);
 
-            // Get all tasks for this launch's milestones
-            var taskQuery = new QueryExpression("lc_task")
+            int milestoneCount = milestones.Entities.Count;
+            if (milestoneCount == 0)
             {
-                ColumnSet = new ColumnSet("lc_title", "lc_taskstatus", "lc_isblocked",
-                                          "lc_blockerreason", "lc_milestoneid"),
-            };
-            var milestoneIds = milestones.Entities
-                .Select(m => m.Id.ToString())
-                .ToArray();
-
-            // Score each gate
-            int totalScore = 0;
-            var summaryLines = new List<string>();
-            string verdict;
-
-            bool anyBlocked = false;
-            bool anyAtRisk = false;
-
-            foreach (var gateName in GateNames)
-            {
-                var milestone = milestones.Entities
-                    .FirstOrDefault(m => m.GetAttributeValue<string>("lc_name") == gateName);
-
-                if (milestone == null)
-                {
-                    summaryLines.Add(string.Format(
-                        "Gate: {0} | Status: NOT FOUND | Score: 0/25", gateName));
-                    continue;
-                }
-
-                var msStatus = milestone.GetAttributeValue<OptionSetValue>("lc_milestonestatus");
-                int statusCode = msStatus != null ? msStatus.Value : NotStarted;
-
-                int gateScore;
-                string statusLabel;
-
-                switch (statusCode)
-                {
-                    case Complete:
-                        gateScore = 25;
-                        statusLabel = "PASSED";
-                        break;
-                    case AtRisk:
-                        gateScore = 12;
-                        statusLabel = "AT RISK";
-                        anyAtRisk = true;
-                        break;
-                    case Blocked:
-                        gateScore = 0;
-                        statusLabel = "BLOCKED";
-                        anyBlocked = true;
-                        break;
-                    case InProgress:
-                        gateScore = 15;
-                        statusLabel = "IN PROGRESS";
-                        break;
-                    default:
-                        gateScore = 5;
-                        statusLabel = "NOT STARTED";
-                        break;
-                }
-
-                totalScore += gateScore;
-                summaryLines.Add(string.Format(
-                    "Gate: {0} | Status: {1} | Score: {2}/25",
-                    gateName, statusLabel, gateScore));
-
-                trace.Trace("{0}: {1} ({2}/25)", gateName, statusLabel, gateScore);
+                context.OutputParameters["lc_ReadinessScore"]   = 0m;
+                context.OutputParameters["lc_ReadinessSummary"] = "No milestones found for launch: " + launchName;
+                context.OutputParameters["lc_Verdict"]          = "NO-GO";
+                return;
             }
 
-            // Determine verdict
-            if (anyBlocked)
-                verdict = "NO-GO";
-            else if (anyAtRisk)
-                verdict = "CONDITIONAL";
-            else if (totalScore == 100)
-                verdict = "GO";
-            else
-                verdict = "CONDITIONAL";
+            int totalPoints = 0;
+            bool anyBlocked = false;
+            bool anyAtRisk  = false;
+            var lines = new List<string>();
 
-            string summary = string.Join("\n", summaryLines)
-                + string.Format("\n\nOverall Score: {0}/100 | Verdict: {1}", totalScore, verdict);
+            foreach (var ms in milestones.Entities)
+            {
+                string name      = ms.GetAttributeValue<string>("lc_name") ?? "(unnamed)";
+                var statusOpt    = ms.GetAttributeValue<OptionSetValue>("lc_milestonestatus");
+                int statusCode   = statusOpt != null ? statusOpt.Value : NotStarted;
 
-            trace.Trace("Score: {0}/100, Verdict: {1}", totalScore, verdict);
+                int points;
+                string label;
+                switch (statusCode)
+                {
+                    case Complete:   points = 100; label = "COMPLETE";    break;
+                    case InProgress: points = 60;  label = "IN PROGRESS"; break;
+                    case AtRisk:     points = 50;  label = "AT RISK";     anyAtRisk  = true; break;
+                    case Blocked:    points = 0;   label = "BLOCKED";     anyBlocked = true; break;
+                    default:         points = 20;  label = "NOT STARTED"; break;
+                }
 
-            // Set output parameters
-            context.OutputParameters["lc_ReadinessScore"] = (decimal)totalScore;
+                totalPoints += points;
+                lines.Add(string.Format("- [{0,-12}] {1} ({2}/100)", label, name, points));
+                trace.Trace("{0}: {1} ({2}/100)", name, label, points);
+            }
+
+            decimal score = Math.Round((decimal)totalPoints / milestoneCount, 1);
+
+            string verdict;
+            if (anyBlocked)        verdict = "NO-GO";
+            else if (score >= 90m && !anyAtRisk) verdict = "GO";
+            else                   verdict = "CONDITIONAL";
+
+            string summary = string.Format("Launch: {0}\nMilestones evaluated: {1}\n\n", launchName, milestoneCount)
+                           + string.Join("\n", lines)
+                           + string.Format("\n\nReadiness Score: {0}/100\nVerdict: {1}", score, verdict);
+
+            trace.Trace("Score: {0}/100, Verdict: {1}", score, verdict);
+
+            context.OutputParameters["lc_ReadinessScore"]   = score;
             context.OutputParameters["lc_ReadinessSummary"] = summary;
-            context.OutputParameters["lc_Verdict"] = verdict;
+            context.OutputParameters["lc_Verdict"]          = verdict;
         }
     }
 }
+

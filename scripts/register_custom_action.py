@@ -36,7 +36,7 @@ def api(env_url, token, method, endpoint, data=None):
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8")
-        if any(x in body.lower() for x in ["duplicate", "already exists", "already being used", "matching key"]):
+        if any(x in body.lower() for x in ["duplicate", "already exists", "already being used", "matching key", "must be unique", "are not allowed", "violates a database constraint", "violates the database constraint"]):
             return "EXISTS"
         print(f"  HTTP {e.code}: {body[:400]}")
         raise
@@ -68,10 +68,15 @@ def main():
         "description": "Custom action: CalculateLaunchReadiness for Launch Control",
     })
     if result == "EXISTS":
-        print("  Assembly already exists, looking up ID...")
+        print("  Assembly already exists, looking up ID and updating content...")
         r = api(env_url, token, "GET",
             "pluginassemblies?$filter=name%20eq%20'CalculateLaunchReadiness'&$select=pluginassemblyid")
         assembly_id = r["value"][0]["pluginassemblyid"]
+        # PATCH the new DLL bytes onto the existing assembly so code changes deploy.
+        api(env_url, token, "PATCH", f"pluginassemblies({assembly_id})", {
+            "content": dll_b64,
+        })
+        print("  Assembly content updated.")
     else:
         assembly_id = result
     print(f"  Assembly ID: {assembly_id}")
