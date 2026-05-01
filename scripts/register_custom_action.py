@@ -159,6 +159,24 @@ def main():
     print(f"Call it: POST {env_url}/api/data/v9.2/lc_CalculateLaunchReadiness")
     print('Body: {{"lc_LaunchName": "Q3 Widget Launch"}}')
 
+    # Step 6: Ensure CustomAPI is in the LaunchControl solution.
+    # MSCRM.SolutionName header adds it on initial create, but if the API was
+    # created before that header was set (or was created in a different solution
+    # context), we need to add it explicitly. AddRequiredComponents=True pulls
+    # in request params + response properties automatically.
+    print("\n6. Ensuring solution membership (LaunchControl)...")
+    try:
+        api(env_url, token, "POST", "AddSolutionComponent", {
+            "ComponentId": api_id,
+            "ComponentType": 10038,  # CustomAPI
+            "SolutionUniqueName": "LaunchControl",
+            "AddRequiredComponents": True,
+            "IncludedComponentSettingsValues": None,
+        })
+        print("  CustomAPI + dependencies added to LaunchControl.")
+    except Exception as e:
+        print(f"  (already in solution or error: {e})")
+
 
 if __name__ == "__main__":
     main()
