@@ -70,7 +70,7 @@ Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 ## [ep-01] — AI-Powered Data Modeling
 
 - **Unified core** — Launches, Milestones, Tasks, TeamMembers, StatusUpdates tables with relationships.
-- **Modeling Skill** — `scripts/modeling_skill.py` reads `unified_mapping.yaml` and creates 5 staging tables (TrackerA–E) with typed columns, choice fields, and unique option-set integers per `(table, field)`.
+- **Dataverse skill format for coding agents** — same skill format Dataverse uses for runtime Business Skills is also packaged in the `dataverse-skills` plugin so GitHub Copilot, Claude Code, and the Copilot CLI can do Dataverse modeling. `scripts/modeling_skill.py` is the agent's output: it reads `unified_mapping.yaml` and creates 5 staging tables (TrackerA–E) with typed columns, choice fields, and stable option-set integers per `(table, field)`.
 - **Provenance from day one** — `lc_ImportRun` + `lc_SourceFile` tables, plus four provenance columns (`lc_SourceSystem`, `lc_SourceFilename`, `lc_SourceRowHash`, `lc_NeedsManualReview`) appended to every staging table.
 - **Prompt column** — `Risk Summary` on `lc_Launch` populated by an LLM from row context.
 - **Seed data** — sanitized sample CSVs (`datamodel/samples/*.sample.csv`) + generated seed rows.

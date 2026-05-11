@@ -8,7 +8,7 @@ The "Launch Control" LinkedIn series — twelve short episodes building one proj
 
 | # | Episode | Hero capability |
 |---|---|---|
-| [1](ep-01-data-modeling/) | AI-Powered Data Modeling | Modeling skill + unified mapping → first Dataverse tables |
+| [1](ep-01-data-modeling/) | AI-Powered Data Modeling | Dataverse skill format + coding agent → first Dataverse tables |
 | [2](ep-02-business-skills/) | Your Playbook & Ingestion | Business skills + mapping-driven CLI ingestion |
 | [3](ep-03-staging-layer/) | Promoting the Staging Layer | Python + pandas promote.py; staging → unified |
 | [4](ep-04-connecting-the-dots/) | Connecting the Dots | Virtual entities — GitHub Issues as a Dataverse lookup target |

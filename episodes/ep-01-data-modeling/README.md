@@ -1,9 +1,9 @@
 # Episode 1 — AI-Powered Data Modeling
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Modeling Skill · ⭐ Mapping-driven Dataverse schema · ⭐ Provenance from day one
+**Features:** ⭐ Dataverse skill format consumed by a coding agent · ⭐ Mapping-driven schema · ⭐ Provenance from day one
 **Layer:** 🟢 Layer 1 (Data) — the foundation
-**Coding agent:** GitHub Copilot · **Runtime:** `PowerPlatform-Dataverse-Client` (Python)
+**Coding agent:** GitHub Copilot (with the Dataverse skill plugin) · **Runtime:** `PowerPlatform-Dataverse-Client` (Python)
 
 ---
 
@@ -11,10 +11,19 @@
 
 > _"Every team has shadow trackers — spreadsheets, Notion pages, Loop tabs — and they drift. Before any agent can help, we need one model that tells the truth."_
 
-A **Modeling Skill** turns sanitized shadow trackers + a single mapping
-file into a fully-typed Dataverse data model — staging tables, choice columns,
-provenance fields, and relationships — in one run. _"Show me the trackers
-and the mapping. I'll build the source of truth."_
+I didn't draw this data model in the maker portal. I described the business in
+plain English to a coding agent, and the agent did the work — proposed the
+tables, wrote the Python, ran it against the environment, iterated when
+something broke. That's possible because **Dataverse ships a skill format
+that coding agents (GitHub Copilot, Claude Code, the Copilot CLI) consume
+directly.** The `dataverse-skills` plugin packages a *Modeling* skill in that
+format. The coding agent loads the skill and now it knows how to model on
+Dataverse — typed columns, choices, lookups, provenance, solution membership,
+the lot.
+
+The Python files you see in this repo (`create_datamodel.py`,
+`modeling_skill.py`, `ep1_provenance.py`, `seed_data.py`) are what the coding
+agent *produced* using the skill. Re-runnable, idempotent, in source control.
 
 ---
 
@@ -51,6 +60,11 @@ Plus an `lc_ImportRun` lookup added to every core and staging table.
 > sheets you'll find (feature lists, planning sheets, roadmap tabs, tooling
 > logs, release plans) without leaking specifics.
 
+> The filename `modeling_skill.py` is a nod to what produced it — the
+> Modeling skill the coding agent applied. The script itself is just typed
+> Python that calls the SDK. The "skill" is the plugin instruction; the
+> script is the output.
+
 Every staging table automatically gets four provenance columns
 (`lc_SourceSystem`, `lc_SourceFilename`, `lc_SourceRowHash`,
 `lc_NeedsManualReview`) and an `lc_ImportRun` lookup.
@@ -59,7 +73,9 @@ Every staging table automatically gets four provenance columns
 
 ## How it works
 
-`datamodel/mappings/unified_mapping.yaml` is the single source of truth:
+`datamodel/mappings/unified_mapping.yaml` is the single source of truth for
+the staging schema — *one* file the coding agent and I worked on together,
+not five tables created click-by-click in the maker portal:
 
 ```yaml
 - source: tracker-a.sample.csv
@@ -76,9 +92,10 @@ Every staging table automatically gets four provenance columns
 
 `scripts/modeling_skill.py` walks this file and calls
 `client.tables.create(...)` for each tracker, building columns by type and
-generating unique option-set integers per `(table, field)`. The provenance
-fields are appended uniformly. After all tables exist, it adds the
-`lc_ImportRun` lookup using lowercase logical names.
+assigning stable option-set integers (fixed offsets per `(table, field)`).
+The provenance fields are appended uniformly. After all tables exist, it
+adds the `lc_ImportRun` lookup using lowercase logical names. All of that
+boilerplate the Modeling skill taught the coding agent to handle.
 
 ---
 
@@ -91,7 +108,7 @@ python scripts/create_datamodel.py
 # 2. Provenance tables + lookups
 python scripts/ep1_provenance.py
 
-# 3. Modeling Skill — staging tables from unified_mapping.yaml
+# 3. Staging tables generated from unified_mapping.yaml
 python scripts/modeling_skill.py
 
 # 4. Seed sanitized rows + capture an lc_ImportRun
@@ -106,15 +123,19 @@ export --name LaunchControl`).
 
 ## What this episode showcases
 
-1. **Dataverse Python SDK** — typed table/column creation, choice enums,
-   lookups — fully scripted and idempotent.
-2. **Skills as code** — `modeling_skill.py` reads a declarative spec and builds
-   real Dataverse metadata. Same pattern repeats for ingestion, normalization,
-   and reporting in later episodes.
-3. **Provenance from day one** — every row knows where it came from
+1. **Dataverse's skill format is portable across coding agents.** The same
+   skill format Dataverse uses for runtime Business Skills (see Episode 2)
+   is also packaged in plugins like `dataverse-skills` so build-time coding
+   agents (GitHub Copilot, Claude Code, Copilot CLI) can pick it up. One
+   format. Two consumption modes. That's the real news in this episode.
+2. **AI-powered modeling, not click-ops.** The Modeling skill turns *"here
+   are my trackers, here's a mapping"* into a typed Dataverse schema — choice
+   columns, lookups, provenance, solution membership. The coding agent does
+   the SDK calls; you stay in the conversation.
+3. **Provenance from day one.** Every row knows where it came from
    (`lc_SourceSystem`, `lc_SourceFilename`, `lc_SourceRowHash`,
    `lc_ImportRun`). No spreadsheet detective work later.
-4. **Sanitized & shareable** — only sample CSVs and the mapping file ship in
+4. **Sanitized & shareable.** Only sample CSVs and the mapping file ship in
    the repo; raw trackers are git-ignored.
 
 ---
@@ -134,7 +155,9 @@ export --name LaunchControl`).
 
 ## Next up
 
-**Episode 2 — Your Playbook & Ingestion.** With the schema in place, we
-codify the launch playbook as **Business Skills** any agent can follow, and
-hydrate the staging tables from real CSVs via a mapping-driven CLI workflow —
-with full provenance threaded back to this episode's `lc_ImportRun`.
+**Episode 2 — Your Playbook & Ingestion.** Episode 1 used Dataverse's skill
+format to give a *coding agent* what it needs to build the schema. Episode 2
+flips the consumer: the same skill format now packages **Business Skills**
+that *runtime agents* (Copilot Studio, Claude, M365 Copilot) follow at run
+time to actually operate the launch — readiness checks, escalation policies,
+status transitions. One skill format, both ends of the agent lifecycle.
