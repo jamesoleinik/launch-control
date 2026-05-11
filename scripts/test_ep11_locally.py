@@ -108,9 +108,19 @@ def main():
         check("BAP admin API reachable", False, f"exception: {e}")
         failures += 1
 
+    # ---- proof point 4 (agent blast-radius) data shape ----
+    bots = fetch("/api/data/v9.2/bots?$select=botid,schemaname,statecode"
+                 "&$filter=statecode eq 0")
+    custom_active = [b for b in bots
+                     if not (b.get('schemaname') or '').startswith('msdyn_')]
+    if not check("Custom agents present (blast-radius beat)",
+                 len(custom_active) >= 1,
+                 f"{len(custom_active)} custom + {len(bots) - len(custom_active)} prebuilt active"):
+        failures += 1
+
     print()
     if failures == 0:
-        print("ALL GREEN -- env data + capacity API both ready.")
+        print("ALL GREEN -- env data + capacity API + agent inventory all ready.")
         print()
         print("REMAINING (manual checks before recording):")
         print("  - Pick the agent runtime: Copilot CLI w/ awesome-copilot dataverse plugin")

@@ -59,7 +59,11 @@ Agents have spread through the campaign: Copilot Studio Coordinator (Ep 6), Sent
 
 The pitch: *"Before I approve the next agent into production, what's the surface area of the ones I already have?"*
 
-This proof point is the one that's most likely to evolve as Power Platform's agent-governance surface matures. **For the recording**, we land it as a `scripts/python/admin/agent_blast_radius.py` script that reads bot definitions + flow connection refs + custom-action permissions and prints a per-agent inventory. *(Implementation TODO — see follow-ups below.)*
+For the recording, the agent calls `scripts/python/admin/agent_blast_radius.py`, which reads four Dataverse tables — `bot`, `botcomponent`, `workflow`, `connectionreference` — and emits a per-agent inventory: actions (MCP-backed flagged), generative-orchestration on/off, external triggers, knowledge sources, plus a tenant-wide connector-usage roll-up.
+
+**Live data we'll see on camera (verified by preflight):** 3 custom agents in this env — **Launch Coordinator**, **Launch Sentinel**, plus the `Test` agent. Each one's MCP wiring, triggers, and gen-orchestration status are right there in the output. Sentinel's `Daily Trigger` + `When a task is blocked` make explicit what was implicit in Ep 7. Plus 31 pre-built Sales/Service template agents that any admin would also need to govern (collapsed by default with `--custom-only`).
+
+The on-camera moment: *"This is every agent that can move data in this environment, and what each one can reach. One prompt. No portal navigation."*
 
 ### 5. The chat is the audit log
 
@@ -133,13 +137,12 @@ Manual checks (not scripted):
 | `scripts/test_ep11_locally.py` | 6-check preflight harness |
 | `scripts/python/seed_pre_q1_status_updates.py` | Backdated cleanup-target seeder |
 | `scripts/python/admin/capacity_report.py` | Capacity beat (#2) — env + tenant-top |
-| `scripts/python/admin/agent_blast_radius.py` *(TODO)* | Agent governance beat (#4) |
+| `scripts/python/admin/agent_blast_radius.py` | Agent governance beat (#4) — per-agent inventory |
 
 No solution components. No new tables, columns, plugins, or actions. The only env mutation is 12 backdated status updates the demo deletes on camera.
 
 ## Follow-ups (not blockers for the doc, but blockers for recording)
 
-- [ ] Implement `scripts/python/admin/agent_blast_radius.py` — enumerate Power Automate flows, Copilot Studio bots, custom MCP-grounded agents in the demo env; per-agent: tables read, tables written, actions invoked. JSON + pretty output, mirrors capacity_report.py shape.
 - [ ] Decide the agent runtime for the demo: Copilot CLI w/ awesome-copilot dataverse plugin (no extra install) vs. a dedicated `dv-admin` skill (more on-brand for "skills all the way down" but more authoring work).
 - [ ] Capture exact agent transcript output from each of the 4 prompts for the LinkedIn caption.
 
