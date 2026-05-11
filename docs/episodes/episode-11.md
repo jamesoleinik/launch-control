@@ -109,6 +109,8 @@ Caption: *"Same admin actions. Less navigation. Audit trail by default."*
 
 ## Pre-record gate
 
+**Agent runtime: Copilot CLI** with the existing `dataverse@awesome-copilot v1.0.0` plugin. Backing scripts live in `scripts/python/admin/`; the agent invokes them directly. No new skill is being authored for this episode — the point is that today's tooling already lets an admin run the management plane from chat.
+
 Run before camera turns on:
 
 ```bash
@@ -126,8 +128,7 @@ Six checks. All green at time of writing:
 
 Manual checks (not scripted):
 - Audit setting OFF on at least one table (so the audit-on prompt has a visible diff)
-- Pick agent runtime: Copilot CLI driving `scripts/python/admin/*.py` is the simplest path; a dedicated `dv-admin` skill is optional polish
-- All 4 demo prompts rehearsed end-to-end at least once; capture exact agent output for the recording script
+- All 4 demo prompts rehearsed end-to-end at least once in Copilot CLI; capture exact agent output for the recording script
 
 ## Files in this episode
 
@@ -143,8 +144,8 @@ No solution components. No new tables, columns, plugins, or actions. The only en
 
 ## Follow-ups (not blockers for the doc, but blockers for recording)
 
-- [ ] Decide the agent runtime for the demo: Copilot CLI w/ awesome-copilot dataverse plugin (no extra install) vs. a dedicated `dv-admin` skill (more on-brand for "skills all the way down" but more authoring work).
-- [ ] Capture exact agent transcript output from each of the 4 prompts for the LinkedIn caption.
+- [ ] Toggle audit OFF on at least one table the night before so prompt #1 has a visible diff
+- [ ] Capture exact agent transcript output from each of the 4 prompts for the LinkedIn caption
 
 ## Cross-references
 
