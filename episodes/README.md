@@ -55,4 +55,5 @@ Each preflight is read-only by default and exits non-zero if the substrate isn't
 
 - [`README.md`](../README.md) — top-level project README
 - [`SECURITY.md`](../SECURITY.md) — reporting security issues
-- [LinkedIn series](https://www.linkedin.com/in/james-oleinik/) — episode posts
+- [`CHANGELOG.md`](../CHANGELOG.md) — what shipped per episode
+- [LinkedIn series](https://www.linkedin.com/in/james-oleinik/) — episode posts (each ep folder also has a `linkedin-post.md` draft)
