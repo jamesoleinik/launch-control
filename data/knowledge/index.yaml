@@ -1,0 +1,39 @@
+# Map of file -> metadata used by scripts/python/upload_knowledge.py.
+# Categories must match the lc_Category choice values in lc_KnowledgeArticle.
+# Linked launches are matched against lc_Launch.lc_Name (case-insensitive).
+articles:
+  - file: launch-readiness-playbook.md
+    title: "Launch Readiness Playbook"
+    summary: >
+      Standard procedure for product launches: phases, readiness gates,
+      slip rules, roles, rituals, and escalation hand-off. Source of truth
+      used by the Launch Coordinator agent for go/no-go and process
+      questions.
+    category: Playbook
+    launch: null
+
+  - file: escalation-policy.md
+    title: "Escalation Policy"
+    summary: >
+      How blockers are escalated. Defines severities, time-based triggers,
+      channels, quiet hours, acknowledgement, and override rules. Used at
+      runtime by the lc_EscalateBlocker skill.
+    category: Policy
+    launch: null
+
+  - file: q3-widget-pro-brief.md
+    title: "Q3 Widget Pro - Product Launch Brief"
+    summary: >
+      Fictional product brief covering personas, scope, readiness gates,
+      risks, mitigations, and communications for the Q3 Widget Pro launch.
+    category: Spec
+    launch: "Q3 Widget Launch"
+
+  - file: q1-widget-mini-postmortem.md
+    title: "Postmortem - Q1 Widget Mini Launch"
+    summary: >
+      Postmortem for the Q1 Widget Mini launch. Documents what went well,
+      what went wrong, action items, and lessons learned that feed into
+      future launches.
+    category: Postmortem
+    launch: "Q1 Widget Mini Launch"

@@ -58,10 +58,27 @@ agents/launch-coordinator-py/.skills/
 # Local scratch / probe scripts (env-specific identifiers, demo state)
 tmp/
 scripts/python/_*.py
+scripts/python/inspect_*.py
+scripts/python/dump_*.py
+scripts/python/count_*.py
+scripts/python/find_*.py
+scripts/python/check_roles.py
+scripts/python/seed_*.py
+
+# One-off setup scripts that hardcoded an env-specific URL (kept locally for re-runs)
+scripts/build_launch_agents_solution.py
+scripts/build_launch_coordinator_bot.py
+scripts/check_sentinel_fire.py
+scripts/check_ports.ps1
+scripts/export_solution.py
 
 # Power Apps code app env binding (contains environment ID)
 apps/**/power.config.json
 apps/**/.power/
+
+# Generated/compiled code-app artifacts (built from .ts source)
+apps/**/RuntimeTypes.js
+apps/**/*.compiled.js
 
 # Retired code app (replaced by generative page in Ep 9)
 apps/launch-brain-hub/
