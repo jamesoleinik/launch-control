@@ -34,7 +34,7 @@ Full series index with links to each episode's README, preflight, and scripts: *
 
 | # | Episode | Hero capability |
 |---|---------|------------------|
-| [1](episodes/ep-01-data-modeling/)        | AI-Powered Data Modeling      | Dataverse skill format + coding agent → first Dataverse tables |
+| [1](episodes/ep-01-data-modeling/)        | AI-Powered Data Modeling      | Official Dataverse plugins for Copilot & Claude Code → first Dataverse tables |
 | [2](episodes/ep-02-business-skills/)      | Your Playbook & Ingestion     | Business skills + mapping-driven CLI ingestion |
 | [3](episodes/ep-03-staging-layer/)        | Promoting the Staging Layer   | Python + pandas; staging → unified |
 | [4](episodes/ep-04-connecting-the-dots/)  | Connecting the Dots           | Virtual entities — GitHub Issues as a Dataverse lookup target |

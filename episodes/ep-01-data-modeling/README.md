@@ -1,9 +1,9 @@
 # Episode 1 — AI-Powered Data Modeling
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Dataverse skill format consumed by a coding agent · ⭐ Mapping-driven schema · ⭐ Provenance from day one
+**Features:** ⭐ Official Dataverse plugins for Copilot & Claude Code · ⭐ Mapping-driven schema · ⭐ Provenance from day one
 **Layer:** 🟢 Layer 1 (Data) — the foundation
-**Coding agent:** GitHub Copilot (with the Dataverse skill plugin) · **Runtime:** `PowerPlatform-Dataverse-Client` (Python)
+**Coding agent:** GitHub Copilot (with `dataverse@awesome-copilot`) · **Runtime:** `PowerPlatform-Dataverse-Client` (Python)
 
 ---
 
@@ -14,58 +14,33 @@
 I didn't draw this data model in the maker portal. I described the business in
 plain English to a coding agent, and the agent did the work — proposed the
 tables, wrote the Python, ran it against the environment, iterated when
-something broke. That's possible because **Dataverse ships a skill format
-that coding agents (GitHub Copilot, Claude Code, the Copilot CLI) consume
-directly.** The `dataverse-skills` plugin packages a *Modeling* skill in that
-format. The coding agent loads the skill and now it knows how to model on
-Dataverse — typed columns, choices, lookups, provenance, solution membership,
-the lot.
+something broke. That's possible because **Microsoft now ships official
+Dataverse plugins for the two big coding agents**: `dataverse@awesome-copilot`
+for GitHub Copilot (and the Copilot CLI), and the `dataverse` plugin in
+Claude's official plugin marketplace for Claude Code. Install either one and
+your coding agent suddenly knows how to model on Dataverse — typed columns,
+choices, lookups, provenance, solution membership, the lot.
 
 The Python files you see in this repo (`create_datamodel.py`,
 `modeling_skill.py`, `ep1_provenance.py`, `seed_data.py`) are what the coding
-agent *produced* using the skill. Re-runnable, idempotent, in source control.
+agent *produced* with the plugin loaded. Re-runnable, idempotent, in source
+control.
 
 ---
 
-## What does the skill actually look like?
+## Get the plugin
 
-A Dataverse skill is just a markdown file with YAML frontmatter — same shape
-whether a *coding* agent picks it up at build-time (this episode) or a
-*runtime* agent picks it up later (Episode 2). Here's the top of the real
-`metadata` skill that taught my coding agent how to build the model:
+Two installs — pick whichever coding agent you use:
 
-```markdown
----
-name: dataverse-metadata
-description: >
-  Create or modify Dataverse tables, columns, relationships, forms, and views.
-  USE WHEN: "add column", "create table", "add relationship", "lookup column",
-  "create form", "create view", "modify form", "FormXml", "SavedQuery",
-  "option set", "picklist", "MetadataService", "EntityDefinitions".
-  DO NOT USE WHEN: reading/writing data records (use dataverse-python-sdk),
-  exporting solutions (use dataverse-solution).
----
+| Coding agent | Plugin | Install |
+|---|---|---|
+| **GitHub Copilot / Copilot CLI** | `dataverse@awesome-copilot` | Available in the [awesome-copilot](https://github.com/microsoft/awesome-copilot) plugin marketplace |
+| **Claude Code** | `dataverse` | Available in the [official Claude plugin marketplace](https://claude.com/plugins/dataverse) |
 
-# Skill: Metadata — Making Changes
-
-## How Changes Are Made: Environment-First
-
-Do not write solution XML by hand to create new tables, columns, forms, or
-views. The environment validates metadata far more reliably than an agent
-editing XML. The correct workflow is:
-
-1. Make the change in the environment via the Dataverse MetadataService API
-2. Pull the change into the repo via `pac solution export` + `pac solution unpack`
-3. Commit the result
-...
-```
-
-That's it. Frontmatter tells the agent *when* to load the skill; the body
-tells it *how* to behave. The full plugin
-([`dataverse@awesome-copilot`](https://github.com/microsoft/dataverse-skills))
-ships related skills for `init`, `python-sdk`, `solution`, `mcp-configure`,
-and more — together they cover the full Dataverse pro-dev surface, and any
-coding agent that understands the skill format can use them.
+Same skill content under the hood, both maintained by Microsoft. Once the
+plugin is installed, your coding agent knows how to do Dataverse modeling,
+data work, solution lifecycle, and MCP setup — without you having to teach
+it the conventions every conversation.
 
 ---
 
@@ -103,9 +78,8 @@ Plus an `lc_ImportRun` lookup added to every core and staging table.
 > logs, release plans) without leaking specifics.
 
 > The filename `modeling_skill.py` is a nod to what produced it — the
-> Modeling skill the coding agent applied. The script itself is just typed
-> Python that calls the SDK. The "skill" is the plugin instruction; the
-> script is the output.
+> Dataverse plugin teaching the coding agent how to model. The script
+> itself is just typed Python that calls the SDK.
 
 Every staging table automatically gets four provenance columns
 (`lc_SourceSystem`, `lc_SourceFilename`, `lc_SourceRowHash`,
@@ -137,7 +111,7 @@ not five tables created click-by-click in the maker portal:
 assigning stable option-set integers (fixed offsets per `(table, field)`).
 The provenance fields are appended uniformly. After all tables exist, it
 adds the `lc_ImportRun` lookup using lowercase logical names. All of that
-boilerplate the Modeling skill taught the coding agent to handle.
+boilerplate the Dataverse plugin taught the coding agent to handle.
 
 ---
 
@@ -165,15 +139,16 @@ export --name LaunchControl`).
 
 ## What this episode showcases
 
-1. **Dataverse's skill format is portable across coding agents.** The same
-   skill format Dataverse uses for runtime Business Skills (see Episode 2)
-   is also packaged in plugins like `dataverse-skills` so build-time coding
-   agents (GitHub Copilot, Claude Code, Copilot CLI) can pick it up. One
-   format. Two consumption modes. That's the real news in this episode.
-2. **AI-powered modeling, not click-ops.** The Modeling skill turns *"here
-   are my trackers, here's a mapping"* into a typed Dataverse schema — choice
-   columns, lookups, provenance, solution membership. The coding agent does
-   the SDK calls; you stay in the conversation.
+1. **Official Dataverse plugins for the major coding agents.** Microsoft now
+   ships `dataverse@awesome-copilot` for GitHub Copilot (and the Copilot CLI)
+   and the `dataverse` plugin in [Claude's official plugin marketplace](https://claude.com/plugins/dataverse)
+   for Claude Code. Install either and the coding agent stops guessing —
+   it knows the Dataverse conventions, the SDKs, the publisher/solution
+   rules, the MCP setup. Pick your agent; the plugin meets it there.
+2. **AI-powered modeling, not click-ops.** With the plugin loaded, *"here
+   are my trackers, here's a mapping"* becomes a typed Dataverse schema —
+   choice columns, lookups, provenance, solution membership. The coding
+   agent does the SDK calls; you stay in the conversation.
 3. **Provenance from day one.** Every row knows where it came from
    (`lc_SourceSystem`, `lc_SourceFilename`, `lc_SourceRowHash`,
    `lc_ImportRun`). No spreadsheet detective work later.
@@ -197,9 +172,9 @@ export --name LaunchControl`).
 
 ## Next up
 
-**Episode 2 — Your Playbook & Ingestion.** Episode 1 used Dataverse's skill
-format to give a *coding agent* what it needs to build the schema. Episode 2
-flips the consumer: the same skill format now packages **Business Skills**
-that *runtime agents* (Copilot Studio, Claude, M365 Copilot) follow at run
-time to actually operate the launch — readiness checks, escalation policies,
-status transitions. One skill format, both ends of the agent lifecycle.
+**Episode 2 — Your Playbook & Ingestion.** Episode 1 was about how the
+*coding agent* gets help — an official plugin in the marketplace it already
+trusts. Episode 2 shifts to the *runtime agents* (Copilot Studio, Claude,
+M365 Copilot) and how Dataverse gives them their own help: **Business
+Skills** that govern readiness checks, escalation policies, and status
+transitions while the launch is actually running.
