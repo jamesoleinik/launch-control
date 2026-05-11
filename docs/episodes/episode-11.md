@@ -1,160 +1,150 @@
 # Episode 11 — Agentic Administration
 
-> **Hook:** *"I built the system. Now an agent runs the back office of it. From my terminal, in plain English, with a refusal when it should refuse."*
+> **Hook:** *"Eleven episodes ago, this launch was a spreadsheet. Tonight, the platform that runs it answers admin questions in chat."*
 
-After ten episodes of building a system **on top of** Dataverse, Episode 11 turns the camera on the **administration of** Dataverse itself. The protagonist is the `dv-admin` skill — a GitHub Copilot CLI plugin that wraps the Dataverse Admin CLI. The point is not the tool; it's the shape of the work: **the platform's own admin surface is now agentic.**
+Every prior episode in this campaign builds **on** the platform — data model, business skills, agents, gen page, native Copilot grounding. Ep 11 turns the camera on the **platform itself**: auditing, capacity, cleanup, agent governance. The admin work that lived in admin centers and PowerShell scripts is now a conversation.
 
 ## Why this matters in the arc
 
-By Ep 10, the audience has seen agents on top of business data. Ep 11 closes the loop: even the **operations** of the platform — auditing, plugin trace, cleanup, governance — are conversational. And critically, when you ask the agent to do something dangerous, it **refuses out loud**. That refusal is the safety beat that makes the rest of the episode credible.
+This is the only episode that's about **operating** the platform rather than building **on** it. After ten episodes of "look what you can build," the question every admin in the audience is asking is *"…and how do I run this in production?"* Ep 11 answers it.
 
-If Eps 6–8 prove "agents can read your data," Ep 11 proves "agents can run your admin — with guardrails."
+## The five proof points
 
-## Pre-record gate
+These aren't five tools. They're five questions an admin asks every week — and five answers the management plane returns in the time it takes to type the question.
 
-The env needs to be in a specific state for the demo to land. Run the preflight harness first:
+### 1. Auditing on by conversation
 
-```bash
-python scripts/test_ep11_locally.py
-```
-
-It checks:
-- Launch row exists (narrative anchor)
-- ≥ 10 backdated `lc_statusupdate` rows tagged `PreQ1Seed::` (so the FetchXML cleanup beat has data to delete)
-- Every seeded row's `createdon` is < 2026-01-01 (so the FetchXML filter actually selects them)
-
-If the seeded rows are missing, run:
-
-```bash
-python scripts/python/seed_pre_q1_status_updates.py
-```
-
-This idempotently creates 12 status updates dated Oct–Dec 2025 with the `PreQ1Seed::` prefix in `lc_title`. Backdating uses Dataverse's `overriddencreatedon` field — the rows really do show `createdon = 2025-10-03` etc., not a backdated metadata column. That's what makes the FetchXML demo realistic.
-
-The remaining manual checks (not scripted, you do them by eye):
-- `/plugin list` in Copilot CLI confirms `dv-admin` is installed; capture the version string for the doc
-- Audit setting drift exists between the two scopes you'll compare (env-vs-env or table-vs-table — see C2 below)
-- All five commands rehearsed end-to-end against the demo env at least once
-
-## The 5-command demo
-
-Each command is a turn in a real Copilot CLI session. The agent confirms before mutating, and the user types the exact prompt below — no shorthand, no preset.
-
-### Command 1 — Enable auditing
-
-**Demo prep:** the night before, turn audit *off* on `lc_task` (or the whole env).
-
-**Prompt:**
 > *"Enable auditing on the launch environment so we can track every status change."*
 
-**Expected:** agent reads current setting, shows the diff, asks for confirm, applies. Concise structured output with a green check.
+Agent reads the current setting, shows the diff, asks for confirm, applies. The compliance toggle that used to be a four-tab navigation is now a sentence.
 
-### Command 2 — Plugin trace settings: drift compare
+**Demo prep:** turn audit OFF on at least one table the night before, so the diff is visible.
 
-**Risk:** the demo env is a single environment. We may not have a second.
+### 2. Capacity by conversation
 
-**Two framings, decide on Day -5:**
+> *"What's burning capacity in this environment?"*
+> *"Which environments in my tenant are closest to their limits?"*
 
-| Framing | Use when | Demo effect |
-|---|---|---|
-| **Env vs env** | Second demo env exists | "Drift between dev and prod plugin trace settings — is that intentional?" |
-| **Table vs table** *(fallback)* | Single env only | "`lc_task` audits everything; `lc_milestone` audits nothing — is that intentional?" |
+Agent calls `scripts/python/admin/capacity_report.py`, parses the structured output, presents the headline numbers. Three pools (Database, File, Log), per-environment + tenant-wide top-N.
 
-Either way, the punchline is the same: **config drift detection at scale, in conversation.** Bake the chosen framing into `episode-11.md` Section 3 once decided.
+**Live data we'll see on camera (verified by preflight):**
 
-**Prompt (env-vs-env):**
-> *"Compare plugin trace settings between dev and prod and tell me anything that's different."*
+| Pool | Used | Allocated | Util |
+|---|---|---|---|
+| Database | 264.5 MB | 1.00 GB | 25.8% |
+| **File** | **6.37 GB** | **6.37 GB** | **100% ← AT CAP** |
+| Log | 0.07 MB | 0.07 MB | 100% |
 
-**Prompt (two-table):**
-> *"Compare audit settings between the lc_task and lc_milestone tables in this environment."*
+**The on-camera moment:** the agent flags that the File pool is at cap — and answers the next question (*"which environments are worst?"*) by scanning all 35 envs in the tenant in one call. **Nobody answers this in 30 seconds today.**
 
-### Command 3 — FetchXML cleanup
+### 3. Bulk cleanup, auditable not destructive
 
-**Demo prep:** done by `seed_pre_q1_status_updates.py` (12 rows, `PreQ1Seed::` prefix, dated Oct–Dec 2025).
+> *"Clean up StatusUpdate records from before Q1 2026."*
 
-**Prompt:**
-> *"Clean up StatusUpdate records that were created before Q1 2026."*
-
-**Expected agent flow:**
-1. Builds FetchXML with `condition attribute="createdon" operator="lt" value="2026-01-01"`
-2. Runs the FetchXML as a count first — *"Found 12 records matching."*
+Agent flow:
+1. Builds the FetchXML filter (`createdon < 2026-01-01`)
+2. **Runs it as a count first** — *"Found 12 records matching."*
 3. **Asks for confirmation** before deleting
 4. Deletes; confirms 12 deleted
 
-The on-camera moment is the agent showing the FetchXML it generated **before** running it. That's the "I trust this because I can see it" beat.
+The on-camera beat is the agent showing the FetchXML it generated **before** running it. *"I trust this because I can see exactly what it's about to do."*
 
-### Command 4 — Refused bulk delete (the safety beat)
+**Demo prep:** `seed_pre_q1_status_updates.py` already created 12 backdated `lc_statusupdate` rows with the `PreQ1Seed::` prefix, dated Oct–Dec 2025. The script uses `overriddencreatedon` so the actual `createdon` field stores 2025-10-03 etc. — the FetchXML filter selects them for real, not via a metadata workaround.
 
-**Prompt:**
-> *"Delete all records in the Launches table."*
+### 4. Agent blast-radius is one prompt away
 
-**Expected:** agent **refuses**. The exact refusal text gets pulled into the LinkedIn caption — that's the on-camera quote we're looking for. Something to the effect of: *"I'm not going to do that. Bulk-deleting the Launches table would remove your entire launch history. If you really want this, here's the shape of the FetchXML — review it and run it yourself."*
+> *"Show me everything the agents in this environment can read or write."*
 
-This is the most important beat in the episode. **Without it, "agents can run your admin" sounds reckless. With it, it sounds responsible.**
+Agents have spread through the campaign: Copilot Studio Coordinator (Ep 6), Sentinel autonomous agent (Ep 7), the code-first agent (Ep 8). An admin needs the **standing report**: what tables, what actions, by which agent — without crawling each one's settings page.
 
-### Command 5 — Read-only close
+The pitch: *"Before I approve the next agent into production, what's the surface area of the ones I already have?"*
 
-**Prompt:**
-> *"What's the plugin trace log retention setting on this environment?"*
+This proof point is the one that's most likely to evolve as Power Platform's agent-governance surface matures. **For the recording**, we land it as a `scripts/python/admin/agent_blast_radius.py` script that reads bot definitions + flow connection refs + custom-action permissions and prints a per-agent inventory. *(Implementation TODO — see follow-ups below.)*
 
-A small read to close on a positive note. Demonstrates that the agent does the small things too, not just the dramatic ones.
+### 5. The chat is the audit log
+
+The fifth proof point isn't a separate command — it's the **frame** the other four sit in. Every prompt typed, every agent action, every diff and confirmation lives in one conversation. The conversation is exportable. The conversation is the record.
+
+Voiceover beat:
+
+> *"Whatever I just did to my environment — what changed, why I changed it, who saw it before I changed it — is in this chat. The chat IS the audit log."*
 
 ## The episode in 90 seconds
 
-### Beat 1 — Hook (~10 sec)
+### Beat 1 — Cold open (~10 sec)
 
-Cold open: terminal, blinking prompt. Voiceover: *"My business runs on Dataverse. Agents help my team do the work. But who runs the platform?"*
+Visual: PPAC dashboard — the "old way" — split-screened with a terminal.
 
-### Beat 2 — Five commands (~60 sec)
+> *"This is how I run the platform today. This is how I want to run it tomorrow."*
 
-Cuts of the five commands. Each one ~10–12 sec, structured terminal output framed center-stage. **The refusal is held longer than the others** — the agent's exact refusal text fills the screen for ~5 sec.
+### Beat 2 — Four prompts, four answers (~60 sec)
 
-### Beat 3 — Browser-vs-chat split-frame (~15 sec)
+The four mutating/reading prompts (#1–#4 above). ~15 sec each. The capacity prompt (#2) gets the longest hold because the on-camera moment — agent says "File pool at cap, here's the tenant-wide view" — is the strongest single beat.
 
-Static frame:
+### Beat 3 — The audit-log frame (~15 sec)
+
+Hold the chat scrollback. Voiceover lands #5: the chat IS the audit log.
 
 ```
-┌──────────────────────────┬──────────────────────────┐
-│  THE OLD WAY             │  EP 11 — DV-ADMIN        │
-│  Power Platform Admin    │  Copilot CLI             │
-│  Center                  │                          │
-│                          │                          │
-│  navigate, click, click, │  type the question.      │
-│  read, click, repeat     │  agent shows the diff.   │
-│                          │  agent asks before        │
-│                          │  changing anything.       │
-└──────────────────────────┴──────────────────────────┘
+┌──────────────────────────────────┬────────────────────────────────┐
+│  PPAC                            │  COPILOT CLI                   │
+│  (the old admin surface)         │  (the new admin surface)       │
+│                                  │                                │
+│  navigate, click, click, read,   │  ask. read the diff.           │
+│  click, repeat                   │  approve. done.                │
+│                                  │                                │
+│  audit trail: SAS log somewhere  │  audit trail: this chat        │
+└──────────────────────────────────┴────────────────────────────────┘
 ```
 
 Caption: *"Same admin actions. Less navigation. Audit trail by default."*
 
 ### Beat 4 — Bridge to Ep 12 (~5 sec)
 
-> *"The platform runs the system. The system runs the launch. Next episode: shipping it."*
+> *"The platform runs. The system runs. Next episode: shipping the launch."*
 
-## Risks & guardrails callout
+## Pre-record gate
 
-In the doc and the recording, dedicate ~10 sec to the refusal — what it means, why it matters, what the agent's actual policy boundary is. This is where viewers' "but isn't this dangerous?" question gets answered before they ask it.
-
-## Files touched
-
-- `docs/episodes/episode-11.md` (this file)
-- `scripts/test_ep11_locally.py` — preflight harness (4 checks)
-- `scripts/python/seed_pre_q1_status_updates.py` — backdated demo data seeder
-
-No solution components. No new tables, columns, plugins, or actions. The only env mutation is 12 backdated `lc_statusupdate` rows the demo will then delete on camera.
-
-## Cleanup after recording
-
-The FetchXML cleanup demo deletes the 12 seeded rows on camera. To re-rehearse:
+Run before camera turns on:
 
 ```bash
-python scripts/python/seed_pre_q1_status_updates.py            # idempotent, no-op if 12+ exist
-python scripts/python/seed_pre_q1_status_updates.py --force    # wipes + re-creates
+python scripts/test_ep11_locally.py
 ```
+
+Six checks. All green at time of writing:
+
+- ✅ Launch row exists
+- ✅ Pre-Q1 seeded status updates ≥ 10 (cleanup beat)
+- ✅ Every seeded row's `createdon` < 2026-01-01
+- ✅ BAP admin API reachable (capacity beat)
+- ✅ Demo env visible in tenant list
+- ✅ Capacity endpoint returns ≥ 3 pools (currently flags File + Log at 100%)
+
+Manual checks (not scripted):
+- Audit setting OFF on at least one table (so the audit-on prompt has a visible diff)
+- Pick agent runtime: Copilot CLI driving `scripts/python/admin/*.py` is the simplest path; a dedicated `dv-admin` skill is optional polish
+- All 4 demo prompts rehearsed end-to-end at least once; capture exact agent output for the recording script
+
+## Files in this episode
+
+| Path | Role |
+|---|---|
+| `docs/episodes/episode-11.md` | This document |
+| `scripts/test_ep11_locally.py` | 6-check preflight harness |
+| `scripts/python/seed_pre_q1_status_updates.py` | Backdated cleanup-target seeder |
+| `scripts/python/admin/capacity_report.py` | Capacity beat (#2) — env + tenant-top |
+| `scripts/python/admin/agent_blast_radius.py` *(TODO)* | Agent governance beat (#4) |
+
+No solution components. No new tables, columns, plugins, or actions. The only env mutation is 12 backdated status updates the demo deletes on camera.
+
+## Follow-ups (not blockers for the doc, but blockers for recording)
+
+- [ ] Implement `scripts/python/admin/agent_blast_radius.py` — enumerate Power Automate flows, Copilot Studio bots, custom MCP-grounded agents in the demo env; per-agent: tables read, tables written, actions invoked. JSON + pretty output, mirrors capacity_report.py shape.
+- [ ] Decide the agent runtime for the demo: Copilot CLI w/ awesome-copilot dataverse plugin (no extra install) vs. a dedicated `dv-admin` skill (more on-brand for "skills all the way down" but more authoring work).
+- [ ] Capture exact agent transcript output from each of the 4 prompts for the LinkedIn caption.
 
 ## Cross-references
 
-- **Ep 5 / Ep 7 / Ep 8** — three runtimes of agents on top of Dataverse. Ep 11 is the **fourth** runtime: an agent for Dataverse itself.
-- **Ep 9** — gen page is unaffected by audit/plugin-trace toggles; this is admin work that doesn't touch app surfaces.
+- **Eps 6 / 7 / 8** — the three agent runtimes whose blast-radius proof point #4 reports on.
+- **Ep 1** — `lc_statusupdate` was created here; the cleanup beat (#3) deletes pre-Q1 rows from this table.
 - **Ep 12** — closes the campaign with the orchestra montage; Ep 11 is the last "individual capability" episode.
