@@ -121,7 +121,7 @@ batch. That's the audit trail every business process needs.
   records. Episode 6 will plug an agent into the same skills.
 - **Reproducible imports.** Drop a new CSV in `datamodel/samples/` and add a mapping —
   no code changes, full provenance.
-- **A foundation for normalization.** Episode 4 (Python SDK + pandas) will read these
+- **A foundation for normalization.** Episode 3 (Python SDK + pandas) will read these
   staging tables and promote rows into the unified `lc_Launch` / `lc_Milestone` /
   `lc_Task` model with conflict resolution and dedup.
 

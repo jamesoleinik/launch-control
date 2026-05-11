@@ -206,26 +206,6 @@ k6 Cloud subscription                 #2      open    Load test: Verify 10k conc
 
 ---
 
-## The unified query (legacy framing — superseded by Part 3)
-
-This is the moment of the episode. Once the SharePoint VE and the GitHub VE
-are both registered, the same MCP tool that queried `lc_Task` now queries all
-three.
-
-```sql
-SELECT lc_name, lc_state, 'lc_task'         AS source FROM lc_task
-UNION ALL
-SELECT lc_name, lc_status, 'sharepoint'     AS source FROM lc_sharepointtask
-UNION ALL
-SELECT lc_name, lc_state, 'github'          AS source FROM lc_githubissue
-WHERE lc_state = 'open'
-```
-
-> No data copied. Real-time projection. Three systems. One query — and the
-> native side is real because of last episode.
-
----
-
 ## What's deliberately NOT in this episode
 
 - **A custom MCP server.** Custom MCP is Episode 5, and it solves a different
@@ -253,7 +233,8 @@ WHERE lc_state = 'open'
    columns.
 5. MCP query: `SELECT lc_name, lc_state FROM lc_githubissue` — 6 live GitHub
    issues appear as Dataverse rows.
-6. The unified query above — three systems, one result set.
+6. The `$expand` query from Part 3 — `lc_task` joined to live GitHub issues
+   through the new lookup, in one Web API call.
 7. **The punchline:**
    > _"Three systems. Zero copies. One query.
    > That's what 'native to Dataverse' really means."_

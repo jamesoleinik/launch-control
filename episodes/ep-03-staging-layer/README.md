@@ -86,9 +86,10 @@ The dedup story is the unsung hero. It's why a re-run of `promote.py` produces
   belongs alongside BYO MCP. Pulling it forward would muddy the "Python +
   pandas" story.
 - **Auto-linking promoted milestones to a launch.** Currently milestones land
-  with a NULL `lc_launchid`. The narrative is "staging → unified," not
-  "staging → unified, attached to a launch." Linking is a one-line follow-up
-  that fits Ep 5 better.
+  with a NULL `lc_launchid`. The narrative for this episode is "staging →
+  unified" — proving the round-trip is idempotent and provenance-aware.
+  Wiring milestones to their parent launch is a small follow-up that can
+  ship out-of-band without its own episode beat.
 
 ---
 

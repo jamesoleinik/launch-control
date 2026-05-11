@@ -1,11 +1,5 @@
 # Episode 5 — Custom Tools
 
-> **Note on ordering:** In the new roadmap (reordered 2026-05-01) this episode
-> ships in **Slot 4** — directly after _Connecting the Dots_ — because Skills
-> (Slot 5) needs the `lc_CalculateLaunchReadiness` action and the BYO MCP
-> connectors to reference. The episode number in the filename stays as 5 for
-> continuity with earlier planning notes.
-
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ BYO MCP Server Registration (paconn)
 **Layer:** 🔵 Layer 2 (intelligence — extending the tool ecosystem)
@@ -232,11 +226,10 @@ Once registered:
 
 ---
 
-## Part 3 · Local validation (because you don't have an agent yet)
+## Part 3 · Local validation (before any agent picks the tools up)
 
-> The episode order is `Custom Tools` (this one) → `Skills` → `Copilot
-> Studio Agent`. We need to know the tools _work_ before we point an agent
-> at them.
+> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 6).
+> We want to know the tools _work_ before we point an agent at them.
 
 [`episodes/ep-05-custom-tools/preflight.py`](../../episodes/ep-05-custom-tools/preflight.py) is a
 two-mode test harness that exercises the tools without any agent surface:
@@ -287,18 +280,13 @@ source.
 
 ## What's deliberately NOT in this episode
 
-- **A Copilot Studio agent.** That's Slot 6 in the new ordering. The point of
+- **A Copilot Studio agent.** That's Episode 6 — _The Agent_. The point of
   this episode is _the tools exist and are independently verified_. Pointing
   an agent at them is the next episode's payoff.
-- **The skills that wrap these tools.** Slot 5 (Skills) rewrites the
-  `Launch Readiness Checklist`, `Status Transition Rules`, and `Escalation
-  Policy` skills so they reference `lc_CalculateLaunchReadiness` and the
-  `github_issue.state` from the Episode 4 virtual entity. That enrichment
-  belongs there, not here.
-- **A custom MCP server we host ourselves.** The episode shows BYO MCP via
-  registering _someone else's_ public MCP servers. Hosting your own MCP
-  server (auth, scaling, observability) is a meatier topic and lands in the
-  later "Agentic Admin" episode.
+- **A custom MCP server we host ourselves.** This episode shows BYO MCP via
+  registering _someone else's_ public MCP servers (Microsoft Learn, GitHub).
+  Hosting your own MCP server (auth, scaling, observability) is a meatier
+  topic that resurfaces in later episodes on agent runtimes and admin.
 - **Write-through to the external systems.** Both Learn MCP and GitHub MCP
   expose read tools in the configuration we ship. Letting agents create or
   edit through them is a write-path concern with its own auth review; out
