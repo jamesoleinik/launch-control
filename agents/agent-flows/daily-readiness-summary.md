@@ -1,8 +1,8 @@
-> ## ⚠️ DEFERRED — see [`docs/episodes/episode-7.md`](../../docs/episodes/episode-7.md)
+> ## ⚠️ DEFERRED — see [`episodes/ep-07-autonomous-agents/README.md`](../../episodes/ep-07-autonomous-agents/README.md)
 >
 > The standalone Agent Flow surface was pivoted out of Episode 7 because the preview Dataverse MCP-step UX could not reliably invoke unbound Custom APIs (specifically `lc_CalculateLaunchReadiness`) from natural-language Instructions. We discovered the Instructions box does accept raw Dataverse SQL (preserved in Step 0 / Step 1 below), but Custom API invocation in nested loop steps was the unblockable issue.
 >
-> **Replacement:** a recurrence trigger added directly to the Launch Sentinel autonomous agent. Same Dataverse MCP server, plus a Teams MCP `SendMessageToSelf` action. See [`agents/launch-sentinel/README.md`](../launch-sentinel/README.md) and [`docs/episodes/episode-7.md`](../../docs/episodes/episode-7.md).
+> **Replacement:** a recurrence trigger added directly to the Launch Sentinel autonomous agent. Same Dataverse MCP server, plus a Teams MCP `SendMessageToSelf` action. See [`agents/launch-sentinel/README.md`](../launch-sentinel/README.md) and [`episodes/ep-07-autonomous-agents/README.md`](../../episodes/ep-07-autonomous-agents/README.md).
 >
 > **Why this doc is preserved:** when the MCP-step UX in Agent Flows hardens (Custom API invocation becomes reliable from the Instructions box), this design is still the cleanest expression of "MCP tools and MCP flow steps are the same primitive." Reactivate then.
 >

@@ -1,7 +1,7 @@
 # Launch Coordinator (Python edition)
 
 A code-first reimplementation of the **Launch Coordinator** agent first built in
-Copilot Studio in [Episode 6](../../docs/episodes/episode-6.md). Same job. Same
+Copilot Studio in [Episode 6](../../episodes/ep-06-the-agent/README.md). Same job. Same
 skill. Different runtime.
 
 ## The point

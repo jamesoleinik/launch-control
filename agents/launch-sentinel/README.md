@@ -164,9 +164,9 @@ If the policy changes, the canonical edit happens in `business-skills/escalation
 Run the substrate harness before recording:
 
 ```bash
-python scripts/test_ep7_locally.py --plan      # show what gets checked
-python scripts/test_ep7_locally.py --run       # full pre-flight + non-destructive smoke
-python scripts/test_ep7_locally.py --trigger   # ephemeral task lifecycle (T1)
+python episodes/ep-07-autonomous-agents/preflight.py --plan      # show what gets checked
+python episodes/ep-07-autonomous-agents/preflight.py --run       # full pre-flight + non-destructive smoke
+python episodes/ep-07-autonomous-agents/preflight.py --trigger   # ephemeral task lifecycle (T1)
 ```
 
 The harness verifies:
