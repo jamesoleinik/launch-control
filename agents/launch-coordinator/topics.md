@@ -53,7 +53,7 @@ logical names** confirmed against the solution XML.
 3. Resolve assignee email: expand `_lc_assignedtoid_value` → `lc_teammember(lc_name,lc_email)`
 4. Get the milestone's `lc_duedate` to compute days remaining
 5. Apply the **Escalation Policy** business skill severity matrix
-6. Offer to write a `lc_statusupdates` row (`lc_name="[<Severity>] <task title> blocked"`, `lc_LaunchId@odata.bind=/lc_launchs(<id>)`)
+6. Offer to write a `lc_statusupdates` row (`lc_title="[<Severity>] <task title> blocked"`, `lc_body=<rationale>`, `lc_updatedon=<now>`, `lc_LaunchId@odata.bind=/lc_launchs(<id>)`)
 
 ---
 

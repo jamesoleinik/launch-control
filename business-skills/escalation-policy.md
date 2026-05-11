@@ -144,6 +144,104 @@ When the blocker clears:
 4. **If the milestone date slipped**, surface that to the program manager
    with a recommendation to update `lc_milestone.lc_duedate`.
 
+## Autonomous mode (Launch Sentinel)
+
+The sections above describe the **interactive mode** — used by the Launch
+Coordinator agent (Ep 6), which talks to humans and walks the full
+notification chain. This section describes the **autonomous mode** used by
+the Launch Sentinel agent (Ep 7) when its event trigger fires on a
+`lc_task` record where `lc_isblocked = true`.
+
+Same policy, different consumer: Sentinel doesn't notify humans
+synchronously — it writes ONE `lc_statusupdate` row capturing the
+escalation, and lets the existing notification surfaces (Teams, email,
+the Coordinator agent) pick it up.
+
+### Trigger payload
+
+The autonomous trigger fires on every update to `lc_task` matching
+`lc_isblocked eq true` (not just the false→true transition). The payload
+contains `lc_taskid`. Idempotency below makes repeated firings safe.
+
+### Lookup chain (always run before writing)
+
+1. `GET lc_milestones(<_lc_milestoneid_value>)?$select=lc_name,lc_duedate,_lc_launchid_value`
+2. `GET lc_launchs(<launch_id>)?$select=lc_name,lc_targetdate,lc_launchstatus`
+3. If `_lc_assignedtoid_value` is set: `GET lc_teammembers(<id>)?$select=lc_name,lc_email,lc_role`
+4. If `_lc_githubissueid_value` is set: `GET lc_tasks(<lc_taskid>)?$select=lc_title&$expand=lc_GitHubIssueId($select=lc_state)`. If `lc_state == 'closed'` → exit (stale block).
+
+If `lc_launchstatus` is NOT in `(10600001 Planning, 10600002 InProgress,
+10600003 ReadyForLaunch)` → exit. Never escalate on Launched (10600004)
+or OnHold (10600005).
+
+### Idempotency check (always run before writing)
+
+```
+GET lc_statusupdates?$filter=_lc_launchid_value eq <launch_id> and contains(lc_body,'Correlation: task=<lc_taskid>')&$top=1&$orderby=lc_updatedon desc
+```
+
+If a row exists and its `lc_updatedon` is within 24h → exit. If older than
+24h and the task is still blocked → write a follow-up; mark the title
+`[Severity] <task title> still blocked (follow-up)`.
+
+### Severity rubric (autonomous variant — days-to-deadline)
+
+The interactive rubric above blends GitHub labels and qualitative
+multipliers ("critical-path task", "sponsor sign-off pending"). For
+autonomous escalation we collapse to a deterministic days-to-milestone
+table — the agent is writing to a record, not paging a human.
+
+Compute `days = lc_milestone.lc_duedate - today`, clamping negatives to 0.
+
+| Severity | Condition |
+|----------|-----------|
+| **P0 — Critical** | days ≤ 2 |
+| **P1 — High**     | days ≤ 7 |
+| **P2 — Medium**   | days ≤ 14 |
+| **P3 — Low**      | days > 14 |
+
+If no due date → default `P2 — Medium` and add `(no due date set)` to the
+body.
+
+### What you write — exactly ONE `lc_statusupdate` row
+
+Columns (do NOT improvise others):
+
+- `lc_title` — `[<Severity>] <task title> blocked` (or `... still blocked (follow-up)`)
+- `lc_body` — template below (the first three marker lines are MANDATORY)
+- `lc_updatedon` — NOW
+- `lc_LaunchId@odata.bind` — `/lc_launchs(<launch_id>)`
+
+```
+Source: Launch Sentinel
+Correlation: task=<lc_taskid>
+GeneratedByAutomation: true
+
+Task: <lc_title>
+Milestone: <lc_milestone.lc_name> (due <lc_duedate>, <days> day(s) out)
+Severity: <P0|P1|P2|P3 - label>
+Assignee: <lc_teammember.lc_name> <<lc_teammember.lc_email>>  (or "unassigned")
+Reason: <lc_blockerreason or "no reason provided">
+
+Recommended action: <one sentence — P0/P1: page assignee + manager; P2: notify in Teams; P3: file FYI>
+```
+
+The `Source`, `Correlation`, and `GeneratedByAutomation` markers are the
+contract: any consumer (Coordinator agent, downstream Flow, audit query)
+can recognize a Sentinel-authored escalation and de-duplicate against it.
+
+### Autonomous-mode guardrails
+
+1. Read-only on `lc_task`. Never flip `lc_isblocked` or any task field.
+2. Only call the Dataverse MCP tool: read on `lc_task`, `lc_milestone`,
+   `lc_launch`, `lc_teammember`, `lc_statusupdate`; create on
+   `lc_statusupdate`. No Teams, email, or external calls in autonomous
+   mode — those are owned by interactive mode.
+3. ≤ 1 row per invocation.
+4. Any lookup failure (404, permission, network) → exit silently. No
+   partial rows. Doing nothing is always preferable to a wrong row.
+5. Never invent column names or PII beyond what's already in Dataverse.
+
 ### What this skill is NOT
 
 - It is **not** a way to set status. State changes go through the Status
@@ -153,3 +251,6 @@ When the blocker clears:
   as one input to severity.
 - It does **not** modify GitHub. The virtual entity is read-only and the
   GitHub issue's lifecycle is owned by engineering.
+- It does **not** post to Teams or send email in autonomous mode. The
+  Sentinel agent only writes the `lc_statusupdate` row; downstream
+  surfaces are responsible for fan-out.
