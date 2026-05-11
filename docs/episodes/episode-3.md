@@ -140,3 +140,28 @@ python scripts/python/promote.py
 ```
 
 Re-run `promote.py` as often as you like. It's idempotent.
+
+
+## Why Ep 3 matters for Ep 9 (the Launch Command Center)
+
+Episode 9's hero shot — the Launch Command Center generative page with all four
+kanban columns full, every task showing a milestone tag + owner, and Blocked
+cards displaying their red reason banner — only works because Ep 3 populates
+the data with enough breadth and depth. The CSVs in `datamodel/samples/`
+are deliberately sized to land:
+
+- 16 milestones spanning 5 milestone-status buckets (NotStarted, InProgress,
+  AtRisk, Blocked, Complete) on the Q3 Widget Launch
+- 61 tasks distributed across all 4 kanban columns (NotStarted 26 · InProgress
+  22 · Blocked 8 · Done 5) with at least 3 cards per column so no kanban
+  column reads as empty on camera
+- Every task carries a real owner (resolves to `lc_teammember` via Tracker A/B)
+- Every Blocked task carries a `lc_blockerreason` string (so the red banner
+  on the gen-page card has content)
+- 36 `lc_statusupdate` rows spanning multiple agent sources (System,
+  Coordinator from Ep 6, Sentinel from Ep 7, Python agent from Ep 8) so the
+  side rail in the gen page never reads as quiet
+
+The Ep 9 preflight (`python scripts/test_ep9_locally.py`) verifies all of
+the above on the live env. If it ever fails after a fresh ingest, fix it in
+the **Ep 3 sample CSVs**, not in Ep 9 — Ep 9 only renders what Ep 3 lands.
