@@ -1,0 +1,29 @@
+name: 🎬 Episode suggestion
+description: Suggest a topic, capability, or scenario for a future episode
+title: "[Episode idea] "
+labels: ["episode-suggestion", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea for a future "Launch Control" episode (or a follow-on series)? Drop it here.
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: One sentence hook + a few bullets on what you'd want to see
+    validations:
+      required: true
+  - type: textarea
+    id: feature
+    attributes:
+      label: What Dataverse / Power Platform / agent capability would it showcase?
+    validations:
+      required: false
+  - type: textarea
+    id: business-case
+    attributes:
+      label: Why does it matter?
+      description: What real business problem would this solve or demonstrate?
+    validations:
+      required: false

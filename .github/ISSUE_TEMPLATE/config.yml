@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 LinkedIn — James Oleinik
+    url: https://www.linkedin.com/in/james-oleinik/
+    about: Reach out about the series, partnerships, or general discussion
+  - name: 📚 Microsoft Dataverse docs
+    url: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/
+    about: Official product documentation
+  - name: 🛟 Power Platform community
+    url: https://powerusers.microsoft.com/
+    about: Best place for general Dataverse / Power Platform questions

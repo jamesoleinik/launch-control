@@ -1,0 +1,39 @@
+name: 🐛 Bug report
+description: Something in the repo (a script, a skill, a doc) doesn't work as advertised
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! This repo is the companion to the **Launch Control** LinkedIn series — please include the episode and step you were on so I can reproduce.
+  - type: input
+    id: episode
+    attributes:
+      label: Which episode?
+      description: e.g., "Ep 8 — The Code-First Agent" or "general / repo setup"
+      placeholder: "Ep N — <title>"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you ran, what you expected, what you got. Paste error messages.
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, PAC CLI version, Python version, Node version, plugin versions
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a clean clone if possible
+    validations:
+      required: false
