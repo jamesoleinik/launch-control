@@ -64,6 +64,10 @@ mappings:
         schema: lc_Notes
         type: memo
         display: Notes
+      milestone:
+        schema: lc_Milestone
+        type: string
+        display: Milestone Hint
 
   - source: tracker-b.sample.csv
     target_entity: lc_TrackerB
@@ -102,6 +106,10 @@ mappings:
         type: choice
         display: Status
         options: [NotStarted, InProgress, Blocked, Done]
+      milestone:
+        schema: lc_Milestone
+        type: string
+        display: Milestone Hint
 
   - source: tracker-c.sample.csv
     target_entity: lc_TrackerC
@@ -160,6 +168,10 @@ mappings:
         schema: lc_Notes
         type: memo
         display: Notes
+      milestone:
+        schema: lc_Milestone
+        type: string
+        display: Milestone Hint
 
   - source: tracker-e.sample.csv
     target_entity: lc_TrackerE

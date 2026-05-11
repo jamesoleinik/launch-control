@@ -1,9 +1,13 @@
-id,tool,owner,priority,notes
-1,Azure AI Search index for widget catalog,alex.chen@example.com,Critical,Required for search migration (blocks Tracker A #11)
-2,Redis Enterprise cluster,riley.nguyen@example.com,High,For widget cache layer (Tracker A #6)
-3,App Insights workspace for widget telemetry,riley.nguyen@example.com,High,Provisioned in staging; prod next
-4,Adobe XD design system tokens,jordan.kim@example.com,Medium,UX team handoff for admin UI
-5,k6 Cloud subscription,riley.nguyen@example.com,Medium,For perf benchmarks (Tracker A #5)
-6,Snyk for SCA scanning,sam.rivera@example.com,High,Required by security review gate
-7,Stripe sandbox for billing tests,priya.patel@example.com,High,Beta payments validation
-8,GitHub Copilot Enterprise seats,alex.chen@example.com,Low,Productivity boost; not launch-blocking
+id,tool,owner,priority,notes,milestone
+1,Azure AI Search index for widget catalog,alex.chen@example.com,Critical,Required for search migration (blocks Tracker A #11),Widget admin portal v2
+2,Redis Enterprise cluster,riley.nguyen@example.com,High,For widget cache layer (Tracker A #6),Reduce widget P95 latency below 200ms
+3,App Insights workspace for widget telemetry,riley.nguyen@example.com,High,Provisioned in staging; prod next,Customer telemetry pipeline
+4,Adobe XD design system tokens,jordan.kim@example.com,Medium,UX team handoff for admin UI,Widget admin portal v2
+5,k6 Cloud subscription,riley.nguyen@example.com,Medium,For perf benchmarks (Tracker A #5),Reduce widget P95 latency below 200ms
+6,Snyk for SCA scanning,sam.rivera@example.com,High,Required by security review gate,Complete SOC2 Type II for widgets
+7,Stripe sandbox for billing tests,priya.patel@example.com,High,Beta payments validation,Onboard 50 paying customers in beta
+8,GitHub Copilot Enterprise seats,alex.chen@example.com,Low,Productivity boost; not launch-blocking,Smart Widget Pro v1.0 release
+9,Azure Chaos Studio workspace,riley.nguyen@example.com,Medium,Required for SLA chaos tests,Achieve 99.9% widget API SLA
+10,LaunchDarkly feature flag account,alex.chen@example.com,High,Enables progressive rollout,Smart Widget Pro GA
+11,Datadog APM trial,riley.nguyen@example.com,Medium,Comparison vs App Insights,Reduce widget P95 latency below 200ms
+12,Translation vendor MSA (Lionbridge),jordan.kim@example.com,Medium,For EMEA localization,Localize widgets for EMEA

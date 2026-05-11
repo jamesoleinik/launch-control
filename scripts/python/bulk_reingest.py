@@ -40,6 +40,7 @@ TRACKERS = [
             ("due_date", "lc_duedate", None),
             ("status", "lc_status", STAT_A),
             ("notes", "lc_notes", None),
+            ("milestone", "lc_milestone", None),
         ],
     },
     {
@@ -52,6 +53,7 @@ TRACKERS = [
             ("priority", "lc_priority", PRIO_B),
             ("due_date", "lc_duedate", None),
             ("status", "lc_status", STAT_B),
+            ("milestone", "lc_milestone", None),
         ],
     },
     {
@@ -72,6 +74,7 @@ TRACKERS = [
             ("owner", "lc_owneremail", None),
             ("priority", "lc_priority", PRIO_D),
             ("notes", "lc_notes", None),
+            ("milestone", "lc_milestone", None),
         ],
     },
     {

@@ -176,6 +176,29 @@ def _resolve_assignee(email: str | None, ctx: dict) -> str | None:
     return ctx.get("email_to_guid", {}).get(local)
 
 
+def _resolve_milestone(hint: str | None, ctx: dict) -> str | None:
+    """Resolve a free-text milestone hint to an lc_milestoneid.
+
+    Tracker C milestones use the bare initiative name ("Smart Widget Pro GA").
+    Tracker E milestones append a release suffix ("Smart Widget Pro v1.0
+    release (2026Q3)"). Match strategy: exact (case-insensitive), then
+    case-insensitive prefix. None on no match — caller decides whether to
+    leave the task orphaned or assign a default.
+    """
+    if not hint or not isinstance(hint, str):
+        return None
+    h = hint.strip().lower()
+    if not h:
+        return None
+    by_name = ctx.get("milestones_by_name") or {}
+    if h in by_name:
+        return by_name[h]
+    for name_lower, mid in by_name.items():
+        if name_lower.startswith(h) or h in name_lower:
+            return mid
+    return None
+
+
 def recipe_tracker_a(row: dict, ctx: dict) -> dict:
     status = TRACKER_A_STATUS.get(row.get("lc_status"))
     body: dict[str, Any] = {
@@ -190,6 +213,9 @@ def recipe_tracker_a(row: dict, ctx: dict) -> dict:
     assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
     if assignee:
         body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    mid = _resolve_milestone(row.get("lc_milestone"), ctx)
+    if mid:
+        body["lc_MilestoneId@odata.bind"] = f"/lc_milestones({mid})"
     return body
 
 
@@ -211,6 +237,9 @@ def recipe_tracker_b(row: dict, ctx: dict) -> dict:
     assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
     if assignee:
         body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    mid = _resolve_milestone(row.get("lc_milestone"), ctx)
+    if mid:
+        body["lc_MilestoneId@odata.bind"] = f"/lc_milestones({mid})"
     return body
 
 
@@ -238,6 +267,9 @@ def recipe_tracker_d(row: dict, ctx: dict) -> dict:
     assignee = _resolve_assignee(row.get("lc_owneremail"), ctx)
     if assignee:
         body["lc_AssignedToId@odata.bind"] = f"/lc_teammembers({assignee})"
+    mid = _resolve_milestone(row.get("lc_milestone"), ctx)
+    if mid:
+        body["lc_MilestoneId@odata.bind"] = f"/lc_milestones({mid})"
     return body
 
 
@@ -288,13 +320,13 @@ PRIMARY_KEY = {"lc_task": "lc_taskid", "lc_milestone": "lc_milestoneid"}
 # Per-source-table select list. Only ask for columns that exist on that table.
 SELECT_BY_SOURCE = {
     "lc_trackera": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_title", "lc_notes", "lc_duedate", "lc_status", "lc_owneremail"],
+                    "lc_title", "lc_notes", "lc_duedate", "lc_status", "lc_owneremail", "lc_milestone"],
     "lc_trackerb": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_title", "lc_category", "lc_duedate", "lc_status", "lc_owneremail"],
+                    "lc_title", "lc_category", "lc_duedate", "lc_status", "lc_owneremail", "lc_milestone"],
     "lc_trackerc": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
                     "lc_initiative", "lc_quarter", "lc_status", "lc_owneremail"],
     "lc_trackerd": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
-                    "lc_tool", "lc_notes", "lc_owneremail"],
+                    "lc_tool", "lc_notes", "lc_owneremail", "lc_milestone"],
     "lc_trackere": ["lc_sourcerowid", "lc_sourcefilename", "_lc_importrunid_value", "modifiedon",
                     "lc_project", "lc_release", "lc_status", "lc_owneremail"],
 }
@@ -391,6 +423,22 @@ def _promote_one(
             "updated": updated, "skipped": skipped}
 
 
+def _refresh_milestones(client: DataverseClient, ctx: dict) -> None:
+    """(Re)load milestone name->id index into ctx.
+
+    Called once at startup AND after each milestone-promoting tracker so
+    task-promoting trackers downstream see the latest milestone set.
+    """
+    name_to_id: dict[str, str] = {}
+    for batch in client.records.get("lc_milestone", select=["lc_milestoneid", "lc_name"]):
+        for rec in batch:
+            name = rec.get("lc_name")
+            mid = rec.get("lc_milestoneid")
+            if name and mid:
+                name_to_id[name.strip().lower()] = mid
+    ctx["milestones_by_name"] = name_to_id
+
+
 def _load_context(client: DataverseClient) -> dict:
     """Read singleton lookups once: the launch row + email->teammember map.
 
@@ -413,7 +461,9 @@ def _load_context(client: DataverseClient) -> dict:
             if local and tid:
                 email_to_guid[local] = tid
 
-    return {"launch_id": launch_id, "email_to_guid": email_to_guid}
+    ctx = {"launch_id": launch_id, "email_to_guid": email_to_guid, "milestones_by_name": {}}
+    _refresh_milestones(client, ctx)
+    return ctx
 
 
 def main() -> int:
@@ -436,14 +486,20 @@ def main() -> int:
 
     print(f"Promotion: {len(mappings)} mapping(s) -> unified model{' [dry-run]' if args.dry_run else ''}\n")
 
+    # Process milestone-promoting trackers first so task trackers can resolve
+    # the lc_milestone hint to a real lookup.
+    mappings.sort(key=lambda m: 0 if m["promote_to"].lower() == "lc_milestone" else 1)
+
     totals = {"read": 0, "deduped": 0, "created": 0, "updated": 0, "skipped": 0}
     with DataverseClient(env_url, get_credential()) as client:
         ctx = _load_context(client)
         print(f"  Context: launch_id={ctx['launch_id']}  "
-              f"teammembers indexed={len(ctx['email_to_guid'])}\n")
+              f"teammembers indexed={len(ctx['email_to_guid'])}  "
+              f"milestones indexed={len(ctx['milestones_by_name'])}\n")
 
         # Cache per-target existing-row index.
         existing_cache: dict[str, dict[str, str]] = {}
+        last_target = None
         for m in mappings:
             source_table = m["target_entity"].lower()
             target = m["promote_to"].lower()
@@ -451,6 +507,12 @@ def main() -> int:
             if not recipe:
                 print(f"  {source_table}: no recipe registered, skipping")
                 continue
+
+            # If we just finished the milestone phase, refresh the milestone
+            # index so subsequent task recipes can resolve names.
+            if last_target == "lc_milestone" and target != "lc_milestone":
+                _refresh_milestones(client, ctx)
+                print(f"\n  (refreshed milestone index: {len(ctx['milestones_by_name'])} milestones)\n")
 
             if target not in existing_cache:
                 print(f"  Indexing existing {target} rows by lc_StagingSource...")
@@ -467,6 +529,7 @@ def main() -> int:
                   f"skipped={stats['skipped']}")
             for k, v in stats.items():
                 totals[k] += v
+            last_target = target
 
     print(f"\n=== Promotion complete ===")
     print(f"  rows read:    {totals['read']}")

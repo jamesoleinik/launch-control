@@ -1,13 +1,29 @@
-id,title,owner,priority,due_date,status,notes
-1,Implement widget core API,alex.chen@example.com,High,2026-06-30,InProgress,Backend service for widget config payloads
-2,Build admin UI for widget config,jordan.kim@example.com,High,2026-07-10,InProgress,Designer + FE handoff in flight
-3,Add OAuth integration for widget,sam.rivera@example.com,Critical,2026-07-05,Blocked,Waiting on IDP team review of token scopes
-4,Database schema migration for widgets,alex.chen@example.com,High,2026-06-25,Done,Live in staging; rolled to prod next sprint
-5,Performance benchmark for widget load,riley.nguyen@example.com,Medium,2026-07-20,NotStarted,Need k6 scenarios authored
-6,Refactor widget cache layer,alex.chen@example.com,Medium,2026-07-25,InProgress,Move from in-proc cache to Redis Enterprise
-7,Wire widget telemetry to App Insights,riley.nguyen@example.com,High,2026-07-15,InProgress,Pixel events + server traces
-8,Fix widget pagination bug,alex.chen@example.com,High,2026-06-22,Done,PR merged; cherry-picked to release branch
-9,Implement widget bulk delete API,alex.chen@example.com,Low,2026-08-05,NotStarted,V2 feature; deferred if capacity tight
-10,Audit widget API rate limits,riley.nguyen@example.com,Medium,2026-07-12,InProgress,DDoS protection thresholds
-11,Migrate widget search to Azure AI Search,alex.chen@example.com,Critical,2026-07-18,Blocked,Index design pending vector schema review
-12,SDK release for widget customers,alex.chen@example.com,High,2026-08-10,NotStarted,Versioning strategy needs PM signoff
+id,title,owner,priority,due_date,status,notes,milestone
+1,Implement widget core API,alex.chen@example.com,High,2026-06-30,InProgress,Backend service for widget config payloads,Smart Widget Pro GA
+2,Build admin UI for widget config,jordan.kim@example.com,High,2026-07-10,InProgress,Designer + FE handoff in flight,Widget admin portal v2
+3,Add OAuth integration for widget,sam.rivera@example.com,Critical,2026-07-05,Blocked,Waiting on IDP team review of token scopes,Complete SOC2 Type II for widgets
+4,Database schema migration for widgets,alex.chen@example.com,High,2026-06-25,Done,Live in staging; rolled to prod next sprint,Smart Widget Pro GA
+5,Performance benchmark for widget load,riley.nguyen@example.com,Medium,2026-07-20,NotStarted,Need k6 scenarios authored,Reduce widget P95 latency below 200ms
+6,Refactor widget cache layer,alex.chen@example.com,Medium,2026-07-25,InProgress,Move from in-proc cache to Redis Enterprise,Reduce widget P95 latency below 200ms
+7,Wire widget telemetry to App Insights,riley.nguyen@example.com,High,2026-07-15,InProgress,Pixel events + server traces,Customer telemetry pipeline
+8,Fix widget pagination bug,alex.chen@example.com,High,2026-06-22,Done,PR merged; cherry-picked to release branch,Smart Widget Pro GA
+9,Implement widget bulk delete API,alex.chen@example.com,Low,2026-08-05,NotStarted,V2 feature; deferred if capacity tight,Smart Widget Pro GA
+10,Audit widget API rate limits,riley.nguyen@example.com,Medium,2026-07-12,InProgress,DDoS protection thresholds,Smart Widget Pro GA
+11,Migrate widget search to Azure AI Search,alex.chen@example.com,Critical,2026-07-18,Blocked,Index design pending vector schema review,Widget admin portal v2
+12,SDK release for widget customers,alex.chen@example.com,High,2026-08-10,NotStarted,Versioning strategy needs PM signoff,Widget mobile SDK alpha
+13,Wire feature flags for gradual rollout,alex.chen@example.com,High,2026-08-12,InProgress,LaunchDarkly integration in flight,Smart Widget Pro GA
+14,Customer migration tooling,jordan.kim@example.com,High,2026-08-20,InProgress,CLI to migrate from v1 to v2 schemas,Smart Widget Pro GA
+15,Profile cold-start path,riley.nguyen@example.com,Medium,2026-07-30,InProgress,Tracing 99th-percentile spans,Reduce widget P95 latency below 200ms
+16,Tune Redis hit ratio,alex.chen@example.com,Medium,2026-08-02,InProgress,Currently 71%; target 85%,Reduce widget P95 latency below 200ms
+17,Build Kafka -> Synapse landing job,riley.nguyen@example.com,High,2026-08-15,InProgress,Schema-on-read with Avro,Customer telemetry pipeline
+18,Wire downstream consumer to Synapse,riley.nguyen@example.com,High,2026-08-22,Blocked,Synapse workspace provisioning blocked on tenant policy review,Customer telemetry pipeline
+19,Implement bulk action drawer,jordan.kim@example.com,Medium,2026-08-18,InProgress,Multi-select + batch state transitions,Widget admin portal v2
+20,iOS sample app updates,sam.rivera@example.com,Medium,2026-08-25,InProgress,Swift 5.10 + new SDK,Widget mobile SDK alpha
+21,Android coroutines wrapper,sam.rivera@example.com,Medium,2026-08-28,InProgress,Kotlin coroutines around the Java SDK,Widget mobile SDK alpha
+22,Apple App Store enterprise distribution cert,sam.rivera@example.com,High,2026-09-05,Blocked,Apple developer team account renewal pending finance approval,Widget mobile SDK alpha
+23,Add chaos test for failover,riley.nguyen@example.com,Medium,2026-09-12,InProgress,Azure Chaos Studio scenario for region loss,Achieve 99.9% widget API SLA
+24,Region-pair latency baseline,riley.nguyen@example.com,Medium,2026-10-01,NotStarted,East US 2 + Frankfurt round-trip baseline,Multi-region failover rollout
+25,Frankfurt region capacity request,riley.nguyen@example.com,High,2026-10-15,Blocked,Awaiting capacity team confirmation; ticket #INC-22918 open 6 days,EMEA datacenter rollout
+26,Customer comms plan for v1 deprecation,alex.chen@example.com,Medium,2026-11-01,NotStarted,90-60-30-day email cadence,Sunset legacy widget v1 API
+27,Sunset countdown banner in v1 SDK,alex.chen@example.com,Low,2026-11-15,NotStarted,Render in-SDK warning when v1 endpoint hit,Sunset legacy widget v1 API
+28,Identify top-100 v1 customers for early signal,alex.chen@example.com,Medium,2026-12-01,NotStarted,Telemetry-driven account list,Widget v1 API deprecation
