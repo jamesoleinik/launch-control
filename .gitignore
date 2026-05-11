@@ -87,5 +87,10 @@ apps/launch-brain-hub/
 episodes/**/linkedin-post.md
 episodes/**/social-draft.md
 
+# Local social-publishing workspace (LinkedIn post drafts + 60s video scripts).
+# These are authoring artifacts for the series, not OSS content. Kept locally
+# only — sync from ~/.copilot/session-state/.../files/ if they get out of step.
+social/
+
 # OS junk
 desktop.ini
