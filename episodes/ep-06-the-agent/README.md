@@ -267,7 +267,7 @@ Output (current environment):
 [ OK ] T2: Smoke — Score=38.8, Verdict=NO-GO                      (1248ms)
 [ OK ] T3: lc_githubissue virtual entity returns rows               (1402ms)
 
-8/8 passing | Manual prompt set: scripts/test_ep6_prompts.md
+8/8 passing | Manual prompt set: episodes/ep-06-the-agent/test_ep6_prompts.md
 ```
 
 ---
@@ -280,9 +280,11 @@ Output (current environment):
   prompt; pulling them into separate `.skill` files (or the new Power
   Platform Business Skill catalog) is part of the larger skills story.
 - **Custom UI.** The agent runs in CS Test, M365 Copilot, and Teams. The
-  custom Power Apps surface is Episode 10.
-- **Native cross-tenant.** A Claude-native version with the same skills
-  pattern lands in Episode 8.
+  dashboard surface — a generative Power Apps page deployed via
+  `pac model genpage upload` — lands in Episode 9.
+- **Code-first runtime.** A Python rebuild of this agent — same skills,
+  different stack (GitHub Copilot SDK + Microsoft Agent Framework + the
+  Dataverse MCP server) — lands in Episode 8.
 
 ---
 
@@ -364,7 +366,7 @@ These bit us first time and are now handled by the scripts / documented:
 - **`lc_knowledgearticle` not appearing in CS Knowledge picker** — the
   table needs to be in the `LaunchControl` solution AND the tenant-level
   preview flag _"Search support for multiline text and file data types"_
-  must be enabled in PPAC. Both are checked by `test_ep6_locally.py`.
+  must be enabled in PPAC. Both are checked by `episodes/ep-06-the-agent/preflight.py`.
 - **Lookup `@odata.bind` keys are schema-cased** —
   `lc_LaunchId@odata.bind`, not `lc_launchid@odata.bind`. The lowercase
   form fails with _"undeclared property 'lc_launchid'"_. Affects any code
@@ -392,12 +394,25 @@ These bit us first time and are now handled by the scripts / documented:
 
 ## What this unlocks for the rest of the series
 
-- Ep 7 (Autonomous Agents) reuses _exactly_ this prompt and these tools, but
-  fronts them with event triggers and Agent Flows. The conversation surface
-  becomes optional.
-- Ep 8 (Native Claude Agent) takes the same skill definitions, ports them to
-  Anthropic's skill-pack format, and points them at the same Dataverse via
-  the `dataverse-skills` plugin. Skills portability proven by reuse.
-- Ep 10 (Dashboard) adds a custom Power Apps surface that shows the same
-  data + can invoke the same Custom API + can chat with the same agent
-  via the Embed Bot control. Three surfaces, one substrate.
+- Ep 7 (Autonomous Agents) reuses _exactly_ these business skills and the
+  same Dataverse MCP server, but fronts them with event + recurrence
+  triggers on **Launch Sentinel**. The conversation surface becomes
+  optional — the agent acts without being asked.
+- Ep 8 (Code-First Agent) takes the same skill definitions and runs them
+  inside ~250 lines of Python — GitHub Copilot SDK as the brain, Microsoft
+  Agent Framework as the abstraction, the Dataverse MCP server (stdio) as
+  the tool surface. Same skills, different runtime — skills portability
+  proven by reuse.
+- Ep 9 (Dashboard) renders a generative Power Apps page over the same
+  Dataverse — shipped via `pac model genpage upload`, no code-app required.
+  Three surfaces (Copilot Studio chat, autonomous, Python) plus a UI — all
+  pointed at one substrate.
+
+---
+
+## Next up
+
+**Episode 7 — Autonomous Agents.** Same skills, same MCP server, but now
+event-triggered. The Launch Sentinel agent fires when `lc_task.lc_isblocked`
+flips to `true` and on a Mon–Fri 08:00 recurrence — writing escalations and
+posting digests without anyone in the chat.

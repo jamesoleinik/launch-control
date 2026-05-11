@@ -187,3 +187,14 @@ All three:
 ```
 python episodes/ep-08-code-first-agent/preflight.py
 ```
+
+---
+
+## Next up
+
+**Episode 9 — The Dashboard.** Three agents are populating the same tracker.
+Time to surface it. We describe a Launch Command Center in plain English to
+Power Apps and ship it as a **generative Power Apps page** via
+`pac model genpage upload` — typed Dataverse access, Fluent UI, sitemap
+registration, no Vite project. The data model and the agents were AI-authored;
+now the UI is too.

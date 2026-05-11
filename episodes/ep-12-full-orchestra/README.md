@@ -1,5 +1,13 @@
 # Episode 12 — Full Orchestra + Your Turn
 
+**Status:** ✅ Built · 🎬 Not yet recorded
+**Features:** ⭐ Six surfaces firing on one launch row in 60 seconds · ⭐ Open-source CTA — `git clone` → row in your env in <30 sec · ⭐ Repo flips public on drop
+**Layer:** 🎼 All layers — the closer
+**Coding agent:** Every coding agent and surface from Eps 1–11, on one stage
+**Runtime:** All of the above
+
+---
+
 > **Hook (Part 1):** *"Twelve episodes. One launch. Watch every piece play together."*
 > **Hook (Part 2):** *"Now it's your turn. Clone, paste, ship."*
 
@@ -35,7 +43,7 @@ Six surfaces fire in sequence. Each ~10 sec including a 1-sec lead/tail. Every s
 | # | Surface | Episode it came from | Beat |
 |---|---|---|---|
 | 1 | **Gen page dashboard** | Ep 9 | Re-establishing shot. Opens green across the board. *"Same record we built piece by piece — here's the whole picture."* |
-| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 4 + Ep 8 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
+| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 5 + Ep 8 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
 | 3 | **Python pandas report** | Ep 3 | `python scripts/python/status_report.py` — table prints all milestones at 100%, zero blockers. *"Same data, scripted."* |
 | 4 | **GitHub issues via virtual entity** | Ep 4 | Dataverse view of `lc_githubissue` — every issue closed. *"External system, in our table."* |
 | 5 | **M365 Copilot** | Ep 10 | Exec-style prompt: *"Is the Q3 Widget Launch ready to ship?"* → "All gates passed." *"No agent. Just Copilot grounded in this data."* |
@@ -47,7 +55,7 @@ Six surfaces fire in sequence. Each ~10 sec including a 1-sec lead/tail. Every s
 
 The CTA. Six shots, sped-up where noted.
 
-1. Terminal: `git clone https://github.com/<owner>/launch-control` (~5 sec)
+1. Terminal: `git clone https://github.com/jamesoleinik/launch-control` (~5 sec)
 2. `cd launch-control && cat .env.example` — the placeholders are visible (~5 sec)
 3. `cp .env.example .env` + an editor flash showing one URL pasted in (~5 sec)
 4. `python episodes/ep-12-full-orchestra/orchestra/spin_up_launch.py "My First Launch" --apply` (~8 sec, sped up to ~3 on screen)
@@ -86,13 +94,13 @@ The repo flips public when Ep 12 drops. Audit before that moment:
 - [x] `CHANGELOG.md` at root
 - [x] `.env.example` at root
 - [x] `.gitignore` at root
-- [ ] `SECURITY.md` — even a 5-line "report privately to X" suffices (Microsoft OSS template)
-- [ ] `CODE_OF_CONDUCT.md` — Microsoft OSS standard template
-- [ ] `CONTRIBUTING.md` — confirm contribution flow makes sense for an "example repo"
-- [ ] `.github/ISSUE_TEMPLATE/` — `bug.yml`, `question.yml`, `episode-suggestion.yml`
-- [ ] **Sensitive-data sweep** — `git grep` for tenant ID, env GUIDs, org URL, internal URLs. Zero hits.
-- [ ] **README links** — top-level README links to `docs/episodes/` index + LinkedIn series URL
-- [ ] **CHANGELOG entry per episode** — Eps 1–12 each have a tagged entry
+- [x] `SECURITY.md` — Microsoft OSS template
+- [x] `CODE_OF_CONDUCT.md` — Microsoft OSS standard template
+- [x] `CONTRIBUTING.md` — "example repo" contribution flow
+- [x] `.github/ISSUE_TEMPLATE/` — `bug.yml`, `question.yml`, `episode-suggestion.yml`, `config.yml`
+- [x] **Sensitive-data sweep** — `git grep` for tenant ID, env GUIDs, org URL, internal URLs. Zero hits.
+- [x] **README links** — top-level README links to `episodes/` index + LinkedIn series URL
+- [x] **CHANGELOG entry per episode** — Eps 1–12 each have a tagged entry
 - [ ] **Episode tags** — `git tag ep-1` … `ep-12` for each episode commit, pushed to origin
 - [ ] **Repo description + topics** on GitHub: short tagline, topics like `dataverse`, `power-platform`, `copilot`, `mcp`, `agents`, `dynamics-365`
 
@@ -111,8 +119,6 @@ No new tables, columns, plugins, actions, or agents. Ep 12 is pure orchestration
 
 ## Follow-ups (not blockers for the doc; blockers for going public)
 
-- [ ] Add `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/*.yml`
-- [ ] Run sensitive-data sweep (env GUIDs, tenant ID, internal URLs)
 - [ ] Tag commits `ep-1` through `ep-12`; push tags
 - [ ] Write LinkedIn copy for Ep 12 + the pinned-post version that lives at the top of James's profile through the campaign window
 - [ ] Schedule the recording day (Part 1 + Part 2 + teaser in a single half-day session)

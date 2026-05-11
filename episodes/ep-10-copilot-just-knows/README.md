@@ -1,5 +1,13 @@
 # Episode 10 — Copilot Just Knows
 
+**Status:** ✅ Built · 🎬 Not yet recorded
+**Features:** ⭐ Dataverse Intelligence (preview) · ⭐ Native M365 Copilot grounding over `lc_launch` / `lc_milestone` / `lc_task` / `lc_teammember` — no agent, no plugin, no MCP
+**Layer:** 🟣 Layer 3 (the conversational surface — but here, _Microsoft's_ surface)
+**Coding agent:** _None._ This is the platform answering on its own.
+**Runtime:** M365 Copilot (Word side panel, Teams, `copilot.microsoft.com`)
+
+---
+
 > **Hook:** *"Eight episodes building a system. Now I open M365 Copilot, ask in plain English, and it just answers — no agent, no plugin, no MCP."*
 
 This is the smallest episode in the campaign and it's the one that lands the platform punchline. Every prior episode put **something** between the user and the data — a custom action (Ep 5), a Copilot Studio agent + MCP (Ep 6), an autonomous agent (Ep 7), a code-first agent (Ep 8), a generative page (Ep 9). Ep 10 takes all of it away.
@@ -129,3 +137,13 @@ No solution components. No tables, columns, plugins, or actions. **The platform 
 - **Ep 3** — task ↔ milestone ↔ launch wiring + teammember assignments make Prompt 2 (traversal) work
 - **Ep 6** — custom Copilot Studio agent; the left side of the split-screen
 - **Ep 9** — gen page used to prime context before recording
+
+---
+
+## Next up
+
+**Episode 11 — Agentic Administration.** If the platform can answer business
+questions without an agent, what about the platform's own management plane?
+We point Copilot CLI (with the `dataverse@awesome-copilot v1.0.0` plugin) at
+auditing, capacity, cleanup, and agent blast-radius — and the chat becomes
+the audit log.

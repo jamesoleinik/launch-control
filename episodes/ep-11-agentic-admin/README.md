@@ -1,5 +1,13 @@
 # Episode 11 — Agentic Administration
 
+**Status:** ✅ Built · 🎬 Not yet recorded
+**Features:** ⭐ Copilot CLI as the admin surface · ⭐ `dataverse@awesome-copilot v1.0.0` plugin · ⭐ Capacity / audit / cleanup / agent blast-radius — all by conversation
+**Layer:** 🟠 Layer 4 (the management plane)
+**Coding agent:** Copilot CLI (no new agent authored — today's tooling _is_ the admin agent)
+**Runtime:** Copilot CLI + the `dataverse@awesome-copilot` plugin invoking `scripts/python/admin/` + episode scripts
+
+---
+
 > **Hook:** *"Eleven episodes ago, this launch was a spreadsheet. Tonight, the platform that runs it answers admin questions in chat."*
 
 Every prior episode in this campaign builds **on** the platform — data model, business skills, agents, gen page, native Copilot grounding. Ep 11 turns the camera on the **platform itself**: auditing, capacity, cleanup, agent governance. The admin work that lived in admin centers and PowerShell scripts is now a conversation.
@@ -152,3 +160,13 @@ No solution components. No new tables, columns, plugins, or actions. The only en
 - **Eps 6 / 7 / 8** — the three agent runtimes whose blast-radius proof point #4 reports on.
 - **Ep 1** — `lc_statusupdate` was created here; the cleanup beat (#3) deletes pre-Q1 rows from this table.
 - **Ep 12** — closes the campaign with the orchestra montage; Ep 11 is the last "individual capability" episode.
+
+---
+
+## Next up
+
+**Episode 12 — Full Orchestra + Your Turn.** Six surfaces fire in sequence
+on the same launch row — gen page, Custom API, Python report, GitHub issues
+via the virtual entity, M365 Copilot, "Mark Shipped." Then the camera turns
+to the viewer: `git clone`, one `python` command, a row in their own env.
+The repo flips public the moment Ep 12 drops.
