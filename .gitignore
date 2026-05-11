@@ -83,5 +83,9 @@ apps/**/*.compiled.js
 # Retired code app (replaced by generative page in Ep 9)
 apps/launch-brain-hub/
 
+# Social drafts (LinkedIn copy, scratch narrative) — kept out of the public repo
+episodes/**/linkedin-post.md
+episodes/**/social-draft.md
+
 # OS junk
 desktop.ini
