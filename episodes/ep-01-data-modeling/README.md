@@ -27,6 +27,48 @@ agent *produced* using the skill. Re-runnable, idempotent, in source control.
 
 ---
 
+## What does the skill actually look like?
+
+A Dataverse skill is just a markdown file with YAML frontmatter — same shape
+whether a *coding* agent picks it up at build-time (this episode) or a
+*runtime* agent picks it up later (Episode 2). Here's the top of the real
+`metadata` skill that taught my coding agent how to build the model:
+
+```markdown
+---
+name: dataverse-metadata
+description: >
+  Create or modify Dataverse tables, columns, relationships, forms, and views.
+  USE WHEN: "add column", "create table", "add relationship", "lookup column",
+  "create form", "create view", "modify form", "FormXml", "SavedQuery",
+  "option set", "picklist", "MetadataService", "EntityDefinitions".
+  DO NOT USE WHEN: reading/writing data records (use dataverse-python-sdk),
+  exporting solutions (use dataverse-solution).
+---
+
+# Skill: Metadata — Making Changes
+
+## How Changes Are Made: Environment-First
+
+Do not write solution XML by hand to create new tables, columns, forms, or
+views. The environment validates metadata far more reliably than an agent
+editing XML. The correct workflow is:
+
+1. Make the change in the environment via the Dataverse MetadataService API
+2. Pull the change into the repo via `pac solution export` + `pac solution unpack`
+3. Commit the result
+...
+```
+
+That's it. Frontmatter tells the agent *when* to load the skill; the body
+tells it *how* to behave. The full plugin
+([`dataverse@awesome-copilot`](https://github.com/microsoft/dataverse-skills))
+ships related skills for `init`, `python-sdk`, `solution`, `mcp-configure`,
+and more — together they cover the full Dataverse pro-dev surface, and any
+coding agent that understands the skill format can use them.
+
+---
+
 ## What gets built
 
 ### Unified model (created by `scripts/create_datamodel.py`)
