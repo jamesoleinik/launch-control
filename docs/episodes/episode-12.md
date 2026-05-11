@@ -90,7 +90,7 @@ The repo flips public when Ep 12 drops. Audit before that moment:
 - [ ] `CODE_OF_CONDUCT.md` — Microsoft OSS standard template
 - [ ] `CONTRIBUTING.md` — confirm contribution flow makes sense for an "example repo"
 - [ ] `.github/ISSUE_TEMPLATE/` — `bug.yml`, `question.yml`, `episode-suggestion.yml`
-- [ ] **Sensitive-data sweep** — `git grep` for tenant ID, env GUIDs (`1877555b-c7c7-e838-...`, `2100057d-ad42-f111-...`), org URL, internal URLs. Zero hits.
+- [ ] **Sensitive-data sweep** — `git grep` for tenant ID, env GUIDs, org URL, internal URLs. Zero hits.
 - [ ] **README links** — top-level README links to `docs/episodes/` index + LinkedIn series URL
 - [ ] **CHANGELOG entry per episode** — Eps 1–12 each have a tagged entry
 - [ ] **Episode tags** — `git tag ep-1` … `ep-12` for each episode commit, pushed to origin

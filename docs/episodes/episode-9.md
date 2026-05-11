@@ -115,7 +115,7 @@ python ../../scripts/python/_set_genpage_default.py
 ```
 
 After phase 2, the play URL lands directly on the Launch Command Center page:
-`https://org0cdef8cc.crm.dynamics.com/main.aspx?appid=840766e6-cd4c-f111-bec6-00224805ff5f`
+`https://<your-org>.crm.dynamics.com/main.aspx?appid=<your-app-id>`
 
 ### Known issue — PAC `genpage transpile` hangs
 

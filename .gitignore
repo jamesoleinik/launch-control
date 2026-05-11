@@ -51,3 +51,20 @@ connectors/*/settings.json
 connectors/**/settings.local.json
 
 scripts/test_results_*.md
+
+# Ep 8 agent: skills cache hydrated from Dataverse at runtime
+agents/launch-coordinator-py/.skills/
+
+# Local scratch / probe scripts (env-specific identifiers, demo state)
+tmp/
+scripts/python/_*.py
+
+# Power Apps code app env binding (contains environment ID)
+apps/**/power.config.json
+apps/**/.power/
+
+# Retired code app (replaced by generative page in Ep 9)
+apps/launch-brain-hub/
+
+# OS junk
+desktop.ini
