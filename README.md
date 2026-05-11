@@ -30,20 +30,24 @@ Engineering teams are automating code reviews, DRIs, and incident response. But 
 
 ## Episode Guide
 
-| Ep | Title | Key Feature | Week |
-|----|-------|-------------|------|
-| 1 | AI-Powered Data Modeling 🏗️ | Dataverse MCP Server + Prompt Columns | 1 |
-| 2 | Your Playbook & Ingestion 📋 | Business Skills + Dataverse CLI | 1 |
-| 3 | Promoting the Staging Layer 🐍 | Python SDK with pandas | 1 |
-| 4 | Connecting the Dots 🔗 | Virtual Entities (OOB + custom) | 2 |
-| 5 | The Copilot Studio Agent 🤖 | Copilot Studio + MCP | 2 |
-| 6 | Agent Flows ⚡ | Agent Flows + MCP steps | 2 |
-| 7 | The Native Claude Agent 🧠 | Claude Code + Anthropic business skills | 3 |
-| 8 | Custom Tools 🔧 | BYO MCP Server + Custom Plugins | 3 |
-| 9 | Copilot Just Knows 💡 | Dataverse Intelligence | 3 |
-| 10 | The Dashboard 📊 | Power Apps code-first | 4 |
-| 11 | Agentic Administration 🛡️ | CLI + DV Admin Skills | 4 |
-| 12 | Full Orchestra + Your Turn 🎼 | Everything together + open source | 4 |
+Full series index with links to each episode's README, preflight, and scripts: **[`episodes/README.md`](episodes/README.md)**.
+
+| # | Episode | Hero capability |
+|---|---------|------------------|
+| [1](episodes/ep-01-data-modeling/)        | AI-Powered Data Modeling      | Modeling skill + unified mapping → first Dataverse tables |
+| [2](episodes/ep-02-business-skills/)      | Your Playbook & Ingestion     | Business skills + mapping-driven CLI ingestion |
+| [3](episodes/ep-03-staging-layer/)        | Promoting the Staging Layer   | Python + pandas; staging → unified |
+| [4](episodes/ep-04-connecting-the-dots/)  | Connecting the Dots           | Virtual entities — GitHub Issues as a Dataverse lookup target |
+| [5](episodes/ep-05-custom-tools/)         | Custom Tools                  | Custom API + two BYO MCP custom connectors registered with `paconn` |
+| [6](episodes/ep-06-the-agent/)            | The Agent                     | Declarative Launch Coordinator + knowledge substrate |
+| [7](episodes/ep-07-autonomous-agents/)    | Autonomous Agents             | Launch Sentinel — event-triggered autonomous agent |
+| [8](episodes/ep-08-code-first-agent/)     | The Code-First Agent          | Same skills, different runtime — Python agent that pulls skills from Dataverse |
+| [9](episodes/ep-09-the-dashboard/)        | The Dashboard                 | Generative Power Apps page deployed via `pac model genpage upload` |
+| [10](episodes/ep-10-copilot-just-knows/)  | Copilot Just Knows            | Native Copilot intelligence over Dataverse — no agent needed |
+| [11](episodes/ep-11-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven — capacity, audit, cleanup, blast-radius |
+| [12](episodes/ep-12-full-orchestra/)      | Full Orchestra + Your Turn    | Six surfaces in 60 seconds + open-source CTA |
+
+Each episode is also tagged in git: `git checkout ep-09` to see the repo as it was at that episode's ship.
 
 ## Quick Start
 
@@ -55,29 +59,36 @@ Engineering teams are automating code reviews, DRIs, and incident response. But 
 
 ### Setup
 ```bash
-git clone https://github.com/james-oleinik/launch-control.git
+git clone https://github.com/jamesoleinik/launch-control.git
 cd launch-control
 cp .env.example .env
 # Edit .env with your Dataverse environment URL and credentials
 pip install -r scripts/python/requirements.txt
 ```
 
+To verify any episode is set up correctly, run its preflight:
+
+```bash
+python episodes/ep-09-the-dashboard/preflight.py
+```
+
 ## Repo Structure
 
 ```
 launch-control/
-├── datamodel/              # Table definitions, solution, seed data
-├── business-skills/        # Launch readiness, escalation, status rules
-├── scripts/
-│   ├── python/             # pandas-powered status reports, seed data
-│   └── cli/                # Terminal workflow scripts
+├── episodes/                  # 12 per-episode folders (READMEs + preflights + scripts)
+├── datamodel/                 # Table definitions, mappings, sample data
+├── solutions/LaunchControl/   # Exported managed solution
+├── business-skills/           # Launch readiness, escalation, status rules
+├── data/knowledge/            # Sanitized KB articles for RAG
 ├── agents/
-│   ├── launch-coordinator/ # Copilot Studio agent definition
-│   ├── agent-flows/        # Agent Flow configurations
-│   └── custom-mcp-server/  # BYO MCP server registration
-├── plugins/                # Custom Dataverse plugins & actions
-├── app/launch-dashboard/   # Power Apps code-first dashboard
-└── docs/                   # Architecture, episodes, security checklist
+│   ├── launch-coordinator/    # Declarative Copilot Studio agent (Ep 6)
+│   ├── launch-sentinel/       # Autonomous agent (Ep 7)
+│   ├── launch-coordinator-py/ # Code-first agent (Ep 8)
+│   └── agent-flows/           # Agent flow configurations
+├── apps/launch-command-center/# Generative Power Apps page (Ep 9)
+├── plugins/                   # Custom Dataverse plugins & actions
+└── scripts/                   # auth.py + shared Python utilities
 ```
 
 ## Key Themes
@@ -93,6 +104,12 @@ The launch spans GitHub, SharePoint, email — but mastering the business proces
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to fork and adapt this for your own scenario — customer onboarding, release management, incident response, or anything else.
+
+## See also
+
+- [`CHANGELOG.md`](CHANGELOG.md) — what shipped in each episode (with git tags)
+- [`SECURITY.md`](SECURITY.md) — how to report a security issue
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Microsoft Open Source Code of Conduct
 
 ## License
 

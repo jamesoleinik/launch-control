@@ -1,41 +1,75 @@
 # Changelog
 
-All notable changes to the Launch Control project are documented here, organized by episode.
+All notable changes to **Launch Control** are documented here, organized by episode. Each entry corresponds to a git tag (`ep-01` through `ep-12`) — `git checkout ep-NN` to see the repo as it was at the end of that episode.
 
-## [Ep 01] — AI-Powered Data Modeling
-- Created Launches, Milestones, Tasks, TeamMembers, StatusUpdates tables
-- Added Risk Summary prompt column to Launches
-- Initial repo setup with README, LICENSE, folder structure
+Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 
-## [Ep 02] — Your Playbook
-*Coming soon*
+## [ep-12] — Full Orchestra + Your Turn
 
-## [Ep 03] — Connecting the Dots
-*Coming soon*
+- Added `episodes/ep-12-full-orchestra/orchestra/` — six-surface demo runner that exercises MCP, SDK, CLI, declarative agent, autonomous agent, and code-first agent in a single timed sequence.
+- Added `episodes/ep-12-full-orchestra/preflight.py` to validate every surface is recording-ready.
+- Open-source CTA: SECURITY.md, CODE_OF_CONDUCT.md, issue templates, sensitive-data sweep, per-episode folder restructure, episode tags `ep-01..ep-12`.
 
-## [Ep 04] — Scripting the Ops
-*Coming soon*
+## [ep-11] — Agentic Administration
 
-## [Ep 05] — The Copilot Studio Agent
-*Coming soon*
+- New theme: the **management plane** is agent-driven, not just the data plane.
+- Added `episodes/ep-11-agentic-admin/agent_blast_radius.py` — enumerates every Dataverse object an agent identity can read/write in an environment.
+- Added `episodes/ep-11-agentic-admin/capacity_report.py` — pulls capacity + storage telemetry programmatically (no portal scraping).
+- Locked runtime: Copilot CLI + `dataverse@awesome-copilot v1.0.0` plugin as the canonical admin surface.
+- Backdated seed data so the audit/cleanup beats have something real to chew on.
 
-## [Ep 06] — Agent Flows
-*Coming soon*
+## [ep-10] — Copilot Just Knows (Dataverse Intelligence)
 
-## [Ep 07] — The Native Claude Agent
-*Coming soon*
+- Episode doc + `prompt-data` preflight covering the three demo prompts + one backup.
+- Showcase: native M365 Copilot answers about Launches/Milestones/Tasks with **no agent in the middle** — Dataverse Intelligence is the wiring.
 
-## [Ep 08] — Custom Tools
-*Coming soon*
+## [ep-09] — The Dashboard
 
-## [Ep 09] — Copilot Just Knows
-*Coming soon*
+- Shipped `apps/launch-command-center/` — a generative Power Apps page deployed via `pac model genpage upload` (programmatic, no maker-portal click-ops).
+- Discovered + documented the `pac model genpage` path; set the page as the default landing for the model-driven app.
+- `episodes/ep-09-the-dashboard/{set_genpage_default.py, inspect_sitemap.py, preflight.py}`.
 
-## [Ep 10] — The Dashboard
-*Coming soon*
+## [ep-08] — The Code-First Agent
 
-## [Ep 11] — Agentic Administration
-*Coming soon*
+- `agents/launch-coordinator-py/` — a Python agent that pulls the **same business skills** the declarative agent uses, proving the skills are runtime-portable.
+- Demonstrates: Dataverse as the skill registry; any runtime (Copilot Studio, Claude, custom Python) can consume.
 
-## [Ep 12] — Full Orchestra + Your Turn
-*Coming soon*
+## [ep-07] — Autonomous Agents
+
+- `agents/launch-sentinel/` — event-triggered autonomous agent with an explicit escalation policy.
+- Refined the escalation rules in `business-skills/` so both the declarative coordinator and the autonomous sentinel route the same way.
+
+## [ep-06] — The Agent
+
+- `agents/launch-coordinator/` — declarative Copilot Studio agent grounded on Dataverse + the knowledge substrate.
+- Added `data/knowledge/` (sanitized KB articles) and the `episodes/ep-06-the-agent/{setup_table.py, upload_knowledge.py}` ingestion path.
+
+## [ep-05] — Custom Tools
+
+- `CalculateLaunchReadiness` Custom API + idempotent registration script.
+- Two BYO MCP servers registered as Power Platform custom connectors via `paconn`.
+- Plugin assembly + types registered; harness with `--plan` / `--run` modes.
+
+## [ep-04] — Connecting the Dots (Virtual Entities)
+
+- Custom **GitHub Issues** virtual entity provider — issues show up in Dataverse as real records, no replication.
+- Wired GitHub Issues VE as a lookup target on `lc_task` so a task can point directly at a live issue.
+- Companion VE setup guide.
+
+## [ep-03] — Promoting the Staging Layer
+
+- `scripts/python/promote.py` — pandas-driven staging → unified promotion (Python SDK).
+- Visualization scripts (Sankey, ERD, flow) for the episode video.
+- Expanded demo dataset to a 46-row Smart Widget Pro narrative.
+
+## [ep-02] — Your Playbook & Ingestion
+
+- Business Skills authored via MCP.
+- Mapping-driven CLI ingestion path so the playbook can absorb new sources without code changes.
+
+## [ep-01] — AI-Powered Data Modeling
+
+- Launch Control data model: Launches, Milestones, Tasks, TeamMembers, StatusUpdates.
+- AI modeling skill + unified mapping; seed data + a prompt column on Launches.
+- Switched auth to `AzureCliCredential`.
+- Initial repo: README, LICENSE, folder structure.
