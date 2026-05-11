@@ -115,7 +115,60 @@ boilerplate the Dataverse plugin taught the coding agent to handle.
 
 ---
 
-## Reproduce
+## Rebuild it with a coding agent
+
+This episode is *about* the coding agent doing the modeling. So the most honest reproduction path is to give your own coding agent the same prompts I gave mine. Open Copilot CLI (or Claude Code) in this repo's root with the [dataverse plugin](#get-the-plugin) loaded, authenticate PAC CLI against a fresh Dataverse environment (`pac auth create --environment https://<your-org>.crm.dynamics.com/`), then run these in order:
+
+**1. Set up the workspace**
+```
+Set up this folder as a Dataverse workspace pointing at https://<your-org>.crm.dynamics.com/.
+```
+
+**2. Publisher + solution**
+```
+Create a publisher "Launch Control" with prefix lc_ and a solution "LaunchControl".
+```
+
+**3. The data model**
+```
+Five shadow trackers live in datamodel/samples/. Model these as Dataverse
+tables: a unified launch model (Launch, Milestone, Task, TeamMember,
+StatusUpdate) on top of staging tables that keep provenance. Propose the
+schema first, then build it in the LaunchControl solution.
+```
+
+**4. Risk Summary prompt column**
+```
+Add a prompt column "Risk Summary" on lc_Launch that writes a one-paragraph
+risk read from its milestones and tasks.
+```
+
+**5. Seed demo data**
+```
+Seed a "Q3 Widget Launch" with realistic demo data — six milestones across
+teams, a dozen tasks with mixed statuses including a couple blocked, four
+team members with fictional names, a few status updates. Keep it sanitized
+for OSS.
+```
+
+**6. Pull to the repo**
+```
+Export LaunchControl unmanaged and unpack it into datamodel/solutions/ep1_unified_model/.
+```
+
+**7. Verify**
+```
+Verify the rebuild — row counts per table, relationships intact, show me Q3
+Widget Launch with its children.
+```
+
+The agent will hit you with confirmation prompts along the way (target env URL, publisher prefix, schema proposal). Approve what makes sense; redirect what doesn't. That's the whole point — you're the PM, the agent is doing the modeling.
+
+---
+
+## Reproduce (deterministic re-run)
+
+If you'd rather skip the agent loop and just re-run the artifacts the agent produced last time:
 
 ```pwsh
 # 1. Core unified model
