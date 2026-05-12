@@ -94,3 +94,9 @@ social/
 
 # OS junk
 desktop.ini
+
+# Dataverse init skill additions
+.claude/mcp_settings.json
+.token_cache.bin
+*.snk
+solutions/*.zip
