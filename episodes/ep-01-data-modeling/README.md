@@ -117,7 +117,7 @@ boilerplate the Dataverse plugin taught the coding agent to handle.
 
 ## Rebuild it with a coding agent
 
-This episode is *about* the coding agent doing the modeling. So the most honest reproduction path is to give your own coding agent the same prompts I gave mine. Open Copilot CLI (or Claude Code) in this repo's root with the [dataverse plugin](#get-the-plugin) loaded, authenticate PAC CLI against a fresh Dataverse environment (`pac auth create --environment https://<your-org>.crm.dynamics.com/`), then run these in order:
+This episode is *about* the coding agent doing the modeling. So the most honest reproduction path is to give your own coding agent the same prompts I gave mine. Open Copilot CLI (or Claude Code) in this repo's root with the [dataverse plugin](#get-the-plugin) loaded, authenticate PAC CLI against a fresh Dataverse environment (`pac auth create --environment https://<your-org>.crm.dynamics.com/`), **enable the [Dataverse MCP server](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-mcp-preview-tools) on that environment** (PPAC → environment → Settings → Features → turn on **MCP for makers**, then add your coding-agent client ID to the allow-list — the plugin's `dataverse-mcp-configure` skill will walk you through it), then run these in order:
 
 **1. Set up the workspace**
 ```
