@@ -175,16 +175,29 @@ def main() -> int:
                 rows = list(csv.DictReader(fh))
 
             seed_rows: list[dict] = []
-            inserted = 0
+            payloads: list[dict] = []
             for row in rows:
-                payload = _build_record(m, row, import_run_id, m["source"])
-                try:
-                    client.records.create(table.lower(), payload)
-                    inserted += 1
-                    seed_rows.append(row)
-                except Exception as e:
-                    per_table_failures += 1
-                    print(f"  ERROR inserting row {row.get('id')}: {e}")
+                payloads.append(_build_record(m, row, import_run_id, m["source"]))
+                seed_rows.append(row)
+
+            inserted = 0
+            try:
+                # Bulk insert via CreateMultiple under the hood.
+                client.records.create(table.lower(), payloads)
+                inserted = len(payloads)
+            except Exception as bulk_err:
+                # Fall back to per-row so one bad row doesn't sink the batch.
+                print(f"  Bulk insert failed ({bulk_err.__class__.__name__}); falling back to per-row.")
+                inserted = 0
+                seed_rows = []
+                for row, payload in zip(rows, payloads):
+                    try:
+                        client.records.create(table.lower(), payload)
+                        inserted += 1
+                        seed_rows.append(row)
+                    except Exception as e:
+                        per_table_failures += 1
+                        print(f"  ERROR inserting row {row.get('id')}: {e}")
             total_rows += inserted
             print(f"  Inserted {inserted}/{len(rows)} row(s)")
 

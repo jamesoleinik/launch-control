@@ -1,11 +1,22 @@
-id,name,owner,category,priority,due_date,status
-1,GTM campaign for Smart Widget Pro,priya.patel@example.com,Marketing,High,2026-08-01,InProgress
-2,Pricing & packaging review,priya.patel@example.com,Planning,Critical,2026-07-08,Done
-3,Sales enablement deck,casey.wright@example.com,Marketing,Medium,2026-07-30,InProgress
-4,Demo environment standup,taylor.brooks@example.com,Engineering,High,2026-07-20,InProgress
-5,Customer beta program,priya.patel@example.com,Operations,High,2026-07-15,InProgress
-6,Privacy review for widget telemetry,robin.foster@example.com,Legal,Critical,2026-06-30,Blocked
-7,Open-source license audit,robin.foster@example.com,Legal,Medium,2026-07-05,Done
-8,Customer-facing widget documentation,casey.wright@example.com,Documentation,High,2026-07-25,InProgress
-9,Launch event logistics,priya.patel@example.com,Marketing,Medium,2026-08-12,NotStarted
-10,Rollback runbook,riley.nguyen@example.com,Operations,High,2026-08-08,NotStarted
+id,name,owner,category,priority,due_date,status,milestone
+1,GTM campaign for Smart Widget Pro,priya.patel@example.com,Marketing,High,2026-08-01,InProgress,Smart Widget Pro v1.0 release
+2,Pricing & packaging review,priya.patel@example.com,Planning,Critical,2026-07-08,Done,Onboard 50 paying customers in beta
+3,Sales enablement deck,casey.wright@example.com,Marketing,Medium,2026-07-30,InProgress,Smart Widget Pro v1.0 release
+4,Demo environment standup,taylor.brooks@example.com,Engineering,High,2026-07-20,InProgress,Onboard 50 paying customers in beta
+5,Customer beta program,priya.patel@example.com,Operations,High,2026-07-15,InProgress,Onboard 50 paying customers in beta
+6,Privacy review for widget telemetry,robin.foster@example.com,Legal,Critical,2026-06-30,Blocked,Customer telemetry pipeline
+7,Open-source license audit,robin.foster@example.com,Legal,Medium,2026-07-05,Done,Smart Widget Pro v1.0 release
+8,Customer-facing widget documentation,casey.wright@example.com,Documentation,High,2026-07-25,InProgress,Smart Widget Pro v1.0 release
+9,Launch event logistics,priya.patel@example.com,Marketing,Medium,2026-08-12,NotStarted,Smart Widget Pro v1.0 release
+10,Rollback runbook,riley.nguyen@example.com,Operations,High,2026-08-08,NotStarted,Achieve 99.9% widget API SLA
+11,Onboarding email cadence,priya.patel@example.com,Marketing,Medium,2026-08-15,InProgress,Onboard 50 paying customers in beta
+12,Blog post draft + review,casey.wright@example.com,Marketing,Medium,2026-09-01,InProgress,Smart Widget Pro v1.0 release
+13,Webinar deck for launch day,casey.wright@example.com,Marketing,Medium,2026-09-05,InProgress,Smart Widget Pro v1.0 release
+14,Landing page copy VP approval,priya.patel@example.com,Marketing,Critical,2026-09-08,Blocked,Smart Widget Pro v1.0 release
+15,Translation memory bootstrap (DE FR ES),jordan.kim@example.com,Localization,Medium,2026-10-15,NotStarted,Localize widgets for EMEA
+16,RTL support audit (AR HE),jordan.kim@example.com,Localization,Medium,2026-11-10,NotStarted,Localize widgets for EMEA
+17,Partner tiering policy v1,priya.patel@example.com,Planning,Medium,2026-10-05,NotStarted,Establish widget partner program
+18,Partner portal RFP,priya.patel@example.com,Planning,Medium,2026-10-20,NotStarted,Establish widget partner program
+19,Vendor sub-processor list,robin.foster@example.com,Legal,Critical,2026-09-20,Blocked,Complete SOC2 Type II for widgets
+20,Auditor kickoff meeting,robin.foster@example.com,Legal,High,2026-08-25,Done,Complete SOC2 Type II for widgets
+21,Charter for beta -> GA conversion bonus,priya.patel@example.com,Operations,Low,2026-12-01,NotStarted,Beta program offboarding
