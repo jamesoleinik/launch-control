@@ -28,6 +28,7 @@ import yaml
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from scripts.auth import get_credential, load_env  # noqa: E402
+from scripts._resilient import attempt_many  # noqa: E402
 from PowerPlatform.Dataverse.client import DataverseClient  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +49,7 @@ CHOICE_BASE = {
 
 
 def _is_duplicate(e: Exception) -> bool:
+    # Kept for backward compatibility; resilient.attempt does the right thing.
     msg = str(e).lower()
     return any(
         x in msg
@@ -121,46 +123,43 @@ def main() -> int:
     print(f"Solution: {SOLUTION}, prefix: {PREFIX}\n")
 
     with DataverseClient(env_url, credential) as client:
-        # 1. Create each staging table with columns + provenance.
+        # 1. Create each staging table with columns + provenance -- in parallel.
+        print(f"Creating {len(mappings)} staging tables in parallel...")
+        table_jobs = []
         for m in mappings:
             table = m["target_entity"]
             primary = m["primary_column"]
             cols = _columns_for_mapping(m)
-            print(f"Creating {table} (primary={primary}, columns={len(cols)})...")
-            try:
-                client.tables.create(
-                    table,
-                    cols,
-                    solution=SOLUTION,
-                    primary_column=primary,
-                )
-                print(f"  Created: {table}")
-            except Exception as e:
-                if _is_duplicate(e):
-                    print(f"  {table} already exists, skipping.")
-                else:
-                    print(f"  ERROR creating {table}: {e}")
+            label = f"{table} (primary={primary}, columns={len(cols)})"
+            table_jobs.append((
+                label,
+                lambda t=table, c=cols, p=primary: client.tables.create(
+                    t, c, solution=SOLUTION, primary_column=p,
+                ),
+            ))
+        attempt_many(table_jobs, workers=min(5, len(table_jobs)))
 
-        # 2. Add lc_ImportRun lookup to each staging table.
+        # 2. Add lc_ImportRun lookup to each staging table -- SERIALIZED.
+        # Parallel adds collide on the EntityCustomization lock held by the
+        # shared target entity (lc_importrun); serial is reliably faster than
+        # parallel-with-retry for this step.
         # Use lowercase logical names for SDK compatibility.
-        print("\nAdding lc_ImportRun lookup to each staging table...")
+        print("\nAdding lc_ImportRun lookup to each staging table (serialized)...")
         target_logical = f"{PREFIX}_importrun"
+        lookup_jobs = []
         for m in mappings:
             ref_logical = m["target_entity"].lower()
-            try:
-                client.tables.create_lookup_field(
-                    ref_logical,
+            lookup_jobs.append((
+                f"{ref_logical} -> {target_logical}",
+                lambda r=ref_logical, t=target_logical: client.tables.create_lookup_field(
+                    r,
                     f"{PREFIX}_ImportRunId",
-                    target_logical,
+                    t,
                     display_name="Import Run",
                     solution=SOLUTION,
-                )
-                print(f"  {ref_logical} -> {target_logical}")
-            except Exception as e:
-                if _is_duplicate(e):
-                    print(f"  {ref_logical} -> {target_logical} already exists, skipping.")
-                else:
-                    print(f"  ERROR {ref_logical} -> {target_logical}: {e}")
+                ),
+            ))
+        attempt_many(lookup_jobs, workers=1)
 
     print("\n=== Modeling Skill complete ===")
     print(f"Created {len(mappings)} staging tables under solution '{SOLUTION}'.")

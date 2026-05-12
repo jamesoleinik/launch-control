@@ -1,27 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ImportExportXml version="9.2.26024.146" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26024.146" OrganizationSchemaType="Full" CRMServerServiceabilityVersion="9.2.26043.00141">
+<ImportExportXml version="9.2.26041.179" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26041.179" OrganizationSchemaType="Full" CRMServerServiceabilityVersion="9.2.26041.00181">
   <SolutionManifest>
     <UniqueName>LaunchControl</UniqueName>
     <LocalizedNames>
-      <LocalizedName description="Launch Control" languagecode="1033" />
+      <LocalizedName description="LaunchControl" languagecode="1033" />
     </LocalizedNames>
-    <Descriptions>
-      <Description description="Product Launch Coordinator - companion to the Launch Control LinkedIn series" languagecode="1033" />
-    </Descriptions>
+    <Descriptions />
     <Version>1.0.0.0</Version>
     <Managed>0</Managed>
     <Publisher>
-      <UniqueName>launchcontrol</UniqueName>
+      <UniqueName>LaunchControl</UniqueName>
       <LocalizedNames>
         <LocalizedName description="Launch Control" languagecode="1033" />
       </LocalizedNames>
       <Descriptions>
-        <Description description="Publisher for the Launch Control demo project" languagecode="1033" />
+        <Description description="Launch Control publisher" languagecode="1033" />
       </Descriptions>
       <EMailAddress xsi:nil="true"></EMailAddress>
       <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
       <CustomizationPrefix>lc</CustomizationPrefix>
-      <CustomizationOptionValuePrefix>10600</CustomizationOptionValuePrefix>
+      <CustomizationOptionValuePrefix>94809</CustomizationOptionValuePrefix>
       <Addresses>
         <Address>
           <AddressNumber>1</AddressNumber>
@@ -82,21 +80,18 @@
       </Addresses>
     </Publisher>
     <RootComponents>
-      <RootComponent type="1" schemaName="lc_githubdatasource" behavior="0" />
-      <RootComponent type="1" schemaName="lc_githubissue" behavior="0" />
       <RootComponent type="1" schemaName="lc_importrun" behavior="0" />
       <RootComponent type="1" schemaName="lc_launch" behavior="0" />
       <RootComponent type="1" schemaName="lc_milestone" behavior="1" />
       <RootComponent type="1" schemaName="lc_sourcefile" behavior="1" />
       <RootComponent type="1" schemaName="lc_statusupdate" behavior="1" />
       <RootComponent type="1" schemaName="lc_task" behavior="1" />
-      <RootComponent type="1" schemaName="lc_teammember" behavior="0" />
+      <RootComponent type="1" schemaName="lc_teammember" behavior="1" />
       <RootComponent type="1" schemaName="lc_trackera" behavior="1" />
       <RootComponent type="1" schemaName="lc_trackerb" behavior="1" />
       <RootComponent type="1" schemaName="lc_trackerc" behavior="1" />
       <RootComponent type="1" schemaName="lc_trackerd" behavior="1" />
       <RootComponent type="1" schemaName="lc_trackere" behavior="1" />
-      <RootComponent type="181" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" schemaName="GitHubIssuesProvider" behavior="0" />
     </RootComponents>
     <MissingDependencies>
       <MissingDependency>
@@ -114,6 +109,10 @@
       <MissingDependency>
         <Required type="1" schemaName="lc_task" displayName="lc_Task" solution="Active" />
         <Dependent type="1" schemaName="lc_task" displayName="lc_Task" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="1" schemaName="lc_teammember" displayName="lc_TeamMember" solution="Active" />
+        <Dependent type="1" schemaName="lc_teammember" displayName="lc_TeamMember" />
       </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="lc_trackera" displayName="lc_TrackerA" solution="Active" />
@@ -140,16 +139,8 @@
         <Dependent type="10" schemaName="lc_milestone_lc_task_lc_MilestoneId" displayName="lc_milestone_lc_task_lc_MilestoneId" parentSchemaName="lc_milestone" parentDisplayName="lc_Milestone" />
       </MissingDependency>
       <MissingDependency>
-        <Required type="401" displayName="lc_Launch - Risk Summary " solution="Active" id="{1e76f59f-3807-441c-94ef-595e6b595832}" />
-        <Dependent type="2" schemaName="cr88d_risksummary" displayName="Risk Summary" parentSchemaName="lc_launch" parentDisplayName="lc_Launch" />
-      </MissingDependency>
-      <MissingDependency>
-        <Required type="90" schemaName="GitHubIssuesProvider.RetrieveMultiplePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" displayName="GitHubIssuesProvider.RetrieveMultiplePlugin" solution="Active" id="{07418f71-c142-f111-bec6-000d3a336093}" />
-        <Dependent type="181" schemaName="GitHubIssuesProvider" displayName="GitHubIssuesProvider" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" />
-      </MissingDependency>
-      <MissingDependency>
-        <Required type="90" schemaName="GitHubIssuesProvider.RetrievePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" displayName="GitHubIssuesProvider.RetrievePlugin" solution="Active" id="{ffc78678-c142-f111-bec6-000d3a336093}" />
-        <Dependent type="181" schemaName="GitHubIssuesProvider" displayName="GitHubIssuesProvider" id="{ba26bc4e-c842-f111-bec6-000d3a336d63}" />
+        <Required type="2" schemaName="lc_name" displayName="Name" parentSchemaName="lc_teammember" parentDisplayName="lc_TeamMember" solution="Active" />
+        <Dependent type="10" schemaName="lc_teammember_lc_task_lc_AssignedToId" displayName="lc_teammember_lc_task_lc_AssignedToId" parentSchemaName="lc_teammember" parentDisplayName="lc_TeamMember" />
       </MissingDependency>
     </MissingDependencies>
   </SolutionManifest>

@@ -13,6 +13,7 @@ from enum import Enum
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from scripts.auth import get_credential, load_env
+from scripts._resilient import attempt_many, is_duplicate
 from PowerPlatform.Dataverse.client import DataverseClient
 
 
@@ -41,8 +42,7 @@ class TaskStatus(Enum):
 
 def _is_duplicate(e):
     """Check if an exception indicates a duplicate record."""
-    msg = str(e).lower()
-    return any(x in msg for x in ["duplicate", "already exists", "matching key", "already being used", "cannot be used again"])
+    return is_duplicate(e)
 
 
 def main():
@@ -106,88 +106,52 @@ def main():
         # SDK signature: client.tables.create(table_schema_name, columns_dict, solution=, primary_column=)
         print("\nCreating tables...")
 
-        # 1. Launch
-        try:
-            client.tables.create(
-                f"{prefix}_Launch",
-                {
-                    f"{prefix}_TargetDate": "datetime",
-                    f"{prefix}_Description": "memo",
-                    f"{prefix}_LaunchStatus": LaunchStatus,
-                },
-                solution=solution_name,
-                primary_column=f"{prefix}_Name",
-            )
-            print("  Created: lc_Launch")
-        except Exception as e:
-            print(f"  lc_Launch: {e}" if not _is_duplicate(e) else "  lc_Launch already exists.")
+        tables = [
+            (f"{prefix}_Launch", {
+                f"{prefix}_TargetDate": "datetime",
+                f"{prefix}_Description": "memo",
+                f"{prefix}_LaunchStatus": LaunchStatus,
+            }, f"{prefix}_Name"),
+            (f"{prefix}_Milestone", {
+                f"{prefix}_DueDate": "datetime",
+                f"{prefix}_SortOrder": "integer",
+                f"{prefix}_MilestoneStatus": MilestoneStatus,
+            }, f"{prefix}_Name"),
+            (f"{prefix}_Task", {
+                f"{prefix}_DueDate": "datetime",
+                f"{prefix}_Description": "memo",
+                f"{prefix}_IsBlocked": "boolean",
+                f"{prefix}_BlockerReason": "string",
+                f"{prefix}_TaskStatus": TaskStatus,
+            }, f"{prefix}_Title"),
+            (f"{prefix}_TeamMember", {
+                f"{prefix}_Email": "string",
+                f"{prefix}_Role": "string",
+            }, f"{prefix}_Name"),
+            (f"{prefix}_StatusUpdate", {
+                f"{prefix}_Body": "memo",
+                f"{prefix}_UpdatedOn": "datetime",
+            }, f"{prefix}_Title"),
+        ]
 
-        # 2. Milestone
-        try:
-            client.tables.create(
-                f"{prefix}_Milestone",
-                {
-                    f"{prefix}_DueDate": "datetime",
-                    f"{prefix}_SortOrder": "integer",
-                    f"{prefix}_MilestoneStatus": MilestoneStatus,
-                },
-                solution=solution_name,
-                primary_column=f"{prefix}_Name",
-            )
-            print("  Created: lc_Milestone")
-        except Exception as e:
-            print(f"  lc_Milestone: {e}" if not _is_duplicate(e) else "  lc_Milestone already exists.")
-
-        # 3. Task
-        try:
-            client.tables.create(
-                f"{prefix}_Task",
-                {
-                    f"{prefix}_DueDate": "datetime",
-                    f"{prefix}_Description": "memo",
-                    f"{prefix}_IsBlocked": "boolean",
-                    f"{prefix}_BlockerReason": "string",
-                    f"{prefix}_TaskStatus": TaskStatus,
-                },
-                solution=solution_name,
-                primary_column=f"{prefix}_Title",
-            )
-            print("  Created: lc_Task")
-        except Exception as e:
-            print(f"  lc_Task: {e}" if not _is_duplicate(e) else "  lc_Task already exists.")
-
-        # 4. TeamMember
-        try:
-            client.tables.create(
-                f"{prefix}_TeamMember",
-                {
-                    f"{prefix}_Email": "string",
-                    f"{prefix}_Role": "string",
-                },
-                solution=solution_name,
-                primary_column=f"{prefix}_Name",
-            )
-            print("  Created: lc_TeamMember")
-        except Exception as e:
-            print(f"  lc_TeamMember: {e}" if not _is_duplicate(e) else "  lc_TeamMember already exists.")
-
-        # 5. StatusUpdate
-        try:
-            client.tables.create(
-                f"{prefix}_StatusUpdate",
-                {
-                    f"{prefix}_Body": "memo",
-                    f"{prefix}_UpdatedOn": "datetime",
-                },
-                solution=solution_name,
-                primary_column=f"{prefix}_Title",
-            )
-            print("  Created: lc_StatusUpdate")
-        except Exception as e:
-            print(f"  lc_StatusUpdate: {e}" if not _is_duplicate(e) else "  lc_StatusUpdate already exists.")
+        print(f"Creating {len(tables)} tables in parallel...")
+        attempt_many(
+            [
+                (
+                    schema,
+                    lambda s=schema, c=cols, p=primary: client.tables.create(
+                        s, c, solution=solution_name, primary_column=p,
+                    ),
+                )
+                for schema, cols, primary in tables
+            ],
+            workers=min(5, len(tables)),
+        )
 
         # --- Relationships (Lookups) ---
-        print("\nCreating relationships...")
+        # Lookups touching the same target entity contend on Dataverse's
+        # EntityCustomization lock; serial is more reliable than parallel here.
+        print("\nCreating relationships (serialized)...")
         lookups = [
             (f"{prefix}_Milestone", f"{prefix}_LaunchId", f"{prefix}_Launch", "Launch"),
             (f"{prefix}_Task", f"{prefix}_MilestoneId", f"{prefix}_Milestone", "Milestone"),
@@ -196,21 +160,18 @@ def main():
             (f"{prefix}_TeamMember", f"{prefix}_LaunchId", f"{prefix}_Launch", "Launch"),
         ]
 
-        for ref_table, lookup_name, target_table, display in lookups:
-            try:
-                client.tables.create_lookup_field(
-                    ref_table,       # referencing_table
-                    lookup_name,     # lookup_field_name
-                    target_table,    # referenced_table
-                    display_name=display,
-                    solution=solution_name,
+        attempt_many(
+            [
+                (
+                    f"{ref_table} -> {target_table} ({display})",
+                    lambda r=ref_table, n=lookup_name, t=target_table, d=display: client.tables.create_lookup_field(
+                        r, n, t, display_name=d, solution=solution_name,
+                    ),
                 )
-                print(f"  {ref_table} -> {target_table} ({display})")
-            except Exception as e:
-                if _is_duplicate(e):
-                    print(f"  {ref_table} -> {target_table} already exists, skipping.")
-                else:
-                    print(f"  Error: {ref_table} -> {target_table}: {e}")
+                for ref_table, lookup_name, target_table, display in lookups
+            ],
+            workers=1,
+        )
 
         print("\n=== Episode 1 data model complete! ===")
         print("Tables: Launch, Milestone, Task, TeamMember, StatusUpdate")
