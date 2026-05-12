@@ -1,92 +1,53 @@
-erDiagram
-    lc_launch ||--o{ lc_task : "has"
-    lc_launch ||--o{ lc_milestone : "has"
-    lc_milestone ||--o{ lc_task : "groups"
-    lc_importrun ||--o{ lc_sourcefile : "produced"
-    lc_importrun ||--o{ lc_trackera : "ingested"
-    lc_importrun ||--o{ lc_trackerb : "ingested"
-    lc_importrun ||--o{ lc_trackerc : "ingested"
-    lc_importrun ||--o{ lc_trackerd : "ingested"
-    lc_importrun ||--o{ lc_trackere : "ingested"
-    lc_trackera }o..o| lc_task : "promoted"
-    lc_trackerb }o..o| lc_task : "promoted"
-    lc_trackerd }o..o| lc_task : "promoted"
-    lc_trackerc }o..o| lc_milestone : "promoted"
-    lc_trackere }o..o| lc_milestone : "promoted"
+flowchart TB
+    classDef tier1 fill:#fef3c7,stroke:#b45309,stroke-width:1px,color:#1f2937;
+    classDef tier2 fill:#dbeafe,stroke:#1d4ed8,stroke-width:1px,color:#1f2937;
+    classDef tier3 fill:#e0e7ff,stroke:#4338ca,stroke-width:1px,color:#1f2937;
+    classDef tier4 fill:#dcfce7,stroke:#15803d,stroke-width:1.5px,color:#1f2937;
 
-    lc_launch {
-        guid lc_launchid PK
-        string lc_name
-        date lc_targetdate
-        choice lc_status
-    }
-    lc_task {
-        guid lc_taskid PK
-        string lc_title
-        choice lc_taskstatus
-        choice lc_priority
-        guid lc_launchid FK
-        guid lc_milestoneid FK
-        string lc_stagingsource
-    }
-    lc_milestone {
-        guid lc_milestoneid PK
-        string lc_title
-        choice lc_milestonestatus
-        date lc_duedate
-        guid lc_launchid FK
-        string lc_stagingsource
-    }
-    lc_importrun {
-        guid lc_importrunid PK
-        string lc_name
-        datetime lc_startedat
-        int lc_recordsprocessed
-        choice lc_status
-    }
-    lc_sourcefile {
-        guid lc_sourcefileid PK
-        string lc_filename
-        guid lc_importrunid FK
-    }
-    lc_trackera {
-        guid lc_trackeraid PK
-        string lc_title
-        choice lc_status
-        choice lc_priority
-        string lc_sourcefilename
-        guid lc_importrunid FK
-    }
-    lc_trackerb {
-        guid lc_trackerbid PK
-        string lc_title
-        choice lc_status
-        choice lc_priority
-        string lc_sourcefilename
-        guid lc_importrunid FK
-    }
-    lc_trackerc {
-        guid lc_trackercid PK
-        string lc_name
-        choice lc_status
-        string lc_quarter
-        string lc_sourcefilename
-        guid lc_importrunid FK
-    }
-    lc_trackerd {
-        guid lc_trackerdid PK
-        string lc_name
-        choice lc_priority
-        string lc_vendor
-        string lc_sourcefilename
-        guid lc_importrunid FK
-    }
-    lc_trackere {
-        guid lc_trackereid PK
-        string lc_name
-        choice lc_status
-        choice lc_priority
-        string lc_release
-        string lc_sourcefilename
-        guid lc_importrunid FK
-    }
+    subgraph T1 [" "]
+        direction LR
+        SF["<b>lc_sourcefile</b><br/><span style='font-size:11px'>Tier 1 &middot; Raw source file<br/>lc_filename &middot; lc_importrunid</span>"]:::tier1
+    end
+
+    subgraph T2 [" "]
+        direction LR
+        IR["<b>lc_importrun</b><br/><span style='font-size:11px'>Tier 2 &middot; Ingest event<br/>lc_name &middot; lc_startedat<br/>lc_recordsprocessed &middot; lc_status</span>"]:::tier2
+    end
+
+    subgraph T3 [" "]
+        direction LR
+        TA["<b>lc_trackerA</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>title &middot; status &middot; priority</span>"]:::tier3
+        TB["<b>lc_trackerB</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>title &middot; status &middot; priority</span>"]:::tier3
+        TC["<b>lc_trackerC</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; status &middot; quarter</span>"]:::tier3
+        TD["<b>lc_trackerD</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; priority &middot; vendor</span>"]:::tier3
+        TE["<b>lc_trackerE</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; status &middot; release</span>"]:::tier3
+    end
+
+    subgraph T4 [" "]
+        direction LR
+        L["<b>lc_launch</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_name &middot; lc_targetdate</span>"]:::tier4
+        M["<b>lc_milestone</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_title &middot; lc_duedate</span>"]:::tier4
+        TK["<b>lc_task</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_title &middot; lc_taskstatus &middot; lc_priority</span>"]:::tier4
+    end
+
+    SF -->|"recorded in"| IR
+    IR -->|"loads"| TA
+    IR -->|"loads"| TB
+    IR -->|"loads"| TC
+    IR -->|"loads"| TD
+    IR -->|"loads"| TE
+
+    TA -.->|"promoted"| TK
+    TB -.->|"promoted"| TK
+    TD -.->|"promoted"| TK
+    TC -.->|"promoted"| M
+    TE -.->|"promoted"| M
+
+    L -->|"has"| M
+    L -->|"has"| TK
+    M -->|"groups"| TK
+
+    style T1 fill:transparent,stroke:transparent
+    style T2 fill:transparent,stroke:transparent
+    style T3 fill:transparent,stroke:transparent
+    style T4 fill:transparent,stroke:transparent

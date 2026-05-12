@@ -1,18 +1,24 @@
-"""Episode 3 visual — ERD of the Launch Control data model.
+"""Visual — 4-tier tree view of the Launch Control data model.
 
-Emits a Mermaid `erDiagram` showing all 10 tables with their key
-columns and relationships:
+Emits a Mermaid `flowchart TB` showing the data flow as a tree:
 
-    lc_launch  -|<-  lc_task, lc_milestone
-    lc_milestone  -|<-  lc_task
-    lc_importrun  -|<-  lc_sourcefile, lc_trackera..e
-    lc_trackera..e  -.->  lc_task / lc_milestone   (logical, via lc_stagingsource)
+    Tier 1 — lc_sourcefile         (raw source files)
+       |
+    Tier 2 — lc_importrun          (ingest event)
+       |
+    Tier 3 — lc_trackerA..E        (staging tables, 1 per source system)
+       |
+    Tier 4 — lc_launch, lc_milestone, lc_task   (unified model)
+
+Solid arrows = hard Dataverse lookups. Dashed arrows = logical
+"promoted to" edges (staging rows get unified into a real launch/
+milestone/task via the lc_stagingsource string).
 
 Outputs:
     launch-control/artifacts/erd.mmd       Mermaid source (paste into
                                            mermaid.live or render in any
                                            Markdown that supports Mermaid)
-    launch-control/artifacts/erd.png       Rendered via mermaid.ink
+    launch-control/artifacts/erd.png       Rendered via mermaid-cli (npx)
 
 Usage:
     python launch-control/scripts/python/erd_diagram.py
@@ -20,142 +26,72 @@ Usage:
 
 from __future__ import annotations
 
-import base64
 import sys
-import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 
-# ---------- Entity definitions (column lists) ----------
-#
-# Keep each box to ~6 columns max so the diagram stays legible.
-# PK first, primary text next, then 1-2 status/priority columns,
-# then the lookups (FK columns) that drive the relationships.
+def build_mermaid() -> str:
+    return r"""flowchart TB
+    classDef tier1 fill:#fef3c7,stroke:#b45309,stroke-width:1px,color:#1f2937;
+    classDef tier2 fill:#dbeafe,stroke:#1d4ed8,stroke-width:1px,color:#1f2937;
+    classDef tier3 fill:#e0e7ff,stroke:#4338ca,stroke-width:1px,color:#1f2937;
+    classDef tier4 fill:#dcfce7,stroke:#15803d,stroke-width:1.5px,color:#1f2937;
 
-ENTITIES: dict[str, list[tuple[str, str, str | None]]] = {
-    "lc_launch": [
-        ("guid",     "lc_launchid",      "PK"),
-        ("string",   "lc_name",          None),
-        ("date",     "lc_targetdate",    None),
-        ("choice",   "lc_status",        None),
-    ],
-    "lc_task": [
-        ("guid",     "lc_taskid",          "PK"),
-        ("string",   "lc_title",           None),
-        ("choice",   "lc_taskstatus",      None),
-        ("choice",   "lc_priority",        None),
-        ("guid",     "lc_launchid",        "FK"),
-        ("guid",     "lc_milestoneid",     "FK"),
-        ("string",   "lc_stagingsource",   None),
-    ],
-    "lc_milestone": [
-        ("guid",     "lc_milestoneid",     "PK"),
-        ("string",   "lc_title",           None),
-        ("choice",   "lc_milestonestatus", None),
-        ("date",     "lc_duedate",         None),
-        ("guid",     "lc_launchid",        "FK"),
-        ("string",   "lc_stagingsource",   None),
-    ],
-    "lc_importrun": [
-        ("guid",     "lc_importrunid",     "PK"),
-        ("string",   "lc_name",            None),
-        ("datetime", "lc_startedat",       None),
-        ("int",      "lc_recordsprocessed", None),
-        ("choice",   "lc_status",          None),
-    ],
-    "lc_sourcefile": [
-        ("guid",     "lc_sourcefileid",    "PK"),
-        ("string",   "lc_filename",        None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-    "lc_trackera": [
-        ("guid",     "lc_trackeraid",      "PK"),
-        ("string",   "lc_title",           None),
-        ("choice",   "lc_status",          None),
-        ("choice",   "lc_priority",        None),
-        ("string",   "lc_sourcefilename",  None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-    "lc_trackerb": [
-        ("guid",     "lc_trackerbid",      "PK"),
-        ("string",   "lc_title",           None),
-        ("choice",   "lc_status",          None),
-        ("choice",   "lc_priority",        None),
-        ("string",   "lc_sourcefilename",  None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-    "lc_trackerc": [
-        ("guid",     "lc_trackercid",      "PK"),
-        ("string",   "lc_name",            None),
-        ("choice",   "lc_status",          None),
-        ("string",   "lc_quarter",         None),
-        ("string",   "lc_sourcefilename",  None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-    "lc_trackerd": [
-        ("guid",     "lc_trackerdid",      "PK"),
-        ("string",   "lc_name",            None),
-        ("choice",   "lc_priority",        None),
-        ("string",   "lc_vendor",          None),
-        ("string",   "lc_sourcefilename",  None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-    "lc_trackere": [
-        ("guid",     "lc_trackereid",      "PK"),
-        ("string",   "lc_name",            None),
-        ("choice",   "lc_status",          None),
-        ("choice",   "lc_priority",        None),
-        ("string",   "lc_release",         None),
-        ("string",   "lc_sourcefilename",  None),
-        ("guid",     "lc_importrunid",     "FK"),
-    ],
-}
+    subgraph T1 [" "]
+        direction LR
+        SF["<b>lc_sourcefile</b><br/><span style='font-size:11px'>Tier 1 &middot; Raw source file<br/>lc_filename &middot; lc_importrunid</span>"]:::tier1
+    end
 
-# ---------- Relationships ----------
-# (parent, child, label, hard_or_logical)
-# hard = real Dataverse lookup; logical = via lc_stagingsource string
+    subgraph T2 [" "]
+        direction LR
+        IR["<b>lc_importrun</b><br/><span style='font-size:11px'>Tier 2 &middot; Ingest event<br/>lc_name &middot; lc_startedat<br/>lc_recordsprocessed &middot; lc_status</span>"]:::tier2
+    end
 
-RELATIONSHIPS: list[tuple[str, str, str, str]] = [
-    ("lc_launch",     "lc_task",        "has",       "hard"),
-    ("lc_launch",     "lc_milestone",   "has",       "hard"),
-    ("lc_milestone",  "lc_task",        "groups",    "hard"),
-    ("lc_importrun",  "lc_sourcefile",  "produced",  "hard"),
-    ("lc_importrun",  "lc_trackera",    "ingested",  "hard"),
-    ("lc_importrun",  "lc_trackerb",    "ingested",  "hard"),
-    ("lc_importrun",  "lc_trackerc",    "ingested",  "hard"),
-    ("lc_importrun",  "lc_trackerd",    "ingested",  "hard"),
-    ("lc_importrun",  "lc_trackere",    "ingested",  "hard"),
-    ("lc_trackera",   "lc_task",        "promoted",  "logical"),
-    ("lc_trackerb",   "lc_task",        "promoted",  "logical"),
-    ("lc_trackerd",   "lc_task",        "promoted",  "logical"),
-    ("lc_trackerc",   "lc_milestone",   "promoted",  "logical"),
-    ("lc_trackere",   "lc_milestone",   "promoted",  "logical"),
-]
+    subgraph T3 [" "]
+        direction LR
+        TA["<b>lc_trackerA</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>title &middot; status &middot; priority</span>"]:::tier3
+        TB["<b>lc_trackerB</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>title &middot; status &middot; priority</span>"]:::tier3
+        TC["<b>lc_trackerC</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; status &middot; quarter</span>"]:::tier3
+        TD["<b>lc_trackerD</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; priority &middot; vendor</span>"]:::tier3
+        TE["<b>lc_trackerE</b><br/><span style='font-size:11px'>Tier 3 &middot; Staging<br/>name &middot; status &middot; release</span>"]:::tier3
+    end
+
+    subgraph T4 [" "]
+        direction LR
+        L["<b>lc_launch</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_name &middot; lc_targetdate</span>"]:::tier4
+        M["<b>lc_milestone</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_title &middot; lc_duedate</span>"]:::tier4
+        TK["<b>lc_task</b><br/><span style='font-size:11px'>Tier 4 &middot; Unified<br/>lc_title &middot; lc_taskstatus &middot; lc_priority</span>"]:::tier4
+    end
+
+    SF -->|"recorded in"| IR
+    IR -->|"loads"| TA
+    IR -->|"loads"| TB
+    IR -->|"loads"| TC
+    IR -->|"loads"| TD
+    IR -->|"loads"| TE
+
+    TA -.->|"promoted"| TK
+    TB -.->|"promoted"| TK
+    TD -.->|"promoted"| TK
+    TC -.->|"promoted"| M
+    TE -.->|"promoted"| M
+
+    L -->|"has"| M
+    L -->|"has"| TK
+    M -->|"groups"| TK
+
+    style T1 fill:transparent,stroke:transparent
+    style T2 fill:transparent,stroke:transparent
+    style T3 fill:transparent,stroke:transparent
+    style T4 fill:transparent,stroke:transparent
+"""
 
 
-def build_mermaid(include_columns: bool = True) -> str:
-    lines: list[str] = ["erDiagram"]
-
-    for parent, child, label, kind in RELATIONSHIPS:
-        connector = "||--o{" if kind == "hard" else "}o..o|"
-        lines.append(f"    {parent} {connector} {child} : \"{label}\"")
-
-    if include_columns:
-        lines.append("")
-        for entity, cols in ENTITIES.items():
-            lines.append(f"    {entity} {{")
-            for typ, name, marker in cols:
-                suffix = f" {marker}" if marker else ""
-                lines.append(f"        {typ} {name}{suffix}")
-            lines.append("    }")
-
-    return "\n".join(lines) + "\n"
-
-
-def render_via_mermaid_ink(mmd: str, out_path: Path) -> bool:
+def render_via_mermaid_cli(mmd: str, out_path: Path) -> bool:
     """Render the .mmd via mermaid-cli (mmdc), invoked through npx. Returns True on success."""
+    import json
     import shutil
     import subprocess
     import tempfile
@@ -168,23 +104,26 @@ def render_via_mermaid_ink(mmd: str, out_path: Path) -> bool:
     with tempfile.NamedTemporaryFile("w", suffix=".mmd", delete=False, encoding="utf-8") as tmp:
         tmp.write(mmd)
         tmp_path = tmp.name
+    cfg = {
+        "theme": "default",
+        "themeVariables": {"fontFamily": "Segoe UI, Inter, sans-serif"},
+        "flowchart": {"htmlLabels": True, "curve": "basis", "nodeSpacing": 40, "rankSpacing": 70},
+    }
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as cfg_file:
+        json.dump(cfg, cfg_file)
+        cfg_path = cfg_file.name
     try:
-        cfg = {"theme": "default", "themeVariables": {"fontFamily": "Segoe UI, Inter, sans-serif"}}
-        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as cfg_file:
-            import json
-            json.dump(cfg, cfg_file)
-            cfg_path = cfg_file.name
         cmd = [
             npx, "-y", "@mermaid-js/mermaid-cli@latest",
             "-i", tmp_path,
             "-o", str(out_path),
             "-b", "#f8fafc",
-            "-w", "1600",
+            "-w", "1800",
             "-c", cfg_path,
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
         if result.returncode != 0:
-            print(f"  mmdc failed (rc={result.returncode}): {result.stderr.strip()[:300]}", file=sys.stderr)
+            print(f"  mmdc failed (rc={result.returncode}): {result.stderr.strip()[:400]}", file=sys.stderr)
             return False
         return True
     except Exception as exc:
@@ -206,11 +145,10 @@ def main() -> None:
 
     mmd_path = out_dir / "erd.mmd"
     mmd_path.write_text(mmd, encoding="utf-8")
-    print(f"Wrote {mmd_path.relative_to(ROOT)}  ({len(ENTITIES)} entities, "
-          f"{len(RELATIONSHIPS)} relationships)")
+    print(f"Wrote {mmd_path.relative_to(ROOT)}  (4-tier tree view)")
 
     png_path = out_dir / "erd.png"
-    if render_via_mermaid_ink(mmd, png_path):
+    if render_via_mermaid_cli(mmd, png_path):
         print(f"Wrote {png_path.relative_to(ROOT)}")
     else:
         print("  Tip: paste artifacts/erd.mmd into https://mermaid.live to preview / export.")

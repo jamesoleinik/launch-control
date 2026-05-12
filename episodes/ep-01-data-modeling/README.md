@@ -89,10 +89,12 @@ Every staging table automatically gets four provenance columns
 
 The agent also produced an ERD of the model it built — Mermaid source in
 [`artifacts/erd.mmd`](../../artifacts/erd.mmd), rendered PNG at
-[`artifacts/erd.png`](../../artifacts/erd.png). One picture that shows the five
-unified tables, the staging-to-unified promotion paths, and the provenance
-spine (`lc_ImportRun` → everything). Re-runnable: edit the model, regenerate
-the diagram with `python scripts/python/erd_diagram.py`.
+[`artifacts/erd.png`](../../artifacts/erd.png). Laid out as a **4-tier tree
+that mirrors the data flow**: raw source file → ingest event → five staging
+trackers (one per source system) → unified launch model. Solid arrows are
+hard Dataverse lookups; dashed arrows are the "promoted" edges where staging
+rows are merged into a real launch / milestone / task. Re-runnable: edit the
+model, regenerate with `python scripts/python/erd_diagram.py`.
 
 ![Entity relationship diagram](../../artifacts/erd.png)
 
