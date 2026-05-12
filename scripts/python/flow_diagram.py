@@ -40,7 +40,7 @@ MERMAID = """flowchart LR
     end
 
     %% ---------- Staging in Dataverse ----------
-    subgraph STAGING["Dataverse staging (raw, per-source schema)"]
+    subgraph STAGING["Dataverse staging"]
         direction TB
         sa[lc_trackera]
         sb[lc_trackerb]
@@ -49,22 +49,22 @@ MERMAID = """flowchart LR
         se[lc_trackere]
     end
 
-    %% ---------- Provenance ----------
-    subgraph PROV["Provenance"]
-        direction TB
-        ir(["lc_importrun"])
-        sf(["lc_sourcefile"])
-        ir --> sf
-    end
-
     %% ---------- Unified model ----------
-    subgraph UNIFIED["Unified model (one schema for the whole project)"]
+    subgraph UNIFIED["Unified model"]
         direction TB
         task[/lc_task/]
         ms[/lc_milestone/]
     end
 
     launch[["lc_launch<br/><i>Smart Widget Pro Q3</i>"]]
+
+    %% ---------- Provenance (compact box; one anchor edge, others are conceptual) ----------
+    subgraph PROV["Provenance<br/><span style='font-size:11px;font-style:italic'>every staging row carries<br/>lc_importrunid + lc_sourcefilename</span>"]
+        direction TB
+        ir(["lc_importrun"])
+        sf(["lc_sourcefile"])
+        ir --> sf
+    end
 
     %% ---------- Flows ----------
     ca -- "ingest" --> sa
@@ -74,9 +74,6 @@ MERMAID = """flowchart LR
     ce -- "ingest" --> se
 
     ir -.-> sa
-    ir -.-> sb
-    ir -.-> sc
-    ir -.-> sd
     ir -.-> se
 
     sa == "promote" ==> task
@@ -101,15 +98,16 @@ MERMAID = """flowchart LR
     class task,ms unified
     class launch launch
 
-    linkStyle 0,1,2,3,4 stroke:#b45309,stroke-width:2px;
-    linkStyle 5,6,7,8,9 stroke:#94a3b8,stroke-width:1.2px,stroke-dasharray:5 4;
-    linkStyle 10,11,12,13,14 stroke:#15803d,stroke-width:2.5px;
-    linkStyle 15,16 stroke:#b45309,stroke-width:2px;
+    linkStyle 0 stroke:#b45309,stroke-width:2px;
+    linkStyle 1,2,3,4,5 stroke:#b45309,stroke-width:2px;
+    linkStyle 6,7 stroke:#94a3b8,stroke-width:1.2px,stroke-dasharray:5 4;
+    linkStyle 8,9,10,11,12 stroke:#15803d,stroke-width:2.5px;
+    linkStyle 13,14 stroke:#b45309,stroke-width:2px;
 
-    style CSVS     fill:#fffbeb,stroke:#fbbf24,color:#92400e
-    style STAGING  fill:#eef2ff,stroke:#a5b4fc,color:#3730a3
-    style PROV     fill:#f8fafc,stroke:#cbd5e1,color:#475569
-    style UNIFIED  fill:#f0fdf4,stroke:#86efac,color:#166534
+    style CSVS     fill:#fffbeb,stroke:#fbbf24,color:#92400e,padding:20px
+    style STAGING  fill:#eef2ff,stroke:#a5b4fc,color:#3730a3,padding:20px
+    style PROV     fill:#f8fafc,stroke:#cbd5e1,color:#475569,padding:20px
+    style UNIFIED  fill:#f0fdf4,stroke:#86efac,color:#166534,padding:20px
 """
 
 
@@ -122,7 +120,18 @@ def render_png(mmd: str, out_path: Path) -> bool:
     with tempfile.NamedTemporaryFile("w", suffix=".mmd", delete=False, encoding="utf-8") as tmp:
         tmp.write(mmd)
         tmp_path = tmp.name
-    cfg = {"theme": "default", "themeVariables": {"fontFamily": "Segoe UI, Inter, sans-serif", "fontSize": "16px"}}
+    cfg = {
+        "theme": "default",
+        "themeVariables": {"fontFamily": "Segoe UI, Inter, sans-serif", "fontSize": "16px"},
+        "flowchart": {
+            "htmlLabels": True,
+            "curve": "basis",
+            "nodeSpacing": 80,
+            "rankSpacing": 110,
+            "padding": 24,
+            "subGraphTitleMargin": {"top": 8, "bottom": 8},
+        },
+    }
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as cfg_file:
         json.dump(cfg, cfg_file)
         cfg_path = cfg_file.name
@@ -132,10 +141,10 @@ def render_png(mmd: str, out_path: Path) -> bool:
             "-i", tmp_path,
             "-o", str(out_path),
             "-b", "#ffffff",
-            "-w", "1800",
+            "-w", "2400",
             "-c", cfg_path,
         ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
         if result.returncode != 0:
             print(f"  mmdc failed (rc={result.returncode}): {result.stderr.strip()[:300]}", file=sys.stderr)
             return False
