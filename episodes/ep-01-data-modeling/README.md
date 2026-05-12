@@ -148,13 +148,7 @@ StatusUpdate) on top of staging tables that keep provenance. Propose the
 schema first, then build it in the LaunchControl solution.
 ```
 
-**4. Risk Summary prompt column**
-```
-Add a prompt column "Risk Summary" on lc_Launch that writes a one-paragraph
-risk read from its milestones and tasks.
-```
-
-**5. Seed demo data**
+**4. Seed demo data**
 ```
 Seed a "Q3 Widget Launch" with realistic demo data — six milestones across
 teams, a dozen tasks with mixed statuses including a couple blocked, four
@@ -162,12 +156,12 @@ team members with fictional names, a few status updates. Keep it sanitized
 for OSS.
 ```
 
-**6. Pull to the repo**
+**5. Pull to the repo**
 ```
 Export LaunchControl unmanaged and unpack it into datamodel/solutions/ep1_unified_model/.
 ```
 
-**7. Verify**
+**6. Verify**
 ```
 Verify the rebuild — row counts per table, relationships intact, show me Q3
 Widget Launch with its children.
