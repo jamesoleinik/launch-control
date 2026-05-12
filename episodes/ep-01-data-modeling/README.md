@@ -34,7 +34,7 @@ Two installs — pick whichever coding agent you use:
 
 | Coding agent | Plugin | Install |
 |---|---|---|
-| **GitHub Copilot / Copilot CLI** | `dataverse@awesome-copilot` | Available in the [awesome-copilot](https://github.com/microsoft/awesome-copilot) plugin marketplace |
+| **GitHub Copilot / Copilot CLI** | `dataverse@awesome-copilot` | Source: [microsoft/Dataverse-skills](https://github.com/microsoft/Dataverse-skills) — install via the awesome-copilot marketplace |
 | **Claude Code** | `dataverse` | Available in the [official Claude plugin marketplace](https://claude.com/plugins/dataverse) |
 
 Same skill content under the hood, both maintained by Microsoft. Once the
