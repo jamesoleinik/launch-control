@@ -39,14 +39,29 @@ function quoteArg(a) {
   return a;
 }
 
+// Resolve the CLI invocation. We prefer the globally-installed `dataverse`
+// binary (npm i -g @microsoft/dataverse) because spawning `npx -y
+// @microsoft/dataverse@latest` per row adds 10–30s of cold-start latency on
+// Windows. If the global isn't on PATH, fall back to npx.
+const DV_BIN = (() => {
+  const which = process.platform === 'win32'
+    ? spawnSync('where', ['dataverse'], { encoding: 'utf8', shell: false })
+    : spawnSync('which', ['dataverse'], { encoding: 'utf8', shell: false });
+  return which.status === 0 ? 'dataverse' : null;
+})();
+
 export function dvCli(args, opts = {}) {
   const isWin = process.platform === 'win32';
-  const fullArgs = ['-y', '@microsoft/dataverse@latest', ...args];
+  const useNpx = !DV_BIN;
+  const fullArgs = useNpx
+    ? ['-y', '@microsoft/dataverse@latest', ...args]
+    : args;
+  const bin = useNpx ? 'npx' : DV_BIN;
   // Node 20+ refuses to spawn .cmd/.bat without shell:true on Windows.
   // Use shell:true and pre-quote args ourselves.
   const cmdLine = isWin
-    ? ['npx', ...fullArgs].map(quoteArg).join(' ')
-    : 'npx';
+    ? [bin, ...fullArgs].map(quoteArg).join(' ')
+    : bin;
   const cmdArgs = isWin ? [] : fullArgs;
   const result = spawnSync(cmdLine, cmdArgs, {
     encoding: 'utf8',

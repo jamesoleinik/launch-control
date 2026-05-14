@@ -3,12 +3,24 @@
 //
 // Reads datamodel/mappings/unified_mapping.yaml and the matching
 // datamodel/samples/*.csv files, then drives `dataverse data create`
-// for each row into its staging table. Provenance is captured via a
-// single lc_ImportRun (and an lc_SourceFile per CSV processed).
+// for each row into its staging table.
+//
+// This env uses the unified data model from the lc-datamodel skill:
+//   - Tables are named `lc_stg_tracker_a..e` (snake_case, _stg_ prefix), not
+//     `lc_trackera..e`. The ENTITY_OVERRIDES map translates.
+//   - There are NO `lc_importrun` / `lc_sourcefile` lookup tables. Provenance
+//     is captured inline on each staging row via `lc_sourcefile` (string =
+//     filename), `lc_ingestedat` (datetime), and `lc_rawjson` (full source row
+//     as JSON). The script writes a console summary in place of the import-run
+//     record.
+//   - `lc_priority` / `lc_status` are plain Strings in this env, not Picklists,
+//     so the script does NOT fetch option-set metadata.
+//
+// Field-level renames (yaml schema → env logical name) live in FIELD_OVERRIDES
+// keyed by mapping.target_entity.
 
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import YAML from 'yaml';
 import { parse as csvParse } from 'csv-parse/sync';
 
@@ -16,16 +28,12 @@ import {
   repoRoot,
   loadEnv,
   dataCreate,
-  dataUpdate,
-  fetchOptionMap,
   logHeader,
   logStep,
   logOk,
   logFail,
 } from './lib/dv.mjs';
 import { buildRowPayload } from './lib/csv-to-json.mjs';
-
-const STATUS = { Pending: 10600050, Running: 10600051, Succeeded: 10600052, Failed: 10600053 };
 
 logHeader('Launch Control — Episode 2 ingestion');
 
@@ -42,66 +50,42 @@ const samplesDir = path.join(repoRoot, 'datamodel', 'samples');
 const mapping = YAML.parse(fs.readFileSync(mappingPath, 'utf8'));
 logOk(`Loaded ${mapping.mappings.length} mapping(s) from unified_mapping.yaml`);
 
-// Resolve entity-set names per logical name (auto-pluralization is unreliable).
-// We hard-code the discovered set names — they're stable per environment.
-const ENTITY_SETS = {
-  lc_trackera: 'lc_trackeras',
-  lc_trackerb: 'lc_trackerbs',
-  lc_trackerc: 'lc_trackercs',
-  lc_trackerd: 'lc_trackerds',
-  lc_trackere: 'lc_trackeres',
-  lc_importrun: 'lc_importruns',
-  lc_sourcefile: 'lc_sourcefiles',
+// Entity-set overrides: yaml target_entity → { logicalName, entitySetName }.
+// The env uses the lc-datamodel staging convention (`lc_stg_tracker_a..e`),
+// not the legacy `lc_trackera..e` form the yaml uses.
+const ENTITY_OVERRIDES = {
+  lc_TrackerA: { logicalName: 'lc_stg_tracker_a', entitySetName: 'lc_stg_tracker_as' },
+  lc_TrackerB: { logicalName: 'lc_stg_tracker_b', entitySetName: 'lc_stg_tracker_bs' },
+  lc_TrackerC: { logicalName: 'lc_stg_tracker_c', entitySetName: 'lc_stg_tracker_cs' },
+  lc_TrackerD: { logicalName: 'lc_stg_tracker_d', entitySetName: 'lc_stg_tracker_ds' },
+  lc_TrackerE: { logicalName: 'lc_stg_tracker_e', entitySetName: 'lc_stg_tracker_es' },
 };
 
-logStep('Fetching choice option metadata for picklists…');
-const choiceMaps = {};
-for (const m of mapping.mappings) {
-  const entityLogical = m.target_entity.toLowerCase();
-  for (const f of Object.values(m.fields)) {
-    if (f.type !== 'choice') continue;
-    const attrLogical = f.schema.toLowerCase();
-    const cacheKey = `${entityLogical}:${attrLogical}`;
-    if (choiceMaps[cacheKey]) continue;
-    const map = fetchOptionMap(entityLogical, attrLogical);
-    if (!map) {
-      logFail(`Could not fetch options for ${entityLogical}.${attrLogical}`);
-      process.exit(3);
-    }
-    choiceMaps[cacheKey] = map;
-  }
-}
-logOk(`Cached option sets for ${Object.keys(choiceMaps).length} choice fields`);
+// Per-tracker field renames: yaml `schema` → env logical name.
+// Anything not listed falls through as lowercase(schema).
+const FIELD_OVERRIDES = {
+  lc_TrackerA: { lc_SourceRowId: 'lc_sourceid', lc_Milestone: 'lc_milestonename' },
+  lc_TrackerB: { lc_SourceRowId: 'lc_sourceid', lc_Milestone: 'lc_milestonename', lc_Title: 'lc_name' },
+  lc_TrackerC: { lc_SourceRowId: 'lc_sourceid' },
+  lc_TrackerD: { lc_SourceRowId: 'lc_sourceid', lc_Milestone: 'lc_milestonename' },
+  lc_TrackerE: { lc_SourceRowId: 'lc_sourceid' },
+};
 
-// 1. Create lc_ImportRun (Status=Running)
+// Process each tracker
 const runStartedAt = new Date().toISOString();
-const runName = `Ep2 CLI ingest ${runStartedAt.slice(0, 19).replace('T', ' ')} UTC`;
-logStep(`Creating lc_importrun: ${runName}`);
-const importRunRes = dataCreate(ENTITY_SETS.lc_importrun, {
-  lc_name: runName,
-  lc_startedat: runStartedAt,
-  lc_status: STATUS.Running,
-  lc_recordsprocessed: 0,
-  lc_notes: 'Created by scripts/cli/ingest.mjs',
-});
-if (!importRunRes.ok || !importRunRes.id) {
-  logFail(`lc_importrun create failed: ${importRunRes.stderr || importRunRes.parseError}`);
-  process.exit(4);
-}
-const importRunId = importRunRes.id;
-logOk(`lc_importrun created: ${importRunId}`);
+const runLabel = `Ep2 CLI ingest ${runStartedAt.slice(0, 19).replace('T', ' ')} UTC`;
+logStep(`Run label: ${runLabel}`);
 
-// 2. Process each tracker
 let totalRows = 0;
 const summary = [];
 
 for (const m of mapping.mappings) {
-  const entityLogical = m.target_entity.toLowerCase();
-  const entitySet = ENTITY_SETS[entityLogical];
-  if (!entitySet) {
-    logFail(`No entity-set mapping for ${entityLogical}`);
+  const override = ENTITY_OVERRIDES[m.target_entity];
+  if (!override) {
+    logFail(`No entity-set override for ${m.target_entity}`);
     continue;
   }
+  const { logicalName: entityLogical, entitySetName: entitySet } = override;
 
   const csvPath = path.join(samplesDir, m.source);
   if (!fs.existsSync(csvPath)) {
@@ -114,35 +98,15 @@ for (const m of mapping.mappings) {
   const rows = csvParse(rawCsv, { columns: true, skip_empty_lines: true, trim: true });
   logStep(`${rows.length} row(s) from ${m.source}`);
 
-  // Compute file checksum
-  const checksum = crypto.createHash('sha256').update(rawCsv).digest('hex').slice(0, 32);
-
-  // Create lc_SourceFile linked to importrun
-  const sourceSystem = m.source.replace(/\.sample\.csv$/, '');
-  const sfRes = dataCreate(ENTITY_SETS.lc_sourcefile, {
-    lc_name: m.source,
-    lc_filename: m.source,
-    lc_checksum: checksum,
-    lc_rowcount: rows.length,
-    'lc_ImportRunId@odata.bind': `/lc_importruns(${importRunId})`,
-  });
-  if (!sfRes.ok) {
-    logFail(`lc_sourcefile create failed for ${m.source}: ${sfRes.stderr}`);
-    continue;
-  }
-  logOk(`lc_sourcefile created: ${sfRes.id}`);
-
   // Insert each row
   let inserted = 0;
   for (const row of rows) {
     let payload;
     try {
       payload = buildRowPayload(m, row, {
-        importRunId,
-        sourceSystem,
         sourceFilename: m.source,
-        choiceMaps,
-        entityLogical,
+        ingestedAt: runStartedAt,
+        fieldOverrides: FIELD_OVERRIDES[m.target_entity] ?? {},
       });
     } catch (e) {
       logFail(`Row coerce error for ${m.source}: ${e.message}`);
@@ -150,7 +114,7 @@ for (const m of mapping.mappings) {
     }
     const r = dataCreate(entitySet, payload);
     if (!r.ok) {
-      logFail(`Row insert failed: ${r.stderr || r.parseError}`);
+      logFail(`Row insert failed: ${(r.stderr || r.stdout || r.parseError || '').trim().slice(0, 300)}`);
       continue;
     }
     inserted++;
@@ -160,23 +124,11 @@ for (const m of mapping.mappings) {
   summary.push({ tracker: m.display_name, inserted, total: rows.length });
 }
 
-// 3. Finalize importrun
-logHeader('Finalizing import run');
-const finalize = dataUpdate(ENTITY_SETS.lc_importrun, importRunId, {
-  lc_status: STATUS.Succeeded,
-  lc_recordsprocessed: totalRows,
-  lc_notes: `Inserted ${totalRows} row(s) across ${summary.length} tracker(s).`,
-});
-if (!finalize.ok) {
-  logFail(`finalize failed: ${finalize.stderr}`);
-  process.exit(5);
-}
-logOk(`lc_importrun marked Succeeded (records=${totalRows})`);
-
-console.log('');
-console.log('Summary:');
+logHeader('Summary');
+console.log(`  Run label: ${runLabel}`);
 for (const s of summary) console.log(`  ${s.tracker}: ${s.inserted}/${s.total}`);
+console.log(`  Total inserted: ${totalRows}`);
 console.log('');
-console.log(`ImportRun ID: ${importRunId}`);
 console.log('Verify:');
-console.log(`  npx -y @microsoft/dataverse@latest data query --sql "SELECT lc_name, lc_recordsprocessed, lc_statusname FROM lc_importrun WHERE lc_importrunid = '${importRunId}'"`);
+console.log(`  dataverse data query --table lc_stg_tracker_as --select lc_sourceid,lc_title,lc_ingestedat`);
+

@@ -6,7 +6,8 @@
   "description": "Episode 2 — Launch Control CLI orchestration (mapping-driven ingestion).",
   "scripts": {
     "setup-auth": "node setup-auth.mjs",
-    "ingest": "node ingest.mjs"
+    "ingest": "node ingest.mjs",
+    "upload-skills": "node upload-skills.mjs"
   },
   "dependencies": {
     "csv-parse": "^5.5.6",
