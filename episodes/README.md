@@ -9,8 +9,8 @@ The "Launch Control" LinkedIn series — twelve short episodes building one proj
 | # | Episode | Hero capability |
 |---|---|---|
 | [1](ep-01-data-modeling/) | AI-Powered Data Modeling | Official Dataverse plugins for Copilot & Claude Code → first Dataverse tables |
-| [2](ep-02-business-skills/) | Your Playbook & Ingestion | Business skills + mapping-driven CLI ingestion |
-| [3](ep-03-staging-layer/) | Promoting the Staging Layer | Python + pandas promote.py; staging → unified |
+| [2](ep-02-business-skills/) | Process Modeling | Codifying the playbook as Business Skills with the `@microsoft/dataverse` CLI |
+| [3](ep-03-staging-layer/) | Migration & Analysis | Python SDK + pandas — migrate staging → unified and analyze in DataFrames |
 | [4](ep-04-connecting-the-dots/) | Connecting the Dots | Virtual entities — GitHub Issues as a Dataverse lookup target |
 | [5](ep-05-custom-tools/) | Custom Tools | Custom API + two BYO MCP custom connectors registered with `paconn` |
 | [6](ep-06-the-agent/) | The Agent | Declarative Launch Coordinator + knowledge substrate |

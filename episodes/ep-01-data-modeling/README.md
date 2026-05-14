@@ -232,9 +232,11 @@ export --name LaunchControl`).
 
 ## Next up
 
-**Episode 2 — Your Playbook & Ingestion.** Episode 1 was about how the
-*coding agent* gets help — an official plugin in the marketplace it already
-trusts. Episode 2 shifts to the *runtime agents* (Copilot Studio, Claude,
-M365 Copilot) and how Dataverse gives them their own help: **Business
-Skills** that govern readiness checks, escalation policies, and status
-transitions while the launch is actually running.
+**Episode 2 — Process Modeling.** Episode 1 was about how the *coding
+agent* gets help — an official plugin in the marketplace it already trusts.
+Episode 2 shifts to the *runtime agents* (Copilot Studio, Claude, M365
+Copilot) and how Dataverse gives them their own help: the coding agent reads
+the launch playbook and generates **Business Skills** the runtime agents can
+execute against live data.
+
+
