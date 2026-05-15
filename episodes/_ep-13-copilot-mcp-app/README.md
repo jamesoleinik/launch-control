@@ -141,12 +141,74 @@ inline widget (verdict pill, readiness score, milestone table) instead of plain 
 - **Not a Copilot Studio episode.** Copilot Studio can also consume MCP servers
   (GA Aug 2025) and remains a valid alt path — but the March 2026 announcement
   made the Agents Toolkit + declarative agent + MCP Apps route the canonical
-  Microsoft 365 Copilot story. We use it.
-- **Not a custom UI build.** We rely on whatever inline UI the Dataverse MCP server
-  returns via the MCP `meta` property. If it returns plain text, the demo still
-  works; the UI widget is the cherry on top.
+  Microsoft 365 Copilot story for MCP-server-backed agents. We use it.
+- **Not a Power Apps agent episode.** Power Apps is the *other* launch partner
+  Microsoft promotes in the same dev blog — see the next section. Different
+  surface, different tradeoff; we acknowledge it but don't build it here.
+- **Not a custom UI build.** Rich-card rendering in chat comes from the agent
+  producing **GitHub-flavored Markdown** (header + status emojis + tables +
+  block-quotes — see `declarative-agent/appPackage/instruction.txt`). The
+  Dataverse MCP server returns `TextContent` today; Markdown is the
+  mitigation. No HTML, no Adaptive Cards, no proxy server.
 - **Not a replacement for Ep 6's Copilot Studio agent.** Ep 6 stays in Copilot
   Studio's native runtime. This episode is the M365 Copilot front door.
+
+---
+
+## The Power Apps companion path (acknowledged but not built here)
+
+The same March 2026 dev blog calls out a *second* GA path for getting rich,
+Dataverse-backed UI into M365 Copilot chat — **Power Apps agents** (public
+preview as of the announcement):
+
+> *"Power Apps agents bring all these capabilities to chat with compelling
+> visualizations."* — [MCP Apps now available in Copilot Chat](https://devblogs.microsoft.com/microsoft365dev/mcp-apps-now-available-in-copilot-chat/)
+
+The heatmap GIF in that post is literally a canvas app rendering inline in
+Copilot chat.
+
+**Architecture** (alternative to this episode's MCP path):
+
+```
+M365 Copilot chat
+       │
+       ▼
+ Power Apps agent (canvas/model-driven app published as an in-chat agent)
+       │
+       ▼  Dataverse connector (user identity, no MCP server in the loop)
+ Dataverse  ─ lc_launch / lc_milestone / lc_task / lc_CalculateLaunchReadiness
+```
+
+| | This episode (declarative + MCP) | Power Apps companion path |
+|---|---|---|
+| Surface in M365 Copilot | Agents rail, conversational | Agents rail, conversational + **inline canvas screens** |
+| Auth to Dataverse | OAuth via Entra app reg → MCP endpoint | Power Platform Dataverse connector (user identity) |
+| UI fidelity in chat | Markdown card (header + emoji + table) | Real canvas controls — charts, heatmaps, forms |
+| Net-new code | ✅ none beyond manifest/action JSON | ⚠️ a canvas app (1-2 screens) |
+| Reuses Business Skills | ✅ inherited through MCP server | ❌ Power App calls Dataverse directly; skills bypassed |
+| Story alignment with Eps 1-12 | ✅ "MCP everywhere, one server" | ⚠️ "Power Apps everywhere" — pivots the thread |
+| Public preview vs. GA | Both surfaces are preview at time of writing | Both surfaces are preview at time of writing |
+
+**Why this episode picks the MCP path:**
+1. **Narrative thread.** Eps 1-12 sell "Dataverse MCP server as the single point
+   of integration for every agent." Power Apps agents bypass MCP entirely. The
+   declarative-agent build closes the MCP arc cleanly.
+2. **Business Skills payoff.** The Ep 2 Business Skills only show up at runtime
+   through MCP. A Power App reading Dataverse directly doesn't invoke them.
+3. **No new app to build.** The Power Apps path requires ~1-2 hours of canvas
+   app work for one or two screens; the declarative-agent path is pure config.
+
+**When the Power Apps path wins:**
+- You want **richer in-chat visuals** (heatmaps, charts, write-back forms) than
+  Markdown can produce.
+- The MCP server's tool catalog isn't expressive enough for the workflow you
+  want to demo.
+- The audience is Power Platform builders rather than agent/SDK developers.
+
+**If we ever ship the Power Apps variant**, it'd live as a sibling folder
+`power-apps-agent/` under this episode (or get spun out as Ep 13.5
+*"Same Dataverse, native canvas in chat"*). Out of scope for the current
+recording.
 
 ---
 
