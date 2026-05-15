@@ -152,9 +152,13 @@ inline widget (verdict pill, readiness score, milestone table) instead of plain 
 
 ## Open questions for the exploration
 
-- [ ] Does the Dataverse MCP server (`/api/mcp`) emit MCP Apps `meta`-tagged UI
-      payloads, or just text? If text-only, the demo still works but we lose the
-      rich inline UI moment.
+- [x] **Does the Dataverse MCP server (`/api/mcp`) emit MCP Apps `meta`-tagged UI
+      payloads, or just text?** Confirmed **text only** as of May 2026 — the
+      preview server returns `TextContent`. Mitigation: the agent's
+      `instruction.txt` includes a Markdown-formatting block so MCP tool
+      responses render as styled cards (header + status emoji + table +
+      block-quote) inside M365 Copilot chat without any server changes.
+      Track Microsoft adding `_meta` UI shaping for a future episode upgrade.
 - [ ] Does the **Microsoft 365 Agents Toolkit** "Start with an MCP Server" flow
       work with the Dataverse MCP's OAuth dance, or does it require static
       credentials / a different auth flavor?
@@ -168,6 +172,12 @@ inline widget (verdict pill, readiness score, milestone table) instead of plain 
       Does `lc_CalculateLaunchReadiness` stay under the limit?
 - [ ] Power Apps agents are already shipping this pattern in public preview —
       should we contrast with their preview as a callout in the script?
+- [ ] **Optional Ep 13.5 — proxy MCP server.** If we want guaranteed framed
+      cards / `EmbeddedResource text/html` rendering, scaffold a ~150-line
+      Node/Python MCP server that wraps `/api/mcp` and decorates hero tool
+      responses with `_meta` UI hints. Net-new code, but the only way to get
+      the rich-card moment until Microsoft ships UI shaping in the Dataverse
+      MCP server itself.
 
 ---
 
