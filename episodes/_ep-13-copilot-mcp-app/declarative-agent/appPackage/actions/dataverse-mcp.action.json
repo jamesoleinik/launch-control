@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/copilot/plugin/v2.3/schema.json",
+  "schema_version": "v2.3",
+  "namespace": "dataverseMcp",
+  "name_for_human": "Dataverse (MCP)",
+  "description_for_human": "Reads and writes Launch Control records, calls business skills, and runs lc_CalculateLaunchReadiness via the Dataverse MCP server.",
+  "description_for_model": "Use this Model Context Protocol server to reach Microsoft Dataverse for the Launch Control environment. All record reads, record writes, business skills, knowledge grounding, and the lc_CalculateLaunchReadiness custom API are exposed as MCP tools and resources.",
+  "runtimes": [
+    {
+      "type": "ModelContextProtocol",
+      "auth": {
+        "type": "OAuthPluginVault",
+        "reference_id": "${{OAUTH_REGISTRATION_ID}}"
+      },
+      "spec": {
+        "url": "https://${{DATAVERSE_HOST}}/api/mcp",
+        "transport": "streamable-http"
+      },
+      "run_for_functions": ["*"]
+    }
+  ],
+  "capabilities": {
+    "localization": {},
+    "conversation_starters": [
+      {
+        "text": "What's the readiness for Q3 Widget Launch?"
+      },
+      {
+        "text": "List blocked tasks across all launches"
+      }
+    ]
+  }
+}
