@@ -210,6 +210,10 @@ M365 Copilot chat
 *"Same Dataverse, native canvas in chat"*). Out of scope for the current
 recording.
 
+> 📖 **Build steps for the Power Apps companion path are now in
+> [`power-apps-agent/BUILD.md`](power-apps-agent/BUILD.md)** if you want
+> to construct it in parallel.
+
 ---
 
 ## Open questions for the exploration
