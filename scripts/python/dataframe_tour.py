@@ -1,21 +1,12 @@
-"""Episode 3 demo — pandas DataFrame tour over the unified Launch model.
+"""Five-stop pandas tour over the unified LaunchControl model.
 
-Five short stops:
-    1. dataframe.get()      — read a staging table directly into a DataFrame
-    2. row-count profile    — across all 5 lc_stg_tracker_* tables
-    3. query.sql()          — T-SQL TOP/ORDER BY against the unified lc_task,
-                              then a pandas merge across staging + unified
-                              (showcasing the SDK's TWO query surfaces)
-    4. dataframe.get()      — round-trip lc_task, filtered to promoted rows
-    5. provenance pivot     — count promoted rows per source tracker
+Reads staging (lc_stg_tracker_a..e) and unified (lc_task, lc_milestone,
+lc_launch) tables via the Dataverse Python SDK, joins a staging row to
+its promoted twin on the back-reference lookup, and finishes with a
+provenance pivot counting how many unified rows came from each tracker.
 
-Run AFTER promote.py has populated lc_task / lc_milestone.
-
-NOTE for re-recording Ep 3: delete this file before the on-camera shot of
-the agent authoring it. After recording, restore from git.
-
-Usage:
-    python scripts/python/dataframe_tour.py
+Run twice across promote.py — once before, once after — to see Stop 0
+flip from zeros to populated counts.
 """
 
 from __future__ import annotations
@@ -26,14 +17,13 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.auth import get_credential, load_env  # noqa: E402
-
 from PowerPlatform.Dataverse.client import DataverseClient  # noqa: E402
 
-STAGING = [
+
+STAGING_TABLES = [
     "lc_stg_tracker_a",
     "lc_stg_tracker_b",
     "lc_stg_tracker_c",
@@ -41,135 +31,188 @@ STAGING = [
     "lc_stg_tracker_e",
 ]
 
-# Map source-staging lookup columns on each unified table → which tracker
-# they came from. Used by Stop 5's provenance pivot.
-PROV_LOOKUPS = {
-    "lc_task": {
-        "_lc_sourcestagingaid_value": "TrackerA",
-        "_lc_sourcestagingbid_value": "TrackerB",
-        "_lc_sourcestagingdid_value": "TrackerD",
-    },
-    "lc_milestone": {
-        "_lc_sourcestagingcid_value": "TrackerC",
-        "_lc_sourcestagingeid_value": "TrackerE",
-    },
-}
+# (target table, back-reference lookup attribute on the target)
+PROVENANCE = [
+    ("lc_task",      "_lc_sourcestagingaid_value", "TrackerA"),
+    ("lc_task",      "_lc_sourcestagingbid_value", "TrackerB"),
+    ("lc_milestone", "_lc_sourcestagingcid_value", "TrackerC"),
+    ("lc_task",      "_lc_sourcestagingdid_value", "TrackerD"),
+    ("lc_milestone", "_lc_sourcestagingeid_value", "TrackerE"),
+]
 
 
-def _client() -> DataverseClient:
-    load_env()
-    url = os.environ["DATAVERSE_URL"].rstrip("/")
-    return DataverseClient(url, get_credential())
+def _hr(title: str) -> None:
+    print()
+    print("=" * 72)
+    print(title)
+    print("=" * 72)
 
 
-def stop_1_read_one_table(client: DataverseClient) -> None:
-    print("\n--- Stop 1: dataframe.get('lc_stg_tracker_a') ---")
+def stop_0_snapshot(client) -> None:
+    _hr("Stop 0 — snapshot: unified row counts")
+    rows = []
+    for table, pk in [
+        ("lc_launch",    "lc_launchid"),
+        ("lc_milestone", "lc_milestoneid"),
+        ("lc_task",      "lc_taskid"),
+    ]:
+        df = client.dataframe.get(table, select=[pk])
+        rows.append({"table": table, "rows": len(df)})
+    snap = pd.DataFrame(rows)
+    print(snap.to_string(index=False))
+    m = int(snap.loc[snap["table"] == "lc_milestone", "rows"].iloc[0])
+    t = int(snap.loc[snap["table"] == "lc_task", "rows"].iloc[0])
+    if m == 0 and t == 0:
+        print("\nHint: lc_milestone and lc_task are empty — run "
+              "`python scripts/python/promote.py` to populate them.")
+
+
+def stop_1_read_staging(client) -> pd.DataFrame:
+    _hr("Stop 1 — read lc_stg_tracker_a as a DataFrame")
     df = client.dataframe.get(
         "lc_stg_tracker_a",
         select=["lc_title", "lc_status", "lc_duedate", "lc_sourcefile"],
     )
+    print(f"rows: {len(df)}")
     print(df.head(10).to_string(index=False))
-    print(f"  shape={df.shape}  dtypes={ {k: str(v) for k, v in df.dtypes.items()} }")
+    return df
 
 
-def stop_2_profile_all_staging(client: DataverseClient) -> None:
-    print("\n--- Stop 2: row-count profile across all 5 staging tables ---")
+def stop_2_profile(client) -> None:
+    _hr("Stop 2 — row counts across all 5 staging tables")
     rows = []
-    for table in STAGING:
+    for table in STAGING_TABLES:
         df = client.dataframe.get(table, select=["lc_sourcefile"])
-        rows.append({"staging_table": table, "rows": len(df)})
-    summary = pd.DataFrame(rows)
-    print(summary.to_string(index=False))
-    print(f"  total staging rows: {summary['rows'].sum()}")
+        files = df["lc_sourcefile"].dropna().unique().tolist() if "lc_sourcefile" in df.columns else []
+        rows.append({
+            "table": table,
+            "rows": len(df),
+            "source_files": ", ".join(sorted(files)) if files else "(none)",
+        })
+    print(pd.DataFrame(rows).to_string(index=False))
 
 
-def stop_3_join_via_sql(client: DataverseClient) -> None:
-    print("\n--- Stop 3: query.sql() — top tasks via T-SQL TOP/ORDER BY ---")
-    sql = """
-        SELECT TOP 5 lc_title, lc_taskstatus, lc_isblocked
-          FROM lc_task
-         ORDER BY createdon DESC
-    """
-    try:
-        rows = client.query.sql(sql)
-        df = pd.DataFrame(rows) if not isinstance(rows, pd.DataFrame) else rows
-        print(df.to_string(index=False))
-    except Exception as exc:
-        # query.sql() requires the TDS endpoint (Dataverse SQL) to be enabled.
-        # If it's off, the pandas merge below still demonstrates the analytics
-        # angle — call out the limitation honestly.
-        print(f"  (query.sql unavailable: {exc.__class__.__name__})")
-        print("  Skipping T-SQL stop; pandas merge below covers the join story.")
-
-    print("\n--- Stop 3b: pandas merge — staging row + promoted task row ---")
-    staging = client.dataframe.get(
-        "lc_stg_tracker_a",
-        select=["lc_stg_tracker_aid", "lc_title", "lc_sourceid"],
+def stop_3_sql_top(client) -> None:
+    _hr("Stop 3 — T-SQL TOP query against lc_task")
+    # NOTE: client.query.sql() returns a list[Record] (not a DataFrame); use
+    # .data on each record and build a DataFrame ourselves.
+    # NOTE: client.query.sql() only supports relationship-based JOINs;
+    # computed JOIN columns return "No valid link found in JOIN condition".
+    # UNION ALL is also not supported — use pd.concat for that.
+    sql = (
+        "SELECT TOP 5 lc_title, lc_taskstatus, lc_isblocked "
+        "FROM lc_task ORDER BY createdon DESC"
     )
+    try:
+        result = client.query.sql(sql)
+        records = [r.data for r in result] if result else []
+        df = pd.DataFrame(records)
+        if df.empty:
+            print("(no rows — lc_task is empty; run promote.py first)")
+        else:
+            print(df.to_string(index=False))
+    except Exception as exc:  # noqa: BLE001
+        print(f"skipped — TDS endpoint unavailable ({exc.__class__.__name__}: {exc})")
+        print("Stop 3b's pandas merge below carries the join story regardless.")
+
+
+def stop_3b_merge(client, staging_a: pd.DataFrame) -> None:
+    _hr("Stop 3b — pandas merge: staging row ↔ promoted unified twin")
+    # Select lookups by their `_value` projection — selecting the bare logical
+    # name silently drops the column from the dataframe.
     tasks = client.dataframe.get(
         "lc_task",
-        select=["lc_title", "lc_taskstatus", "_lc_sourcestagingaid_value"],
+        select=[
+            "lc_taskid", "lc_title", "lc_taskstatus", "lc_isblocked",
+            "_lc_sourcestagingaid_value",
+        ],
     )
-    # The lookup IS the join key — no string-key gymnastics needed.
-    merged = staging.merge(
+    if "lc_stg_tracker_aid" not in staging_a.columns:
+        staging_a = client.dataframe.get(
+            "lc_stg_tracker_a",
+            select=["lc_stg_tracker_aid", "lc_title", "lc_status"],
+        )
+
+    if "_lc_sourcestagingaid_value" not in tasks.columns:
+        print("(lc_task has no _lc_sourcestagingaid_value column — run promote.py first)")
+        return
+
+    merged = pd.merge(
+        staging_a,
         tasks,
         left_on="lc_stg_tracker_aid",
         right_on="_lc_sourcestagingaid_value",
+        how="inner",
         suffixes=("_staging", "_unified"),
     )
+    print(f"matched rows: {len(merged)}")
     if not merged.empty:
-        print(merged[["lc_sourceid", "lc_title_staging",
-                      "lc_title_unified", "lc_taskstatus"]].head(10)
-              .to_string(index=False))
-        print(f"  matched: {len(merged)} of {len(staging)} staging rows")
-    else:
-        print("  (no matches — promote.py probably hasn't run yet)")
-
-    # SDK gotchas worth flagging for viewers:
-    # - client.query.sql() only supports relationship-based JOINs.
-    #   Joining on a computed expression returns "No valid link found in
-    #   JOIN condition" — pandas merge fills exactly that gap.
-    # - UNION ALL isn't supported either; use pd.concat.
-    # The lookup-based design used here makes both unnecessary for this query.
+        cols = [c for c in
+                ["lc_title_staging", "lc_status", "lc_title_unified",
+                 "lc_taskstatus", "lc_isblocked"]
+                if c in merged.columns]
+        print(merged[cols].head(10).to_string(index=False))
 
 
-def stop_4_unified_view(client: DataverseClient) -> None:
-    print("\n--- Stop 4: dataframe.get('lc_task') — promoted rows only ---")
-    lookups = list(PROV_LOOKUPS["lc_task"].keys())
+def stop_4_promoted_view(client) -> None:
+    _hr("Stop 4 — unified lc_task view filtered to promoted rows")
+    lookup_cols = [
+        "_lc_sourcestagingaid_value",
+        "_lc_sourcestagingbid_value",
+        "_lc_sourcestagingdid_value",
+    ]
     df = client.dataframe.get(
         "lc_task",
-        select=["lc_title", "lc_taskstatus", "lc_isblocked"] + lookups,
+        select=["lc_title", "lc_taskstatus", "lc_isblocked", *lookup_cols],
     )
-    has_prov = df[lookups].notna().any(axis=1)
-    promoted = df[has_prov]
-    print(promoted[["lc_title", "lc_taskstatus", "lc_isblocked"]].head(15)
-          .to_string(index=False))
-    print(f"  promoted rows: {len(promoted)}  /  total task rows: {len(df)}")
+    present = [c for c in lookup_cols if c in df.columns]
+    if not present:
+        print("(no back-reference lookup columns present — run promote.py first)")
+        return
+    promoted = df[df[present].notna().any(axis=1)]
+    print(f"promoted rows: {len(promoted)} / {len(df)}")
+    print(promoted[["lc_title", "lc_taskstatus", "lc_isblocked"]].head(10).to_string(index=False))
 
 
-def stop_5_provenance_pivot(client: DataverseClient) -> None:
-    print("\n--- Stop 5: rows promoted per source tracker (groupby) ---")
+def stop_5_provenance(client) -> None:
+    _hr("Stop 5 — provenance pivot: unified rows per tracker")
+    target_selects = {
+        "lc_task": [
+            "lc_taskid",
+            "_lc_sourcestagingaid_value",
+            "_lc_sourcestagingbid_value",
+            "_lc_sourcestagingdid_value",
+        ],
+        "lc_milestone": [
+            "lc_milestoneid",
+            "_lc_sourcestagingcid_value",
+            "_lc_sourcestagingeid_value",
+        ],
+    }
+    cache: dict[str, pd.DataFrame] = {}
     rows = []
-    for target, lookups in PROV_LOOKUPS.items():
-        select = list(lookups.keys())
-        df = client.dataframe.get(target, select=select)
-        for lookup_attr, tracker in lookups.items():
-            n = int(df[lookup_attr].notna().sum()) if lookup_attr in df.columns else 0
-            if n:
-                rows.append({"source": tracker, "target": target, "rows": n})
-    pivot = pd.DataFrame(rows).sort_values(["target", "source"]) if rows else pd.DataFrame(
-        columns=["source", "target", "rows"]
-    )
+    for target, lookup_col, label in PROVENANCE:
+        if target not in cache:
+            cache[target] = client.dataframe.get(target, select=target_selects[target])
+        df = cache[target]
+        count = int(df[lookup_col].notna().sum()) if lookup_col in df.columns else 0
+        rows.append({"tracker": label, "target": target, "promoted_rows": count})
+    pivot = pd.DataFrame(rows)
     print(pivot.to_string(index=False))
+    print(f"\ntotal promoted rows: {int(pivot['promoted_rows'].sum())}")
 
 
 def main() -> None:
-    with _client() as client:
-        stop_1_read_one_table(client)
-        stop_2_profile_all_staging(client)
-        stop_3_join_via_sql(client)
-        stop_4_unified_view(client)
-        stop_5_provenance_pivot(client)
+    load_env()
+    url = os.environ["DATAVERSE_URL"].rstrip("/")
+    with DataverseClient(url, get_credential()) as client:
+        stop_0_snapshot(client)
+        staging_a = stop_1_read_staging(client)
+        stop_2_profile(client)
+        stop_3_sql_top(client)
+        stop_3b_merge(client, staging_a)
+        stop_4_promoted_view(client)
+        stop_5_provenance(client)
 
 
 if __name__ == "__main__":
