@@ -161,7 +161,7 @@ Ep 9's panels look populated only because Episode 3's pipeline does the work. Th
 
 Net result, every clean run: **16 milestones + 61 tasks (28 + 21 + 12), all linked, healthy status mix**.
 
-The promotion script is idempotent (uses `lc_StagingSource` as upsert key), so re-running it is safe. The ingest script is **not** idempotent — always wipe staging before re-ingesting (use `scripts/python/wipe_demo_data.py`).
+The promotion script is idempotent (upserts via the back-reference lookup columns `lc_sourcestaging<x>id`), so re-running it is safe. The ingest script is **not** idempotent — always wipe staging before re-ingesting (use `scripts/python/wipe_demo_data.py`).
 
 ## Why we disabled three cloud flows
 

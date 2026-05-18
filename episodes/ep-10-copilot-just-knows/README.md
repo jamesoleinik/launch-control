@@ -12,7 +12,7 @@
 
 This is the smallest episode in the campaign and it's the one that lands the platform punchline. Every prior episode put **something** between the user and the data — a custom action (Ep 5), a Copilot Studio agent + MCP (Ep 6), an autonomous agent (Ep 7), a code-first agent (Ep 8), a generative page (Ep 9). Ep 10 takes all of it away.
 
-The data model from Ep 1, the relationships from Ep 3, the prompt column from Ep 1, the team-member assignments from Ep 3 — Copilot reads them natively. **You built the schema. Microsoft handles the grounding.**
+The data model from Ep 1, the relationships from Ep 3, the prompt column from Ep 3, the team-member assignments from Ep 3 — Copilot reads them natively. **You built the schema. Microsoft handles the grounding.**
 
 ## Why this matters in the arc
 
@@ -133,7 +133,7 @@ No solution components. No tables, columns, plugins, or actions. **The platform 
 
 ## Cross-references
 
-- **Ep 1** — data model + prompt column on `lc_launch` (`cr88d_risksummary`) feeds the backup prompt
+- **Ep 3** — data model rows + the `lc_risksummary` prompt column on `lc_launch` feed the backup prompt
 - **Ep 3** — task ↔ milestone ↔ launch wiring + teammember assignments make Prompt 2 (traversal) work
 - **Ep 6** — custom Copilot Studio agent; the left side of the split-screen
 - **Ep 9** — gen page used to prime context before recording
