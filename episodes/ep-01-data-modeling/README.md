@@ -16,8 +16,8 @@ plain English to a coding agent, and the agent did the work — proposed the
 tables, wrote the Python, ran it against the environment, iterated when
 something broke. That's possible because **Microsoft now ships official
 Dataverse plugins for the two big coding agents**: `dataverse@awesome-copilot`
-for GitHub Copilot (and the Copilot CLI), and the `dataverse` plugin in
-Claude's official plugin marketplace for Claude Code. Install either one and
+for GitHub Copilot (and the Copilot CLI), and `dataverse@claude-plugins-official`
+in Anthropic's official Claude Code plugin registry. Install either one and
 your coding agent suddenly knows how to model on Dataverse — typed columns,
 choices, lookups, provenance, solution membership, the lot.
 
@@ -30,17 +30,21 @@ control.
 
 ## Get the plugin
 
-Two installs — pick whichever coding agent you use:
+Two installs — pick whichever coding agent you use. Both are one-liners
+typed into the agent itself:
 
-| Coding agent | Plugin | Install |
+| Coding agent | Install command | Source |
 |---|---|---|
-| **GitHub Copilot / Copilot CLI** | `dataverse@awesome-copilot` | Source: [microsoft/Dataverse-skills](https://github.com/microsoft/Dataverse-skills) — install via the awesome-copilot marketplace |
-| **Claude Code** | `dataverse` | Available in the [official Claude plugin marketplace](https://claude.com/plugins/dataverse) |
+| **GitHub Copilot / Copilot CLI** | `/plugin install dataverse@awesome-copilot` | [microsoft/Dataverse-skills](https://github.com/microsoft/Dataverse-skills) (also surfaced via the [awesome-copilot](https://github.com/github/awesome-copilot) marketplace) |
+| **Claude Code** | `/plugin install dataverse@claude-plugins-official` | [microsoft/Dataverse-skills](https://github.com/microsoft/Dataverse-skills) (surfaced via Anthropic's official Claude Code plugin registry) |
 
 Same skill content under the hood, both maintained by Microsoft. Once the
-plugin is installed, your coding agent knows how to do Dataverse modeling,
-data work, solution lifecycle, and MCP setup — without you having to teach
-it the conventions every conversation.
+plugin is installed, ask the agent _"connect to Dataverse"_ — the
+`dv-connect` skill walks through the Dataverse CLI / Python SDK / PAC CLI
+install, authenticates against your environment, and registers the
+Dataverse MCP server. After that, your coding agent knows how to do
+Dataverse modeling, data work, solution lifecycle, and MCP setup —
+without you having to teach it the conventions every conversation.
 
 ---
 
@@ -201,10 +205,11 @@ export --name LaunchControl`).
 
 1. **Official Dataverse plugins for the major coding agents.** Microsoft now
    ships `dataverse@awesome-copilot` for GitHub Copilot (and the Copilot CLI)
-   and the `dataverse` plugin in [Claude's official plugin marketplace](https://claude.com/plugins/dataverse)
-   for Claude Code. Install either and the coding agent stops guessing —
-   it knows the Dataverse conventions, the SDKs, the publisher/solution
-   rules, the MCP setup. Pick your agent; the plugin meets it there.
+   and `dataverse@claude-plugins-official` in Anthropic's official Claude Code
+   plugin registry. Install either with one `/plugin install …` and the
+   coding agent stops guessing — it knows the Dataverse conventions, the
+   SDKs, the publisher/solution rules, the MCP setup. Pick your agent;
+   the plugin meets it there.
 2. **AI-powered modeling, not click-ops.** With the plugin loaded, *"here
    are my trackers, here's a mapping"* becomes a typed Dataverse schema —
    choice columns, lookups, provenance, solution membership. The coding
