@@ -100,3 +100,9 @@ desktop.ini
 .token_cache.bin
 *.snk
 solutions/*.zip
+
+# Local-only Copilot CLI "clean home" sandbox + its launcher.
+# Contains Azure auth tokens, Copilot session DB, MCP config, and the
+# entire installed-plugins/ tree. Never commit -- regenerate locally.
+.copilot-clean/
+launch-clean-copilot.ps1

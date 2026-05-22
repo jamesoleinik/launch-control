@@ -1,0 +1,67 @@
+# Contoso Playbook: Launch Readiness (Go / No-Go)
+
+## Description
+Extracted from §1 of the Contoso Product Launch Playbook
+(`source/launch-playbook.docx`). Every launch passes through a readiness
+review before we ship. The PMO evaluates the launch against milestone gates
+and produces a verdict of **GO**, **CONDITIONAL**, or **NO-GO**. Trigger this
+skill whenever a user asks "are we ready to ship?", "what's the go/no-go on
+&lt;launch&gt;?", or anything that resolves to a readiness verdict for a launch.
+The verdict is not a vibe — it is computed.
+
+## Instructions
+
+### Step 1: Resolve the launch in question
+
+If the user names a launch (e.g. "Q3 Widget Launch"), use that name to look
+up the matching `lc_launch` record. If they don't name one, query `lc_launch`
+and **ask** which one — do not guess and do not silently pick the most recent
+launch.
+
+### Step 2: Compute readiness via the Custom API (POLICY)
+
+Readiness is the weighted average of all milestone completion states on the
+launch. The PMO does **NOT** hand-tally gates in a slide or chat message.
+The readiness score is calculated server-side by the
+`lc_CalculateLaunchReadiness` Custom API in Dataverse, which has full
+visibility of every milestone and task on the launch.
+
+Invoke that Custom API and report its three return values verbatim:
+
+| Field                 | Type              | Meaning |
+|-----------------------|-------------------|---------|
+| `lc_ReadinessScore`   | decimal 0–100     | Weighted milestone score |
+| `lc_Verdict`          | string            | `GO` \| `CONDITIONAL` \| `NO-GO` |
+| `lc_ReadinessSummary` | multi-line string | Per-milestone narrative |
+
+(Q3 retro note: this Custom API requirement was added after three launches
+were tallied by hand and got it wrong.)
+
+### Step 3: Apply the verdict thresholds
+
+| Score             | Verdict         | Meaning |
+|-------------------|-----------------|---------|
+| ≥ 85              | **GO**          | Cleared to ship. |
+| 65 – 84 inclusive | **CONDITIONAL** | Leadership sign-off required. Treat as GO with a documented mitigation plan. |
+| < 65              | **NO-GO**       | Do not ship. |
+
+`CONDITIONAL` is the only sanctioned override path when a single milestone is
+`At Risk` but recoverable. There is no other override. (Q1 retro note.)
+
+### Step 4: Report the result
+
+When reporting back to the user, always:
+
+- State the verdict in the first sentence.
+- Quote the score with one decimal place.
+- Surface any milestone that is `At Risk` or `Blocked`, **by name**.
+- If the verdict is `CONDITIONAL`, name who needs to sign off.
+
+### What this skill is NOT
+
+- It is **not** a status report — it answers "are we ready to ship?".
+- It does **not** modify any data.
+- It does **not** escalate. If the verdict surfaces blocked milestones, hand
+  them off to the Escalation skill.
+- It does **not** re-derive the readiness math in the prompt. The Custom API
+  `lc_CalculateLaunchReadiness` is the single source of truth.

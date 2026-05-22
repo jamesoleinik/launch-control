@@ -1,0 +1,47 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{07D57EEB-2F50-60C4-C011-FE4FA775C9A8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "datamodel", "datamodel", "{1680AD4C-2D54-D68A-F37B-E230A2F1C42A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CalculateLaunchReadiness", "CalculateLaunchReadiness", "{D1C3604B-F42B-852E-2F36-1DA2B1C518A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculateLaunchReadiness", "plugins\CalculateLaunchReadiness\CalculateLaunchReadiness\CalculateLaunchReadiness.csproj", "{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "virtual-entities", "virtual-entities", "{6F4C8A00-A823-681A-4AE6-CAC7EF5E91BE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GitHubIssuesProvider", "GitHubIssuesProvider", "{BA514640-FC18-503B-5357-78AFE1F995CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubIssuesProvider", "datamodel\virtual-entities\GitHubIssuesProvider\GitHubIssuesProvider\GitHubIssuesProvider.csproj", "{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D1C3604B-F42B-852E-2F36-1DA2B1C518A4} = {07D57EEB-2F50-60C4-C011-FE4FA775C9A8}
+		{6B8AB349-7D67-EC69-6954-7C2C8A67C4E2} = {D1C3604B-F42B-852E-2F36-1DA2B1C518A4}
+		{6F4C8A00-A823-681A-4AE6-CAC7EF5E91BE} = {1680AD4C-2D54-D68A-F37B-E230A2F1C42A}
+		{BA514640-FC18-503B-5357-78AFE1F995CE} = {6F4C8A00-A823-681A-4AE6-CAC7EF5E91BE}
+		{F57B9C18-6B26-04E8-B7F5-29F6E8CAFC98} = {BA514640-FC18-503B-5357-78AFE1F995CE}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F0759674-5C87-4DF5-A51E-878C70B33807}
+	EndGlobalSection
+EndGlobal
