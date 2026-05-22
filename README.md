@@ -2,7 +2,7 @@
 
 **A Product Launch Coordinator built with Microsoft Dataverse — from data model to agents to dashboard.**
 
-This repo is the companion to the **Launch Control** LinkedIn series by [James Oleinik](https://www.linkedin.com/in/james-oleinik/), Product Director for Microsoft Dataverse. Over 12 episodes (3/week for 4 weeks), we build a complete product launch coordination system from scratch — and open-source every line of code.
+This repo is the companion to the **Launch Control** LinkedIn series by [James Oleinik](https://www.linkedin.com/in/james-oleinik/), Product Director for Microsoft Dataverse. Over 13 episodes (3/week for ~4 weeks), we build a complete product launch coordination system from scratch — and open-source every line of code.
 
 ## The Problem
 
@@ -37,15 +37,16 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [1](episodes/ep-01-data-modeling/)        | AI-Powered Data Modeling      | Official Dataverse plugins for Copilot & Claude Code → first Dataverse tables |
 | [2](episodes/ep-02-business-skills/)      | Your Playbook & Ingestion     | Business skills + mapping-driven CLI ingestion |
 | [3](episodes/ep-03-staging-layer/)        | Promoting the Staging Layer   | Python + pandas; staging → unified |
-| [4](episodes/ep-04-connecting-the-dots/)  | Connecting the Dots           | Virtual entities — GitHub Issues as a Dataverse lookup target |
+| [4](episodes/ep-04-connecting-the-dots/)  | Connecting the Dots           | Virtual entities (SharePoint OOB + custom GitHub Issues) **+ a business rule** the coding agent authors over the unified model |
 | [5](episodes/ep-05-custom-tools/)         | Custom Tools                  | Custom API + two BYO MCP custom connectors registered with `paconn` |
-| [6](episodes/ep-06-the-agent/)            | The Agent                     | Declarative Launch Coordinator + knowledge substrate |
-| [7](episodes/ep-07-autonomous-agents/)    | Autonomous Agents             | Launch Sentinel — event-triggered autonomous agent |
-| [8](episodes/ep-08-code-first-agent/)     | The Code-First Agent          | Same skills, different runtime — Python agent that pulls skills from Dataverse |
-| [9](episodes/ep-09-the-dashboard/)        | The Dashboard                 | Generative Power Apps page deployed via `pac model genpage upload` |
-| [10](episodes/ep-10-copilot-just-knows/)  | Copilot Just Knows            | Native Copilot intelligence over Dataverse — no agent needed |
-| [11](episodes/ep-11-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven — capacity, audit, cleanup, blast-radius |
-| [12](episodes/ep-12-full-orchestra/)      | Full Orchestra + Your Turn    | Six surfaces in 60 seconds + open-source CTA |
+| [6](episodes/ep-06-rbac/)                 | Roles & Reach                 | Four flat roles (Member / Owner / Viewer / Admin) over Eps 1–5 data + tools — same query, four lenses |
+| [7](episodes/ep-07-the-agent/)            | The Agent                     | Declarative Launch Coordinator + knowledge substrate |
+| [8](episodes/ep-08-autonomous-agents/)    | Autonomous Agents             | Launch Sentinel — event-triggered autonomous agent |
+| [9](episodes/ep-09-code-first-agent/)     | The Code-First Agent          | Same skills, different runtime — Python agent that pulls skills from Dataverse |
+| [10](episodes/ep-10-the-dashboard/)        | The Dashboard                 | Generative Power Apps page deployed via `pac model genpage upload` |
+| [11](episodes/ep-11-copilot-just-knows/)  | Copilot Just Knows            | Native Copilot intelligence over Dataverse — no agent needed |
+| [12](episodes/ep-12-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven — capacity, audit, cleanup, blast-radius |
+| [13](episodes/ep-13-full-orchestra/)      | Full Orchestra + Your Turn    | Six surfaces in 60 seconds + open-source CTA |
 
 Each episode is also tagged in git: `git checkout ep-09` to see the repo as it was at that episode's ship.
 
@@ -69,24 +70,24 @@ pip install -r scripts/python/requirements.txt
 To verify any episode is set up correctly, run its preflight:
 
 ```bash
-python episodes/ep-09-the-dashboard/preflight.py
+python episodes/ep-10-the-dashboard/preflight.py
 ```
 
 ## Repo Structure
 
 ```
 launch-control/
-├── episodes/                  # 12 per-episode folders (READMEs + preflights + scripts)
+├── episodes/                  # 13 per-episode folders (READMEs + preflights + scripts)
 ├── datamodel/                 # Table definitions, mappings, sample data
 ├── solutions/LaunchControl/   # Exported managed solution
 ├── business-skills/           # Launch readiness, escalation, status rules
 ├── data/knowledge/            # Sanitized KB articles for RAG
 ├── agents/
-│   ├── launch-coordinator/    # Declarative Copilot Studio agent (Ep 6)
-│   ├── launch-sentinel/       # Autonomous agent (Ep 7)
-│   ├── launch-coordinator-py/ # Code-first agent (Ep 8)
+│   ├── launch-coordinator/    # Declarative Copilot Studio agent (Ep 7)
+│   ├── launch-sentinel/       # Autonomous agent (Ep 8)
+│   ├── launch-coordinator-py/ # Code-first agent (Ep 9)
 │   └── agent-flows/           # Agent flow configurations
-├── apps/launch-command-center/# Generative Power Apps page (Ep 9)
+├── apps/launch-command-center/# Generative Power Apps page (Ep 10)
 ├── plugins/                   # Custom Dataverse plugins & actions
 └── scripts/                   # auth.py + shared Python utilities
 ```

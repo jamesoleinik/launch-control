@@ -1,15 +1,15 @@
 # Episode 4 — Connecting the Dots
 
-**Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Virtual Entities (OOB SharePoint + custom GitHub Issues provider)
-**Layer:** 🟢 Layer 1 expands (Data — without copying it)
-**Coding agent:** Claude Code · **Runtime:** .NET Framework 4.6.2 plugin (Sandbox)
+**Status:** 🚧 VE part built · 🚧 Business rule part not yet built · 🎬 Not yet recorded
+**Features:** ⭐ Virtual Entities (OOB SharePoint + custom GitHub Issues provider) · ⭐ Business rule authored by the coding agent on the unified model
+**Layer:** 🟢 Layer 1 expands (Data — without copying it) + 🟢 declarative automation expressed as code
+**Coding agent:** Claude Code · **Runtime:** .NET Framework 4.6.2 plugin (Sandbox) + Web API / Python SDK for business-rule authoring
 
 ---
 
 ## The hook
 
-> _"Our engineering backlog lives in GitHub. The PM playbook is on SharePoint. The launch tracker is in Dataverse. What if they were all the same table?"_
+> _"Our engineering backlog lives in GitHub. The PM playbook is on SharePoint. The launch tracker is in Dataverse. What if they were all the same table? — and once they are, what if the coding agent could also author the business rules that govern them?"_
 
 Episode 3 promoted the staging trackers into the unified `lc_Task` / `lc_Milestone` /
 `lc_Launch` model. The unified core is real. But the work itself doesn't all live
@@ -17,8 +17,10 @@ in Dataverse — it never will. Engineering issues live in GitHub. Some teams ke
 status in SharePoint lists. Copying that data nightly is exactly what we don't
 want.
 
-Episode 4 closes that loop without copying anything: **virtual entities**. Two
-approaches, one query surface.
+Episode 4 closes that loop without copying anything: **virtual entities**. Then
+it does one more thing — it shows the coding agent authoring a **business
+rule** over that unified shape, because declarative automation is just another
+record in Dataverse and the agent can write records.
 
 ---
 
@@ -206,6 +208,78 @@ k6 Cloud subscription                 #2      open    Load test: Verify 10k conc
 
 ---
 
+## Part 4 · Business rule authored by the coding agent
+
+> Business rules in Dataverse are usually drag-and-drop in the maker portal. Can the coding agent author one too?
+
+A business rule is no-code declarative validation/automation that runs
+server-side and on the form. The maker designer is great — but it's
+also click-heavy, has no diff in PRs, and copy-pasting a rule between
+environments means re-clicking through the designer. If the coding
+agent can author the rule from a one-line spec, all three problems
+collapse into a script.
+
+### The rule
+
+On `lc_task`:
+
+> _"When `lc_blockerreason` has any content, set `lc_status` to **Blocked** and show a notification on the form."_
+
+That's the business English. The coding agent translates it.
+
+### Underneath, a business rule is just a workflow row
+
+Dataverse persists every business rule as a row in the `workflow`
+table with:
+
+- `category = 9` — BusinessRule
+- `primaryentity = "lc_task"` — the table the rule runs on
+- `clientdata` — the **XAML** expression of the rule (the same XAML
+  the maker designer generates when you draw the condition node and
+  the action node)
+- `mode = 0` — entity-scope (vs. business-process flow)
+- `statecode = 1` — activated
+
+Once you know the shape, authoring is a `POST /workflows`. The maker
+portal designer just round-trips the XAML.
+
+### Claude Code writes the rule
+
+```
+Author a Dataverse business rule on lc_task:
+  - condition: lc_blockerreason is not empty
+  - then: set lc_status to "Blocked", show notification
+    "Task is blocked — see blocker reason for details"
+
+Emit it as scripts/python/business_rule_lc_task.py that creates the
+workflow row via Web API, activates it, and is idempotent. Use the
+auth helpers in scripts/auth.py.
+```
+
+The output is `scripts/python/business_rule_lc_task.py` — one script,
+two helpers (XAML body + activation), runnable from the CLI.
+
+### The round-trip is the proof
+
+After the script runs:
+
+1. Open the rule at `make.powerapps.com → Tables → lc_task → Business rules`.
+   The maker designer **renders** the XAML the script wrote — the
+   condition node, the set-field action node, the notification text.
+   The agent and the GUI are looking at the same record.
+2. Open an `lc_task` form, fill in `lc_blockerreason`, tab out. The
+   status flips to **Blocked**, the notification appears.
+
+> _"Declarative no-code and code-first don't have to be enemies. The
+> maker designer can't see whether a row was created by a human
+> clicking nodes or a script from Claude Code — because it's the same
+> row either way. Same model, same shape, two doors."_
+
+That's the closing beat of Episode 4 — the coding agent extending
+declarative automation it never wrote a UI for.
+
+---
+
 ## What's deliberately NOT in this episode
 
 - **A custom MCP server.** Custom MCP is Episode 5, and it solves a different
@@ -217,6 +291,14 @@ k6 Cloud subscription                 #2      open    Load test: Verify 10k conc
 - **Re-platforming the SharePoint Word-doc playbook.** Episode 2 already
   codified the playbook into business skills. The SharePoint VE here is for
   the team's task list, not the Word doc.
+- **Security roles + business units.** RBAC over this now-federated model
+  is the entire subject of [Episode 6 — Roles & Reach](../ep-06-rbac/). We
+  finish Ep 4 with one rule visible to everyone; Ep 6 is where _who can
+  see what_ gets answered.
+- **Multi-action / multi-condition business rules.** The one rule we author
+  is intentionally minimal — one condition, one action, one notification.
+  The point is that the coding agent can write the XAML, not that the rule
+  is complex.
 
 ---
 
@@ -235,9 +317,19 @@ k6 Cloud subscription                 #2      open    Load test: Verify 10k conc
    issues appear as Dataverse rows.
 6. The `$expand` query from Part 3 — `lc_task` joined to live GitHub issues
    through the new lookup, in one Web API call.
-7. **The punchline:**
-   > _"Three systems. Zero copies. One query.
-   > That's what 'native to Dataverse' really means."_
+7. Claude Code in a terminal again: _"author a business rule on lc_task:
+   when lc_blockerreason is set, flip lc_status to Blocked and notify."_
+   It emits `scripts/python/business_rule_lc_task.py`.
+8. We run the script. `POST /workflows` returns 201. Activation returns 204.
+9. `make.powerapps.com → Tables → lc_task → Business rules` — the rule
+   the script wrote renders correctly in the designer.
+10. Open an `lc_task` form, type into `lc_blockerreason`, tab out — status
+    flips to **Blocked**, notification appears.
+11. **The punchline:**
+    > _"Three systems, zero copies, one query. Then a business rule the
+    > maker designer drew without ever opening — because the agent wrote
+    > the same row it would have. That's what 'native to Dataverse'
+    > really means."_
 
 ---
 
@@ -255,6 +347,7 @@ k6 Cloud subscription                 #2      open    Load test: Verify 10k conc
 | [`scripts/setup_virtual_entity.py`](../../scripts/setup_virtual_entity.py) | Web API helper that creates the virtual table + columns. |
 | [`scripts/create_ve_table.py`](../../scripts/create_ve_table.py) | Lower-level table-creation helper (used during iteration). |
 | [`scripts/check_ve.py`](../../scripts/check_ve.py) | One-line existence check against `EntityDefinitions(LogicalName='lc_githubissue')`. |
+| [`scripts/python/business_rule_lc_task.py`](../../scripts/python/business_rule_lc_task.py) | _(planned)_ Claude-authored Web API helper that creates + activates the `lc_task` "Blocked" business rule (`workflow` row, `category=9`, with XAML body). Idempotent. |
 
 ---
 
@@ -282,6 +375,13 @@ python scripts/check_ve.py
 
 # 6. Query via MCP (in your IDE):
 #    SELECT lc_name, lc_state, lc_issuenumber FROM lc_githubissue
+
+# 7. (Part 4) Author + activate the business rule on lc_task
+python scripts/python/business_rule_lc_task.py
+# → POST /workflows returns 201, activation returns 204.
+# → Open make.powerapps.com → Tables → lc_task → Business rules and confirm
+#   the designer renders the rule the script wrote.
+# → On any lc_task form, type into lc_blockerreason → status flips to Blocked.
 ```
 
 ---
