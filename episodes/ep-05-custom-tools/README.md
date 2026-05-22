@@ -228,7 +228,7 @@ Once registered:
 
 ## Part 3 · Local validation (before any agent picks the tools up)
 
-> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 6).
+> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 7).
 > We want to know the tools _work_ before we point an agent at them.
 
 [`episodes/ep-05-custom-tools/preflight.py`](../../episodes/ep-05-custom-tools/preflight.py) is a
@@ -280,7 +280,7 @@ source.
 
 ## What's deliberately NOT in this episode
 
-- **A Copilot Studio agent.** That's Episode 6 — _The Agent_. The point of
+- **A Copilot Studio agent.** That's Episode 7 — _The Agent_. The point of
   this episode is _the tools exist and are independently verified_. Pointing
   an agent at them is the next episode's payoff.
 - **A custom MCP server we host ourselves.** This episode shows BYO MCP via

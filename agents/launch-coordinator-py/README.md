@@ -1,12 +1,12 @@
 # Launch Coordinator (Python edition)
 
 A code-first reimplementation of the **Launch Coordinator** agent first built in
-Copilot Studio in [Episode 6](../../episodes/ep-06-the-agent/README.md). Same job. Same
+Copilot Studio in [Episode 7](../../episodes/ep-07-the-agent/README.md). Same job. Same
 skill. Different runtime.
 
 ## The point
 
-By Episode 8 we have *three* agents that all do launch readiness:
+By Episode 9 we have *three* agents that all do launch readiness:
 
 | Episode | Runtime | Where it lives | LLM brain |
 |---|---|---|---|
@@ -30,7 +30,7 @@ server:
                                  │
                 ┌────────────────┼─────────────────────┐
                 │                │                     │
-        Ep 6 Coordinator   Ep 7 Sentinel        Ep 8 Coordinator (this)
+        Ep 7 Coordinator   Ep 8 Sentinel        Ep 9 Coordinator (this)
         (Copilot Studio)   (Copilot Studio)     (Python + GH Copilot SDK)
 ```
 
@@ -110,7 +110,7 @@ faster.
 
 ## What to look for in the output
 
-The **on-camera moment** for Episode 8: scroll back through the agent's tool
+The **on-camera moment** for Episode 9: scroll back through the agent's tool
 trace. The first MCP call should be:
 
 ```
@@ -155,8 +155,8 @@ a `headers` parameter).
 
 ## See also
 
-- Episode 6 doc — the Copilot Studio Coordinator that authored the same skill
-- Episode 7 doc — Launch Sentinel, autonomous, same brain
+- Episode 7 doc — the Copilot Studio Coordinator that authored the same skill
+- Episode 8 doc — Launch Sentinel, autonomous, same brain
 - [Microsoft Agent Framework](https://github.com/microsoft/agent-framework)
 - [GitHub Copilot SDK](https://github.com/github/copilot-sdk)
 - [Dataverse MCP server](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-mcp)

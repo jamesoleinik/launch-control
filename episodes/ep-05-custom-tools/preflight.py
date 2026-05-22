@@ -143,8 +143,8 @@ Query the `connector` table for rows where `name` contains the customization pre
 
 ## Out-of-scope
 
-- Invoking via Copilot Studio agent (that's Ep 6 demo)
-- Tool-level invocation of paconn MCP servers (need an MCP client; covered in Ep 6 / Claude Desktop in Ep 8)
+- Invoking via Copilot Studio agent (that's Ep 7 demo)
+- Tool-level invocation of paconn MCP servers (need an MCP client; covered in Ep 7 / Claude Desktop in Ep 9)
 """
 
 

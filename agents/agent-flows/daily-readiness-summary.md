@@ -1,8 +1,8 @@
-> ## ⚠️ DEFERRED — see [`episodes/ep-07-autonomous-agents/README.md`](../../episodes/ep-07-autonomous-agents/README.md)
+> ## ⚠️ DEFERRED — see [`episodes/ep-08-autonomous-agents/README.md`](../../episodes/ep-08-autonomous-agents/README.md)
 >
-> The standalone Agent Flow surface was pivoted out of Episode 7 because the preview Dataverse MCP-step UX could not reliably invoke unbound Custom APIs (specifically `lc_CalculateLaunchReadiness`) from natural-language Instructions. We discovered the Instructions box does accept raw Dataverse SQL (preserved in Step 0 / Step 1 below), but Custom API invocation in nested loop steps was the unblockable issue.
+> The standalone Agent Flow surface was pivoted out of Episode 8 because the preview Dataverse MCP-step UX could not reliably invoke unbound Custom APIs (specifically `lc_CalculateLaunchReadiness`) from natural-language Instructions. We discovered the Instructions box does accept raw Dataverse SQL (preserved in Step 0 / Step 1 below), but Custom API invocation in nested loop steps was the unblockable issue.
 >
-> **Replacement:** a recurrence trigger added directly to the Launch Sentinel autonomous agent. Same Dataverse MCP server, plus a Teams MCP `SendMessageToSelf` action. See [`agents/launch-sentinel/README.md`](../launch-sentinel/README.md) and [`episodes/ep-07-autonomous-agents/README.md`](../../episodes/ep-07-autonomous-agents/README.md).
+> **Replacement:** a recurrence trigger added directly to the Launch Sentinel autonomous agent. Same Dataverse MCP server, plus a Teams MCP `SendMessageToSelf` action. See [`agents/launch-sentinel/README.md`](../launch-sentinel/README.md) and [`episodes/ep-08-autonomous-agents/README.md`](../../episodes/ep-08-autonomous-agents/README.md).
 >
 > **Why this doc is preserved:** when the MCP-step UX in Agent Flows hardens (Custom API invocation becomes reliable from the Instructions box), this design is still the cleanest expression of "MCP tools and MCP flow steps are the same primitive." Reactivate then.
 >
@@ -10,13 +10,13 @@
 
 ---
 
-# Daily Readiness Digest — Standalone Agent Flow (Episode 7, Part 2) — DEFERRED
+# Daily Readiness Digest — Standalone Agent Flow (Episode 8, Part 2) — DEFERRED
 
 A **standalone Copilot Studio Agent Flow** that runs every weekday morning at 8 AM. It calls `lc_CalculateLaunchReadiness` for every active launch and posts a single digest to a Microsoft Teams channel.
 
-> **Scope clarification:** this is an **Agent Flow** (Copilot Studio Flows canvas), not a Power Automate cloud flow. The Dataverse MCP step type is a first-class step in Agent Flows. Don't build this in `flow.microsoft.com` — different surface, different ALM story, and it would defeat the Episode 7 narrative ("MCP tools and MCP flow steps are the same primitive").
+> **Scope clarification:** this is an **Agent Flow** (Copilot Studio Flows canvas), not a Power Automate cloud flow. The Dataverse MCP step type is a first-class step in Agent Flows. Don't build this in `flow.microsoft.com` — different surface, different ALM story, and it would defeat the Episode 8 narrative ("MCP tools and MCP flow steps are the same primitive").
 
-> **Why standalone (not inside Sentinel):** the flow doesn't use any of Sentinel's instructions, topics, or knowledge — it's pure deterministic orchestration (list → loop → call API → post). Hosting it inside the bot would be narrative theater, not architecture. The Episode 7 framing is "**the autonomous tier has two surfaces**": Sentinel (event-driven, LLM-reasoning) **and** this flow (cron-driven, deterministic). Both call the **same** Dataverse MCP server. That's the punch line.
+> **Why standalone (not inside Sentinel):** the flow doesn't use any of Sentinel's instructions, topics, or knowledge — it's pure deterministic orchestration (list → loop → call API → post). Hosting it inside the bot would be narrative theater, not architecture. The Episode 8 framing is "**the autonomous tier has two surfaces**": Sentinel (event-driven, LLM-reasoning) **and** this flow (cron-driven, deterministic). Both call the **same** Dataverse MCP server. That's the punch line.
 
 > **MCP step UX (preview):** newer tenants render the Dataverse MCP step as a **single Instructions box**. **Verified in this tenant:** the box accepts **raw Dataverse SQL** (the same dialect as the MCP `read_query` tool), and that's the most reliable shape — natural-language filters on choice columns silently fail with "An error has occurred." Paste SQL directly. For non-SQL operations (invoking a Custom API, creating a record), use a natural-language instruction since SQL doesn't cover those.
 
@@ -40,7 +40,7 @@ A **standalone Copilot Studio Agent Flow** that runs every weekday morning at 8 
    - If it returns rows ✅ → proceed to the build below.
 5. **If no step type appears**:
    - Delete the spike flow.
-   - **Defer Part 2** of Episode 7 to a future re-cut once the step type is GA in your tenant.
+   - **Defer Part 2** of Episode 8 to a future re-cut once the step type is GA in your tenant.
    - **Do not** fall back to a Power Automate cloud flow on camera. It changes the surface, the ALM story, and the narrative — better to ship Part 1 alone than to muddy the message.
 
 ---
@@ -86,7 +86,7 @@ Wrap a **For each** loop around the array from Step 1. Inside the loop, add a se
 
 Why a Custom API instead of raw queries: the readiness algorithm was built once in Episode 5 (`plugins/CalculateLaunchReadiness/`). Reusing it here is what lets the demo say "**three callers, one algorithm**: the Coordinator agent, the Sentinel bot, and this flow."
 
-Why this and not raw queries: the Custom API encapsulates the readiness algorithm (built in Episode 5). Re-implementing it inline in the flow would drift from what the Coordinator (Episode 6) and Sentinel (Episode 7 Part 1) use.
+Why this and not raw queries: the Custom API encapsulates the readiness algorithm (built in Episode 5). Re-implementing it inline in the flow would drift from what the Coordinator (Episode 7) and Sentinel (Episode 8 Part 1) use.
 
 ### Step 3 — Compose per-launch markdown block
 

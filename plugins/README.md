@@ -66,7 +66,7 @@ CloudAppEvents
 
 | Agent Type | Custom Action (internal) | BYO MCP (external) |
 |-----------|------------------------|-------------------|
-| Copilot Studio (Ep 6) | Via MCP Server tool | Via registered MCP connector |
-| Autonomous Agent (Ep 7) | Via event-triggered action | Via agent flow MCP step |
-| Claude Code (Ep 8) | Via SDK/Web API | Via MCP client |
-| M365 Copilot (Ep 9) | Via Dataverse Intelligence | Not directly available |
+| Copilot Studio (Ep 7) | Via MCP Server tool | Via registered MCP connector |
+| Autonomous Agent (Ep 8) | Via event-triggered action | Via agent flow MCP step |
+| Claude Code (Ep 9) | Via SDK/Web API | Via MCP client |
+| M365 Copilot (Ep 10) | Via Dataverse Intelligence | Not directly available |
