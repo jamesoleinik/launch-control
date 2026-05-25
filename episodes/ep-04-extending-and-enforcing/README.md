@@ -46,7 +46,7 @@ One sticky label per beat. Each one is short enough to read at glance, written i
 | 13 | Rule 1 PATCH — blocker reason set | **Rule 1: blockerreason set → status = Blocked.** | *No client code. No form script. Just the platform.* |
 | 14 | Rule 3 PATCH — try to mark Done with blocker | **Rule 3: Done refused. Row unchanged.** | *HTTP 400. The platform said no.* |
 | 15 | Rule 2 PATCH — blocker reason cleared | **Rule 2: blockerreason cleared → status = InProgress.** | *Only if it was Blocked. PreImage knows.* |
-| 16 | Final cross-system query payoff | **One model. Live data. Enforced.** | *The same rule fires whether James writes it or an agent does.* |
+| 16 | Final cross-system query payoff | **The platform has opinions now.** | *And the agent gave them to it.* |
 
 **Production tips:**
 - Use a consistent style: bold sans-serif lower-third, ~3-second hold, fade in/out.
