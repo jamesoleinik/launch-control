@@ -57,12 +57,12 @@ Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 - Two BYO MCP servers registered as Power Platform custom connectors via `paconn`.
 - Plugin assembly + types registered; harness with `--plan` / `--run` modes.
 
-## [ep-04] — Connecting the Dots (Virtual Entities + Business Rule)
+## [ep-04] — Extending & Enforcing the Model (Virtual Entities + Server-Side Business Rule)
 
 - Custom **GitHub Issues** virtual entity provider — issues show up in Dataverse as real records, no replication.
 - Wired GitHub Issues VE as a lookup target on `lc_task` so a task can point directly at a live issue.
 - Companion VE setup guide.
-- **Bonus beat:** Claude Code authors a Dataverse business rule on `lc_task` (`workflow` row, `category=9`, XAML body) — when `lc_blockerreason` is set, the rule flips `lc_status` to **Blocked** and shows a notification. Proof that declarative no-code and code-first are the same row, two doors.
+- **The enforcement beat:** Claude Code authors a Dataverse **server-side business rule** on `lc_task` (`workflow` row, `category=2`, Entity scope, XAML body) — when `lc_blockerreason` is set, the rule flips `lc_taskstatus` to **Blocked** on every write, including writes from the agent layer we build in later episodes. Proof that declarative guardrails and code-first are the same row, two doors.
 
 ## [ep-03] — Promoting the Staging Layer
 

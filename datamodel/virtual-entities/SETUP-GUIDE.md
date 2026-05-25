@@ -54,11 +54,26 @@ Plugin types are NOT auto-registered when you upload an assembly. Register each 
 
 **Returns:** Plugin Type IDs for each plugin.
 
-## Step 4: Register the Data Provider (Plugin Registration Tool)
+## Step 4: Register the Data Provider — PRT (GUI) or Web API (script)
 
-**IMPORTANT:** This step MUST use the Plugin Registration Tool (PRT). The Web API can create 
-a data provider without a data source, but the PRT creates both the data provider AND the 
-data source entity together, which is required for Step 5.
+> **Update (May 2026):** PRT is **optional.** The original "the Web API can't do this" claim was wrong. We reverse-engineered what PRT writes ([`scripts/python/register_ve_data_provider.py`](../../scripts/python/register_ve_data_provider.py)) and verified the rebuild path end-to-end from a clean slate (full teardown → re-register via Web API → query returns 6 live GitHub issues). PRT remains the recommended on-camera path because the GUI dialog is more discoverable for viewers; the script is the documented Web-API alternative.
+
+**The two paths produce the same two rows:**
+
+1. **One `entitydataproviders` row** — has one column per SDK message (`retrievemultipleplugin`, `retrieveplugin`, `createplugin`, `updateplugin`, ...). Implemented operations get your plugin-type GUIDs; every unimplemented slot gets the OOB "Not Implemented" plugintype (`c1919979-0021-4f11-a587-a8f904bdfdf9`). The `datasourcelogicalname` column links to row 2 by **logical name** (not GUID).
+2. **One data-source virtual entity** — a regular `TableType=Virtual` entity backed by the OOB `JsonConverter` data provider (`b2112a7e-b26c-42f7-9b63-9a809a9d716f`). Holds the provider's configuration rows.
+
+Neither PRT nor the script creates any `sdkmessageprocessingsteps` for VE data providers — the binding IS the entitydataprovider row's own columns. This is different from "regular" plugins bound to a specific message.
+
+### Three Web-API gotchas (only relevant for the script path)
+
+If you write your own version of `register_ve_data_provider.py` from scratch, these are the three errors you will hit in order — captured from the clean-slate rebuild test:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `400 CanChangeTrackingBeEnabled can not be active for ... virtual Entity` | The data-source entity is itself a virtual entity and needs the full virtual-entity managed-property set | Include `ChangeTrackingEnabled: false`, `CanChangeTrackingBeEnabled: {Value: false, CanBeChanged: false}`, `IsAvailableOffline`, `IsVisibleInMobileClient`, `CanCreateCharts` on the data-source entity create |
+| `400 You must specify a value for the External Collection Name property` | Only `ExternalName` was set | Set both `ExternalName` AND `ExternalCollectionName` |
+| `400 An ODataPrimitiveValue was instantiated with a value of type 'ODataEntityReferenceLink'` when creating the `entitydataprovider` row | The `*plugin` columns look like lookups but are `Uniqueidentifier` primitives | Send each plugin column as a **raw GUID string**, not `@odata.bind`. Confirmed via `EntityDefinitions(LogicalName='entitydataprovider')/Attributes` — all 20 plugin columns are `AttributeType=Uniqueidentifier` |
 
 ### PRT Connection Troubleshooting
 

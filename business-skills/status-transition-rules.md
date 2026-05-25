@@ -101,7 +101,7 @@ per entity — do not mix them up.
 ### Cross-system tasks (virtual entity linkage)
 
 Some tasks link to a GitHub issue via the `lc_GitHubIssueId` lookup on
-`lc_task` (Episode 3 — Connecting the Dots). Before transitioning a
+`lc_task` (Episode 4 — Extending & Enforcing the Model). Before transitioning a
 linked task to `Done`, **verify the GitHub issue is closed** by reading
 the virtual entity:
 

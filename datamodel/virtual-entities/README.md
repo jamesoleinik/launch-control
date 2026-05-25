@@ -1,4 +1,4 @@
-# Episode 4: Virtual Entities — Connecting the Dots
+# Episode 4: Virtual Entities — Extending the Model
 
 ## Overview
 
