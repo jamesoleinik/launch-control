@@ -24,6 +24,37 @@
 
 Smash-cut from the kicker straight into the `SELECT lc_name, source_system FROM (lc_Task ∪ lc_GitHubIssue)` query screen to pay off the frustration with the demo.
 
+### On-screen annotation — full episode lower-third track
+
+One sticky label per beat. Each one is short enough to read at glance, written in the same eye-roll voice as the cold open.
+
+| # | Beat (when it fires) | Lower-third | Subtitle (optional) |
+|---|---|---|---|
+| 0 | Cold open, B-roll of trackers | **Every PM's morning.** | *ADO. GitHub. A spreadsheet.* |
+| 1 | First reveal of the cross-system query | **One query. Two systems.** | *Neither one is copying the other.* |
+| 2 | Open `Class1.cs` / start writing the .NET plugin | **Part 1 — Build the provider.** | *GitHub doesn't ship as a Dataverse VE. So we ship one.* |
+| 3 | `dotnet build` succeeds | **17 KB of plugin. Zero rows copied.** | |
+| 4 | Run `register_ve_plugin.py` + `register_ve_data_provider.py` | **No PRT. Just the Web API.** | *Two rows is all PRT writes anyway.* |
+| 5 | `setup_virtual_entity.py` creates `lc_GitHubIssue` | **A virtual table is born.** | *9 columns. 0 rows on disk.* |
+| 6 | First `GET /lc_githubissues` returns 6 rows | **Live from GitHub. Through Dataverse.** | *The plugin ran. The issues are real.* |
+| 7 | Open `add_ve_lookup.py` | **Part 2 — Make it a relationship.** | *One lookup, two universes.* |
+| 8 | `bind_ve_lookup.py` patches 6 tasks | **6 launch tasks ↔ 6 GitHub issues.** | *Bound by deterministic GUID, not nightly sync.* |
+| 9 | Run the `$expand` joined query | **The query that wasn't possible.** | *Real `lc_task` rows. Real GitHub state. One round-trip.* |
+| 10 | Open Copilot CLI to write the rule plugins | **Part 3 — The agent writes the rules.** | *Three guardrails. One assembly. Same DLL as Part 1.* |
+| 11 | `TaskRules.cs` materializes in the editor | **C# plugin > business rule.** | *Sandboxed, sync, on every write — including from agents.* |
+| 12 | Run `register_task_rule_steps.py` | **3 steps. 2 PreImages. 0 clicks.** | |
+| 13 | Rule 1 PATCH — blocker reason set | **Rule 1: blockerreason set → status = Blocked.** | *No client code. No form script. Just the platform.* |
+| 14 | Rule 3 PATCH — try to mark Done with blocker | **Rule 3: Done refused. Row unchanged.** | *HTTP 400. The platform said no.* |
+| 15 | Rule 2 PATCH — blocker reason cleared | **Rule 2: blockerreason cleared → status = InProgress.** | *Only if it was Blocked. PreImage knows.* |
+| 16 | Final cross-system query payoff | **One model. Live data. Enforced.** | *The same rule fires whether James writes it or an agent does.* |
+
+**Production tips:**
+- Use a consistent style: bold sans-serif lower-third, ~3-second hold, fade in/out.
+- Beats 6, 9, and 16 are the "money shots" — let those lower-thirds linger a beat longer.
+- Beats 13/14/15 are a rapid-fire trio; consider a unified "Rule N of 3" counter in the upper-right so viewers can see the trio land as a set.
+- Beat 11 ("C# plugin > business rule") is the thesis statement of Part 3 — if you cut any annotation, keep this one.
+
+
 
 Episode 3 promoted the staging trackers into a unified `lc_Task` / `lc_Milestone` /
 `lc_Launch` model. The core is real. But the work itself doesn't all live in
