@@ -9,9 +9,21 @@
 
 ## The hook
 
-> _"'Engineering wants their bugs in GitHub Issues.' 'The other engineering team lives in ADO.' 'The platform crew swears by Linear.' 'Sales just emails them to me personally.' Every PM running a cross-team launch rolls their eyes, opens a 47-tab Notion doc, and resigns themselves to copy-pasting work items between five tools."_
+> _"'The platform team lives in ADO.' 'Engineering wants their bugs in GitHub Issues.' 'And marketing? Marketing tracks the launch in… a spreadsheet.' Every PM running a cross-team launch rolls their eyes, opens a 47-tab browser, and resigns themselves to copy-pasting work items between three tools that don't talk to each other."_
 >
 > _"Fine. I'll just unify it in Dataverse — without copying a single row. And while I'm in there, I'll write the rule that every agent in this org has to honor."_
+
+### On-screen annotation — cold-open tracker montage
+
+| Beat | Cut | Lower-third |
+|---|---|---|
+| 1 | ADO board     | **Tracker 1: ADO** |
+| 2 | GitHub Issues | **Tracker 2: GitHub** |
+| 3 | Spreadsheet   | **Tracker 3: …a spreadsheet.** *(hold a beat)* |
+| 4 | Hold on spreadsheet | **"And none of them talk to each other."** |
+
+Smash-cut from the kicker straight into the `SELECT lc_name, source_system FROM (lc_Task ∪ lc_GitHubIssue)` query screen to pay off the frustration with the demo.
+
 
 Episode 3 promoted the staging trackers into a unified `lc_Task` / `lc_Milestone` /
 `lc_Launch` model. The core is real. But the work itself doesn't all live in
