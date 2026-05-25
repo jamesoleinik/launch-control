@@ -31,7 +31,7 @@ One sticky label per beat. Each one is short enough to read at glance, written i
 | # | Beat (when it fires) | Lower-third | Subtitle (optional) |
 |---|---|---|---|
 | 0 | Cold open, B-roll of trackers | **Every PM's morning.** | *ADO. GitHub. A spreadsheet.* |
-| 1 | First reveal of the cross-system query | **One query. Two systems.** | *Neither one is copying the other.* |
+| 1 | First reveal of the cross-system query | **When config runs out — the agent writes code.** | *Two plugins. Same DLL. Both authored by Copilot.* |
 | 2 | Open `Class1.cs` / start writing the .NET plugin | **Part 1 — Build the provider.** | *GitHub doesn't ship as a Dataverse VE. So we ship one.* |
 | 3 | `dotnet build` succeeds | **17 KB of plugin. Zero rows copied.** | |
 | 4 | Run `register_ve_plugin.py` + `register_ve_data_provider.py` | **No PRT. Just the Web API.** | *Two rows is all PRT writes anyway.* |
