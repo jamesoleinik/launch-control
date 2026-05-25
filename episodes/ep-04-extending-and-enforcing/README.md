@@ -9,9 +9,24 @@
 
 ## The hook
 
-> _"'The platform team lives in ADO.' 'Engineering wants their bugs in GitHub Issues.' 'And marketing? Marketing tracks the launch in… a spreadsheet.' Every PM running a cross-team launch rolls their eyes, opens a 47-tab browser, and resigns themselves to copy-pasting work items between three tools that don't talk to each other."_
+**Cold-open script — beat-by-beat with the tracker cuts:**
+
+> **[CUT 1 — ADO board]**
+> _"The platform team lives in ADO."_
 >
-> _"Fine. I'll just unify it in Dataverse — without copying a single row. And while I'm in there, I'll write the rule that every agent in this org has to honor."_
+> **[CUT 2 — GitHub Issues]**
+> _"Engineering tracks their bugs in GitHub."_
+>
+> **[CUT 3 — spreadsheet] (hold the beat)**
+> _"And marketing tracks the launch in… a spreadsheet."_
+>
+> **[HOLD on spreadsheet, then to camera]**
+> _"Every PM running a cross-team launch is staring at three systems that don't talk to each other — and resigning themselves to copy-pasting between all of them."_
+>
+> **[Beat — half smile]**
+> _"Fine. Today I'm going to fix that — without copying a single row. And while I'm in there, I'll teach the platform a rule that every agent in this org has to honor."_
+
+The script lines correspond 1:1 with the lower-third cues in the next section, so the delivery and the on-screen annotations land together.
 
 ### On-screen annotation — cold-open tracker montage
 
