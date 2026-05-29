@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="lc_Verdict">
+  <description default="GO, NO-GO, or CONDITIONAL">
+    <label description="GO, NO-GO, or CONDITIONAL" languagecode="1033" />
+  </description>
+  <displayname default="Verdict">
+    <label description="Verdict" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>lc_Verdict</name>
+  <type>10</type>
+</customapiresponseproperty>

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SdkMessageProcessingStep Name="lc_task: TaskBlockedRule (Pre-Update)" SdkMessageProcessingStepId="{70017973-9058-f111-bec6-6045bd0a3ee0}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SdkMessageId>20bebb1b-ea3e-db11-86a7-000a3a5473e8</SdkMessageId>
+  <PluginTypeName>GitHubIssuesProvider.TaskBlockedRulePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea</PluginTypeName>
+  <PluginTypeId>a43aee53-9058-f111-bec7-00224802be5b</PluginTypeId>
+  <PrimaryEntity>lc_task</PrimaryEntity>
+  <AsyncAutoDelete>0</AsyncAutoDelete>
+  <Description>Force lc_taskstatus=Blocked when lc_blockerreason is set.</Description>
+  <FilteringAttributes>lc_blockerreason</FilteringAttributes>
+  <InvocationSource>1</InvocationSource>
+  <Mode>0</Mode>
+  <Rank>2</Rank>
+  <EventHandlerTypeCode>4602</EventHandlerTypeCode>
+  <Stage>20</Stage>
+  <IsCustomizable>1</IsCustomizable>
+  <IsHidden>0</IsHidden>
+  <SupportedDeployment>0</SupportedDeployment>
+  <IntroducedVersion>1.0.0.0</IntroducedVersion>
+  <SdkMessageProcessingStepImages />
+</SdkMessageProcessingStep>

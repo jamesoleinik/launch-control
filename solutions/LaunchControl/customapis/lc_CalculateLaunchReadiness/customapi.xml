@@ -1,0 +1,18 @@
+<customapi uniquename="lc_CalculateLaunchReadiness">
+  <allowedcustomprocessingsteptype>0</allowedcustomprocessingsteptype>
+  <bindingtype>0</bindingtype>
+  <description default="Evaluates all 4 launch gates and returns a readiness score, summary, and verdict">
+    <label description="Evaluates all 4 launch gates and returns a readiness score, summary, and verdict" languagecode="1033" />
+  </description>
+  <displayname default="Calculate Launch Readiness">
+    <label description="Calculate Launch Readiness" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isfunction>0</isfunction>
+  <isprivate>0</isprivate>
+  <name>lc_CalculateLaunchReadiness</name>
+  <plugintypeid>
+    <plugintypeexportkey>c0c8c114-7d5b-f111-bec7-000d3a5a5baf</plugintypeexportkey>
+  </plugintypeid>
+  <workflowsdkstepenabled>0</workflowsdkstepenabled>
+</customapi>

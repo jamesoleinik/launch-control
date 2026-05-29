@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="lc_ReadinessScore">
+  <description default="Overall score 0-100">
+    <label description="Overall score 0-100" languagecode="1033" />
+  </description>
+  <displayname default="Readiness Score">
+    <label description="Readiness Score" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>lc_ReadinessScore</name>
+  <type>2</type>
+</customapiresponseproperty>

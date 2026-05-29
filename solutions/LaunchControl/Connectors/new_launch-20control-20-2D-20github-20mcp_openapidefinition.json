@@ -1,0 +1,34 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Launch Control - GitHub MCP",
+    "description": "GitHub remote MCP server, registered as a Power Platform custom connector via paconn. Demonstrates Episode 5 BYO MCP pattern with PAT/Bearer auth via x-ms-agentic-protocol.",
+    "version": "1.0.0"
+  },
+  "host": "api.githubcopilot.com",
+  "basePath": "/",
+  "schemes": ["https"],
+  "paths": {
+    "/mcp/": {
+      "post": {
+        "operationId": "InvokeServer",
+        "summary": "Launch Control - GitHub MCP",
+        "description": "Streamable HTTP entry point for the GitHub remote MCP server.",
+        "x-ms-agentic-protocol": "mcp-streamable-1.0",
+        "responses": {
+          "200": { "description": "Immediate Response" }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization"
+    }
+  },
+  "security": [
+    { "api_key": [] }
+  ]
+}

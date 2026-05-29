@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="lc_LaunchName">
+  <description default="Name of the launch to evaluate">
+    <label description="Name of the launch to evaluate" languagecode="1033" />
+  </description>
+  <displayname default="Launch Name">
+    <label description="Launch Name" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>lc_LaunchName</name>
+  <type>10</type>
+</customapirequestparameter>

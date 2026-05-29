@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="OutputFloat">
+  <description default="OutputFloat">
+    <label description="OutputFloat" languagecode="1033" />
+  </description>
+  <displayname default="OutputFloat">
+    <label description="OutputFloat" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>OutputFloat</name>
+  <type>6</type>
+</customapiresponseproperty>

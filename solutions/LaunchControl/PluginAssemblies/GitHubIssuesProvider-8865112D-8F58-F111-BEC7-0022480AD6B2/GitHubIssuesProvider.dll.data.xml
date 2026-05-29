@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PluginAssembly FullName="GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginAssemblyId="8865112d-8f58-f111-bec7-0022480ad6b2" CustomizationLevel="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Virtual entity data provider for GitHub Issues</Description>
+  <IsolationMode>2</IsolationMode>
+  <SourceType>0</SourceType>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <FileName>/PluginAssemblies/GitHubIssuesProvider-8865112D-8F58-F111-BEC7-0022480AD6B2/GitHubIssuesProvider.dll</FileName>
+  <PluginTypes>
+    <PluginType AssemblyQualifiedName="GitHubIssuesProvider.RetrieveMultiplePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginTypeId="4b85d428-8f58-f111-bec7-00224802b745" Name="GitHubIssuesProvider.RetrieveMultiplePlugin">
+      <Description>Virtual-entity RetrieveMultiple handler for GitHub Issues.</Description>
+      <FriendlyName>GitHubIssuesProvider.RetrieveMultiplePlugin</FriendlyName>
+    </PluginType>
+    <PluginType AssemblyQualifiedName="GitHubIssuesProvider.RetrievePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginTypeId="4d85d428-8f58-f111-bec7-00224802b745" Name="GitHubIssuesProvider.RetrievePlugin">
+      <Description>Virtual-entity Retrieve handler for GitHub Issues.</Description>
+      <FriendlyName>GitHubIssuesProvider.RetrievePlugin</FriendlyName>
+    </PluginType>
+    <PluginType AssemblyQualifiedName="GitHubIssuesProvider.TaskBlockedRulePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginTypeId="a43aee53-9058-f111-bec7-00224802be5b" Name="GitHubIssuesProvider.TaskBlockedRulePlugin">
+      <Description>Pre-Update guardrail on lc_task: when lc_blockerreason has content, force lc_taskstatus to Blocked.</Description>
+      <FriendlyName>GitHubIssuesProvider.TaskBlockedRulePlugin</FriendlyName>
+    </PluginType>
+    <PluginType AssemblyQualifiedName="GitHubIssuesProvider.TaskCompletionGuardRulePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginTypeId="a63aee53-9058-f111-bec7-00224802be5b" Name="GitHubIssuesProvider.TaskCompletionGuardRulePlugin">
+      <Description>Pre-Update guardrail on lc_task: refuse to mark Done while lc_blockerreason is still set.</Description>
+      <FriendlyName>GitHubIssuesProvider.TaskCompletionGuardRulePlugin</FriendlyName>
+    </PluginType>
+    <PluginType AssemblyQualifiedName="GitHubIssuesProvider.TaskUnblockedRulePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" PluginTypeId="8b1f4a50-9058-f111-bec7-00224802b745" Name="GitHubIssuesProvider.TaskUnblockedRulePlugin">
+      <Description>Pre-Update guardrail on lc_task: when lc_blockerreason is cleared on a Blocked task, revert lc_taskstatus to InProgress.</Description>
+      <FriendlyName>GitHubIssuesProvider.TaskUnblockedRulePlugin</FriendlyName>
+    </PluginType>
+  </PluginTypes>
+</PluginAssembly>

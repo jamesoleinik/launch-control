@@ -1,0 +1,10 @@
+<botcomponent schemaname="lc_Test.gpt.default">
+  <componenttype>15</componenttype>
+  <iscustomizable>0</iscustomizable>
+  <name>Test</name>
+  <parentbotid>
+    <schemaname>lc_Test</schemaname>
+  </parentbotid>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</botcomponent>

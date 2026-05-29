@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Connector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <connectorid>4aa5aa10-7f5b-f111-bec7-000d3a5a5baf</connectorid>
+  <description></description>
+  <displayname>Launch Control - GitHub MCP</displayname>
+  <iconbrandcolor>#24292F</iconbrandcolor>
+  <name>new_launch-20control-20-2D-20github-20mcp</name>
+  <connectortype>1</connectortype>
+  <scriptoperations>[]</scriptoperations>
+  <openapidefinition>/Connector/new_launch-20control-20-2D-20github-20mcp_openapidefinition.json</openapidefinition>
+  <connectionparameters>/Connector/new_launch-20control-20-2D-20github-20mcp_connectionparameters.json</connectionparameters>
+  <policytemplateinstances>/Connector/new_launch-20control-20-2D-20github-20mcp_policytemplateinstances.json</policytemplateinstances>
+</Connector>

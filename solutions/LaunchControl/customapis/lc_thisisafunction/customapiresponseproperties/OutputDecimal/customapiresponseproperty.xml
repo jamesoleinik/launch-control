@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="OutputDecimal">
+  <description default="OutputDecimal">
+    <label description="OutputDecimal" languagecode="1033" />
+  </description>
+  <displayname default="OutputDecimal">
+    <label description="OutputDecimal" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>OutputDecimal</name>
+  <type>2</type>
+</customapiresponseproperty>

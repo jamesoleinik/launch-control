@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="InputBoolean">
+  <description default="InputBoolean">
+    <label description="InputBoolean" languagecode="1033" />
+  </description>
+  <displayname default="InputBoolean">
+    <label description="InputBoolean" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>InputBoolean</name>
+  <type>0</type>
+</customapirequestparameter>

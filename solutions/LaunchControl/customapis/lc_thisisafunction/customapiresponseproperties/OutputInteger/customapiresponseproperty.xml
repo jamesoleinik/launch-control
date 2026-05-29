@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="OutputInteger">
+  <description default="OutputInteger">
+    <label description="OutputInteger" languagecode="1033" />
+  </description>
+  <displayname default="OutputInteger">
+    <label description="OutputInteger" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>OutputInteger</name>
+  <type>7</type>
+</customapiresponseproperty>

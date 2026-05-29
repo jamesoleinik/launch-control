@@ -1,0 +1,21 @@
+<customapi uniquename="lc_thisisafunction">
+  <allowedcustomprocessingsteptype>1</allowedcustomprocessingsteptype>
+  <bindingtype>0</bindingtype>
+  <description default="this is a function">
+    <label description="this is a function" languagecode="1033" />
+  </description>
+  <displayname default="this is a function">
+    <label description="this is a function" languagecode="1033" />
+  </displayname>
+  <fxexpressionid>
+    <uniquename>lc_thisisafunction</uniquename>
+  </fxexpressionid>
+  <iscustomizable>1</iscustomizable>
+  <isfunction>0</isfunction>
+  <isprivate>0</isprivate>
+  <name>this is a function</name>
+  <plugintypeid>
+    <plugintypeexportkey>462b3e8f-beb4-4981-9b87-a60c2162a9f7</plugintypeexportkey>
+  </plugintypeid>
+  <workflowsdkstepenabled>0</workflowsdkstepenabled>
+</customapi>

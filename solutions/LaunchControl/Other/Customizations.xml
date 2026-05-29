@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26042.168" OrganizationSchemaType="Full" CRMServerServiceabilityVersion="9.2.26043.00177">
+  <Entities />
+  <Roles />
+  <Workflows />
+  <FieldSecurityProfiles />
+  <Templates />
+  <EntityMaps />
+  <EntityRelationships />
+  <OrganizationSettings />
+  <optionsets />
+  <CustomControls />
+  <SolutionPluginAssemblies />
+  <SdkMessageProcessingSteps />
+  <EntityDataProviders />
+  <Connectors />
+  <AIModels>
+    <AIModel>
+      <msdyn_aimodelid>{5b92b771-72b6-4c4a-8767-50db60a8db78}</msdyn_aimodelid>
+      <msdyn_name>lc_launch - Risk Summary Prompt 05/18/2026, 06:22:04 AM</msdyn_name>
+      <msdyn_templateid>{0632735e-ce75-4348-888d-0c8efa537334}</msdyn_templateid>
+      <statecode>1</statecode>
+      <statuscode>1</statuscode>
+      <IsCustomizable>1</IsCustomizable>
+      <msdyn_activerunconfigurationid>{6d03ca3e-61bd-47c8-872b-f5dedc0b322b}</msdyn_activerunconfigurationid>
+      <AIConfigurations>
+        <AIConfiguration>
+          <msdyn_aiconfigurationid>{6d03ca3e-61bd-47c8-872b-f5dedc0b322b}</msdyn_aiconfigurationid>
+          <msdyn_customconfiguration>{"version":"GptDynamicPrompt-2","prompt":[{"type":"literal","text":" You are a product launch risk analyst. Analyze the following launch data and \r\ngenerate a brief risk assessment.\r\n \r\n Launch Name: "},{"type":"data","id":"lc_launch.lc_name","text":"lc_launch.name"},{"type":"literal","text":" \n Launch Status: "},{"type":"data","id":"lc_launch.lc_launchstatus","text":"lc_launch.launchstatus"},{"type":"literal","text":" \r\n\r Related Milestones: "},{"type":"data","id":"lc_launch.lc_launch_lc_milestone_lc_launchid.lc_milestonestatus","text":"lc_launch.Launch (lc_milestone).milestonestatus"},{"type":"literal","text":" \r\n Related Status Updates: "},{"type":"data","id":"lc_launch.lc_launch_lc_statusupdate_lc_launchid.lc_summary","text":"lc_launch.Launch (lc_statusupdate).summary"},{"type":"literal","text":" \r\n \r\n Instructions:\r\n 1. Identify any milestones that are \"Blocked\" or \"At Risk\" include the "},{"type":"data","id":"lc_launch.lc_launch_lc_milestone_lc_launchid.lc_name","text":"lc_launch.Launch (lc_milestone).name"},{"type":"literal","text":" \r\n 2. Flag any concerning patterns in status updates\r\n 3. Provide a one-sentence overall risk summary\r\n \r\n Keep the response under 3 sentences.\r\n"},{"type":"inputVariable","id":"PromptColumnRecordId"}],"definitions":{"inputs":[{"id":"PromptColumnRecordId","text":"PromptColumnRecordId","type":"text","quickTestValue":""}],"formulas":[],"data":[{"id":"lc_launch","displayName":"lc_launch","type":"dataverseTable","filters":[{"filterType":"equal","attribute":"lc_launchid","valueType":"inputVariable","value":"PromptColumnRecordId"}]}],"output":{"formats":["text"]}},"modelParameters":{"modelType":"gpt-5-reasoning","gptParameters":{"temperature":1}},"settings":{"recordRetrievalLimit":30,"shouldPreserveRecordLinks":null,"runtime":null},"code":""}</msdyn_customconfiguration>
+          <msdyn_majoriterationnumber>1</msdyn_majoriterationnumber>
+          <msdyn_minoriterationnumber>0</msdyn_minoriterationnumber>
+          <msdyn_name>5b92b771-72b6-4c4a-8767-50db60a8db78_5/18/2026 1:24:47 PM</msdyn_name>
+          <msdyn_modelrundataspecification>H4sIAAAAAAAACpWQSwvCMBCE/0rZcy6CeOhNW4VerNTHfTWrBtokJBuwSP+7rQ8UWw+eZ+abnb3C2tJhYVyFvCPnldEQjwRk2gYujOG5ZsU1xFdIlbcl1kusCGIAAVNmp/aByXfyypnKcmLKUOmCDsbJTPZjgy4BueW2GUuIj1h6ErCpbWdftw36BI0AlFI9PInRTBfus6c9yyeYXXhzZ+hpMn7Rm5afB/538fAVm0dxb8BRaeXPBaHvXvydWtzV6CkPxCUybj0NvDRtlegu/Zz7HtrcAG6DTVXxAQAA</msdyn_modelrundataspecification>
+          <msdyn_type>190690001</msdyn_type>
+          <msdyn_aimodelid>{5b92b771-72b6-4c4a-8767-50db60a8db78}</msdyn_aimodelid>
+          <msdyn_trainedmodelaiconfigurationpareid>{835504ed-bc52-f111-bec7-00224802b745}</msdyn_trainedmodelaiconfigurationpareid>
+          <statecode>2</statecode>
+          <statuscode>7</statuscode>
+          <IsCustomizable>1</IsCustomizable>
+          <msdyn_templateversion>1</msdyn_templateversion>
+        </AIConfiguration>
+        <AIConfiguration>
+          <msdyn_aiconfigurationid>{835504ed-bc52-f111-bec7-00224802b745}</msdyn_aiconfigurationid>
+          <msdyn_majoriterationnumber>1</msdyn_majoriterationnumber>
+          <msdyn_minoriterationnumber>0</msdyn_minoriterationnumber>
+          <msdyn_modeldata>cc8e5f21-d0ef-4f6f-bec4-6fd424b23d6c</msdyn_modeldata>
+          <msdyn_name>5b92b771-72b6-4c4a-8767-50db60a8db78_Training_5/18/2026 1:24:44 PM</msdyn_name>
+          <msdyn_modelrundataspecification>
+        {
+        "schemaVersion": 2,
+        "input": {},
+        "output": {}
+        }
+      </msdyn_modelrundataspecification>
+          <msdyn_type>190690000</msdyn_type>
+          <msdyn_aimodelid>{5b92b771-72b6-4c4a-8767-50db60a8db78}</msdyn_aimodelid>
+          <statecode>2</statecode>
+          <statuscode>6</statuscode>
+          <IsCustomizable>1</IsCustomizable>
+          <msdyn_templateversion>1</msdyn_templateversion>
+        </AIConfiguration>
+      </AIConfigurations>
+    </AIModel>
+  </AIModels>
+  <msdyn_functions />
+  <Languages>
+    <Language>1033</Language>
+  </Languages>
+</ImportExportXml>

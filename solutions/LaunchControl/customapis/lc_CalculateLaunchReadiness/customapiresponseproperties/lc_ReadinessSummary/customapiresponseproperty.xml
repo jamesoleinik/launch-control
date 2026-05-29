@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="lc_ReadinessSummary">
+  <description default="Gate-by-gate breakdown">
+    <label description="Gate-by-gate breakdown" languagecode="1033" />
+  </description>
+  <displayname default="Readiness Summary">
+    <label description="Readiness Summary" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>lc_ReadinessSummary</name>
+  <type>10</type>
+</customapiresponseproperty>

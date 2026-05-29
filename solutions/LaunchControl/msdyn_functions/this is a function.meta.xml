@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<msdyn_function msdyn_functionid="e92ddc7a-835b-f111-bec7-000d3a5a5d72" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <customapi>
+    <uniquename>lc_thisisafunction</uniquename>
+  </customapi>
+  <iscustomizable>1</iscustomizable>
+  <language>100000000</language>
+  <name>this is a function</name>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</msdyn_function>

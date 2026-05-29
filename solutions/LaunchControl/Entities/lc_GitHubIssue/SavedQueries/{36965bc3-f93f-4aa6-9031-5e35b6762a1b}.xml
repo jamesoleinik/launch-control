@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{36965bc3-f93f-4aa6-9031-5e35b6762a1b}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="lc_name" select="1" icon="1" preview="1">
+        <row name="result" id="lc_githubissueid">
+          <cell name="lc_name" width="300" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lc_githubissue">
+          <attribute name="lc_githubissueid" />
+          <attribute name="lc_name" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="All GitHub Issues" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

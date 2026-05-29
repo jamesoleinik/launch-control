@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="InputString">
+  <description default="InputString">
+    <label description="InputString" languagecode="1033" />
+  </description>
+  <displayname default="InputString">
+    <label description="InputString" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>InputString</name>
+  <type>10</type>
+</customapirequestparameter>

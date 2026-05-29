@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="OutputDateTime">
+  <description default="OutputDateTime">
+    <label description="OutputDateTime" languagecode="1033" />
+  </description>
+  <displayname default="OutputDateTime">
+    <label description="OutputDateTime" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>OutputDateTime</name>
+  <type>1</type>
+</customapiresponseproperty>

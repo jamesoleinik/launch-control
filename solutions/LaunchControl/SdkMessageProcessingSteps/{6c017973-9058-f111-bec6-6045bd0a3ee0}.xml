@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SdkMessageProcessingStep Name="lc_task: TaskCompletionGuardRule (Pre-Update)" SdkMessageProcessingStepId="{6c017973-9058-f111-bec6-6045bd0a3ee0}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SdkMessageId>20bebb1b-ea3e-db11-86a7-000a3a5473e8</SdkMessageId>
+  <PluginTypeName>GitHubIssuesProvider.TaskCompletionGuardRulePlugin, GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea</PluginTypeName>
+  <PluginTypeId>a63aee53-9058-f111-bec7-00224802be5b</PluginTypeId>
+  <PrimaryEntity>lc_task</PrimaryEntity>
+  <AsyncAutoDelete>0</AsyncAutoDelete>
+  <Description>Refuse to mark lc_task Done while lc_blockerreason is set.</Description>
+  <FilteringAttributes>lc_taskstatus</FilteringAttributes>
+  <InvocationSource>1</InvocationSource>
+  <Mode>0</Mode>
+  <Rank>1</Rank>
+  <EventHandlerTypeCode>4602</EventHandlerTypeCode>
+  <Stage>20</Stage>
+  <IsCustomizable>1</IsCustomizable>
+  <IsHidden>0</IsHidden>
+  <SupportedDeployment>0</SupportedDeployment>
+  <IntroducedVersion>1.0.0.0</IntroducedVersion>
+  <SdkMessageProcessingStepImages>
+    <SdkMessageProcessingStepImage Name="PreImage">
+      <SdkMessageProcessingStepImageId>{866a2574-9058-f111-bec7-00224802be5b}</SdkMessageProcessingStepImageId>
+      <Attributes>lc_blockerreason,lc_taskstatus</Attributes>
+      <EntityAlias>PreImage</EntityAlias>
+      <ImageType>0</ImageType>
+      <MessagePropertyName>Target</MessagePropertyName>
+      <IsCustomizable>1</IsCustomizable>
+    </SdkMessageProcessingStepImage>
+  </SdkMessageProcessingStepImages>
+</SdkMessageProcessingStep>

@@ -1,0 +1,11 @@
+<customapiresponseproperty uniquename="OutputString">
+  <description default="OutputString">
+    <label description="OutputString" languagecode="1033" />
+  </description>
+  <displayname default="OutputString">
+    <label description="OutputString" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <name>OutputString</name>
+  <type>10</type>
+</customapiresponseproperty>

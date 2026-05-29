@@ -1,0 +1,1 @@
+{"api_key":{"type":"securestring","uiDefinition":{"displayName":"GitHub Personal Access Token","description":"Personal Access Token from https://github.com/settings/tokens (prefix with 'Bearer ')","tooltip":"e.g. Bearer ghp_xxxxxxxx","constraints":{"tabIndex":2,"clearText":false,"required":"true"}}}}

@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="InputFloat">
+  <description default="InputFloat">
+    <label description="InputFloat" languagecode="1033" />
+  </description>
+  <displayname default="InputFloat">
+    <label description="InputFloat" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>InputFloat</name>
+  <type>6</type>
+</customapirequestparameter>

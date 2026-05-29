@@ -1,0 +1,12 @@
+{
+  "fxexpression": {
+    "@uniquename": "lc_thisisafunction",
+    "category": "0",
+    "context": "{\"Tables\":[],\"CustomApis\":[],\"ConnectionReferences\":[],\"TabularConnectionReferences\":[],\"ActionConnectorConnectionReferences\":[]}",
+    "iscustomizable": "1",
+    "name": "this is a function",
+    "parameters": "{\"InputParameter\":[{\"type\":10,\"name\":\"InputString\",\"required\":true,\"entityLogicalName\":null},{\"type\":7,\"name\":\"InputInteger\",\"required\":true,\"entityLogicalName\":null},{\"type\":6,\"name\":\"InputFloat\",\"required\":true,\"entityLogicalName\":null},{\"type\":2,\"name\":\"InputDecimal\",\"required\":true,\"entityLogicalName\":null},{\"type\":1,\"name\":\"InputDateTime\",\"required\":true,\"entityLogicalName\":null},{\"type\":0,\"name\":\"InputBoolean\",\"required\":true,\"entityLogicalName\":null}],\"OutputParameter\":[{\"type\":10,\"name\":\"OutputString\",\"required\":true,\"entityLogicalName\":null},{\"type\":7,\"name\":\"OutputInteger\",\"required\":true,\"entityLogicalName\":null},{\"type\":6,\"name\":\"OutputFloat\",\"required\":true,\"entityLogicalName\":null},{\"type\":2,\"name\":\"OutputDecimal\",\"required\":true,\"entityLogicalName\":null},{\"type\":1,\"name\":\"OutputDateTime\",\"required\":true,\"entityLogicalName\":null},{\"type\":0,\"name\":\"OutputBoolean\",\"required\":true,\"entityLogicalName\":null}]}",
+    "statecode": "0",
+    "statuscode": "1"
+  }
+}

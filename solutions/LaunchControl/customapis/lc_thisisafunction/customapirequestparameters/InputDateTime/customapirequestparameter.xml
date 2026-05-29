@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="InputDateTime">
+  <description default="InputDateTime">
+    <label description="InputDateTime" languagecode="1033" />
+  </description>
+  <displayname default="InputDateTime">
+    <label description="InputDateTime" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>InputDateTime</name>
+  <type>1</type>
+</customapirequestparameter>

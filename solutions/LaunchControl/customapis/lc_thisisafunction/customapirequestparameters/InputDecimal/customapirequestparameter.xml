@@ -1,0 +1,12 @@
+<customapirequestparameter uniquename="InputDecimal">
+  <description default="InputDecimal">
+    <label description="InputDecimal" languagecode="1033" />
+  </description>
+  <displayname default="InputDecimal">
+    <label description="InputDecimal" languagecode="1033" />
+  </displayname>
+  <iscustomizable>1</iscustomizable>
+  <isoptional>0</isoptional>
+  <name>InputDecimal</name>
+  <type>2</type>
+</customapirequestparameter>

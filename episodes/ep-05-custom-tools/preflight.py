@@ -229,11 +229,12 @@ def preflight_p3():
 
 def _lowcode_plugins_available():
     """The Functions-in-Dataverse preview ships as a managed solution that
-    provisions the msdyn_lowcodeplugin table. If that table doesn't exist,
-    the feature is not installed in this env (admin install required).
+    provisions the msdyn_function table (formerly msdyn_lowcodeplugin). If
+    that table doesn't exist, the feature is not installed in this env
+    (admin install required).
     """
     try:
-        get("EntityDefinitions(LogicalName='msdyn_lowcodeplugin')?$select=LogicalName")
+        get("EntityDefinitions(LogicalName='msdyn_function')?$select=LogicalName")
         return True
     except Exception:
         return False
@@ -247,11 +248,11 @@ def preflight_p4():
         r.elapsed_ms = int((time.time() - t0) * 1000)
         return r.skip(
             "Functions-in-Dataverse preview not installed in this env "
-            "(msdyn_lowcodeplugin table missing). Tenant admin must install "
+            "(msdyn_function table missing). Tenant admin must install "
             "the 'Power Platform Low Code Plug-ins' application."
         )
     body = get(
-        "customapis?$filter=uniquename eq 'lc_CalculateLaunchReadinessFx'"
+        "customapis?$filter=uniquename eq 'lc_calculatelaunchreadinessfx'"
         "&$select=customapiid,uniquename,name"
     )
     r.elapsed_ms = int((time.time() - t0) * 1000)
@@ -331,12 +332,12 @@ def test_4_fx_twin():
     if not _lowcode_plugins_available():
         return r.skip(
             "Functions-in-Dataverse preview not installed in this env "
-            "(msdyn_lowcodeplugin table missing). Tenant admin must install "
+            "(msdyn_function table missing). Tenant admin must install "
             "the 'Power Platform Low Code Plug-ins' application."
         )
     launch = "Q3 Widget Launch"
     body = {"lc_LaunchName": launch}
-    status, resp, ms = _req("POST", "lc_CalculateLaunchReadinessFx", body=body)
+    status, resp, ms = _req("POST", "lc_calculatelaunchreadinessfx", body=body)
     r.elapsed_ms = ms
     payload = {"request": body, "response": resp}
     if status != 200:

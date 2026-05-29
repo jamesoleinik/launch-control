@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Connector xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <connectorid>b47e51fe-7e5b-f111-bec7-000d3a5a5a08</connectorid>
+  <description></description>
+  <displayname>Launch Control - Learn MCP</displayname>
+  <iconbrandcolor>#0078D4</iconbrandcolor>
+  <name>new_launch-20control-20-2D-20learn-20mcp</name>
+  <connectortype>1</connectortype>
+  <scriptoperations>[]</scriptoperations>
+  <openapidefinition>/Connector/new_launch-20control-20-2D-20learn-20mcp_openapidefinition.json</openapidefinition>
+  <connectionparameters>/Connector/new_launch-20control-20-2D-20learn-20mcp_connectionparameters.json</connectionparameters>
+  <policytemplateinstances>/Connector/new_launch-20control-20-2D-20learn-20mcp_policytemplateinstances.json</policytemplateinstances>
+</Connector>
