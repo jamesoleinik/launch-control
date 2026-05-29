@@ -1,0 +1,103 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Launch Control - GitHub Releases",
+    "description": "Custom REST connector wrapping the public GitHub Releases API. Used by Episode 5 to demonstrate that ANY HTTPS REST endpoint can be brought into Power Platform as a first-class action, callable from Power Fx Functions, cloud flows, and agents.",
+    "version": "1.0.0"
+  },
+  "host": "api.github.com",
+  "basePath": "/",
+  "schemes": ["https"],
+  "consumes": [],
+  "produces": ["application/json"],
+  "paths": {
+    "/repos/{owner}/{repo}/releases/latest": {
+      "get": {
+        "operationId": "GetLatestRelease",
+        "summary": "Get latest release",
+        "description": "Returns the latest published (non-draft, non-prerelease) release of a public repository.",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-ms-summary": "Owner",
+            "description": "GitHub user or org that owns the repo (e.g. 'microsoft')."
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-ms-summary": "Repository",
+            "description": "Repository name (e.g. 'PowerPlatform-Dataverse-Client')."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest release",
+            "schema": { "$ref": "#/definitions/Release" }
+          },
+          "404": {
+            "description": "Repository or release not found"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/releases": {
+      "get": {
+        "operationId": "ListReleases",
+        "summary": "List releases",
+        "description": "Lists releases for a public repository (most recent first).",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-ms-summary": "Owner"
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-ms-summary": "Repository"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "default": 5,
+            "x-ms-summary": "Results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of releases",
+            "schema": { "type": "array", "items": { "$ref": "#/definitions/Release" } }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Release": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "x-ms-summary": "Release id" },
+        "tag_name": { "type": "string", "x-ms-summary": "Tag" },
+        "name": { "type": "string", "x-ms-summary": "Name" },
+        "html_url": { "type": "string", "x-ms-summary": "URL" },
+        "published_at": { "type": "string", "x-ms-summary": "Published" },
+        "draft": { "type": "boolean", "x-ms-summary": "Draft" },
+        "prerelease": { "type": "boolean", "x-ms-summary": "Prerelease" },
+        "body": { "type": "string", "x-ms-summary": "Release notes" }
+      }
+    }
+  },
+  "securityDefinitions": {},
+  "security": []
+}

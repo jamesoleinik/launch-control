@@ -1,10 +1,10 @@
 # Episode 5 — Custom Tools
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ Power Fx Function (low-code twin) → Custom Action · ⭐ BYO MCP Server Registration (paconn)
+**Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ Power Fx Function (low-code twin) → Custom Action · ⭐ Custom Endpoint Registration (REST + remote MCP, programmatic) · ⭐ Power Automate test-harness flow
 **Layer:** 🔵 Layer 2 (intelligence — extending the tool ecosystem)
-**Coding agent:** GitHub Copilot (Part 1 — plugin) · GitHub Copilot for Power Fx (Part 2 — Function) · Terminal + paconn (Part 3)
-**Runtime:** .NET Framework 4.6.2 plugin (Sandbox) + Functions in Dataverse (Power Fx, preview) + Power Platform custom connectors
+**Coding agent:** GitHub Copilot (Part 1 — plugin) · GitHub Copilot for Power Fx (Part 2 — Function) · Python scripts wrapping paconn + PAPI (Part 3) · Python scripts driving the Workflows table (Part 4)
+**Runtime:** .NET Framework 4.6.2 plugin (Sandbox) + Functions in Dataverse (Power Fx, preview) + Power Platform custom connectors (REST + remote MCP) + Power Automate cloud flow
 
 ---
 
@@ -312,17 +312,67 @@ first-party Microsoft connector, no install needed.
 
 ---
 
-## Part 3 · BYO MCP Server (external, via paconn)
+## Part 3 · Custom Endpoint Registration (REST + remote MCP, both programmatic)
 
-> External services. Same governance plane.
+> Any HTTPS endpoint — REST or MCP — becomes a first-class Power Platform tool
+> through the same `custom connector` primitive. Same governance, same DLP,
+> same Defender for Cloud Apps. The only thing that changes per endpoint is
+> a small Swagger 2.0 document.
 
-Microsoft ships an MCP server at `learn.microsoft.com/api/mcp`. GitHub ships
-one at `api.githubcopilot.com/mcp/`. Your team probably has — or will have —
-internal MCP servers too. None of these live in Dataverse. **All** of them
-should be governable like any other Power Platform connector.
+Custom connectors aren't a side door — they're the same primitive that has
+governed Excel, SharePoint, ServiceNow, and a thousand others for years.
+Once a connector is registered, every Power Platform governance control
+(DLP policies, IP firewall, Defender for Cloud Apps, connection references)
+applies to it identically.
 
-The mechanism is `paconn`, the Power Platform custom connector CLI. The
-trick is one Swagger 2.0 extension:
+This part does **both** flavors and registers each one **programmatically**
+— no hand-clicks in the maker portal, no editing settings files by hand. A
+single script ([`scripts/register_custom_connector.py`](../../scripts/register_custom_connector.py))
+reads any `connectors/<name>/` folder and idempotently creates or updates
+the connector via PAPI (with a thin `paconn` wrapper for the blob upload
+that PAPI's create flow requires).
+
+```powershell
+# One-time auth
+paconn login           # device-code; the script's only manual prerequisite
+az login               # for PAPI verification
+
+# Register any connector folder, programmatically
+python scripts/register_custom_connector.py connectors/github-releases-rest
+python scripts/register_custom_connector.py connectors/learn-mcp
+python scripts/register_custom_connector.py connectors/github-mcp
+```
+
+Each run prints the resulting connector id and caches it in
+`<folder>/.connector-id` so subsequent runs update in place. Re-runnable,
+diff-able, and CI-friendly.
+
+### Part 3a · Wrap a public REST endpoint (GitHub Releases)
+
+Pick any HTTPS REST endpoint, describe it in Swagger 2.0, register it. The
+endpoint we use is the public **GitHub Releases API** — no auth, perfect for
+a recording. Lives in [`connectors/github-releases-rest/`](../../connectors/github-releases-rest/):
+
+| File | Purpose |
+|---|---|
+| `apiDefinition.swagger.json` | Swagger 2.0 for `GetLatestRelease` and `ListReleases` against `api.github.com` |
+| `apiProperties.json` | Connector capabilities + (empty) `connectionParameters` — no auth |
+| `settings.example.json` | paconn settings template (the script generates `_settings.generated.json` per run) |
+
+After `register_custom_connector.py` runs you get a custom connector named
+**Launch Control — GitHub Releases** with two actions, callable from Power
+Apps, Power Automate, Power Fx Functions, and any agent that picks up
+custom connectors.
+
+**Why this matters on-screen.** This is the proof that the same primitive
+covers _anything_ HTTPS, not just MCP. "Has the launch shipped a release
+yet?" becomes a tool the agent can ask the same way it asks Dataverse.
+
+### Part 3b · Wrap a remote MCP server (programmatic)
+
+The mechanism for MCP is identical to Part 3a — same script, same folder
+layout, same `paconn` substrate. The _only_ difference is one Swagger 2.0
+extension that flips the connector framework from "REST" to "MCP":
 
 ```json
 "paths": {
@@ -340,55 +390,66 @@ trick is one Swagger 2.0 extension:
 connector framework "this isn't a REST endpoint, it's an MCP server, do tool
 discovery and streaming for me." Everything else (the HTTP path, optional
 auth via `connectionParameters`, the icon, the publisher) is identical to
-any other custom connector.
+the REST connector in Part 3a.
 
-### Two real connectors registered
-
-Both live in [`connectors/`](../../connectors/) and were registered with
-plain `paconn create`:
+Two real MCP connectors live in [`connectors/`](../../connectors/) and are
+registered with the same script:
 
 | Folder | MCP server | Auth |
 |---|---|---|
 | [`connectors/learn-mcp/`](../../connectors/learn-mcp/) | `https://learn.microsoft.com/api/mcp` | None (public) |
 | [`connectors/github-mcp/`](../../connectors/github-mcp/) | `https://api.githubcopilot.com/mcp/` | GitHub PAT in `Authorization` header |
 
-Each folder has three files:
-
-- `apiDefinition.swagger.json` — the Swagger 2.0 with the `x-ms-agentic-protocol` extension
-- `apiProperties.json` — connector capabilities + `connectionParameters` (for auth)
-- `settings.example.json` — paconn settings template (real `settings.json` is
-  gitignored because it contains an environment-specific GUID)
-
-### Register in your own environment
-
-```powershell
-paconn login                          # device-code
-pac env list                          # find your environment GUID
-cd connectors/learn-mcp
-copy settings.example.json settings.json
-# edit settings.json — paste your environment GUID
-paconn create --settings settings.json
-```
-
-Repeat for `github-mcp/`. Two minutes of CLI, no code, two MCP servers now
-appear under **Custom connectors** in make.powerautomate.com.
-
-### Why this is the same governance plane
-
-Custom connectors aren't a side door — they're the same primitive that has
-governed Excel, SharePoint, ServiceNow, and a thousand others for years.
-Once a connector is registered, every Power Platform governance control
-(DLP policies, IP firewall, Defender for Cloud Apps, connection references)
-applies to it identically. None of that is dev-loop work — it's the admin
-plane you already have. We don't cover it on screen here; the point for
-this episode is that **the tool exists in the same place every tool exists**.
-
-> _"Same registration pattern, same enforcement surface — whether the logic
-> runs in your sandbox or on a server you don't own."_
+> _"REST endpoint or MCP server, the registration story is identical:
+> describe in Swagger, run one script, the tool shows up in every agent
+> surface in your tenant."_
 
 ---
 
-## Part 4 · Local validation (before any agent picks the tools up)
+## Part 4 · The test harness flow (one cloud flow calls all three)
+
+> A single Power Automate flow with three actions — one per surface we built
+> in Parts 1, 2, and 3. Press Run; see the responses side-by-side. The visual
+> confirmation that the tool framework is uniform.
+
+The first three parts produce three independently-callable tools. The
+question every developer asks next is "how do I prove they all work without
+spinning up an agent?" Answer: a manual-trigger cloud flow with three
+`OpenApiConnection` actions, deployed programmatically via the Dataverse
+Workflows table.
+
+[`scripts/create_test_harness_flow.py`](../../scripts/create_test_harness_flow.py)
+POSTs a `workflows` row (category=5, type=Definition) with a `clientdata`
+payload containing:
+
+| Action | What it calls | How |
+|---|---|---|
+| 1 | `lc_CalculateLaunchReadiness` (.NET Custom API, Part 1) | `PerformUnboundAction` on the Microsoft Dataverse connector |
+| 2 | `lc_CalculateLaunchReadinessFx` (Power Fx Function, Part 2) | `PerformUnboundAction` on the Microsoft Dataverse connector |
+| 3 | `GetLatestRelease` on the **Launch Control — GitHub Releases** connector (Part 3a) | Direct custom-connector action |
+
+Run it:
+
+```powershell
+python scripts/create_test_harness_flow.py
+# → Flow URL: https://make.powerautomate.com/.../flows/<guid>
+```
+
+The flow is named **LC · Custom Tools Test Harness**, lives in the
+LaunchControl solution, takes a `LaunchName` text input, and returns a
+Compose action that stitches the three outputs into one JSON blob. Hit
+**Test → Manually → Run** in the portal and you see — in one screen — the
+same launch scored by .NET, the same launch scored by Power Fx (plus a
+posted Teams card), and the latest release of a referenced repo.
+
+**Why this is the right place for it.** Episodes 1–4 verified the data
+layer with Python and pandas. Episode 5 verifies the _tool_ layer with the
+canonical Power Platform automation runtime. Same governance, same auth,
+same surface every Power Platform developer already knows.
+
+---
+
+## Part 5 · Local validation (before any agent picks the tools up)
 
 > The episode order is `Custom Tools` (this one) → `The Agent` (Episode 9).
 > We want to know the tools _work_ before we point an agent at them.

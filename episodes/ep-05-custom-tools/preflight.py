@@ -109,6 +109,8 @@ PLAN = """# Episode 5 — Local Test Plan
 | P2 | CustomAPI is in `LaunchControl` solution (componenttype 10038) | Asset is exportable / open-sourceable |
 | P3 | At least 2 custom `connector` rows for paconn-registered MCP servers | BYO MCP servers are live in env |
 | P4 | `CustomAPI lc_CalculateLaunchReadinessFx` exists (Power Fx twin) | Functions-in-Dataverse Custom API is registered |
+| P5 | Custom connector 'Launch Control - GitHub Releases' present | REST connector (Part 3a) registered |
+| P6 | Cloud flow 'LC - Custom Tools Test Harness' present | Test harness flow (Part 4) deployed |
 
 ## Test 1 — Direct OData invoke (the smoke test)
 
@@ -495,6 +497,43 @@ def render_markdown(results):
     return "\n".join(lines) + "\n"
 
 
+def preflight_p5():
+    """REST custom connector from Part 3a must be present."""
+    r = Result("P5: REST custom connector 'Launch Control - GitHub Releases' present (Part 3a)")
+    t0 = time.time()
+    body = get(
+        "connectors?$filter=name eq 'Launch Control - GitHub Releases'"
+        "&$select=connectorid,name,connectorinternalid&$top=2"
+    )
+    r.elapsed_ms = int((time.time() - t0) * 1000)
+    rows = body.get("value", [])
+    if rows:
+        return r.ok(f"id={rows[0]['connectorid']}", payload=rows[0])
+    return r.fail(
+        "REST connector not found. Run: "
+        "python scripts/register_custom_connector.py connectors/github-releases-rest "
+        "(requires `paconn login` once)."
+    )
+
+
+def preflight_p6():
+    """Test harness cloud flow from Part 4 must be present."""
+    r = Result("P6: Test harness cloud flow 'LC - Custom Tools Test Harness' present (Part 4)")
+    t0 = time.time()
+    body = get(
+        "workflows?$filter=name eq 'LC - Custom Tools Test Harness' and category eq 5"
+        "&$select=workflowid,name,statecode&$top=2"
+    )
+    r.elapsed_ms = int((time.time() - t0) * 1000)
+    rows = body.get("value", [])
+    if rows:
+        return r.ok(f"id={rows[0]['workflowid']}", payload=rows[0])
+    return r.fail(
+        "Test harness flow not found. Run: "
+        "python scripts/create_test_harness_flow.py (depends on P5)."
+    )
+
+
 def run_all():
     results = []
     p1 = preflight_p1()
@@ -508,6 +547,8 @@ def run_all():
         results.append(skip)
     results.append(preflight_p3())
     results.append(preflight_p4())
+    results.append(preflight_p5())
+    results.append(preflight_p6())
     results.append(test_1_smoke())
     results.append(test_2_verdict_matrix())
     results.append(test_3_byo_mcp())
