@@ -31,11 +31,21 @@ DESCRIPTION = (
 # (Cross-Custom-API invocation from Fx requires a specific namespace import
 # that varies by env — we keep this twin simple to prove the architecture.)
 FX_BODY = (
-    '{\n'
-    '    lc_ReadinessScore: 75,\n'
-    '    lc_Verdict: "CONDITIONAL",\n'
-    '    lc_ReadinessSummary: "Power Fx twin returned readiness for: " & lc_LaunchName\n'
-    '}'
+    'With(\n'
+    '    { launch: LookUp(lc_launchs, lc_name = lc_LaunchName) },\n'
+    '    If(IsBlank(launch),\n'
+    '        { lc_ReadinessScore: 0, lc_Verdict: "NO-GO",\n'
+    '          lc_ReadinessSummary: "Launch not found: " & lc_LaunchName },\n'
+    '        With(\n'
+    '            { total: CountRows(Filter(lc_milestones, lc_launchid.lc_launchid = launch.lc_launchid)) },\n'
+    '            {\n'
+    '                lc_ReadinessScore: If(total = 0, 0, Min(100, total * 20)),\n'
+    '                lc_Verdict: If(total = 0, "NO-GO", If(total >= 5, "GO", "CONDITIONAL")),\n'
+    '                lc_ReadinessSummary: launch.lc_name & ": " & total & " milestone(s) tracked"\n'
+    '            }\n'
+    '        )\n'
+    '    )\n'
+    ')'
 )
 
 REQUEST_PARAMS = [
@@ -101,7 +111,7 @@ fx_body = {
     "category": 0,
     "expression": FX_BODY,
     "context": json.dumps({
-        "Tables": [], "CustomApis": [], "ConnectionReferences": [],
+        "Tables": ["lc_launch", "lc_milestone"], "CustomApis": [], "ConnectionReferences": [],
         "TabularConnectionReferences": [], "ActionConnectorConnectionReferences": [],
     }),
     "parameters": json.dumps({
