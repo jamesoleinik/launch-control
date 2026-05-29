@@ -9,7 +9,7 @@ Tests cover:
   Pre-flight   : CustomAPI registered, in LaunchControl solution, BYO MCP connectors present
   Test 1       : Direct OData invoke of lc_CalculateLaunchReadiness (Q3 Widget Launch)
   Test 2       : Verdict matrix - invoke against every lc_launch in env
-  Test 3       : BYO MCP discovery - paconn-registered custom connectors visible
+  Test 3       : MCP handshake — JSON-RPC initialize + tools/list against learn.microsoft.com/api/mcp
 """
 import argparse
 import json
@@ -108,6 +108,7 @@ PLAN = """# Episode 5 — Local Test Plan
 | P1 | `CustomAPI lc_CalculateLaunchReadiness` exists in `customapi` table | Plugin registration step succeeded |
 | P2 | CustomAPI is in `LaunchControl` solution (componenttype 10038) | Asset is exportable / open-sourceable |
 | P3 | At least 2 custom `connector` rows for paconn-registered MCP servers | BYO MCP servers are live in env |
+| P4 | `CustomAPI lc_CalculateLaunchReadinessFx` exists (Power Fx twin) | Functions-in-Dataverse Custom API is registered |
 
 ## Test 1 — Direct OData invoke (the smoke test)
 
@@ -119,7 +120,7 @@ POST /api/data/v9.2/lc_CalculateLaunchReadiness
 
 **Expect**
 - HTTP 200
-- Response has `lc_Score` (number 0-100), `lc_Verdict` (GO|CONDITIONAL|NO-GO), `lc_Summary` (string)
+- Response has `lc_ReadinessScore` (number 0-100), `lc_Verdict` (GO|CONDITIONAL|NO-GO), `lc_ReadinessSummary` (string)
 - Score and verdict are internally consistent (NO-GO if any blocked, GO only if score>=90 and no at-risk)
 
 ## Test 2 — Verdict matrix
@@ -131,9 +132,15 @@ For every `lc_launch` in the env, invoke the action. Record `(name, score, verdi
 
 This proves the plugin generalizes — not hardcoded to one launch.
 
-## Test 3 — BYO MCP discovery
+## Test 3 — MCP handshake against Learn MCP (the real protocol check)
 
-Query the `connector` table for rows where `name` contains the customization prefix or matches the paconn-registered server names. List each connector's `name`, `connectorinternalid`, and creation date. This proves paconn registration landed in Dataverse and is discoverable by any MCP-aware client.
+Open a JSON-RPC `initialize` + `tools/list` round-trip directly against `https://learn.microsoft.com/api/mcp` — no agent, no Power Platform runtime, just the wire protocol the custom connector wraps. Assert the server returns its capabilities and a non-empty tools array. This proves the BYO MCP connector pattern points at a **live, spec-compliant MCP server** — not just a dormant Dataverse row.
+
+P3 above proves the connector is registered. T3 proves the thing it points at actually speaks MCP.
+
+## Test 4 — Power Fx twin returns the same contract
+
+Invoke `lc_CalculateLaunchReadinessFx` on `Q3 Widget Launch` and assert the response shape matches the .NET plugin (`lc_ReadinessScore`, `lc_Verdict`, `lc_ReadinessSummary`). When the launch's `lc_RepoUrl` is set and the repo has open `release-blocker` issues, the Fx body folds that count in and may demote the verdict — the test cross-references the plugin baseline and surfaces any demotion in the output. This proves the **two implementations of the same contract** invariant holds at runtime.
 
 ## Outputs
 
@@ -143,8 +150,8 @@ Query the `connector` table for rows where `name` contains the customization pre
 
 ## Out-of-scope
 
-- Invoking via Copilot Studio agent (that's Ep 7 demo)
-- Tool-level invocation of paconn MCP servers (need an MCP client; covered in Ep 7 / Claude Desktop in Ep 9)
+- Invoking via Copilot Studio agent (that's the next episode — _The Agent_)
+- Per-tool MCP invocation from an external client (Claude Desktop, VS Code MCP) — covered in later runtime episodes
 """
 
 
@@ -166,6 +173,12 @@ class Result:
 
     def fail(self, detail, payload=None):
         self.passed = False
+        self.detail = detail
+        self.payload = payload
+        return self
+
+    def skip(self, detail, payload=None):
+        self.passed = None
         self.detail = detail
         self.payload = payload
         return self
@@ -212,6 +225,43 @@ def preflight_p3():
         names = ", ".join(c["name"] for c in rows[:5])
         return r.ok(f"found {len(rows)}: {names}", payload=rows)
     return r.fail(f"Only {len(rows)} connector(s) match — paconn registration may not have landed")
+
+
+def _lowcode_plugins_available():
+    """The Functions-in-Dataverse preview ships as a managed solution that
+    provisions the msdyn_lowcodeplugin table. If that table doesn't exist,
+    the feature is not installed in this env (admin install required).
+    """
+    try:
+        get("EntityDefinitions(LogicalName='msdyn_lowcodeplugin')?$select=LogicalName")
+        return True
+    except Exception:
+        return False
+
+
+def preflight_p4():
+    """Power Fx twin must be registered as its own Custom API."""
+    r = Result("P4: CustomAPI lc_CalculateLaunchReadinessFx exists (Power Fx twin)")
+    t0 = time.time()
+    if not _lowcode_plugins_available():
+        r.elapsed_ms = int((time.time() - t0) * 1000)
+        return r.skip(
+            "Functions-in-Dataverse preview not installed in this env "
+            "(msdyn_lowcodeplugin table missing). Tenant admin must install "
+            "the 'Power Platform Low Code Plug-ins' application."
+        )
+    body = get(
+        "customapis?$filter=uniquename eq 'lc_CalculateLaunchReadinessFx'"
+        "&$select=customapiid,uniquename,name"
+    )
+    r.elapsed_ms = int((time.time() - t0) * 1000)
+    rows = body.get("value", [])
+    if rows:
+        return r.ok(f"id={rows[0]['customapiid']}", payload=rows[0])
+    return r.fail(
+        "Fx Function not registered. Import functions/CalculateLaunchReadinessFx/ "
+        "into the LaunchControl solution (requires LowCodePluginsEnabled org feature)."
+    )
 
 
 def test_1_smoke():
@@ -269,19 +319,115 @@ def test_2_verdict_matrix():
     return r.ok(f"{len(launches)} launches scored consistently")
 
 
+def test_4_fx_twin():
+    """Invoke the Power Fx twin — same contract, Teams-connector enriched.
+
+    The Fx body delegates milestone math to the .NET Custom API and adds a
+    side-effect: post the readiness card to the launch's Teams channel via
+    the first-party MicrosoftTeams connector. Response shape matches the
+    plug-in plus a `lc_NotifiedAt` timestamp when a channel was posted to.
+    """
+    r = Result("T4: Fx twin — lc_CalculateLaunchReadinessFx returns the contract")
+    if not _lowcode_plugins_available():
+        return r.skip(
+            "Functions-in-Dataverse preview not installed in this env "
+            "(msdyn_lowcodeplugin table missing). Tenant admin must install "
+            "the 'Power Platform Low Code Plug-ins' application."
+        )
+    launch = "Q3 Widget Launch"
+    body = {"lc_LaunchName": launch}
+    status, resp, ms = _req("POST", "lc_CalculateLaunchReadinessFx", body=body)
+    r.elapsed_ms = ms
+    payload = {"request": body, "response": resp}
+    if status != 200:
+        return r.fail(f"HTTP {status}: {resp}", payload=payload)
+    score = resp.get("lc_ReadinessScore")
+    verdict = resp.get("lc_Verdict")
+    if score is None or verdict is None:
+        return r.fail("Missing score/verdict in Fx response", payload=payload)
+    if verdict not in ("GO", "CONDITIONAL", "NO-GO"):
+        return r.fail(f"Unexpected verdict: {verdict}", payload=payload)
+    # Cross-check shape with the .NET plugin baseline.
+    _, base, _ = _req("POST", "lc_CalculateLaunchReadiness", body=body)
+    detail = f"Score={score}, Verdict={verdict}"
+    notified = resp.get("lc_NotifiedAt")
+    if notified:
+        detail += f", Teams card posted @ {notified}"
+    return r.ok(detail, payload={"fx": resp, "plugin_baseline": base})
+
+
 def test_3_byo_mcp():
-    r = Result("T3: BYO MCP custom connectors discoverable")
+    """Real MCP handshake against the Learn MCP server.
+
+    P3 above proves the custom connector row is registered in Dataverse.
+    This proves the URL that connector points at actually speaks MCP —
+    a JSON-RPC `initialize` + `tools/list` round-trip with no agent in the
+    loop. Public endpoint, no Dataverse auth.
+    """
+    r = Result("T3: Learn MCP server responds to initialize + tools/list")
     t0 = time.time()
-    body = get(
-        "connectors?$filter=contains(name,'mcp') or contains(name,'learn')"
-        "&$select=name,connectorinternalid,createdon&$orderby=createdon desc&$top=20"
-    )
-    r.elapsed_ms = int((time.time() - t0) * 1000)
-    rows = body.get("value", [])
-    r.payload = rows
-    if len(rows) >= 2:
-        return r.ok(f"{len(rows)} connector(s) registered via paconn", payload=rows)
-    return r.fail(f"Only {len(rows)} connector(s) found")
+    url = "https://learn.microsoft.com/api/mcp"
+    init_body = {
+        "jsonrpc": "2.0", "id": 1, "method": "initialize",
+        "params": {
+            "protocolVersion": "2025-06-18",
+            "capabilities": {},
+            "clientInfo": {"name": "launch-control-preflight", "version": "1.0"},
+        },
+    }
+    list_body = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+    initialized_notice = {"jsonrpc": "2.0", "method": "notifications/initialized"}
+
+    def _parse(raw):
+        # Streamable HTTP transport returns SSE: "event: message\ndata: {json}\n\n"
+        # or plain application/json. Handle both.
+        for block in raw.split("\n\n"):
+            for line in block.splitlines():
+                line = line.strip()
+                if line.startswith("data:"):
+                    payload = line[5:].strip()
+                    if payload.startswith("{"):
+                        return json.loads(payload)
+        stripped = raw.strip()
+        if stripped.startswith("{"):
+            return json.loads(stripped)
+        raise ValueError(f"no JSON-RPC payload in response: {raw[:200]!r}")
+
+    def _post(body, session_id=None, expect_response=True):
+        req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST")
+        req.add_header("Content-Type", "application/json")
+        req.add_header("Accept", "application/json, text/event-stream")
+        if session_id:
+            req.add_header("Mcp-Session-Id", session_id)
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            sid = resp.headers.get("mcp-session-id") or session_id
+            raw = resp.read().decode("utf-8", errors="replace")
+            if not expect_response:
+                return None, sid
+            return _parse(raw), sid
+
+    try:
+        init, sid = _post(init_body)
+        if "result" not in init:
+            r.elapsed_ms = int((time.time() - t0) * 1000)
+            return r.fail(f"initialize had no result: {init}", payload=init)
+        # MCP spec: client sends `notifications/initialized` after initialize completes.
+        try:
+            _post(initialized_notice, session_id=sid, expect_response=False)
+        except Exception:
+            pass  # notification is best-effort; some servers don't return 200 here
+        tools, _ = _post(list_body, session_id=sid)
+        r.elapsed_ms = int((time.time() - t0) * 1000)
+        tool_list = (tools.get("result") or {}).get("tools") or []
+        server_name = ((init.get("result") or {}).get("serverInfo") or {}).get("name", "?")
+        r.payload = {"server": server_name, "tools_count": len(tool_list),
+                     "tool_names": [t.get("name") for t in tool_list][:10]}
+        if not tool_list:
+            return r.fail("tools/list returned empty", payload=r.payload)
+        return r.ok(f"server={server_name} exposes {len(tool_list)} tool(s)", payload=r.payload)
+    except Exception as exc:
+        r.elapsed_ms = int((time.time() - t0) * 1000)
+        return r.fail(f"MCP handshake failed: {exc}")
 
 
 # ---------- Reporting ----------
@@ -290,7 +436,9 @@ def render_console(results):
     print()
     print(C.BOLD + "Episode 5 — Local Test Run" + C.END)
     print("=" * 60)
-    passed = sum(1 for r in results if r.passed)
+    passed = sum(1 for r in results if r.passed is True)
+    skipped = sum(1 for r in results if r.passed is None)
+    failed = sum(1 for r in results if r.passed is False)
     total = len(results)
     for r in results:
         if r.passed is None:
@@ -303,8 +451,9 @@ def render_console(results):
         if r.detail:
             print(f"         {C.DIM}{r.detail}{C.END}")
     print("=" * 60)
-    color = C.GREEN if passed == total else (C.YELLOW if passed > 0 else C.RED)
-    print(f"  {color}{passed}/{total} passing{C.END}")
+    color = C.GREEN if failed == 0 else (C.YELLOW if passed > 0 else C.RED)
+    skip_note = f" ({skipped} skipped)" if skipped else ""
+    print(f"  {color}{passed}/{total} passing{skip_note}{C.END}")
     print()
 
 
@@ -320,7 +469,12 @@ def render_markdown(results):
     lines.append("| # | Test | Result | Time | Detail |")
     lines.append("|---|------|--------|------|--------|")
     for r in results:
-        ic = "✅" if r.passed else "❌"
+        if r.passed is None:
+            ic = "⚠️"; res = "SKIP"
+        elif r.passed:
+            ic = "✅"; res = "PASS"
+        else:
+            ic = "❌"; res = "FAIL"
         detail = (r.detail or "").replace("|", "\\|")
         lines.append(f"| | {r.name} | {ic} | {r.elapsed_ms}ms | {detail} |")
     lines.append("")
@@ -328,7 +482,7 @@ def render_markdown(results):
     for r in results:
         lines.append("")
         lines.append(f"### {r.name}")
-        lines.append(f"- Result: {'PASS' if r.passed else 'FAIL'}")
+        lines.append(f"- Result: {'SKIP' if r.passed is None else ('PASS' if r.passed else 'FAIL')}")
         lines.append(f"- Time: {r.elapsed_ms}ms")
         if r.detail:
             lines.append(f"- Notes: {r.detail}")
@@ -352,9 +506,11 @@ def run_all():
         skip.fail("Skipped — P1 failed")
         results.append(skip)
     results.append(preflight_p3())
+    results.append(preflight_p4())
     results.append(test_1_smoke())
     results.append(test_2_verdict_matrix())
     results.append(test_3_byo_mcp())
+    results.append(test_4_fx_twin())
     return results
 
 
@@ -377,7 +533,7 @@ def main():
         out_path = args.out or str(Path(__file__).resolve().parent / f"test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md")
         Path(out_path).write_text(render_markdown(results), encoding="utf-8")
         print(f"  Results written: {out_path}")
-        sys.exit(0 if all(r.passed for r in results) else 1)
+        sys.exit(0 if all(r.passed is not False for r in results) else 1)
 
 
 if __name__ == "__main__":

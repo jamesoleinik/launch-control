@@ -1,0 +1,59 @@
+{
+  "$schema": "https://aka.ms/dataverse-customapi-schema",
+  "name": "lc_CalculateLaunchReadinessFx",
+  "displayName": "Calculate Launch Readiness (Power Fx twin)",
+  "description": "Power Fx Function implementation of the readiness calculator. Same contract as lc_CalculateLaunchReadiness; additionally posts a readiness card to the launch's Microsoft Teams channel when lc_launch.lc_TeamsChannelId is set, and returns the post timestamp as lc_NotifiedAt.",
+  "publisherPrefix": "lc",
+  "boundEntity": null,
+  "isFunction": true,
+  "isPrivate": false,
+  "allowedCustomProcessingStepType": "AsyncOrSync",
+  "executePrivilegeName": null,
+  "bindingType": "Global",
+  "requestParameters": [
+    {
+      "name": "LaunchName",
+      "uniqueName": "lc_LaunchName",
+      "type": "String",
+      "isOptional": false,
+      "description": "Name of the lc_launch record to score and (optionally) notify."
+    }
+  ],
+  "responseProperties": [
+    {
+      "name": "ReadinessScore",
+      "uniqueName": "lc_ReadinessScore",
+      "type": "Decimal",
+      "description": "0-100 numeric score across all milestones (delegated to the .NET Custom API)."
+    },
+    {
+      "name": "Verdict",
+      "uniqueName": "lc_Verdict",
+      "type": "String",
+      "description": "GO | CONDITIONAL | NO-GO"
+    },
+    {
+      "name": "ReadinessSummary",
+      "uniqueName": "lc_ReadinessSummary",
+      "type": "String",
+      "description": "Human-readable narration: per-milestone status."
+    },
+    {
+      "name": "NotifiedAt",
+      "uniqueName": "lc_NotifiedAt",
+      "type": "DateTime",
+      "description": "Timestamp the Teams channel post was made. Blank when the launch has no lc_TeamsChannelId."
+    }
+  ],
+  "implementation": {
+    "runtime": "PowerFx",
+    "formulaFile": "formula.fx",
+    "connectionReferences": [
+      {
+        "logicalName": "shared_teams",
+        "displayName": "Microsoft Teams",
+        "usage": "MicrosoftTeams.PostMessageToChannelV3 — post the readiness card to the launch's channel."
+      }
+    ]
+  }
+}

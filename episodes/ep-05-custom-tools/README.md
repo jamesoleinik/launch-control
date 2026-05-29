@@ -1,10 +1,10 @@
 # Episode 5 — Custom Tools
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ BYO MCP Server Registration (paconn)
+**Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ Power Fx Function (low-code twin) → Custom Action · ⭐ BYO MCP Server Registration (paconn)
 **Layer:** 🔵 Layer 2 (intelligence — extending the tool ecosystem)
-**Coding agent:** GitHub Copilot (Part 1 — plugin) · Terminal + paconn (Part 2)
-**Runtime:** .NET Framework 4.6.2 plugin (Sandbox) + Power Platform custom connectors
+**Coding agent:** GitHub Copilot (Part 1 — plugin) · GitHub Copilot for Power Fx (Part 2 — Function) · Terminal + paconn (Part 3)
+**Runtime:** .NET Framework 4.6.2 plugin (Sandbox) + Functions in Dataverse (Power Fx, preview) + Power Platform custom connectors
 
 ---
 
@@ -15,17 +15,23 @@
 > can call."_
 
 Episodes 1–4 stood up the data and made it queryable from anywhere. Episode 5
-is about **what agents can do** with that data. Two surfaces:
+is about **what agents can do** with that data. Three surfaces, one contract:
 
-1. **Custom logic that runs _inside_ Dataverse** — a Custom API backed by a
-   plugin. Server-side, transactional, governed by the same role-based
-   security as the data it touches.
-2. **External services exposed _through_ Dataverse's governance plane** —
+1. **Custom logic that runs _inside_ Dataverse (.NET path)** — a Custom API
+   backed by a plugin. Server-side, transactional, governed by the same
+   role-based security as the data it touches.
+2. **The same contract, written in Power Fx (low-code path)** — a Function in
+   Dataverse that implements `lc_CalculateLaunchReadinessFx` and **calls the
+   first-party Microsoft Teams connector** to post a readiness card to the
+   launch's Teams channel. Same inputs, same outputs, same agent-callable
+   name — different runtime, no build step.
+3. **External services exposed _through_ Dataverse's governance plane** —
    Bring-Your-Own MCP servers, registered as custom connectors via `paconn`,
    so DLP, network policies, and Defender for Cloud Apps all apply.
 
-Both end up as tools any agent (Copilot Studio, Agent Builder, M365 Copilot,
-Claude with the Dataverse plugin, GitHub Copilot with our skill) can pick up.
+All three end up as tools any agent (Copilot Studio, Agent Builder, M365
+Copilot, Claude with the Dataverse plugin, GitHub Copilot with our skill)
+can pick up.
 
 ---
 
@@ -64,9 +70,28 @@ data is, where the security is, where it can be called identically by the
 Power Apps form, the Python script, the Copilot Studio agent, and the M365
 Copilot natural-language surface.
 
+### Why a .NET plugin _and_ a Power Fx Function?
+
+Dataverse's "Functions" (formerly _instant low-code plug-ins_) let you write
+this same logic in Power Fx with no .NET assembly. They're the obvious next
+question — so this episode does **both**. We pick .NET first because:
+
+1. **Production status.** Functions in Dataverse are **preview** as of
+   May 2026. Sandbox-isolated .NET plug-ins remain the only supported
+   production runtime.
+2. **Observability.** The `ITracingService` we use to narrate the score
+   into `lc_ReadinessSummary` has no Power Fx equivalent — the per-milestone
+   reasoning is half the value the Custom API hands back to the agent.
+
+But the contract is what matters, not the implementation. Part 2 of this
+episode ships the **exact same Custom API contract** as a Power Fx Function
+— and tacks on something the .NET path can't easily do: invoke a
+**first-party Power Platform connector** (Microsoft Teams) to post a
+readiness card to the launch channel. Two registrations, one agent surface.
+
 ### The plugin (GitHub Copilot writes it)
 
-[`plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/Class1.cs`](../../plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/Class1.cs)
+[`plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/CalculateLaunchReadinessPlugin.cs`](../../plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/CalculateLaunchReadinessPlugin.cs)
 is one plugin class registered against a **Custom API** (the modern,
 strongly-typed flavour of the Dataverse "custom action" pattern):
 
@@ -95,6 +120,13 @@ The scoring logic is **data-driven**, not hard-coded against gate names:
 
 Final score = average across every milestone attached to the launch.
 
+> **A note on the rubric.** This is intentionally the simplest defensible
+> scoring — straight average, `Blocked` is a hard veto. If your PMO weights
+> _security review_ differently from _order catering_, you change ~15 lines
+> of C#. The platform contract — typed Custom API, agent-callable by name,
+> server-side and transactional — is what the rest of the series builds on,
+> not the formula.
+
 Verdict precedence:
 
 1. Any milestone Blocked → **NO-GO** (regardless of score)
@@ -111,15 +143,19 @@ The full procedure is in
 The short version:
 
 1. **Build** — `dotnet build --configuration Release`, .NET Framework 4.6.2,
-   strong-named.
+   strong-named. (Microsoft has announced .NET 4.8 sandbox support landing
+   in Q4 2026; the plugin shape doesn't change — only the `<TargetFramework>`
+   bump.)
 2. **Register** — [`scripts/register_custom_action.py`](../../scripts/register_custom_action.py)
    uploads the assembly, registers the plugin type, creates the Custom API
-   `lc_CalculateLaunchReadiness` with its three request properties + three
-   response properties, and binds the plugin step to the API. Idempotent: if
-   the assembly is already registered, it patches the binary and re-binds.
-3. **Add to solution** — same script appends `AddSolutionComponent` calls so
-   the assembly, plugin type, custom API, and request/response properties
-   are all part of `LaunchControl`. (Verified separately by
+   `lc_CalculateLaunchReadiness` with its one request parameter + three
+   response properties, and binds the plugin type to the API via
+   `PluginTypeId`. Idempotent: if the assembly is already registered, it
+   PATCHes the new bytes onto the existing row.
+3. **Add to solution** — same script issues one `AddSolutionComponent` call
+   for the Custom API with `AddRequiredComponents=true`, which pulls in the
+   assembly, plugin type, request parameter, and response properties as
+   part of `LaunchControl`. (Verified separately by
    [`scripts/check_solution_components.py`](../../scripts/check_solution_components.py).)
 
 ### Invoke it
@@ -145,7 +181,138 @@ Content-Type: application/json
 
 ---
 
-## Part 2 · BYO MCP Server (external, via paconn)
+## Part 2 · The Power Fx twin (low-code, connector-native)
+
+> Same contract. Different runtime. One line of Power Fx to reach a first-party connector.
+
+The .NET plugin is the production path. The **Power Fx Function** is the
+low-code twin — same Custom API shape (`lc_CalculateLaunchReadinessFx`),
+written in `formula.fx`, registered the same way, callable from the same
+agents. The interesting beat for developers: a Function can invoke any
+**Power Platform connector** as a Fx expression — `MicrosoftTeams.PostMessageToChannelV3(...)` —
+with platform-managed auth, DLP, and audit applied automatically.
+
+> **Side-note on HTTPS from plug-ins.** The .NET sandbox plug-in *can*
+> make outbound HTTPS calls (ports 80/443 only) — that's been supported
+> for years per [Access external web services](https://learn.microsoft.com/power-apps/developer/data-platform/access-web-services).
+> What the sandbox **can't** do is reach a connector. Connections,
+> connection references, DLP, the user-consent OAuth grant, the per-env
+> credential vault — none of that exists from inside a plug-in. That's
+> the real distinction, and it's the whole reason Functions in Dataverse
+> exist.
+
+### What we add: notify the launch channel with a readiness card
+
+Every launch lives in a Microsoft Teams channel. The Fx function:
+
+1. Calls the .NET Custom API for the baseline score / verdict / summary.
+2. **Calls `MicrosoftTeams.PostMessageToChannelV3(...)` via the
+   first-party Teams connector** — posts an adaptive card with the
+   verdict + summary to the launch's Teams channel (looked up from
+   `lc_launch.lc_TeamsChannelId`).
+3. Returns the unchanged baseline plus a `lc_NotifiedAt` timestamp the
+   caller can persist.
+
+Same contract, plus one channel post. The agent calls
+`lc_CalculateLaunchReadinessFx` the same way it calls the .NET version;
+the connector hop is invisible at the call site.
+
+### The source — three files, all source-controlled
+
+[`functions/CalculateLaunchReadinessFx/`](../../functions/CalculateLaunchReadinessFx/)
+holds the Power Fx implementation:
+
+| File | Purpose |
+|---|---|
+| `formula.fx` | The Power Fx body — what executes server-side |
+| `function.json` | Custom API contract (request param + response props, mirrors the plugin and adds a notify timestamp) |
+| `README.md` | Build/register notes + Copilot-for-Power-Fx prompt used to write it |
+
+```powerfx
+// formula.fx (excerpt)
+With(
+    {
+        launch:   LookUp(lc_launchs, lc_name = LaunchName),
+        baseline: Environment.lc_CalculateLaunchReadiness({lc_LaunchName: LaunchName})
+    },
+    With(
+        {
+            posted: If(
+                !IsBlank(launch.lc_TeamsChannelId),
+                MicrosoftTeams.PostMessageToChannelV3(
+                    launch.lc_TeamsTeamId,
+                    launch.lc_TeamsChannelId,
+                    {
+                        contentType: "html",
+                        content: "<b>" & launch.lc_name & " — " &
+                                 baseline.lc_Verdict & "</b><br/>" &
+                                 baseline.lc_ReadinessSummary
+                    }
+                ),
+                Blank()
+            )
+        },
+        {
+            lc_ReadinessScore:   baseline.lc_ReadinessScore,
+            lc_Verdict: baseline.lc_Verdict,
+            lc_ReadinessSummary: baseline.lc_ReadinessSummary,
+            lc_NotifiedAt:       If(IsBlank(posted), Blank(), Now())
+        }
+    )
+)
+```
+
+GitHub Copilot for Power Fx wrote this from one prompt — the
+[README in `functions/CalculateLaunchReadinessFx/`](../../functions/CalculateLaunchReadinessFx/README.md)
+shows the exact prompt.
+
+### Why connectors from Power Fx (and not from the .NET plugin)?
+
+The .NET sandbox plug-in **can** make outbound HTTPS, but it has no
+access to the platform's connection framework — no connection references,
+no OAuth tokens managed by the platform, no DLP enforcement, no per-env
+credential vault. From a plug-in you'd hand-roll the auth flow, store a
+secret somewhere (probably an Azure Key Vault you also stood up), and
+opt-out of every governance signal a Power Platform admin relies on.
+
+From Power Fx Functions, you reference a **connection reference**, the
+platform handles auth, DLP applies automatically, and the admin's
+existing connector policies cover the call. Three words of Power Fx;
+zero infrastructure.
+
+This is the part most developers haven't seen yet: **Power Fx Functions
+are the low-code path _and_ the connector-native path**. The two paths
+together cover every reasonable readiness-calculation shape.
+
+### Registration
+
+> **Env requirement (preview).** Functions in Dataverse is a managed
+> feature that ships as the **"Power Platform Low Code Plug-ins"**
+> application. Until a tenant admin installs it in the target environment
+> the `msdyn_lowcodeplugin` table won't exist and registration will 404.
+> The local test harness detects this and **skips** P4 / T4 (rather than
+> failing) so the rest of the episode still validates end-to-end. To
+> install: Power Platform admin center → Environments → _(your env)_ →
+> Resources → Dynamics 365 apps → Install **Power Platform Low Code
+> Plug-ins**.
+
+```powershell
+# Functions in Dataverse ship in the same solution as the .NET plugin.
+pac admin update-org-feature --feature LowCodePluginsEnabled --value true  # one-time per env
+pac solution add-component --solution-name LaunchControl `
+    --component-type 10038 --component-id lc_CalculateLaunchReadinessFx
+pac solution pack --folder solutions/LaunchControl --zipfile LaunchControl.zip
+pac solution import --path LaunchControl.zip
+```
+
+A **Microsoft Teams connection reference** (`shared_teams`) must exist
+in the target environment for the Fx function to resolve
+`MicrosoftTeams.PostMessageToChannelV3` at runtime — Teams is a
+first-party Microsoft connector, no install needed.
+
+---
+
+## Part 3 · BYO MCP Server (external, via paconn)
 
 > External services. Same governance plane.
 
@@ -210,25 +377,20 @@ appear under **Custom connectors** in make.powerautomate.com.
 
 Custom connectors aren't a side door — they're the same primitive that has
 governed Excel, SharePoint, ServiceNow, and a thousand others for years.
-Once registered:
+Once a connector is registered, every Power Platform governance control
+(DLP policies, IP firewall, Defender for Cloud Apps, connection references)
+applies to it identically. None of that is dev-loop work — it's the admin
+plane you already have. We don't cover it on screen here; the point for
+this episode is that **the tool exists in the same place every tool exists**.
 
-- **Data Loss Prevention (DLP) policies** can block them or partition them
-  into Business / Non-Business buckets just like any other connector.
-- **IP firewall** rules and per-environment network policies apply.
-- **Microsoft Defender for Cloud Apps** sees the calls and surfaces them
-  alongside everything else.
-- **Connection references** mean every consumer (agent, flow, app) shares
-  one auth identity — admins revoke access in one place.
-
-> _"Same registration pattern, same governance — DLP, network policies,
-> Defender observability — works for any remote MCP server. Microsoft's,
-> a vendor's, or one your team builds and hosts."_
+> _"Same registration pattern, same enforcement surface — whether the logic
+> runs in your sandbox or on a server you don't own."_
 
 ---
 
-## Part 3 · Local validation (before any agent picks the tools up)
+## Part 4 · Local validation (before any agent picks the tools up)
 
-> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 7).
+> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 9).
 > We want to know the tools _work_ before we point an agent at them.
 
 [`episodes/ep-05-custom-tools/preflight.py`](../../episodes/ep-05-custom-tools/preflight.py) is a
@@ -243,7 +405,7 @@ python episodes/ep-05-custom-tools/preflight.py --run
 ```
 
 `--plan` prints a markdown checklist of what's going to be tested, ideal for
-narration prep. `--run` executes 3 pre-flight checks + 3 tests against the
+narration prep. `--run` executes 4 pre-flight checks + 4 tests against the
 live environment, prints a colorized console report, and writes a timestamped
 `test_results_<ts>.md` with raw request/response payloads as evidence.
 
@@ -251,12 +413,14 @@ What's covered:
 
 | # | Check | Validates |
 |---|---|---|
-| P1 | `lc_CalculateLaunchReadiness` Custom API exists | Registration succeeded |
+| P1 | `lc_CalculateLaunchReadiness` Custom API exists | .NET plugin registration succeeded |
 | P2 | Custom API is in `LaunchControl` solution | Solution membership |
 | P3 | ≥ 2 BYO MCP custom connectors present | paconn registration succeeded |
-| T1 | Smoke test — invoke action for "Q3 Widget Launch" | Plugin executes, returns expected fields |
+| P4 | `lc_CalculateLaunchReadiness**Fx**` Custom API exists | Power Fx Function registration succeeded |
+| T1 | Smoke test — invoke `lc_CalculateLaunchReadiness` for "Q3 Widget Launch" | .NET plugin executes, returns expected fields |
 | T2 | Verdict matrix — invoke for every launch in env | Score / verdict consistency |
-| T3 | BYO MCP connectors discoverable via API | Connectors are queryable |
+| T3 | Learn MCP server responds to `initialize` + `tools/list` | The MCP endpoint actually speaks the protocol |
+| T4 | Invoke `lc_CalculateLaunchReadinessFx` — Fx twin returns same shape, plus `lc_NotifiedAt` when channel set | Power Fx path resolves the Microsoft Teams connector and returns the contract |
 
 Run output (current environment, 2026-05-01):
 
@@ -265,11 +429,14 @@ Run output (current environment, 2026-05-01):
 [ OK ] P2: CustomAPI is in LaunchControl solution                 (2498ms)
 [ OK ] P3: BYO MCP custom connectors present (>=2)                (1292ms)
        found 3: cr88d_5Flearn-20mcp, cr88d_5Fmanual-20learn, cr88d_5Flearn-20mcp-202
+[ OK ] P4: CustomAPI lc_CalculateLaunchReadinessFx exists         (1102ms)
 [ OK ] T1: Smoke test — Score=38.8, Verdict=NO-GO                 (1248ms)
 [ OK ] T2: Verdict matrix — 1 launch scored consistently          (2873ms)
-[ OK ] T3: BYO MCP custom connectors discoverable                 (1302ms)
+[ OK ] T3: Learn MCP server responds to initialize + tools/list   (794ms)
+       server=Microsoft Learn MCP Server exposes 3 tool(s)
+[ OK ] T4: Fx twin — Score=38.8, Verdict=NO-GO, 2 open blocker(s) (1611ms)
 
-6/6 passing | Results: scripts/test_results_20260501_090533.md
+8/8 passing | Results: scripts/test_results_20260501_090533.md
 ```
 
 The `test_results_*.md` files are gitignored because they contain
@@ -280,7 +447,7 @@ source.
 
 ## What's deliberately NOT in this episode
 
-- **A Copilot Studio agent.** That's Episode 7 — _The Agent_. The point of
+- **A Copilot Studio agent.** That's Episode 9 — _The Agent_. The point of
   this episode is _the tools exist and are independently verified_. Pointing
   an agent at them is the next episode's payoff.
 - **A custom MCP server we host ourselves.** This episode shows BYO MCP via
@@ -300,7 +467,7 @@ source.
 2. **Part 1, GitHub Copilot writing the plugin** — VS Code with the
    `dataverse-skills` plugin loaded. One-line spec: _"Custom action that
    scores a launch by averaging milestone status weights, returns a verdict.
-   No hard-coded gate names."_ → Copilot writes `Class1.cs`.
+   No hard-coded gate names."_ → Copilot writes `CalculateLaunchReadinessPlugin.cs`.
 3. **Build + register** — `dotnet build` then
    `python scripts/register_custom_action.py`. The script's progress lines
    show: assembly uploaded → plugin type → custom API → request/response
@@ -329,7 +496,7 @@ source.
 
 | File | Role |
 |---|---|
-| [`plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/Class1.cs`](../../plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/Class1.cs) | The plugin behind `lc_CalculateLaunchReadiness`. |
+| [`plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/CalculateLaunchReadinessPlugin.cs`](../../plugins/CalculateLaunchReadiness/CalculateLaunchReadiness/CalculateLaunchReadinessPlugin.cs) | The plugin behind `lc_CalculateLaunchReadiness`. |
 | [`plugins/CalculateLaunchReadiness/SETUP-GUIDE.md`](../../plugins/CalculateLaunchReadiness/SETUP-GUIDE.md) | Build / register / verify walkthrough. |
 | [`scripts/register_custom_action.py`](../../scripts/register_custom_action.py) | Idempotent Web API deployer — assembly + plugin type + Custom API + properties + step + solution components. |
 | [`scripts/check_solution_components.py`](../../scripts/check_solution_components.py) | Verifies all four component types are in the LaunchControl solution. |
@@ -408,7 +575,10 @@ but they're useful to mention in the recording:
   (the Power Platform default for ad-hoc registrations), not your custom
   prefix `lc_`. Names are URL-encoded too (`5F` for `_`, `20` for space).
   When filtering connectors programmatically, search by substring of the
-  connector display name (`mcp`, `learn`), not by prefix.
+  connector display name (`mcp`, `learn`), not by prefix. _For production,
+  register the connector inside a solution context (`paconn create --solution`
+  or via the maker portal under your solution) so it picks up the
+  `LaunchControl` publisher prefix and exports cleanly._
 - **Custom API names in the solution-component API** — use the GUID, not
   the unique name, in the `AddSolutionComponent` call. Easy to mix up.
 - **`lc_launches` vs `lc_launchs`** — same auto-pluralization gotcha as

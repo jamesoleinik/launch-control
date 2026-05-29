@@ -69,8 +69,8 @@ namespace CalculateLaunchReadiness
                 Criteria  = new FilterExpression()
             };
             msQuery.Criteria.AddCondition("lc_launchid", ConditionOperator.Equal, launchId);
-            msQuery.AddOrder("lc_sortorder", OrderType.Ascending);
-            msQuery.AddOrder("lc_name",      OrderType.Ascending);
+            msQuery.AddOrder("lc_duedate", OrderType.Ascending);
+            msQuery.AddOrder("lc_name",    OrderType.Ascending);
             var milestones = service.RetrieveMultiple(msQuery);
 
             int milestoneCount = milestones.Entities.Count;

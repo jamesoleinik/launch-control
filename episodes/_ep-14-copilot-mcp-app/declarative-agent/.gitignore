@@ -1,5 +1,0 @@
-env/.env.*.user
-appPackage/build/
-build/
-node_modules/
-*.zip
