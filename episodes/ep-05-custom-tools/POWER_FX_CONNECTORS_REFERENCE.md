@@ -57,7 +57,11 @@ Connector access inside a function can be restricted with security roles (create
 
 ## Tested in this repo — VERIFIED ✅
 
-`scripts/deploy_fx_with_connector.py` provisions the connection + connection reference and PATCHes the Fx body to call MSN Weather. Last invocation (against `Q3 Widget Launch`):
+Two production scripts, both end-to-end idempotent:
+
+### MSN Weather (no-auth connector)
+
+`scripts/deploy_fx_with_connector.py` — proves outbound HTTPS works:
 
 ```json
 {
@@ -67,6 +71,31 @@ Connector access inside a function can be restricted with security roles (create
 }
 ```
 
-The `Redmond is 51F` portion came from `lc_msnweather.CurrentWeather("Redmond, WA", "Imperial")` — a live HTTPS call out of the Fx runtime through the MSN Weather connector. This **disproves** the common claim that Dataverse server-side logic is sandboxed from outbound HTTPS: when routed through a connector, Power Fx Functions can call any HTTPS API the connector exposes (including custom connectors that wrap arbitrary REST endpoints).
+### Microsoft Teams (OAuth connector, real side effect)
 
-The simpler Dataverse-only variant lives in `scripts/deploy_fx_function.py` — preflight 8/8 verified with both bodies.
+`scripts/deploy_fx_with_teams.py` — proves first-party OAuth connectors work and a real Teams message lands every invoke:
+
+```json
+{
+  "lc_ReadinessScore": 100,
+  "lc_Verdict": "GO",
+  "lc_ReadinessSummary": "Q3 Widget Launch: 16 milestone(s); posted to Teams id=1780081213991"
+}
+```
+
+Verified call shape (PostMessageToChannelV3):
+
+```powerfx
+lc_teams.PostMessageToChannelV3(
+    groupId,                                  // Team groupId (GUID)
+    channelId,                                // "19:...@thread.tacv2"
+    { content: "<message html>", contentType: "html" }   // FLAT record, not nested
+)
+```
+
+> **Gotcha — flat records only.** The connector swagger nests `body.content` and `body.contentType` under a `body` object, but Power Fx low-code-plugin binding **does not support nested records**. Passing `{ body: { content, contentType } }` returns `"Missing property content, object is too complex or not supported"`. Pass the leaves directly.
+
+> **Gotcha — positional args ≠ Power Apps canvas.** In Power Apps canvas, this action is called as `MicrosoftTeams.PostMessageToChannelV3("Flow bot", "Channel", ...)` with synthesized "post-as" / "post-in" dropdown args. **Inside Fx Functions, those synthetic args do not exist** — args bind to swagger path parameters in order: `(groupId, channelId, body-record)`. Compile will accept anything string-typed for the first two positions, but at runtime they go on the wire as groupId/channelId and the post will 404 if you pass the wrong thing.
+
+Both Dataverse-only and Teams-connector bodies are interchangeable on the `lc_calculatelaunchreadinessfx` Fx Function — preflight 8/8 with either deployed.
+
