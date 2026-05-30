@@ -2,39 +2,31 @@
 
 Works for BOTH:
   - Plain REST connectors (e.g. connectors/github-releases-rest)
-  - Remote MCP servers (e.g. connectors/learn-mcp, connectors/github-mcp --
-    the x-ms-agentic-protocol extension in the swagger is what makes them MCP)
+  - Remote MCP servers (the x-ms-agentic-protocol extension in the swagger
+    is what makes them MCP)
 
-Why this exists:
-  Ep 5 part 3 originally documented `paconn create` as a manual CLI hop with a
-  separately-edited settings.json per connector. This script is the one-liner
-  alternative: point it at any connectors/<folder> and it (a) generates a
-  settings.json with the right env id baked in, (b) shells out to paconn,
-  (c) verifies via PAPI that the connector landed, (d) writes the resulting
-  connector id to <folder>/.connector-id for downstream scripts.
+Reverse-engineered from paconn's upsert.py + powerappsrp.py. Talks directly
+to api.powerapps.com so the only auth dependency is `az login` -- no
+separate `paconn login`, no device-code interruption.
 
-  Power Apps' connector-create flow uploads the swagger to a temporary blob
-  store before registering -- paconn handles all that. Skipping paconn means
-  reimplementing that blob handshake, which isn't worth it for an episode demo.
+Flow:
+  1. POST /providers/Microsoft.PowerApps/apis?$filter=environment eq '<id>'
+     Body: { properties: { swagger, backendService, environment, ... } }
+     Returns the new connector record with a generated 'name' (slug).
+  2. PATCH the same path with the slug for updates.
+
+Idempotency:
+  - If <folder>/.connector-id exists, PATCH that connector
+  - Else search PAPI for a custom connector with the same displayName
+  - Else POST a new one and cache its id in <folder>/.connector-id
 
 Usage:
   python scripts/register_custom_connector.py <folder>
-  python scripts/register_custom_connector.py connectors/github-releases-rest
-
-Idempotency:
-  paconn create with an existing target connector updates in place. If a
-  <folder>/.connector-id file exists it is reused; otherwise this script
-  searches PAPI for a custom connector with the same display name first.
-
-Prereqs:
-  - `az login` (current tenant)
-  - `paconn login` (interactive once per session; this script will prompt if
-    paconn says the auth cache is empty)
 
 Env:
   ENVIRONMENT_ID -- defaults to LaunchControl 2.0
 """
-import json, os, sys, subprocess, urllib.request, urllib.error, urllib.parse, time
+import json, os, sys, urllib.request, urllib.error, urllib.parse
 from pathlib import Path
 from azure.identity import AzureCliCredential
 
@@ -45,7 +37,7 @@ PAPI = "https://api.powerapps.com"
 
 def _req(token, method, url, body=None):
     h = {"Authorization": "Bearer " + token, "Accept": "application/json",
-         "Content-Type": "application/json"}
+         "Content-Type": "application/json", "x-ms-origin": "paconn-cli"}
     data = json.dumps(body).encode() if body is not None else None
     try:
         r = urllib.request.urlopen(urllib.request.Request(url, data=data, headers=h, method=method))
@@ -54,10 +46,13 @@ def _req(token, method, url, body=None):
         return e.code, e.read().decode()
 
 
-def _find_existing(papi_token: str, display_name: str):
-    q = urllib.parse.quote(f"environment eq '{ENV_ID}'")
+def _filter_query():
+    return urllib.parse.quote(f"environment eq '{ENV_ID}'")
+
+
+def _find_existing(papi_token, display_name):
     s, b = _req(papi_token, "GET",
-                f"{PAPI}/providers/Microsoft.PowerApps/apis?api-version={API_VER}&%24filter={q}&%24top=2000")
+                f"{PAPI}/providers/Microsoft.PowerApps/apis?api-version={API_VER}&%24filter={_filter_query()}&%24top=2000")
     if s != 200:
         return None
     for a in json.loads(b).get("value", []):
@@ -67,62 +62,63 @@ def _find_existing(papi_token: str, display_name: str):
     return None
 
 
-def register(folder: Path):
-    folder = folder.resolve()
+def _backend_url(swagger):
+    scheme = (swagger.get("schemes") or ["https"])[0]
+    host = swagger.get("host", "")
+    base = swagger.get("basePath", "/")
+    return f"{scheme}://{host}{base}"
+
+
+def register(folder):
+    folder = Path(folder).resolve()
     swagger = json.loads((folder / "apiDefinition.swagger.json").read_text())
-    display = swagger["info"]["title"]
+    api_props = json.loads((folder / "apiProperties.json").read_text())
+
+    title = swagger["info"]["title"]
+    description = swagger.get("info", {}).get("description", "")
 
     cred = AzureCliCredential()
     papi_token = cred.get_token("https://service.powerapps.com/.default").token
 
-    # 1. Find existing connector id (if any)
     cached = folder / ".connector-id"
-    existing_id = cached.read_text().strip() if cached.exists() else _find_existing(papi_token, display)
+    existing_id = cached.read_text().strip() if cached.exists() else _find_existing(papi_token, title)
+
+    properties = dict(api_props.get("properties", {}))
+    properties["openApiDefinition"] = swagger
+    properties["backendService"] = {"serviceUrl": _backend_url(swagger)}
+    properties["environment"] = {"name": ENV_ID}
+    properties["description"] = description
+    properties["scriptOperations"] = properties.get("scriptOperations", [])
+    if not existing_id:
+        properties["displayName"] = title
+
+    payload = {"properties": properties}
+
     if existing_id:
-        print(f"[update] Found existing connector: {existing_id}")
+        print(f"[update] PATCH {existing_id}")
+        url = f"{PAPI}/providers/Microsoft.PowerApps/apis/{existing_id}?api-version={API_VER}&%24filter={_filter_query()}"
+        s, b = _req(papi_token, "PATCH", url, payload)
     else:
-        print(f"[create] No existing connector with displayName='{display}' -- will create.")
+        print(f"[create] POST /apis  (env {ENV_ID})")
+        url = f"{PAPI}/providers/Microsoft.PowerApps/apis?api-version={API_VER}&%24filter={_filter_query()}"
+        s, b = _req(papi_token, "POST", url, payload)
 
-    # 2. Generate settings.json for paconn (env id baked in)
-    settings = {
-        "environment": ENV_ID,
-        "apiProperties": "apiProperties.json",
-        "apiDefinition": "apiDefinition.swagger.json",
-        "powerAppsApiVersion": API_VER,
-        "powerAppsUrl": PAPI,
-    }
-    if existing_id:
-        settings["connectorId"] = existing_id
-    settings_path = folder / "_settings.generated.json"
-    settings_path.write_text(json.dumps(settings, indent=2))
-
-    # 3. Shell out to paconn. paconn is known to hang on a final HTTP read
-    # for ~2 minutes after success; we cap with a 90s timeout and verify out-of-band.
-    cmd = ["paconn", "create", "-s", str(settings_path)]
-    print(f"[paconn] {' '.join(cmd)}")
-    try:
-        proc = subprocess.run(cmd, cwd=str(folder), capture_output=True, text=True, timeout=90)
-        print(proc.stdout)
-        if proc.stderr:
-            print("STDERR:", proc.stderr)
-    except subprocess.TimeoutExpired as e:
-        print("[paconn] hit known 2-min hang -- killed after 90s; verifying via PAPI...")
-        if e.stdout: print(e.stdout)
-
-    # 4. Verify
-    time.sleep(2)
-    final_id = _find_existing(papi_token, display)
-    if not final_id:
-        print("[FAIL] Connector did not appear in PAPI after paconn run.")
+    if s not in (200, 201):
+        print(f"FAIL HTTP {s}")
+        print(b[:3000])
         sys.exit(1)
-    cached.write_text(final_id)
-    print(f"[ok] Connector registered: {final_id}")
-    print(f"     Maker UI: https://make.powerapps.com/environments/{ENV_ID}/customconnectors")
-    return final_id
+
+    resp = json.loads(b)
+    connector_id = resp.get("name") or existing_id
+    cached.write_text(connector_id)
+    print(f"[ok] Connector id: {connector_id}")
+    print(f"     displayName : {resp.get('properties', {}).get('displayName', title)}")
+    print(f"     Maker UI    : https://make.powerapps.com/environments/{ENV_ID}/customconnectors")
+    return connector_id
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: register_custom_connector.py <connector-folder>")
         sys.exit(2)
-    register(Path(sys.argv[1]))
+    register(sys.argv[1])

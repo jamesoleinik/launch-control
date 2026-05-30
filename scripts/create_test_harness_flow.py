@@ -96,10 +96,27 @@ def get_solution_id():
     return r["value"][0]["solutionid"] if r["value"] else None
 
 
-def build_definition(gh_connector_id):
-    """Logic-apps-style definition with 2 or 3 OpenApiConnection actions.
-    If gh_connector_id is None the GitHub Releases action and trigger inputs
-    for it are omitted (partial Part 3a deploy)."""
+def ensure_connection_reference(logical_name, display_name, connector_api_id):
+    """Find or create a connectionreference. Returns the logical name."""
+    _, r = dv("GET",
+              "/connectionreferences?" + urllib.parse.urlencode({
+                  "$select": "connectionreferencelogicalname,connectorid",
+                  "$filter": f"connectionreferencelogicalname eq '{logical_name}'",
+              }))
+    if r["value"]:
+        return logical_name
+    print(f"      creating connection reference '{logical_name}' for {connector_api_id}")
+    dv("POST", "/connectionreferences", {
+        "connectionreferencelogicalname": logical_name,
+        "connectionreferencedisplayname": display_name,
+        "connectorid": connector_api_id,
+    }, {"MSCRM.SolutionUniqueName": SOLUTION})
+    return logical_name
+
+
+def build_definition(dv_cref, gh_cref, gh_connector_id):
+    """Logic-apps-style definition. gh_cref/gh_connector_id can be None for
+    a partial deploy (Parts 1 + 2 only)."""
     trigger_props = {
         "LaunchName": {"type": "string", "title": "Launch name",
                         "default": DEFAULT_LAUNCH, "x-ms-content-hint": "TEXT"},
@@ -114,15 +131,15 @@ def build_definition(gh_connector_id):
             "runAfter": {},
             "inputs": {
                 "host": {
-                    "connectionName": "shared_commondataserviceforapps",
+                    "connectionName": dv_cref,
+                    "connectionReferenceName": dv_cref,
                     "operationId": "PerformUnboundAction",
                     "apiId": DV_CONNECTOR_API,
                 },
                 "parameters": {
                     "actionName": "lc_CalculateLaunchReadiness",
-                    "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
+                    "lc_LaunchName": "@triggerBody()?['LaunchName']",
                 },
-                "authentication": "@parameters('$authentication')",
             },
         },
         "Call_Power_Fx_Function": {
@@ -130,15 +147,15 @@ def build_definition(gh_connector_id):
             "runAfter": {"Call_Custom_API_dotnet": ["Succeeded"]},
             "inputs": {
                 "host": {
-                    "connectionName": "shared_commondataserviceforapps",
+                    "connectionName": dv_cref,
+                    "connectionReferenceName": dv_cref,
                     "operationId": "PerformUnboundAction",
                     "apiId": DV_CONNECTOR_API,
                 },
                 "parameters": {
                     "actionName": "lc_CalculateLaunchReadinessFx",
-                    "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
+                    "lc_LaunchName": "@triggerBody()?['LaunchName']",
                 },
-                "authentication": "@parameters('$authentication')",
             },
         },
     }
@@ -156,7 +173,8 @@ def build_definition(gh_connector_id):
             "runAfter": {"Call_Power_Fx_Function": ["Succeeded"]},
             "inputs": {
                 "host": {
-                    "connectionName": gh_connector_id,
+                    "connectionName": gh_cref,
+                    "connectionReferenceName": gh_cref,
                     "operationId": "GetLatestRelease",
                     "apiId": f"/providers/Microsoft.PowerApps/apis/{gh_connector_id}",
                 },
@@ -164,7 +182,6 @@ def build_definition(gh_connector_id):
                     "owner": "@triggerBody()?['Owner']",
                     "repo":  "@triggerBody()?['Repo']",
                 },
-                "authentication": "@parameters('$authentication')",
             },
         }
         compose_inputs["latest_release"] = "@body('Call_GitHub_Releases')"
@@ -212,16 +229,36 @@ def main():
     else:
         print(f"      connector id: {gh}")
 
-    print("[2/4] Resolving LaunchControl solution...")
+    print("[2/4] Resolving LaunchControl solution + connection references...")
     sol_id = get_solution_id()
     if not sol_id:
         print("ERROR: LaunchControl solution not found.")
         sys.exit(1)
 
-    definition = build_definition(gh)
+    dv_cref = ensure_connection_reference(
+        "lc_dataverse_harness", "LC Dataverse (Test Harness)", DV_CONNECTOR_API)
+    gh_cref = None
+    if gh:
+        gh_cref = ensure_connection_reference(
+            "lc_githubreleases_harness", "LC GitHub Releases (Test Harness)",
+            f"/providers/Microsoft.PowerApps/apis/{gh}")
+
+    definition = build_definition(dv_cref, gh_cref, gh)
+    connection_refs = {
+        dv_cref: {"connection": {"connectionReferenceLogicalName": dv_cref},
+                   "api": {"name": "shared_commondataserviceforapps"},
+                   "runtimeSource": "embedded"},
+    }
+    if gh_cref:
+        connection_refs[gh_cref] = {
+            "connection": {"connectionReferenceLogicalName": gh_cref},
+            "api": {"name": gh},
+            "runtimeSource": "embedded",
+        }
+
     clientdata = {
         "properties": {
-            "connectionReferences": {},
+            "connectionReferences": connection_refs,
             "definition": definition,
         },
         "schemaVersion": "1.0.0.0",
@@ -251,8 +288,11 @@ def main():
     headers = {"MSCRM.SolutionUniqueName": SOLUTION}
     if existing:
         wid = existing["workflowid"]
-        print(f"      updating existing flow {wid}...")
-        dv("PATCH", f"/workflows({wid})", payload, headers)
+        print(f"      deleting + recreating existing flow {wid} (PATCH cannot change conn-ref schema)...")
+        dv("DELETE", f"/workflows({wid})")
+        _, r = dv("POST", "/workflows", payload, headers)
+        wid = r["workflowid"]
+        print(f"      recreated workflow {wid}")
     else:
         print("[4/4] Creating new flow...")
         _, r = dv("POST", "/workflows", payload, headers)
