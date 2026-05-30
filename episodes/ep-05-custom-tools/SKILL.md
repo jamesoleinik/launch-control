@@ -75,27 +75,32 @@ verdict precedence (any `Blocked` → `NO-GO`).
 
 ### Prompt to GitHub Copilot CLI
 
-> *Generate a .NET Framework 4.6.2 Dataverse sandbox plugin called
-> `CalculateLaunchReadinessPlugin` in `plugins/CalculateLaunchReadiness/`.
-> It should back a Custom API named `lc_CalculateLaunchReadiness` with one
-> input parameter `lc_LaunchName` (string) and three output properties:
-> `lc_ReadinessScore` (decimal 0–100), `lc_ReadinessSummary` (multi-line
-> string narrating each milestone), and `lc_Verdict` (string: GO,
-> CONDITIONAL, or NO-GO).*
->
-> *Logic: look up the launch by `lc_name`, retrieve every related
-> `lc_milestone`, score each by status (Complete=100, InProgress=60,
-> AtRisk=50, NotStarted=20, Blocked=0), average them. Verdict rules: any
-> Blocked → NO-GO; score ≥ 90 and zero AtRisk → GO; otherwise CONDITIONAL.
-> Use `ITracingService` to narrate the per-milestone score into
-> `lc_ReadinessSummary`. Sort milestones by `lc_duedate`.*
->
-> *Then write `scripts/register_custom_action.py` that uses the Dataverse
-> Web API to upload the assembly, register the plugin type, create the
-> Custom API + request parameter + response properties, bind PluginTypeId,
-> and add the Custom API to the `LaunchControl` solution with
-> `AddRequiredComponents=true`. Idempotent (PATCH if it exists). Use
-> `scripts/auth.py` for tokens.*
+> *Create a Dataverse Custom API called `lc_CalculateLaunchReadiness`*
+> *that scores a launch by averaging its milestone statuses and returns*
+> *a verdict (GO / CONDITIONAL / NO-GO, with any Blocked milestone*
+> *forcing NO-GO). Build it as a .NET sandbox plugin so the per-milestone*
+> *reasoning can come back in a tracing-service narrative. Then register*
+> *everything programmatically into the LaunchControl solution and smoke*
+> *test it against Q3 Widget Launch.*
+
+### Implementation notes (don't put these in the prompt — but the agent needs to honour them)
+
+- **.NET Framework 4.6.2** is the supported sandbox runtime as of May 2026
+  (4.8 lands Q4 2026). The csproj needs
+  `Microsoft.NETFramework.ReferenceAssemblies.Net462` because the SDK no
+  longer ships the targeting pack by default.
+- Strong-name the assembly before registration.
+- Default rubric (confirm with user before locking in): Complete=100,
+  InProgress=60, AtRisk=50, NotStarted=20, Blocked=0. Verdict precedence:
+  any Blocked → NO-GO; score ≥ 90 AND zero AtRisk → GO; else CONDITIONAL.
+- Custom API shape: input `lc_LaunchName` (string); outputs
+  `lc_ReadinessScore` (decimal 0–100), `lc_ReadinessSummary` (multi-line
+  string), `lc_Verdict` (string).
+- Registration script must be idempotent: PATCH the assembly bytes if the
+  row exists; one `AddSolutionComponent` call with
+  `AddRequiredComponents=true` pulls the assembly, plugin type, request
+  parameter, and response properties into the LaunchControl solution
+  together. Use `scripts/auth.py` for tokens.
 
 ### Verification
 
@@ -130,24 +135,31 @@ the first-party `MicrosoftTeams` connector.
 
 ### Prompt to GitHub Copilot CLI
 
-> *Generate a Power Fx Function under `functions/CalculateLaunchReadinessFx/`
-> with three files:*
-> - *`function.json` — Custom API contract matching the Part 1 plugin plus
->   an `lc_NotifiedAt` (DateTime) response property.*
-> - *`formula.fx` — Power Fx that calls
->   `Environment.lc_CalculateLaunchReadiness({lc_LaunchName: LaunchName})`
->   for the baseline, looks up the launch's Teams team and channel IDs,
->   then invokes `MicrosoftTeams.PostMessageToChannelV3(...)` to post a
->   verdict + summary HTML message. Returns baseline outputs plus
->   `lc_NotifiedAt = Now()` if posted else Blank.*
-> - *`README.md` — the exact Copilot for Power Fx prompt used to generate
->   `formula.fx`.*
->
-> *Then extend `scripts/register_custom_action.py` (or add a sibling
-> script) to register this Function via the `msdyn_lowcodeplugin` table
-> and add it to the `LaunchControl` solution. If `msdyn_lowcodeplugin` is
-> absent (tenant admin hasn't installed "Power Platform Low Code
-> Plug-ins"), print a clear remediation message and skip.*
+> *Build a Power Fx twin of that Custom API — same shape, suffixed `Fx` —*
+> *as a Function in Dataverse. After scoring it should also post the*
+> *verdict to the launch's Teams channel and return the timestamp it*
+> *posted. Register it into the LaunchControl solution. If the low-code*
+> *plug-ins app isn't installed in this env, fail gracefully with the*
+> *remediation steps — don't error out.*
+
+### Implementation notes
+
+- Folder layout: `functions/CalculateLaunchReadinessFx/{formula.fx,
+  function.json, README.md}`. The README captures the exact Copilot for
+  Power Fx prompt used to write `formula.fx` so the next dev can
+  regenerate it.
+- Contract mirrors Part 1 plus one extra response prop: `lc_NotifiedAt`
+  (DateTime).
+- `formula.fx` calls `Environment.lc_CalculateLaunchReadiness(...)` for
+  the baseline, looks up `lc_TeamsTeamId` + `lc_TeamsChannelId` from the
+  launch row, then calls `MicrosoftTeams.PostMessageToChannelV3(...)`.
+  Returns baseline + `lc_NotifiedAt = If(posted, Now(), Blank())`.
+- Registration uses the `msdyn_lowcodeplugin` table. If that table is
+  absent the registration script should print the install path (Power
+  Platform admin center → Environments → _(env)_ → Resources → Dynamics
+  365 apps → "Power Platform Low Code Plug-ins") and exit 0, not
+  failure.
+- A `shared_teams` connection reference must already exist in the env.
 
 ### Verification
 
@@ -185,43 +197,49 @@ API (PAPI). No `paconn login`, no maker portal clicks.
 
 ### Prompt — Part 3a (REST)
 
-> *Generate a Swagger 2.0 connector folder at
-> `connectors/github-releases-rest/` for the public GitHub Releases API:*
-> - *`apiDefinition.swagger.json` — host `api.github.com`, basePath
->   `/repos`, two operations: `GetLatestRelease` (`GET
->   /{owner}/{repo}/releases/latest`) and `ListReleases` (`GET
->   /{owner}/{repo}/releases`). No security definitions (public API).*
-> - *`apiProperties.json` — empty `connectionParameters`, brand colour
->   `#24292F`, capabilities `[]`.*
-> - *`settings.example.json` — template for paconn-style settings.*
->
-> *Then write `scripts/register_custom_connector.py` that takes a folder
-> path on the command line and registers (or updates) a custom connector
-> via PAPI directly — no paconn dependency. Use `AzureCliCredential` for
-> the bearer token (`https://service.powerapps.com/.default`). POST to
-> `/providers/Microsoft.PowerApps/apis?api-version=2016-11-01&$filter=environment eq '<env-id>'`
-> for create, PATCH `/providers/Microsoft.PowerApps/apis/<id>?...` for
-> update. Body shape: `{"properties": {"openApiDefinition": <swagger>,
-> "backendService": {"serviceUrl": "<scheme>://<host><basePath>"},
-> "environment": {"name": "<env-id>"}, "description": ..., "displayName":
-> ..., "connectionParameters": {}, "capabilities": [],
-> "policyTemplateInstances": [], "scriptOperations": []}}`. Cache the
-> returned connector id in `<folder>/.connector-id` for re-runs. Add the
-> connector to the LaunchControl solution via `pac connector create
-> --solution-unique-name LaunchControl` after PAPI registration.*
+> *Wrap the public GitHub Releases API as a Power Platform custom*
+> *connector and register it into the LaunchControl solution*
+> *programmatically — no `paconn login`, no maker-portal clicks. I want*
+> *the registration script to be re-runnable against any swagger folder*
+> *in `connectors/`, since we'll do MCP servers next.*
 
 ### Prompt — Part 3b (MCP)
 
-> *Generate two more connector folders using the same script:*
-> - *`connectors/learn-mcp/` — wraps `https://learn.microsoft.com/api/mcp`,
->   no auth.*
-> - *`connectors/github-mcp/` — wraps `https://api.githubcopilot.com/mcp/`,
->   GitHub PAT via `connectionParameters.api_key` (Authorization header).*
->
-> *The Swagger files must include one `POST /api/mcp` (or equivalent) path
-> with `operationId: InvokeServer` and the extension
-> `"x-ms-agentic-protocol": "mcp-streamable-1.0"` — that's the magic that
-> flips the connector framework from REST to MCP.*
+> *Now do the same for two remote MCP servers: Microsoft Learn MCP*
+> *(`learn.microsoft.com/api/mcp`, no auth) and the GitHub MCP server*
+> *(`api.githubcopilot.com/mcp/`, GitHub PAT). Re-use the registration*
+> *script from 3a — the only thing that should differ between REST and*
+> *MCP is the swagger.*
+
+### Implementation notes (REST + MCP)
+
+- Folder layout per connector: `connectors/<name>/{apiDefinition.swagger.json,
+  apiProperties.json, settings.example.json}`. `.connector-id` is
+  gitignored — the registration script writes the returned slug there for
+  re-runs.
+- **The registration script talks PAPI directly — no paconn dependency.**
+  Use `AzureCliCredential` against `https://service.powerapps.com/.default`.
+  - **Create:** `POST /providers/Microsoft.PowerApps/apis?api-version=2016-11-01&$filter=environment eq '<env-id>'`
+  - **Update:** `PATCH /providers/Microsoft.PowerApps/apis/<id>?api-version=2016-11-01&$filter=environment eq '<env-id>'`
+  - Body: `{"properties": {"openApiDefinition": <swagger>, "backendService":
+    {"serviceUrl": "<scheme>://<host><basePath>"}, "environment": {"name":
+    "<env-id>"}, "description": ..., "displayName": ...,
+    "connectionParameters": {}, "capabilities": [],
+    "policyTemplateInstances": [], "scriptOperations": []}}`
+  - **Gotcha 1:** property name is `openApiDefinition`, NOT `swagger`.
+    Wrong key → `ApiDefinitionUrlInvalid` 400.
+  - **Gotcha 2:** create is POST (not PUT). PUT → 405.
+  - Header `x-ms-origin: paconn-cli` is what paconn sets — include it.
+- After PAPI registration, add the connector to the LaunchControl
+  solution via `pac connector create --solution-unique-name LaunchControl`
+  (or the `connector` Dataverse table directly).
+- **The "MCP magic":** the swagger has one `POST /api/mcp` path with
+  `operationId: InvokeServer` and the extension
+  `"x-ms-agentic-protocol": "mcp-streamable-1.0"`. That single key flips
+  the connector framework from REST to MCP. Everything else is identical.
+- GitHub MCP auth: declare `connectionParameters.api_key` (header type,
+  `Authorization` header, prefix `Bearer ` if you want raw PATs — the
+  GitHub MCP server also accepts `token <PAT>`).
 
 ### Verification
 
@@ -255,45 +273,50 @@ programmatically via the Dataverse `workflows` table (no maker portal).
 
 ### Prompt to GitHub Copilot CLI
 
-> *Generate `scripts/create_test_harness_flow.py` that creates a Power
-> Automate flow named `LC · Custom Tools Test Harness` via the Dataverse
-> `workflows` table (`category=5` modern flow, `type=1` definition). The
-> flow should:*
->
-> *1. Look up the GitHub Releases custom connector by displayName via PAPI
-> (`/providers/Microsoft.PowerApps/apis?$filter=environment eq '...'`).
-> If absent, deploy a partial 2-action flow.*
->
-> *2. Idempotently ensure two `connectionreference` rows exist in the
-> `LaunchControl` solution: `lc_dataverse_harness` (connectorid
-> `/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps`)
-> and `lc_githubreleases_harness` (pointing at the slug above). Lookup by
-> `connectionreferencelogicalname` first; create only if missing.*
->
-> *3. Build a logic-apps-style `clientdata` with:*
->    - *`properties.connectionReferences` map — keys are the connection
->      reference logical names; each value is `{"connection":
->      {"connectionReferenceLogicalName": "<name>"}, "api": {"name":
->      "<connector slug>"}, "runtimeSource": "embedded"}`.*
->    - *`properties.definition.triggers.manual` (Request) with a JSON
->      schema input: `LaunchName` (default Q3 Widget Launch), plus
->      `Owner`/`Repo` only if the GH connector is present.*
->    - *`properties.definition.actions` — three `OpenApiConnection`
->      actions: Call_Custom_API_dotnet, Call_Power_Fx_Function (both
->      `PerformUnboundAction` with parameter `actionName` plus the
->      Custom-API input at TOP LEVEL — `lc_LaunchName`, NOT
->      `item/lc_LaunchName`), and Call_GitHub_Releases
->      (`GetLatestRelease`). Each action's `host` block uses
->      `connectionReferenceName: "<map key>"` — not `connectionName`.
->      Do NOT include `"authentication": "@parameters('$authentication')"`
->      anywhere; Power Automate auto-injects this.*
->    - *Compose + Respond actions stitching the three bodies into one
->      JSON.*
->
-> *4. POST the flow with header `MSCRM.SolutionUniqueName:
-> LaunchControl`. If the flow already exists, DELETE and recreate (PATCH
-> cannot change the connection-reference schema in place). Print the
-> https://make.powerautomate.com/.../flows/&lt;guid&gt; URL.*
+> *Build a Power Automate test-harness flow that exercises all three*
+> *tools in one run — the .NET Custom API, the Fx twin, and the GitHub*
+> *Releases connector — and returns their responses side-by-side. Manual*
+> *trigger, takes a `LaunchName` input, deploys programmatically into*
+> *the LaunchControl solution. Re-runnable; ping me with the maker-portal*
+> *URL when it's deployed so I can bind connections and test.*
+
+### Implementation notes (these are the easy-to-miss bits — get them right on the first try)
+
+- Flow name `LC · Custom Tools Test Harness`. Lives in the Dataverse
+  `workflows` table: `category=5` (modern flow), `type=1` (definition),
+  `statecode=0` (draft).
+- POST with header `MSCRM.SolutionUniqueName: LaunchControl` to land it
+  in the solution.
+- **Solution-aware flows need connection references, not connection
+  names.** Idempotently ensure two `connectionreference` rows exist:
+  `lc_dataverse_harness` (`connectorid =
+  /providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps`)
+  and `lc_githubreleases_harness` (pointing at the GH connector slug
+  from Part 3a). Look up by `connectionreferencelogicalname` first;
+  create only if missing.
+- `clientdata.properties.connectionReferences` is a map whose **keys are
+  the connection-reference logical names**. Each value:
+  `{"connection": {"connectionReferenceLogicalName": "<name>"}, "api":
+  {"name": "<connector slug>"}, "runtimeSource": "embedded"}`.
+- Each action's `host` block uses `connectionReferenceName: "<map key>"`
+  — NOT `connectionName`.
+- **For unbound Custom API calls (`PerformUnboundAction`), input params
+  go at the TOP LEVEL of `parameters` — NOT under `item/`.** Using
+  `item/lc_LaunchName` is the bound-action shape; the unbound action
+  rejects it as "no longer present in the operation schema".
+- **Do NOT include `"authentication": "@parameters('$authentication')"`**
+  on `OpenApiConnection` actions. Power Automate auto-injects this and
+  rejects the flow if present (`should not have the property
+  'authentication'`).
+- PATCH can't change `clientdata`'s connection-reference schema in
+  place. If a flow with the same name exists, **DELETE and recreate**.
+- Discover the GH connector slug at runtime by querying PAPI by
+  displayName (`/providers/Microsoft.PowerApps/apis?$filter=environment eq
+  '<env>'`, filter client-side for `displayName == "Launch Control —
+  GitHub Releases"`). If missing, deploy a partial 2-action flow and
+  warn rather than failing.
+- Print the maker-portal URL on success:
+  `https://make.powerautomate.com/environments/<env>/flows/<workflow-id>`.
 
 ### Verification
 
