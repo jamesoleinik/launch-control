@@ -4,7 +4,7 @@
 **Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ Power Fx Function (low-code twin) → Custom Action · ⭐ Custom Endpoint Registration (REST + remote MCP, programmatic) · ⭐ Power Automate test-harness flow
 **Layer:** 🔵 Layer 2 (intelligence — extending the tool ecosystem)
 **Coding agent:** GitHub Copilot CLI (every part — see the prompts below)
-**Companion skill:** [`launch-control/ep-05-custom-tools`](../../.copilot-clean/.copilot/installed-plugins/launch-control/skills/ep-05-custom-tools/SKILL.md) — encodes the prompts below as a single procedure the CLI can follow end-to-end.
+**Companion skill:** [`SKILL.md`](SKILL.md) — encodes the prompts below as a single procedure the CLI can follow end-to-end.
 
 > ⚠️ **How to read this episode.** Each Part is a **prompt you type into
 > GitHub Copilot CLI**. The scripts, plugin, swagger, and flow JSON in this
@@ -560,10 +560,10 @@ preflight.py                               # CI sanity (6 probes); not recorded 
 
 ## Companion skill
 
-The [`launch-control/ep-05-custom-tools`](../../.copilot-clean/.copilot/installed-plugins/launch-control/skills/ep-05-custom-tools/SKILL.md)
-skill encodes the prompts above as a single procedure GitHub Copilot CLI
-can follow end-to-end. With the skill installed, the recording session
-becomes:
+The [`SKILL.md`](SKILL.md) in this folder encodes the prompts above as a
+single procedure GitHub Copilot CLI can follow end-to-end. With the skill
+installed (copy or symlink it under your Copilot CLI plugin path), the
+recording session becomes:
 
 ```
 User: do Episode 5
