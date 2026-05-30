@@ -89,12 +89,99 @@ def find_gh_connector():
 
 def get_solution_id():
     _, r = dv("GET",
-              "/solutions?$select=solutionid,uniquename&$filter=uniquename eq '" + SOLUTION + "'")
+              "/solutions?" + urllib.parse.urlencode({
+                  "$select": "solutionid,uniquename",
+                  "$filter": f"uniquename eq '{SOLUTION}'",
+              }))
     return r["value"][0]["solutionid"] if r["value"] else None
 
 
-def build_definition(gh_connector_id: str):
-    """Logic-apps-style definition with three OpenApiConnection actions."""
+def build_definition(gh_connector_id):
+    """Logic-apps-style definition with 2 or 3 OpenApiConnection actions.
+    If gh_connector_id is None the GitHub Releases action and trigger inputs
+    for it are omitted (partial Part 3a deploy)."""
+    trigger_props = {
+        "LaunchName": {"type": "string", "title": "Launch name",
+                        "default": DEFAULT_LAUNCH, "x-ms-content-hint": "TEXT"},
+    }
+    if gh_connector_id:
+        trigger_props["Owner"] = {"type": "string", "title": "GitHub owner", "default": DEFAULT_OWNER}
+        trigger_props["Repo"]  = {"type": "string", "title": "GitHub repo",  "default": DEFAULT_REPO}
+
+    actions = {
+        "Call_Custom_API_dotnet": {
+            "type": "OpenApiConnection",
+            "runAfter": {},
+            "inputs": {
+                "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "PerformUnboundAction",
+                    "apiId": DV_CONNECTOR_API,
+                },
+                "parameters": {
+                    "actionName": "lc_CalculateLaunchReadiness",
+                    "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
+                },
+                "authentication": "@parameters('$authentication')",
+            },
+        },
+        "Call_Power_Fx_Function": {
+            "type": "OpenApiConnection",
+            "runAfter": {"Call_Custom_API_dotnet": ["Succeeded"]},
+            "inputs": {
+                "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "PerformUnboundAction",
+                    "apiId": DV_CONNECTOR_API,
+                },
+                "parameters": {
+                    "actionName": "lc_CalculateLaunchReadinessFx",
+                    "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
+                },
+                "authentication": "@parameters('$authentication')",
+            },
+        },
+    }
+
+    compose_inputs = {
+        "launch":           "@triggerBody()?['LaunchName']",
+        "dotnet_readiness": "@body('Call_Custom_API_dotnet')",
+        "fx_readiness":     "@body('Call_Power_Fx_Function')",
+    }
+    last_step = "Call_Power_Fx_Function"
+
+    if gh_connector_id:
+        actions["Call_GitHub_Releases"] = {
+            "type": "OpenApiConnection",
+            "runAfter": {"Call_Power_Fx_Function": ["Succeeded"]},
+            "inputs": {
+                "host": {
+                    "connectionName": gh_connector_id,
+                    "operationId": "GetLatestRelease",
+                    "apiId": f"/providers/Microsoft.PowerApps/apis/{gh_connector_id}",
+                },
+                "parameters": {
+                    "owner": "@triggerBody()?['Owner']",
+                    "repo":  "@triggerBody()?['Repo']",
+                },
+                "authentication": "@parameters('$authentication')",
+            },
+        }
+        compose_inputs["latest_release"] = "@body('Call_GitHub_Releases')"
+        last_step = "Call_GitHub_Releases"
+
+    actions["Compose_Result"] = {
+        "type": "Compose",
+        "runAfter": {last_step: ["Succeeded"]},
+        "inputs": compose_inputs,
+    }
+    actions["Respond"] = {
+        "type": "Response",
+        "kind": "Http",
+        "runAfter": {"Compose_Result": ["Succeeded"]},
+        "inputs": {"statusCode": 200, "body": "@outputs('Compose_Result')"},
+    }
+
     return {
         "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
         "contentVersion": "1.0.0.0",
@@ -106,88 +193,10 @@ def build_definition(gh_connector_id: str):
             "manual": {
                 "type": "Request",
                 "kind": "Button",
-                "inputs": {
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "LaunchName": {"type": "string", "title": "Launch name",
-                                            "default": DEFAULT_LAUNCH, "x-ms-content-hint": "TEXT"},
-                            "Owner": {"type": "string", "title": "GitHub owner",
-                                       "default": DEFAULT_OWNER},
-                            "Repo": {"type": "string", "title": "GitHub repo",
-                                      "default": DEFAULT_REPO},
-                        },
-                        "required": ["LaunchName"],
-                    }
-                },
+                "inputs": {"schema": {"type": "object", "properties": trigger_props, "required": ["LaunchName"]}},
             }
         },
-        "actions": {
-            "Call_Custom_API_dotnet": {
-                "type": "OpenApiConnection",
-                "runAfter": {},
-                "inputs": {
-                    "host": {
-                        "connectionName": "shared_commondataserviceforapps",
-                        "operationId": "PerformUnboundAction",
-                        "apiId": DV_CONNECTOR_API,
-                    },
-                    "parameters": {
-                        "actionName": "lc_CalculateLaunchReadiness",
-                        "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
-                    },
-                    "authentication": "@parameters('$authentication')",
-                },
-            },
-            "Call_Power_Fx_Function": {
-                "type": "OpenApiConnection",
-                "runAfter": {"Call_Custom_API_dotnet": ["Succeeded"]},
-                "inputs": {
-                    "host": {
-                        "connectionName": "shared_commondataserviceforapps",
-                        "operationId": "PerformUnboundAction",
-                        "apiId": DV_CONNECTOR_API,
-                    },
-                    "parameters": {
-                        "actionName": "lc_CalculateLaunchReadinessFx",
-                        "item/lc_LaunchName": "@triggerBody()?['LaunchName']",
-                    },
-                    "authentication": "@parameters('$authentication')",
-                },
-            },
-            "Call_GitHub_Releases": {
-                "type": "OpenApiConnection",
-                "runAfter": {"Call_Power_Fx_Function": ["Succeeded"]},
-                "inputs": {
-                    "host": {
-                        "connectionName": gh_connector_id,
-                        "operationId": "GetLatestRelease",
-                        "apiId": f"/providers/Microsoft.PowerApps/apis/{gh_connector_id}",
-                    },
-                    "parameters": {
-                        "owner": "@triggerBody()?['Owner']",
-                        "repo":  "@triggerBody()?['Repo']",
-                    },
-                    "authentication": "@parameters('$authentication')",
-                },
-            },
-            "Compose_Result": {
-                "type": "Compose",
-                "runAfter": {"Call_GitHub_Releases": ["Succeeded"]},
-                "inputs": {
-                    "launch":          "@triggerBody()?['LaunchName']",
-                    "dotnet_readiness":"@body('Call_Custom_API_dotnet')",
-                    "fx_readiness":    "@body('Call_Power_Fx_Function')",
-                    "latest_release":  "@body('Call_GitHub_Releases')",
-                },
-            },
-            "Respond": {
-                "type": "Response",
-                "kind": "Http",
-                "runAfter": {"Compose_Result": ["Succeeded"]},
-                "inputs": {"statusCode": 200, "body": "@outputs('Compose_Result')"},
-            },
-        },
+        "actions": actions,
     }
 
 
@@ -195,10 +204,13 @@ def main():
     print("[1/4] Resolving GitHub Releases custom connector...")
     gh = find_gh_connector()
     if not gh:
-        print(f"ERROR: Custom connector '{GH_CONNECTOR_DISPLAY}' not found.")
-        print("  Run: python scripts/register_custom_connector.py connectors/github-releases-rest")
-        sys.exit(1)
-    print(f"      connector id: {gh}")
+        print(f"      Custom connector '{GH_CONNECTOR_DISPLAY}' NOT found.")
+        print("      Deploying PARTIAL flow (Parts 1 + 2 only). To add Part 3a:")
+        print("        1) paconn login")
+        print("        2) python scripts/register_custom_connector.py connectors/github-releases-rest")
+        print("        3) re-run this script to add the GetLatestRelease action")
+    else:
+        print(f"      connector id: {gh}")
 
     print("[2/4] Resolving LaunchControl solution...")
     sol_id = get_solution_id()
@@ -218,8 +230,10 @@ def main():
     # Look up any existing flow by name
     print("[3/4] Checking for existing flow...")
     _, r = dv("GET",
-              "/workflows?$select=workflowid,name,statecode"
-              "&$filter=name eq '" + urllib.parse.quote(FLOW_NAME).replace("%20", " ") + "' and category eq 5")
+              "/workflows?" + urllib.parse.urlencode({
+                  "$select": "workflowid,name,statecode",
+                  "$filter": f"name eq '{FLOW_NAME}' and category eq 5",
+              }))
     existing = r["value"][0] if r["value"] else None
 
     payload = {

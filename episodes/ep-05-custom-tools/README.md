@@ -444,65 +444,14 @@ posted Teams card), and the latest release of a referenced repo.
 
 **Why this is the right place for it.** Episodes 1–4 verified the data
 layer with Python and pandas. Episode 5 verifies the _tool_ layer with the
-canonical Power Platform automation runtime. Same governance, same auth,
-same surface every Power Platform developer already knows.
+canonical Power Platform automation runtime — same governance, same auth,
+same surface every Power Platform developer already knows. **The flow IS
+the validation surface; no separate Python preflight needed on-screen.**
 
----
-
-## Part 5 · Local validation (before any agent picks the tools up)
-
-> The episode order is `Custom Tools` (this one) → `The Agent` (Episode 9).
-> We want to know the tools _work_ before we point an agent at them.
-
-[`episodes/ep-05-custom-tools/preflight.py`](../../episodes/ep-05-custom-tools/preflight.py) is a
-two-mode test harness that exercises the tools without any agent surface:
-
-```powershell
-# 1. Generate a reviewable plan (no token prompts)
-python episodes/ep-05-custom-tools/preflight.py --plan
-
-# 2. Run the actual tests (acquires token via Azure CLI)
-python episodes/ep-05-custom-tools/preflight.py --run
-```
-
-`--plan` prints a markdown checklist of what's going to be tested, ideal for
-narration prep. `--run` executes 4 pre-flight checks + 4 tests against the
-live environment, prints a colorized console report, and writes a timestamped
-`test_results_<ts>.md` with raw request/response payloads as evidence.
-
-What's covered:
-
-| # | Check | Validates |
-|---|---|---|
-| P1 | `lc_CalculateLaunchReadiness` Custom API exists | .NET plugin registration succeeded |
-| P2 | Custom API is in `LaunchControl` solution | Solution membership |
-| P3 | ≥ 2 BYO MCP custom connectors present | paconn registration succeeded |
-| P4 | `lc_CalculateLaunchReadiness**Fx**` Custom API exists | Power Fx Function registration succeeded |
-| T1 | Smoke test — invoke `lc_CalculateLaunchReadiness` for "Q3 Widget Launch" | .NET plugin executes, returns expected fields |
-| T2 | Verdict matrix — invoke for every launch in env | Score / verdict consistency |
-| T3 | Learn MCP server responds to `initialize` + `tools/list` | The MCP endpoint actually speaks the protocol |
-| T4 | Invoke `lc_CalculateLaunchReadinessFx` — Fx twin returns same shape, plus `lc_NotifiedAt` when channel set | Power Fx path resolves the Microsoft Teams connector and returns the contract |
-
-Run output (current environment, 2026-05-01):
-
-```
-[ OK ] P1: CustomAPI lc_CalculateLaunchReadiness exists           (4431ms)
-[ OK ] P2: CustomAPI is in LaunchControl solution                 (2498ms)
-[ OK ] P3: BYO MCP custom connectors present (>=2)                (1292ms)
-       found 3: cr88d_5Flearn-20mcp, cr88d_5Fmanual-20learn, cr88d_5Flearn-20mcp-202
-[ OK ] P4: CustomAPI lc_CalculateLaunchReadinessFx exists         (1102ms)
-[ OK ] T1: Smoke test — Score=38.8, Verdict=NO-GO                 (1248ms)
-[ OK ] T2: Verdict matrix — 1 launch scored consistently          (2873ms)
-[ OK ] T3: Learn MCP server responds to initialize + tools/list   (794ms)
-       server=Microsoft Learn MCP Server exposes 3 tool(s)
-[ OK ] T4: Fx twin — Score=38.8, Verdict=NO-GO, 2 open blocker(s) (1611ms)
-
-8/8 passing | Results: scripts/test_results_20260501_090533.md
-```
-
-The `test_results_*.md` files are gitignored because they contain
-environment-specific GUIDs and timestamps; they're per-run evidence, not
-source.
+> A `preflight.py` script still lives in this folder for CI / pre-record
+> sanity checks (6 readiness probes: each artifact is in env, in the
+> solution, and answers a call). It's not part of the recorded narrative —
+> the flow run is.
 
 ---
 
