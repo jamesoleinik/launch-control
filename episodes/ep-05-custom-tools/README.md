@@ -180,6 +180,15 @@ Expected output:
 > _"This is business logic that runs **in** Dataverse. Any agent, any app
 > can call it the same way."_
 
+### 📚 References
+
+- [Custom APIs overview](https://learn.microsoft.com/power-apps/developer/data-platform/custom-api) — what a Custom API is and how it differs from a Custom Process Action
+- [Create and use Custom APIs](https://learn.microsoft.com/power-apps/developer/data-platform/create-custom-api) — table-by-table breakdown of `CustomAPI`, `CustomAPIRequestParameter`, `CustomAPIResponseProperty`
+- [Write a plug-in](https://learn.microsoft.com/power-apps/developer/data-platform/write-plug-in) and [`IPlugin` interface](https://learn.microsoft.com/dotnet/api/microsoft.xrm.sdk.iplugin) — the .NET sandbox runtime
+- [`ITracingService`](https://learn.microsoft.com/power-apps/developer/data-platform/debug-plug-in#trace-information) — the narration channel we use for `lc_ReadinessSummary`
+- [Access external web services](https://learn.microsoft.com/power-apps/developer/data-platform/access-web-services) — what the sandbox can and cannot do over HTTPS (sets up the Part 2 contrast)
+- Repo: [`plugins/CalculateLaunchReadiness/SETUP-GUIDE.md`](../../plugins/CalculateLaunchReadiness/SETUP-GUIDE.md), [`scripts/register_custom_action.py`](../../scripts/register_custom_action.py)
+
 ---
 
 ## Part 2 · The Power Fx twin (low-code, connector-native)
@@ -261,6 +270,15 @@ This is the part most developers haven't seen yet: **Power Fx Functions
 are the low-code path _and_ the connector-native path**. Three words of
 Power Fx; zero infrastructure.
 
+### 📚 References
+
+- [Functions in Dataverse (preview)](https://learn.microsoft.com/power-apps/maker/data-platform/create-function) — the low-code plug-ins / Functions feature
+- [Power Fx in Dataverse plug-ins](https://learn.microsoft.com/power-apps/maker/data-platform/low-code-plug-ins) — supported Fx surface, limitations, evaluator runtime
+- [Microsoft Teams connector — `PostMessageToChannelV3`](https://learn.microsoft.com/connectors/teams/#post-message-in-a-chat-or-channel) — the connector action we invoke from the Fx body
+- [Connection references](https://learn.microsoft.com/power-apps/maker/data-platform/create-connection-reference) — the `lc_teams` cref the preflight checks
+- [Power Fx formula reference](https://learn.microsoft.com/power-platform/power-fx/formula-reference) — function index
+- Repo: [`scripts/deploy_fx_function_with_teams.py`](../../scripts/deploy_fx_function_with_teams.py), [`functions/CalculateLaunchReadinessFx/`](../../functions/CalculateLaunchReadinessFx/)
+
 ---
 
 ## Part 3 · Custom Endpoint Registration (REST + remote MCP, both programmatic)
@@ -330,6 +348,15 @@ diff-able, CI-friendly.
 > _"REST endpoint or MCP server, the registration story is identical:
 > describe it in Swagger, run one script, the tool shows up in every
 > agent surface in your tenant."_
+
+### 📚 References
+
+- [Custom connectors overview](https://learn.microsoft.com/connectors/custom-connectors/) — the umbrella concept and governance model
+- [Define a custom connector from an OpenAPI definition](https://learn.microsoft.com/connectors/custom-connectors/define-openapi-definition) — the Swagger 2.0 shape we author
+- [Use MCP with Power Platform custom connectors](https://learn.microsoft.com/connectors/custom-connectors/use-custom-connectors-mcp) — `x-ms-agentic-protocol: mcp-streamable-1.0`
+- [Connector reference solutions and the `connectors` table](https://learn.microsoft.com/power-apps/developer/data-platform/webapi/reference/connector) — the Dataverse Web API surface our script POSTs to (no paconn, no portal)
+- [DLP policies](https://learn.microsoft.com/power-platform/admin/wp-data-loss-prevention) — what custom connectors inherit the moment they're registered
+- Repo: [`scripts/register_custom_connector.py`](../../scripts/register_custom_connector.py), [`connectors/`](../../connectors/)
 
 ---
 
@@ -404,6 +431,14 @@ That's what makes Dataverse the right place to put agent-callable tools
 and `lc_DraftLaunchBriefing` when it wants prose, identical wire
 format, identical governance.
 
+### 📚 References
+
+- [AI Prompts in Dataverse](https://learn.microsoft.com/ai-builder/prompts-overview) — what an AI Prompt is and how it's authored in the AI hub
+- [Create a prompt with AI Builder](https://learn.microsoft.com/ai-builder/create-prompt) — UI walk-through that produces the same `msdyn_aimodel` row our script writes directly
+- [Use AI Builder prompts in Power Automate](https://learn.microsoft.com/ai-builder/use-prompt-in-flow) — the `aibuilderpredict_customprompt` operation Part 5 ends up calling
+- [AI Builder capacity & licensing](https://learn.microsoft.com/ai-builder/administer-licensing) — why raw-REST `Predict` returns `Source is null` without capacity context
+- Repo: [`prompts/DraftLaunchBriefing/`](../../prompts/DraftLaunchBriefing/), [`scripts/register_ai_prompt.py`](../../scripts/register_ai_prompt.py)
+
 ---
 
 ## Part 5 · The test harness flow (one cloud flow calls all four)
@@ -468,6 +503,16 @@ preflight needed on-screen.**
 > pre-record sanity checks (6 readiness probes: each artifact is in env,
 > in the solution, and answers a call). It's not part of the recorded
 > narrative — the flow run is.
+
+### 📚 References
+
+- [Solution-aware cloud flows](https://learn.microsoft.com/power-automate/overview-solution-flows) — why we deploy into the LaunchControl solution
+- [`workflow` table reference](https://learn.microsoft.com/power-apps/developer/data-platform/reference/entities/workflow) — the Dataverse table our deploy script writes
+- [Workflow definition language schema (Logic Apps / Power Automate)](https://learn.microsoft.com/azure/logic-apps/logic-apps-workflow-definition-language) — the JSON shape inside `clientdata`
+- [Power Automate Dataverse connector — `PerformUnboundAction`](https://learn.microsoft.com/connectors/commondataserviceforapps/#perform-an-unbound-action) — note the `item/` parameter wrapping that bit us
+- [Connection references in solutions](https://learn.microsoft.com/power-apps/maker/data-platform/create-connection-reference) — what the maker portal asks you to bind on first open
+- Companion: [`SKILL.md`](SKILL.md) — the captured gotchas this script encodes
+- Repo: [`scripts/create_test_harness_flow.py`](../../scripts/create_test_harness_flow.py)
 
 ---
 

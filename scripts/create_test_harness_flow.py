@@ -36,7 +36,7 @@ FLOW_UNIQUE = "lc_customtoolstestharness"
 
 DV_CONNECTOR_API = "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
 # Look up the GitHub Releases connector slug at runtime (registered by Part 3a)
-GH_CONNECTOR_DISPLAY = "Launch Control - GitHub Releases"
+GH_CONNECTOR_DISPLAY = "LC - GitHub Releases"
 DEFAULT_LAUNCH = "Q3 Widget Launch"
 DEFAULT_OWNER = "microsoft"
 DEFAULT_REPO = "PowerPlatform-Dataverse-Client"
@@ -170,7 +170,7 @@ def build_definition(dv_cref, gh_cref, gh_connector_id, ai_model_id):
                     "apiId": DV_CONNECTOR_API,
                 },
                 "parameters": {
-                    "actionName": "lc_CalculateLaunchReadinessFx",
+                    "actionName": "lc_calculatelaunchreadinessfx",
                     "lc_LaunchName": "@triggerBody()?['LaunchName']",
                 },
             },
@@ -218,8 +218,9 @@ def build_definition(dv_cref, gh_cref, gh_connector_id, ai_model_id):
                 "parameters": {
                     "entityName": "msdyn_aimodels",
                     "recordId": ai_model_id,
-                    "actionName": "Predict",
+                    "actionName": "Microsoft.Dynamics.CRM.Predict",
                     "version": "2.0",
+                    "source": "PowerAutomate",
                 },
             },
         }

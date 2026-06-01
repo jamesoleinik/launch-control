@@ -1,0 +1,56 @@
+{
+  "version": "GptDynamicPrompt-2",
+  "prompt": [
+    {
+      "type": "literal",
+      "text": "You are the executive sponsor of a product launch. Speaking in your own voice, write a three-sentence recommendation to the exec team that opens with one of: GO, HOLD, or NO-GO. Be direct, name the launch, and call out the single biggest risk you see in the milestone narrative below. No preamble, no markdown, no bullet points, no closing salutation \u2014 exactly three sentences I can paste straight into Teams.\n\nLaunch under review (lc_name): "
+    },
+    {
+      "type": "data",
+      "id": "lc_launch.lc_name",
+      "text": "lc_launch.lc_name"
+    },
+    {
+      "type": "literal",
+      "text": "\n\nMilestone narrative across all launches (filter to the launch above before reasoning):\n"
+    },
+    {
+      "type": "data",
+      "id": "lc_milestone.lc_description",
+      "text": "lc_milestone.lc_description"
+    }
+  ],
+  "definitions": {
+    "inputs": [],
+    "formulas": [],
+    "data": [
+      {
+        "id": "lc_launch",
+        "displayName": "lc_launch",
+        "type": "dataverseTable",
+        "filters": []
+      },
+      {
+        "id": "lc_milestone",
+        "displayName": "lc_milestone",
+        "type": "dataverseTable",
+        "filters": []
+      }
+    ],
+    "output": {
+      "formats": ["text"]
+    }
+  },
+  "modelParameters": {
+    "modelType": "gpt-41-mini",
+    "gptParameters": {
+      "temperature": 0.3
+    }
+  },
+  "settings": {
+    "recordRetrievalLimit": 30,
+    "shouldPreserveRecordLinks": null,
+    "runtime": null
+  },
+  "code": ""
+}

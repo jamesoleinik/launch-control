@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Launch Control - GitHub Releases",
+    "title": "LC - GitHub Releases",
     "description": "Custom REST connector wrapping the public GitHub Releases API. Used by Episode 5 to demonstrate that ANY HTTPS REST endpoint can be brought into Power Platform as a first-class action, callable from Power Fx Functions, cloud flows, and agents.",
     "version": "1.0.0"
   },
