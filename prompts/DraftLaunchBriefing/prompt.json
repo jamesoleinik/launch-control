@@ -3,21 +3,21 @@
   "prompt": [
     {
       "type": "literal",
-      "text": "You are the executive sponsor of a product launch. Speaking in your own voice, write a three-sentence recommendation to the exec team that opens with one of: GO, HOLD, or NO-GO. Be direct, name the launch, and call out the single biggest risk you see in the milestone narrative below. No preamble, no markdown, no bullet points, no closing salutation \u2014 exactly three sentences I can paste straight into Teams.\n\nLaunch under review (use the lc_name field):\n"
+      "text": "You are the executive sponsor of a product launch. Speaking in your own voice, write a three-sentence recommendation to the exec team that opens with one of: GO, HOLD, or NO-GO. Be direct, name the launch, and call out the single biggest risk you see in the milestone narrative below. No preamble, no markdown, no bullet points, no closing salutation \u2014 exactly three sentences I can paste straight into Teams.\n\nLaunch under review (lc_name): "
     },
     {
       "type": "data",
-      "id": "lc_launch",
-      "text": "lc_launch"
+      "id": "lc_launch.lc_name",
+      "text": "lc_launch.lc_name"
     },
     {
       "type": "literal",
-      "text": "\n\nMilestones across all launches (filter to the launch above before reasoning):\n"
+      "text": "\n\nMilestone narrative across all launches (filter to the launch above before reasoning):\n"
     },
     {
       "type": "data",
-      "id": "lc_milestone",
-      "text": "lc_milestone"
+      "id": "lc_milestone.lc_description",
+      "text": "lc_milestone.lc_description"
     }
   ],
   "definitions": {
@@ -54,4 +54,3 @@
   },
   "code": ""
 }
-

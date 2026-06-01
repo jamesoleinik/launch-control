@@ -70,9 +70,52 @@ the bound `Predict` action.
   still showing run-to-run variation (vs the deterministic Custom APIs).
 - Both `lc_launch` and `lc_milestone` are grounded — the prompt reads the
   launch name from `lc_launch.lc_name` and the milestone narrative from
-  `lc_milestone.lc_narrative`. Filtering ("focus on the launch under
+  `lc_milestone.lc_description`. Filtering ("focus on the launch under
   review") is done in the prompt text itself.
 - Model `gpt-41-mini` is licensed by default in most AI-Builder-enabled
   environments. If the call returns "no AI Builder capacity", swap to a
   smaller / cheaper model in `prompt.json` and re-register.
 
+
+## Publishing this prompt programmatically
+
+Registration is driven by [`scripts/register_ai_prompt.py`](../../scripts/register_ai_prompt.py),
+which takes the prompt folder as its only argument:
+
+```bash
+python scripts/register_ai_prompt.py prompts/DraftLaunchBriefing
+```
+
+The script is idempotent — first run creates the `msdyn_aimodel` row,
+subsequent runs find it by `msdyn_name` and publish a fresh run
+configuration against it. All three runtime artefacts (`msdyn_aimodel`,
+`msdyn_aiconfiguration` training row, `msdyn_aiconfiguration` active
+run row) are produced by a single unbound action call:
+
+```http
+POST /api/data/v9.2/AIModelPublish
+MSCRM.SolutionUniqueName: LaunchControl
+Content-Type: application/json
+
+{
+  "ModelId": "<new-or-existing GUID>",
+  "ModelName": "lc_DraftLaunchBriefing",
+  "TemplateId": "edfdb190-3791-45d8-9a6c-8f90a37c278a",
+  "RunConfigurationId": "<new GUID per publish>",
+  "CustomConfiguration": "<stringified prompt.json>",
+  "RunConfiguration":    "<stringified prompt.json>",
+  "Source": "AIBuilder"
+}
+```
+
+Two non-obvious values matter:
+
+| Field | Why it matters |
+|---|---|
+| `TemplateId` | `edfdb190-3791-45d8-9a6c-8f90a37c278a` is the built-in **GptPowerPrompt** template. Every AI Builder prompt in every tenant binds to this same managed template — it is the substrate that turns a JSON prompt body into a runnable model. |
+| `Source` | Must be `"AIBuilder"`. With `"PowerPlatform"` the action returns 200 but leaves the model in Draft (`statecode=0`, `msdyn_activerunconfigurationid` unset), and `Predict` will refuse to run with `UnPublishedModel`. `AIBuilder` is the value that flips the model to Published **and** wires the active run config in one shot. |
+
+The `MSCRM.SolutionUniqueName` request header is what places the new
+`msdyn_aimodel` row into the `LaunchControl` solution — there is no
+separate `AddSolutionComponent` call (the public ComponentType code for
+AI Model is not documented and the obvious guesses return "Invalid").
