@@ -268,66 +268,69 @@ Expected: three rows (REST + 2x MCP).
 
 ### Goal
 
-A Dataverse **AI Prompt** named `lc_DraftLaunchBriefing` that takes a
-launch name, pulls its milestone narrative, and returns a 3-sentence
-GO / HOLD / NO-GO recommendation written in the sponsor's voice. Once
-registered, AI Prompts in Dataverse are automatically invocable as
-unbound Custom Actions — so the agent calls it the same shape as the
-.NET and Fx ones. **Non-deterministic substrate, identical contract.**
+A Dataverse **AI Prompt** named `lc_DraftLaunchBriefing` that pulls the
+milestone narrative for a named launch and returns a 3-sentence
+GO / HOLD / NO-GO recommendation in the sponsor's voice. Published via
+`AIModelPublish` with `Source="AIBuilder"`, grounded against
+`lc_launch.lc_name` + `lc_milestone.lc_description`. Smoke-tested via
+the maker portal Test button; invoked from the Part 5 flow via the
+bound `Predict` action on `msdyn_aimodels`. **Non-deterministic
+substrate, same agent-callable surface.**
 
 ### Prompt to GitHub Copilot CLI
 
 > *Create a Dataverse AI Prompt called `lc_DraftLaunchBriefing` that*
 > *takes a launch name, pulls the milestone narrative for that launch,*
 > *and drafts a three-sentence GO / HOLD / NO-GO recommendation in the*
-> *voice of the launch sponsor. Wrap it as an unbound Custom Action,*
-> *register it into the LaunchControl solution, and smoke test it*
-> *against Q3 Widget Launch.*
+> *voice of the launch sponsor that I can paste straight into Teams.*
+> *Register it into the LaunchControl solution and smoke test it*
+> *against Q3 Widget Launch via the maker portal Test button.*
 
 ### Implementation notes (easy-to-miss bits)
 
-- AI Prompts are records in the AI hub. The primary table is
-  `msdyn_aiprompt`; the runnable Custom Action surface that wraps it
-  is what the agent calls. Look it up rather than hard-coding the table
-  schema — Microsoft has been iterating on the column names.
+- AI Prompts are rows in `msdyn_aimodel` with a child training and run
+  `msdyn_aiconfiguration` pair. The recommended template is
+  `GptDynamicPrompt-2` (TemplateId `edfdb190-3791-45d8-9a6c-8f90a37c278a`).
 - Source-control the prompt definition under `prompts/DraftLaunchBriefing/`:
-  - `prompt.json` — inputs, system + user message templates, target
-    model, expected output shape
-  - `README.md` — iteration notes and example outputs
-- `scripts/register_ai_prompt.py` should be idempotent: look up the
-  prompt by `name`, update if it exists, else create. Set
-  `MSCRM.SolutionUniqueName: LaunchControl` so it lands in the solution.
-- The action name exposed to agents and flows is `lc_DraftLaunchBriefing`
-  (or the action name the prompt registration produces — verify and
-  document in the script's output). Smoke-test by POSTing to
-  `/api/data/v9.2/<actionname>` with `{"lc_LaunchName": "Q3 Widget Launch"}`.
-- Calling it twice in a row will return **different** wording — that's
-  expected; that's the whole point of this Part. The episode contrasts
-  this with the deterministic Parts 1–3.
-- Bind a model in the environment that the calling identity is licensed
-  for. If the call returns "no AI Builder capacity" or similar, fall
-  back to a different model in the prompt definition.
+  - `prompt.json` — the GptDynamicPrompt-2 body (prompt segments,
+    grounded data refs, model parameters)
+  - `README.md` — iteration notes, invocation surfaces, publishing notes
+- `scripts/register_ai_prompt.py` calls **one** unbound action,
+  `AIModelPublish`, with `Source="AIBuilder"` (not `"PowerPlatform"` —
+  that returns 200 but leaves the model in Draft) and header
+  `MSCRM.SolutionUniqueName: LaunchControl` to land it in the solution.
+  This single call creates the aimodel + configurations, flips
+  `statecode=1`, and wires `_msdyn_activerunconfigurationid_value` —
+  all in one shot.
+- **Gotcha: `definitions.inputs[]` is silently unsupported by
+  GptDynamicPrompt-2.** Declaring any runtime input prevents publish
+  (model stays statecode=0). Launch context must come via grounded data
+  refs, not runtime inputs.
+- **Gotcha: data tokens must be attribute-qualified** —
+  `{"type":"data","id":"lc_launch.lc_name"}`, NOT bare table. Bare
+  tables fail in the maker portal Test button with "Attribute name is
+  required for dataverse table prompt element". `lc_milestone` has
+  `lc_description` (NOT `lc_narrative`).
+- **There is no auto-registered unbound Custom Action.** Earlier
+  versions of this skill claimed AI Prompts surface as `lc_<promptname>`
+  unbound actions — they do not. The smoke test runs through the maker
+  portal Test button or the bound `Predict` action on `msdyn_aimodels`
+  (see Verification below). The flow in Part 5 calls Predict via the
+  Dataverse connector's `PerformBoundAction`.
+- Raw HTTP `POST /msdyn_aimodels({id})/Microsoft.Dynamics.CRM.Predict`
+  returns `"Source is null"` outside of first-party surfaces (Power
+  Automate, Copilot Studio, Power Fx `Prompt()`) — the capacity context
+  is set by those surfaces, not by request body. Don't try to smoke-test
+  via curl.
 
 ### Verification
 
 ```bash
 python scripts/register_ai_prompt.py prompts/DraftLaunchBriefing
-
-# Same call shape as the .NET and Fx APIs — agent doesn't know it's an LLM
-python -c "
-from auth import get_token
-import requests, os, json
-t = get_token()
-r = requests.post(
-    os.environ['DATAVERSE_URL'] + '/api/data/v9.2/lc_DraftLaunchBriefing',
-    headers={'Authorization': f'Bearer {t}', 'Content-Type': 'application/json'},
-    json={'lc_LaunchName': 'Q3 Widget Launch'})
-print(r.status_code); print(json.dumps(r.json(), indent=2))
-"
+# Script prints the maker-portal URL; click "Test" to invoke.
+# Expected: three sentences in the sponsor's voice. Run twice -
+# the wording changes. That contrast is the recorded beat.
 ```
-
-Expected: HTTP 200 and three sentences of plain English. Run it twice —
-the wording changes. That contrast is the recorded beat.
 
 ---
 
@@ -375,6 +378,13 @@ portal).
   go at the TOP LEVEL of `parameters` — NOT under `item/`.** Using
   `item/lc_LaunchName` is the bound-action shape; the unbound action
   rejects it as "no longer present in the operation schema".
+- **For the AI Prompt (Part 4), the connector action is bound, not
+  unbound.** Use `PerformBoundAction` against `msdyn_aimodels` with
+  `actionName: "Predict"`, `recordId: <aimodel-guid>`, and `version:
+  "2.0"`. Resolve the aimodel-guid at deploy time by querying
+  `msdyn_aimodels?$filter=msdyn_name eq 'lc_DraftLaunchBriefing'`. The
+  Power Automate connector handles AI Builder capacity context — raw
+  HTTP Predict does not.
 - **Do NOT include `"authentication": "@parameters('$authentication')"`**
   on `OpenApiConnection` actions. Power Automate auto-injects this and
   rejects the flow if present (`should not have the property
@@ -402,7 +412,7 @@ python scripts/create_test_harness_flow.py
 Expected: the run history shows four green actions, and the Compose
 output contains a verdict from the .NET API, a verdict + `lc_NotifiedAt`
 from the Fx twin, a `tag_name` from GitHub Releases, and three sentences
-of exec briefing from the AI prompt.
+of exec briefing from the AI prompt's Predict response.
 
 ---
 
@@ -438,17 +448,21 @@ action name from Part 4).
 
 ---
 
-## Cleanup (optional)
+## Cleanup (between recording takes)
 
-If re-running from scratch:
+To wipe all Ep 5 artifacts and re-record from a clean state, run the
+teardown script. It removes the plugin assembly + CustomAPIs, custom
+connectors (REST + MCP), AI Prompt + configs, the test harness flow,
+and any sample AI Prompt rows — while leaving the LaunchControl
+solution shell and the `lc_launch` / `lc_milestone` data from
+Episodes 1–4 intact.
 
 ```bash
-# Delete the flow
-pac flow delete --flow-id <guid>
-# Delete the custom connectors (UI: make.powerapps.com → Custom connectors)
-# Delete the Custom APIs (UI: make.powerapps.com → Solutions → LaunchControl)
-# Re-run from Part 1
+python scripts/teardown_ep05.py             # dry run: prints what would delete
+python scripts/teardown_ep05.py --confirm   # actually deletes
 ```
+
+Re-run from Part 1 after teardown.
 
 ---
 

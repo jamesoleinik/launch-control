@@ -9,6 +9,7 @@ What this builds:
     1. lc_CalculateLaunchReadiness    (.NET Custom API - Part 1)
     2. lc_CalculateLaunchReadinessFx  (Power Fx Function - Part 2)
     3. GetLatestRelease               (Custom REST connector - Part 3a)
+    4. lc_DraftLaunchBriefing         (AI Prompt - Part 4)
 
 Why programmatic:
   The whole episode's promise is that EVERY surface in this stack can be
@@ -39,6 +40,7 @@ GH_CONNECTOR_DISPLAY = "Launch Control - GitHub Releases"
 DEFAULT_LAUNCH = "Q3 Widget Launch"
 DEFAULT_OWNER = "microsoft"
 DEFAULT_REPO = "PowerPlatform-Dataverse-Client"
+AI_PROMPT_NAME = "lc_DraftLaunchBriefing"
 
 cred = AzureCliCredential()
 DV_TOKEN = cred.get_token(f"{ENV}/.default").token
@@ -96,6 +98,21 @@ def get_solution_id():
     return r["value"][0]["solutionid"] if r["value"] else None
 
 
+def find_ai_prompt_id():
+    """Return the msdyn_aimodelid GUID for our published AI Prompt, or None."""
+    _, r = dv("GET",
+              "/msdyn_aimodels?" + urllib.parse.urlencode({
+                  "$select": "msdyn_aimodelid,msdyn_name,statecode",
+                  "$filter": f"msdyn_name eq '{AI_PROMPT_NAME}'",
+              }))
+    if not r["value"]:
+        return None
+    row = r["value"][0]
+    if row.get("statecode") != 1:
+        print(f"      WARNING: AI Prompt '{AI_PROMPT_NAME}' is not published (statecode={row.get('statecode')})")
+    return row["msdyn_aimodelid"]
+
+
 def ensure_connection_reference(logical_name, display_name, connector_api_id):
     """Find or create a connectionreference. Returns the logical name."""
     _, r = dv("GET",
@@ -114,9 +131,9 @@ def ensure_connection_reference(logical_name, display_name, connector_api_id):
     return logical_name
 
 
-def build_definition(dv_cref, gh_cref, gh_connector_id):
+def build_definition(dv_cref, gh_cref, gh_connector_id, ai_model_id):
     """Logic-apps-style definition. gh_cref/gh_connector_id can be None for
-    a partial deploy (Parts 1 + 2 only)."""
+    a partial deploy (Parts 1 + 2 only). ai_model_id can be None to skip Part 4."""
     trigger_props = {
         "LaunchName": {"type": "string", "title": "Launch name",
                         "default": DEFAULT_LAUNCH, "x-ms-content-hint": "TEXT"},
@@ -187,6 +204,29 @@ def build_definition(dv_cref, gh_cref, gh_connector_id):
         compose_inputs["latest_release"] = "@body('Call_GitHub_Releases')"
         last_step = "Call_GitHub_Releases"
 
+    if ai_model_id:
+        actions["Call_AI_Prompt_DraftLaunchBriefing"] = {
+            "type": "OpenApiConnection",
+            "runAfter": {last_step: ["Succeeded"]},
+            "inputs": {
+                "host": {
+                    "connectionName": dv_cref,
+                    "connectionReferenceName": dv_cref,
+                    "operationId": "PerformBoundAction",
+                    "apiId": DV_CONNECTOR_API,
+                },
+                "parameters": {
+                    "entityName": "msdyn_aimodels",
+                    "recordId": ai_model_id,
+                    "actionName": "Predict",
+                    "version": "2.0",
+                },
+            },
+        }
+        compose_inputs["ai_briefing"] = "@body('Call_AI_Prompt_DraftLaunchBriefing')"
+        last_step = "Call_AI_Prompt_DraftLaunchBriefing"
+
+
     actions["Compose_Result"] = {
         "type": "Compose",
         "runAfter": {last_step: ["Succeeded"]},
@@ -218,7 +258,7 @@ def build_definition(dv_cref, gh_cref, gh_connector_id):
 
 
 def main():
-    print("[1/4] Resolving GitHub Releases custom connector...")
+    print("[1/4] Resolving GitHub Releases custom connector + AI Prompt...")
     gh = find_gh_connector()
     if not gh:
         print(f"      Custom connector '{GH_CONNECTOR_DISPLAY}' NOT found.")
@@ -228,6 +268,12 @@ def main():
         print("        3) re-run this script to add the GetLatestRelease action")
     else:
         print(f"      connector id: {gh}")
+    ai_model_id = find_ai_prompt_id()
+    if ai_model_id:
+        print(f"      AI Prompt '{AI_PROMPT_NAME}' id: {ai_model_id}")
+    else:
+        print(f"      AI Prompt '{AI_PROMPT_NAME}' NOT found - skipping Part 4 action.")
+        print("      Run: python scripts/register_ai_prompt.py prompts/DraftLaunchBriefing")
 
     print("[2/4] Resolving LaunchControl solution + connection references...")
     sol_id = get_solution_id()
@@ -243,7 +289,7 @@ def main():
             "lc_githubreleases_harness", "LC GitHub Releases (Test Harness)",
             f"/providers/Microsoft.PowerApps/apis/{gh}")
 
-    definition = build_definition(dv_cref, gh_cref, gh)
+    definition = build_definition(dv_cref, gh_cref, gh, ai_model_id)
     connection_refs = {
         dv_cref: {"connection": {"connectionReferenceLogicalName": dv_cref},
                    "api": {"name": "shared_commondataserviceforapps"},
@@ -279,7 +325,7 @@ def main():
         "category": 5,   # Modern Flow
         "type": 1,       # Definition
         "primaryentity": "none",
-        "description": "Episode 5 test harness - exercises the .NET Custom API, the Power Fx twin, and the GitHub Releases custom connector.",
+        "description": "Episode 5 test harness - exercises the .NET Custom API, the Power Fx twin, the GitHub Releases custom connector, and the lc_DraftLaunchBriefing AI Prompt.",
         "statecode": 0,  # Draft (set to 1 to enable)
         "statuscode": 1,
         "clientdata": json.dumps(clientdata),
