@@ -10,16 +10,18 @@ GitHub Copilot CLI prompts. **The Python scripts and C# plugin in the repo
 are the *output* of these prompts, not the input.** Re-running the prompts
 against a clean repo should regenerate equivalent artifacts.
 
-The episode produces five artifacts that together demonstrate every way to
-extend Dataverse with an agent-callable tool:
+The episode produces six artifacts that together demonstrate every way to
+extend Dataverse with an agent-callable tool — across all **four** ways
+to host custom business logic:
 
-| # | Artifact | Surface |
+| # | Artifact | Hosting model |
 |---|---|---|
-| Part 1 | `lc_CalculateLaunchReadiness` Custom API + .NET sandbox plugin | Internal logic, transactional |
-| Part 2 | `lc_CalculateLaunchReadinessFx` Power Fx Function (twin contract, posts to Teams) | Low-code + first-party connectors |
-| Part 3a | `Launch Control — GitHub Releases` REST custom connector | Wrap any HTTPS REST endpoint |
-| Part 3b | `learn-mcp` + `github-mcp` remote MCP custom connectors | Wrap any remote MCP server |
-| Part 4 | `LC · Custom Tools Test Harness` Power Automate flow | Single-screen verification |
+| Part 1 | `lc_CalculateLaunchReadiness` Custom API + .NET sandbox plugin | **Custom plugin** — .NET in the sandbox |
+| Part 2 | `lc_CalculateLaunchReadinessFx` Power Fx Function (twin contract, posts to Teams) | **Custom function** — low-code + first-party connectors |
+| Part 3a | `Launch Control — GitHub Releases` REST custom connector | **Custom connector** — wrap any HTTPS REST endpoint |
+| Part 3b | `learn-mcp` + `github-mcp` remote MCP custom connectors | **Custom connector** — wrap any remote MCP server |
+| Part 4 | `lc_DraftLaunchBriefing` AI Prompt (Custom Action) | **Custom AI function** — non-deterministic LLM call |
+| Part 5 | `LC · Custom Tools Test Harness` Power Automate flow | Single-screen verification (all four substrates) |
 
 ---
 
@@ -262,23 +264,92 @@ Expected: three rows (REST + 2x MCP).
 
 ---
 
-## Part 4 — Test harness flow (one flow exercises all three)
+## Part 4 — Custom AI Function (AI Prompt → Custom Action)
 
 ### Goal
 
-A single Power Automate flow with three `OpenApiConnection` actions — one
-per surface from Parts 1, 2, 3a. Manual trigger, returns a Compose of all
-three responses. Lives in the `LaunchControl` solution. Deployed
-programmatically via the Dataverse `workflows` table (no maker portal).
+A Dataverse **AI Prompt** named `lc_DraftLaunchBriefing` that takes a
+launch name, pulls its milestone narrative, and returns a 3-sentence
+GO / HOLD / NO-GO recommendation written in the sponsor's voice. Once
+registered, AI Prompts in Dataverse are automatically invocable as
+unbound Custom Actions — so the agent calls it the same shape as the
+.NET and Fx ones. **Non-deterministic substrate, identical contract.**
 
 ### Prompt to GitHub Copilot CLI
 
-> *Build a Power Automate test-harness flow that exercises all three*
-> *tools in one run — the .NET Custom API, the Fx twin, and the GitHub*
-> *Releases connector — and returns their responses side-by-side. Manual*
-> *trigger, takes a `LaunchName` input, deploys programmatically into*
-> *the LaunchControl solution. Re-runnable; ping me with the maker-portal*
-> *URL when it's deployed so I can bind connections and test.*
+> *Create a Dataverse AI Prompt called `lc_DraftLaunchBriefing` that*
+> *takes a launch name, pulls the milestone narrative for that launch,*
+> *and drafts a three-sentence GO / HOLD / NO-GO recommendation in the*
+> *voice of the launch sponsor. Wrap it as an unbound Custom Action,*
+> *register it into the LaunchControl solution, and smoke test it*
+> *against Q3 Widget Launch.*
+
+### Implementation notes (easy-to-miss bits)
+
+- AI Prompts are records in the AI hub. The primary table is
+  `msdyn_aiprompt`; the runnable Custom Action surface that wraps it
+  is what the agent calls. Look it up rather than hard-coding the table
+  schema — Microsoft has been iterating on the column names.
+- Source-control the prompt definition under `prompts/DraftLaunchBriefing/`:
+  - `prompt.json` — inputs, system + user message templates, target
+    model, expected output shape
+  - `README.md` — iteration notes and example outputs
+- `scripts/register_ai_prompt.py` should be idempotent: look up the
+  prompt by `name`, update if it exists, else create. Set
+  `MSCRM.SolutionUniqueName: LaunchControl` so it lands in the solution.
+- The action name exposed to agents and flows is `lc_DraftLaunchBriefing`
+  (or the action name the prompt registration produces — verify and
+  document in the script's output). Smoke-test by POSTing to
+  `/api/data/v9.2/<actionname>` with `{"lc_LaunchName": "Q3 Widget Launch"}`.
+- Calling it twice in a row will return **different** wording — that's
+  expected; that's the whole point of this Part. The episode contrasts
+  this with the deterministic Parts 1–3.
+- Bind a model in the environment that the calling identity is licensed
+  for. If the call returns "no AI Builder capacity" or similar, fall
+  back to a different model in the prompt definition.
+
+### Verification
+
+```bash
+python scripts/register_ai_prompt.py prompts/DraftLaunchBriefing
+
+# Same call shape as the .NET and Fx APIs — agent doesn't know it's an LLM
+python -c "
+from auth import get_token
+import requests, os, json
+t = get_token()
+r = requests.post(
+    os.environ['DATAVERSE_URL'] + '/api/data/v9.2/lc_DraftLaunchBriefing',
+    headers={'Authorization': f'Bearer {t}', 'Content-Type': 'application/json'},
+    json={'lc_LaunchName': 'Q3 Widget Launch'})
+print(r.status_code); print(json.dumps(r.json(), indent=2))
+"
+```
+
+Expected: HTTP 200 and three sentences of plain English. Run it twice —
+the wording changes. That contrast is the recorded beat.
+
+---
+
+## Part 5 — Test harness flow (one flow exercises all four)
+
+### Goal
+
+A single Power Automate flow with four `OpenApiConnection` actions — one
+per substrate from Parts 1, 2, 3a, and 4. Manual trigger, returns a
+Compose of all four responses. Lives in the `LaunchControl` solution.
+Deployed programmatically via the Dataverse `workflows` table (no maker
+portal).
+
+### Prompt to GitHub Copilot CLI
+
+> *Build a Power Automate test-harness flow that exercises all four*
+> *tools in one run — the .NET Custom API, the Fx twin, the GitHub*
+> *Releases connector, and the AI Prompt — and returns their responses*
+> *side-by-side. Manual trigger, takes a `LaunchName` input, deploys*
+> *programmatically into the LaunchControl solution. Re-runnable; ping*
+> *me with the maker-portal URL when it's deployed so I can bind*
+> *connections and test.*
 
 ### Implementation notes (these are the easy-to-miss bits — get them right on the first try)
 
@@ -328,9 +399,10 @@ python scripts/create_test_harness_flow.py
 # Test → Manually → Run with LaunchName=Q3 Widget Launch.
 ```
 
-Expected: the run history shows three green actions, and the Compose
+Expected: the run history shows four green actions, and the Compose
 output contains a verdict from the .NET API, a verdict + `lc_NotifiedAt`
-from the Fx twin, and a `tag_name` from GitHub Releases.
+from the Fx twin, a `tag_name` from GitHub Releases, and three sentences
+of exec briefing from the AI prompt.
 
 ---
 
@@ -353,12 +425,16 @@ from the Fx twin, and a `tag_name` from GitHub Releases.
           register_custom_connector.py connectors/github-mcp
        │
        ▼
-[Part 4] create_test_harness_flow.py → bind connections in portal → Test → Run
+[Part 4] register_ai_prompt.py prompts/DraftLaunchBriefing → smoke-test twice
+       │
+       ▼
+[Part 5] create_test_harness_flow.py → bind connections in portal → Test → Run
 ```
 
 If a Part fails, stop and remediate before moving on. Each Part's output
-is an input to the next (Part 4 needs the GH connector slug from Part 3a;
-the .NET API from Part 1 and the Fx twin from Part 2).
+is an input to the next (Part 5 needs the GH connector slug from Part 3a,
+the .NET API from Part 1, the Fx twin from Part 2, and the AI prompt
+action name from Part 4).
 
 ---
 

@@ -1,46 +1,44 @@
 # Episode 5 — Custom Tools
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Custom Dataverse Plugin → Custom Action · ⭐ Power Fx Function (low-code twin) → Custom Action · ⭐ Custom Endpoint Registration (REST + remote MCP, programmatic) · ⭐ Power Automate test-harness flow
+**Features:** ⭐ Custom Plugin → Custom Action · ⭐ Custom Function (Power Fx) → Custom Action · ⭐ Custom Connector (REST + remote MCP, programmatic) · ⭐ Custom AI Function (AI Prompt) → Custom Action · ⭐ Power Automate test-harness flow
 **Layer:** 🔵 Layer 2 (intelligence — extending the tool ecosystem)
 **Coding agent:** GitHub Copilot CLI (every part — see the prompts below)
 **Companion skill:** [`SKILL.md`](SKILL.md) — encodes the prompts below as a single procedure the CLI can follow end-to-end.
 
 > ⚠️ **How to read this episode.** Each Part is a **prompt you type into
-> GitHub Copilot CLI**. The scripts, plugin, swagger, and flow JSON in this
-> repo are the *output* of those prompts — not the demo. Assume nothing in
-> `plugins/`, `functions/`, `connectors/`, or `scripts/` exists at the
-> moment recording starts. The point of the episode is that one developer,
-> with one CLI, produces all five artifacts in one sitting.
+> GitHub Copilot CLI**. The scripts, plugin, swagger, prompt definition,
+> and flow JSON in this repo are the *output* of those prompts — not the
+> demo. Assume nothing in `plugins/`, `functions/`, `connectors/`,
+> `prompts/`, or `scripts/` exists at the moment recording starts. The
+> point of the episode is that one developer, with one CLI, produces all
+> the artifacts in one sitting.
 
 ---
 
 ## The hook
 
-> _"Before we build agents, we need to give them superpowers. Not by writing
-> agent code. By registering tools — once — that every agent we ever build
-> can call."_
+> _"Before we build agents, we need to give them superpowers. Not by
+> writing agent code. By registering tools — once — that every agent we
+> ever build can call."_
 
-Episodes 1–4 stood up the data and made it queryable from anywhere. Episode
-5 is about **what agents can do** with that data. Three surfaces, one
-contract:
+Episodes 1–4 stood up the data and made it queryable from anywhere.
+Episode 5 is about **what agents can do** with that data. Dataverse gives
+you **four** places to put custom business logic, and every one of them
+ends up as the same primitive: an **agent-callable Custom Action**.
 
-1. **Custom logic that runs _inside_ Dataverse (.NET path)** — a Custom API
-   backed by a sandbox plugin. Server-side, transactional, governed by the
-   same role-based security as the data it touches.
-2. **The same contract, written in Power Fx (low-code path)** — a Function
-   in Dataverse that implements `lc_CalculateLaunchReadinessFx` and **calls
-   the first-party Microsoft Teams connector** to post a readiness card to
-   the launch's Teams channel. Same inputs, same outputs, same
-   agent-callable name — different runtime, no build step.
-3. **External services exposed _through_ Dataverse's governance plane** —
-   REST endpoints and remote MCP servers, registered as custom connectors
-   programmatically, so DLP, network policies, and Defender for Cloud Apps
-   all apply.
+| # | Where the logic lives | Best for | Runtime |
+|---|---|---|---|
+| 1 | **Custom Plugin** (.NET sandbox) | Deterministic, transactional, observability via `ITracingService` | Dataverse server, in-transaction |
+| 2 | **Custom Function** (Power Fx) | Low-code, calls first-party connectors with platform-managed auth | Dataverse server, Fx runtime |
+| 3 | **Custom Connector** (REST or remote MCP) | Any HTTPS endpoint you don't own, governed by DLP / connection refs / Defender for Cloud Apps | External, called via Power Platform connector framework |
+| 4 | **Custom AI Function** (AI Prompt) | Non-deterministic LLM reasoning — narrative, summarization, classification, judgment | Dataverse AI hub, model-routed |
 
-All three end up as tools any agent (Copilot Studio, Agent Builder, M365
-Copilot, Claude with the Dataverse plugin, GitHub Copilot with the
-companion skill) can pick up.
+**All four expose the same shape** — an `lc_*` Custom Action that takes a
+launch name in and returns a structured response. Any agent (Copilot
+Studio, Agent Builder, M365 Copilot, Claude with the Dataverse plugin,
+GitHub Copilot with the companion skill) calls them identically and has
+no idea — and no reason to care — which substrate answered.
 
 ---
 
@@ -50,22 +48,18 @@ The opening shot is a question:
 
 > _"Is the Q3 Widget Launch ready to go?"_
 
-By the end of the episode, that question has two answers, both correct,
-both authoritative — and both reachable from the same agent surface:
+By the end of the episode that question has **four** answers, each
+authoritative on its own terms, all reachable from the same agent surface:
 
 ```
-INVOKE lc_CalculateLaunchReadiness('Q3 Widget Launch')
-→ Score=38.8  Verdict=NO-GO  (because 2 milestones are Blocked)
+INVOKE lc_CalculateLaunchReadiness('Q3 Widget Launch')      → .NET     Score=38.8  Verdict=NO-GO
+INVOKE lc_CalculateLaunchReadinessFx('Q3 Widget Launch')    → Power Fx Same shape + posts Teams card
+INVOKE Launch-Control-GitHub-Releases.GetLatestRelease(...) → REST     Latest shipped artifact
+INVOKE lc_DraftLaunchBriefing('Q3 Widget Launch')           → AI       3-sentence exec recommendation, in the sponsor's voice
 ```
 
-```
-INVOKE Learn-MCP.search('virtual entity setup gotchas')
-→ Live Microsoft Learn results, governed exactly like any Dataverse query
-```
-
-Same agent. Same governance. One tool runs server-side in Dataverse, the
-other on a remote server you don't own. The agent doesn't know — or care —
-which is which.
+Same agent. Same governance. Four very different runtimes. The agent
+doesn't know — or care — which is which.
 
 ---
 
@@ -339,28 +333,102 @@ diff-able, CI-friendly.
 
 ---
 
-## Part 4 · The test harness flow (one cloud flow calls all three)
+## Part 4 · Custom AI Function (AI Prompt → Custom Action)
 
-> A single Power Automate flow with three actions — one per surface we
-> built in Parts 1, 2, and 3a. Press Run; see the responses side-by-side.
-> The visual confirmation that the tool framework is uniform.
+> Non-deterministic logic — narrative, summarization, judgment — wrapped
+> in the **same** Custom Action shape. Authored in the AI hub, callable
+> by name from anywhere.
 
-The first three parts produce three independently-callable tools. The
+The first three parts produced three deterministic tools — the .NET
+plugin returns the same score for the same milestones every time, the Fx
+twin does too (plus a Teams post), the REST connector returns whatever
+the upstream API returns. Sometimes that's exactly wrong. When the
+sponsor asks _"summarise the launch risk in three sentences I can send
+to the exec team in their voice"_, you don't want a deterministic
+weighted average — you want an LLM with the context.
+
+Dataverse has had that primitive for a while and most pro-devs have
+never used it: **AI Prompts in the AI hub**. Author a prompt with
+typed inputs, point it at a model, and it's automatically exposed as a
+runnable Custom Action (`Predict` on the prompt) governed by the same
+security and DLP as everything else. **Same agent-callable contract;
+the substrate happens to be an LLM call.**
+
+### The prompt to GitHub Copilot CLI
+
+> *Create a Dataverse AI Prompt called `lc_DraftLaunchBriefing` that*
+> *takes a launch name, pulls the milestone narrative for that launch,*
+> *and drafts a three-sentence GO / HOLD / NO-GO recommendation in the*
+> *voice of the launch sponsor that I can paste straight into Teams.*
+> *Wrap it so it's callable as an unbound Custom Action the same way as*
+> *the .NET and Fx ones, register it into the LaunchControl solution,*
+> *and smoke test it against Q3 Widget Launch.*
+
+### What Copilot produces
+
+| Artifact | Where it lands |
+|---|---|
+| AI Prompt definition (inputs, system + user message templates, model binding) | [`prompts/DraftLaunchBriefing/`](../../prompts/DraftLaunchBriefing/) |
+| Registration script | `scripts/register_ai_prompt.py` |
+| Custom Action wrapper | `lc_DraftLaunchBriefing` in the LaunchControl solution |
+
+### What you run on screen
+
+```powershell
+python scripts/register_ai_prompt.py prompts/DraftLaunchBriefing
+
+# Same call shape as Parts 1 and 2 — the agent has no idea this one is an LLM
+python -c @"
+from auth import get_token
+import requests, os, json
+t = get_token()
+r = requests.post(
+    os.environ['DATAVERSE_URL'] + '/api/data/v9.2/lc_DraftLaunchBriefing',
+    headers={'Authorization': f'Bearer {t}', 'Content-Type': 'application/json'},
+    json={'lc_LaunchName': 'Q3 Widget Launch'})
+print(r.status_code, json.dumps(r.json(), indent=2))
+"@
+```
+
+Expected: three sentences of plain English. Run it twice — the wording
+changes. That's the point.
+
+### Why this is its own Part (and not a footnote on Part 1)
+
+The first three substrates differ in **where the code runs**. The AI
+Prompt differs in **how the code reasons**. Mashing it into Part 1 ("oh
+also you can do this with AI") hides the real beat: _the same Custom
+Action contract covers both deterministic and non-deterministic logic_.
+That's what makes Dataverse the right place to put agent-callable tools
+— the agent picks `lc_CalculateLaunchReadiness` when it wants a number
+and `lc_DraftLaunchBriefing` when it wants prose, identical wire
+format, identical governance.
+
+---
+
+## Part 5 · The test harness flow (one cloud flow calls all four)
+
+> A single Power Automate flow with four actions — one per substrate we
+> built in Parts 1–4. Press Run; see the responses side-by-side. The
+> visual confirmation that the tool framework is uniform across all four
+> ways of hosting custom business logic.
+
+The first four parts produce four independently-callable tools. The
 question every developer asks next is _"how do I prove they all work
 without spinning up an agent?"_ Answer: a manual-trigger cloud flow with
-three `OpenApiConnection` actions, deployed programmatically via the
+four `OpenApiConnection` actions, deployed programmatically via the
 Dataverse `workflows` table — same governance, same auth, same surface
 every Power Platform developer already knows.
 
 ### The prompt
 
-> *Build a Power Automate test-harness flow that exercises all three*
-> *tools in one run — the .NET Custom API, the Fx twin, and the GitHub*
-> *Releases connector — and returns their responses side-by-side. Manual*
-> *trigger, takes a `LaunchName` input, deploys programmatically into*
-> *the LaunchControl solution. It needs to be re-runnable; ping me with*
-> *the maker-portal URL when it's deployed so I can bind connections and*
-> *test.*
+> *Build a Power Automate test-harness flow that exercises all four*
+> *tools in one run — the .NET Custom API, the Fx twin, the GitHub*
+> *Releases connector, and the AI Prompt — and returns their responses*
+> *side-by-side. Manual trigger, takes a `LaunchName` input, deploys*
+> *programmatically into the LaunchControl solution. Re-runnable; ping*
+> *me with the maker-portal URL when it's deployed so I can bind*
+> *connections and test.*
 
 (If Copilot hits an `OpenApiConnection` gotcha — solution-aware flows
 needing connection references rather than connection names, unbound
@@ -391,9 +459,10 @@ Releases — the custom connector requires no auth). Save. Then **Test →
 Manually → Run** with `LaunchName = Q3 Widget Launch`.
 
 In one screen you see the same launch scored by .NET, the same launch
-scored by Power Fx (plus a Teams card posted), and the latest release of
-the referenced repo. **The flow IS the validation surface; no separate
-Python preflight needed on-screen.**
+scored by Power Fx (plus a Teams card posted), the latest release of the
+referenced repo, **and** the three-sentence exec briefing drafted by the
+AI prompt. **The flow IS the validation surface; no separate Python
+preflight needed on-screen.**
 
 > A [`preflight.py`](preflight.py) script still lives in this folder for CI /
 > pre-record sanity checks (6 readiness probes: each artifact is in env,
@@ -437,15 +506,20 @@ Python preflight needed on-screen.**
 5. **Part 3b** — type the Part 3b prompt. Copilot writes two more swagger
    folders. Re-run the same registration script twice. _"One script,
    three connectors, two of them MCP — one swagger key apart."_
-6. **Part 4** — type the Part 4 prompt. Copilot writes
-   `create_test_harness_flow.py`. Run it, open the URL, bind the two
-   connection references, Test → Run, point at the three green action
-   results side-by-side.
-7. **The reveal** — _"That dashboard at the top? It's calling the .NET
-   Custom API for the verdict. That Teams notification I just got? The Fx
-   twin posted it. That latest-release badge? GitHub Releases custom
-   connector. **Three different runtimes; one agent-callable surface.**
-   Next episode we point an agent at it."_
+6. **Part 4** — type the Part 4 prompt. Copilot writes the AI Prompt
+   definition and `register_ai_prompt.py`. Invoke; show three sentences
+   of plain English; invoke again; show different wording. _"Same Custom
+   Action shape; non-deterministic substrate."_
+7. **Part 5** — type the Part 5 prompt. Copilot writes
+   `create_test_harness_flow.py`. Run it, open the URL, bind connection
+   references, Test → Run, point at the four green action results
+   side-by-side.
+8. **The reveal** — _"That dashboard at the top? It's calling the .NET
+   Custom API for the verdict. That Teams notification I just got? The
+   Fx twin posted it. That latest-release badge? GitHub Releases custom
+   connector. That sponsor-voice briefing in my inbox? The AI prompt.
+   **Four different runtimes; one agent-callable surface.** Next episode
+   we point an agent at it."_
 
 ---
 
@@ -472,13 +546,17 @@ connectors/
   github-mcp/                              # Part 3b — MCP connector (GitHub)
     apiDefinition.swagger.json
     apiProperties.json
+prompts/DraftLaunchBriefing/               # Part 4 — AI Prompt definition
+  prompt.json                              # Inputs + system/user templates + model
+  README.md                                # Iteration notes
 scripts/
-  register_custom_action.py                # Parts 1 + 2 — Custom API registration
+  register_custom_action.py                # Part 1 — Custom API registration
   register_lowcode_function.py             # Part 2 — Function in Dataverse registration
   register_custom_connector.py             # Part 3 — PAPI-direct connector registration
-  create_test_harness_flow.py              # Part 4 — flow deployment
+  register_ai_prompt.py                    # Part 4 — AI Prompt registration
+  create_test_harness_flow.py              # Part 5 — flow deployment
   check_solution_components.py             # Cross-cut — verify solution membership
-preflight.py                               # CI sanity (6 probes); not recorded on screen
+preflight.py                               # CI sanity probes; not recorded on screen
 ```
 
 ---
