@@ -3,11 +3,11 @@
 Pulls per-pool capacity (Database, File, Log, FinOps) for the configured demo env
 AND a tenant-wide top-consumers view across every environment the caller can read.
 
-This is the script the dv-admin demo in Ep 12 invokes when the user asks
+This is the script the dv-admin demo in Ep 14 invokes when the user asks
 "what's burning my capacity?" -- the agent calls it, parses the structured output,
 and presents the headline numbers in chat.
 
-Run: python episodes/ep-12-agentic-admin/capacity_report.py [--tenant-top N]
+Run: python episodes/ep-14-agentic-admin/capacity_report.py [--tenant-top N]
 """
 import os, sys, argparse, json, requests
 from datetime import datetime

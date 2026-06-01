@@ -1,11 +1,11 @@
-"""Local test harness for Episode 9 — The Code-First Agent.
+"""Local test harness for Episode 10 — The Code-First Agent.
 
-Mirrors the Ep 8 pattern: pre-flight checks on the substrate, plus an
+Mirrors the Ep 9 pattern: pre-flight checks on the substrate, plus an
 optional live sanity check against Dataverse.
 
 Usage:
-    python episodes/ep-09-code-first-agent/preflight.py            # P1-P7 only (no network)
-    python episodes/ep-09-code-first-agent/preflight.py --live     # also runs S1 (live skill sync)
+    python episodes/ep-10-code-first-agent/preflight.py            # P1-P7 only (no network)
+    python episodes/ep-10-code-first-agent/preflight.py --live     # also runs S1 (live skill sync)
 
 Pre-flights (no network):
   P1: agents/launch-coordinator-py/agent.py imports cleanly
@@ -169,7 +169,7 @@ def main() -> int:
                     help="Also run S1 (live skill sync against Dataverse)")
     args = ap.parse_args()
 
-    print("Episode 9 pre-flight")
+    print("Episode 10 pre-flight")
     print("====================\n")
     print("Pre-flights (no network):")
     check("P1", "agent.py imports cleanly", p1_agent_imports)

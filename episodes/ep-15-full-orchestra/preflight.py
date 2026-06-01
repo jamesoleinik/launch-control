@@ -1,14 +1,14 @@
-"""Episode 13 preflight: verify orchestra demo readiness.
+"""Episode 15 preflight: verify orchestra demo readiness.
 
-Ep 13 = the 'Full Orchestra + Your Turn' closer. Six checks:
+Ep 15 = the 'Full Orchestra + Your Turn' closer. Six checks:
   1. The 3 orchestra scripts import + run --dry-run cleanly
   2. The lc_CalculateLaunchReadiness custom action exists (binding=0 unbound)
   3. Q3 Widget Launch exists and is reachable
-  4. Capacity API is reachable (Ep 12 carryover -- Ep 13 may show capacity in montage)
+  4. Capacity API is reachable (Ep 14 carryover -- Ep 15 may show capacity in montage)
   5. No 'Q4 Holiday Feature' launch exists yet (the teaser must create it on camera)
   6. OSS readiness files present at repo root: LICENSE, README.md, CHANGELOG.md, .env.example
 
-Run: python episodes/ep-13-full-orchestra/preflight.py
+Run: python episodes/ep-15-full-orchestra/preflight.py
 """
 from __future__ import annotations
 import importlib, os, subprocess, sys
@@ -41,7 +41,7 @@ def check(name, ok, detail=''):
 
 
 def main():
-    print("Episode 13 preflight\n")
+    print("Episode 15 preflight\n")
     failures = 0
 
     # ---- 1: orchestra scripts dry-run cleanly ----
@@ -90,7 +90,7 @@ def main():
     if not check(f"Launch '{LAUNCH}' exists", len(rows) == 1, f"got {len(rows)}"):
         failures += 1
 
-    # ---- 4: capacity API still reachable (carryover Ep 12) ----
+    # ---- 4: capacity API still reachable (carryover Ep 14) ----
     try:
         bap_tok = CRED.get_token('https://api.bap.microsoft.com/.default').token
         r = requests.get(
@@ -120,7 +120,7 @@ def main():
 
     print()
     if failures == 0:
-        print("ALL GREEN -- Ep 13 orchestra harness ready.")
+        print("ALL GREEN -- Ep 15 orchestra harness ready.")
         print()
         print("REMAINING (manual / scripts to run on the day):")
         print("  - Run setup_launch_week.py --apply (rest the env to perfect)")

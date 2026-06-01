@@ -139,7 +139,7 @@ def main():
     # Step 5: Create response properties
     print("\n5. Creating response properties...")
     responses = [
-        ("lc_ReadinessScore", "Readiness Score", "Overall score 0-100", 2),  # Integer
+        ("lc_ReadinessScore", "Readiness Score", "Overall score 0-100", 2),  # Decimal
         ("lc_ReadinessSummary", "Readiness Summary", "Gate-by-gate breakdown", 10),  # String
         ("lc_Verdict", "Verdict", "GO, NO-GO, or CONDITIONAL", 10),  # String
     ]

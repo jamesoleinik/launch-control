@@ -3,7 +3,7 @@
 ## Description
 
 Compose and post a daily readiness digest summarizing the state of every
-active launch. Used by the **Launch Sentinel** autonomous agent (Ep 8)
+active launch. Used by the **Launch Sentinel** autonomous agent (Ep 9)
 when its recurrence trigger fires (Mon–Fri 08:00). Same agent that handles
 event-driven escalation (Escalation Policy skill, autonomous mode), but a
 fundamentally different job: read-only across the entire active portfolio,
@@ -156,7 +156,7 @@ a convenience surface; missing one day is not an incident.
   Coordinator agent and the Escalation Policy skill.
 - It is **not** a chat surface. The agent does not answer follow-up
   questions about the digest. Readers who want detail should ask the
-  Launch Coordinator agent (Ep 7), which can ground in the same
+  Launch Coordinator agent (Ep 8), which can ground in the same
   Dataverse data interactively.
 - It does **not** compute readiness itself — it consumes the Custom
   API's verdict. If the scoring logic needs to change, edit the

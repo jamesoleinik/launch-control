@@ -1,4 +1,4 @@
-# Episode 13 — Full Orchestra + Your Turn
+# Episode 15 — Full Orchestra + Your Turn
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Six surfaces firing on one launch row in 60 seconds · ⭐ Open-source CTA — `git clone` → row in your env in <30 sec · ⭐ Repo flips public on drop
@@ -15,14 +15,14 @@ The closer. Two parts. Part 1 is the **orchestra montage** — every capability 
 
 ## Why this matters in the arc
 
-Eleven episodes have argued *"this is real, look at this slice."* Ep 13 closes the loop with two assertions:
+Eleven episodes have argued *"this is real, look at this slice."* Ep 15 closes the loop with two assertions:
 
-1. **The slices are one system.** When the gen page (Ep 10), the autonomous Sentinel (Ep 8), the M365 Copilot grounding (Ep 11), and the management plane (Ep 12) all light up against the same record, the audience sees the platform — not eleven feature demos.
+1. **The slices are one system.** When the gen page (Ep 11), the autonomous Sentinel (Ep 9), the M365 Copilot grounding (Ep 12), and the management plane (Ep 14) all light up against the same record, the audience sees the platform — not eleven feature demos.
 2. **It's all in your hands now.** The repo isn't a marketing artifact. It's a runnable system. Cloning it gives you the same launch-control rig in your env in minutes. The CTA isn't *"go read the docs"* — it's *"go clone the repo."*
 
 ## Pre-record state — "perfect launch week"
 
-The demo env must be in this exact state before camera turns on. `episodes/ep-13-full-orchestra/orchestra/setup_launch_week.py` enforces it idempotently — re-runnable between takes.
+The demo env must be in this exact state before camera turns on. `episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py` enforces it idempotently — re-runnable between takes.
 
 | Thing | Required state |
 |---|---|
@@ -42,12 +42,12 @@ Six surfaces fire in sequence. Each ~10 sec including a 1-sec lead/tail. Every s
 
 | # | Surface | Episode it came from | Beat |
 |---|---|---|---|
-| 1 | **Gen page dashboard** | Ep 10 | Re-establishing shot. Opens green across the board. *"Same record we built piece by piece — here's the whole picture."* |
-| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 5 + Ep 9 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
+| 1 | **Gen page dashboard** | Ep 11 | Re-establishing shot. Opens green across the board. *"Same record we built piece by piece — here's the whole picture."* |
+| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 5 + Ep 10 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
 | 3 | **Python pandas report** | Ep 3 | `python scripts/python/status_report.py` — table prints all milestones at 100%, zero blockers. *"Same data, scripted."* |
 | 4 | **GitHub issues via virtual entity** | Ep 4 | Dataverse view of `lc_githubissue` — every issue closed. *"External system, in our table."* |
-| 5 | **M365 Copilot** | Ep 11 | Exec-style prompt: *"Is the Q3 Widget Launch ready to ship?"* → "All gates passed." *"No agent. Just Copilot grounded in this data."* |
-| 6 | **Mark Shipped** | Ep 1 + Ep 10 | Toggle `lc_launchstatus` to `Launched` from chat. Confetti. Gen page repaints. *"And this is what shipped looks like."* |
+| 5 | **M365 Copilot** | Ep 12 | Exec-style prompt: *"Is the Q3 Widget Launch ready to ship?"* → "All gates passed." *"No agent. Just Copilot grounded in this data."* |
+| 6 | **Mark Shipped** | Ep 1 + Ep 11 | Toggle `lc_launchstatus` to `Launched` from chat. Confetti. Gen page repaints. *"And this is what shipped looks like."* |
 
 **Bookend:** cut back to the Ep 1 cold-open spreadsheet chaos shot for 2 sec, then back to the all-green dashboard. Caption: *"From this — to this. Twelve episodes."*
 
@@ -58,7 +58,7 @@ The CTA. Six shots, sped-up where noted.
 1. Terminal: `git clone https://github.com/jamesoleinik/launch-control` (~5 sec)
 2. `cd launch-control && cat .env.example` — the placeholders are visible (~5 sec)
 3. `cp .env.example .env` + an editor flash showing one URL pasted in (~5 sec)
-4. `python episodes/ep-13-full-orchestra/orchestra/spin_up_launch.py "My First Launch" --apply` (~8 sec, sped up to ~3 on screen)
+4. `python episodes/ep-15-full-orchestra/orchestra/spin_up_launch.py "My First Launch" --apply` (~8 sec, sped up to ~3 on screen)
 5. Output: a new launch row with 5 starter milestones in the viewer's env (~2 sec)
 6. CTA card: *"Star it. Fork it. Ship it."* + repo URL + LinkedIn handle (~5 sec)
 
@@ -73,7 +73,7 @@ This is the same script Part 2 uses, just pointed at a name James cares about in
 ## Pre-record gate
 
 ```bash
-python episodes/ep-13-full-orchestra/preflight.py
+python episodes/ep-15-full-orchestra/preflight.py
 ```
 
 Twelve checks. **All green at time of writing:**
@@ -81,13 +81,13 @@ Twelve checks. **All green at time of writing:**
 - ✅ All 3 orchestra scripts run `--dry-run` cleanly
 - ✅ `lc_CalculateLaunchReadiness` custom action present, unbound
 - ✅ Q3 Widget Launch exists
-- ✅ Capacity / BAP admin API reachable (Ep 12 carryover; capacity may flash in montage)
+- ✅ Capacity / BAP admin API reachable (Ep 14 carryover; capacity may flash in montage)
 - ✅ `Q4 Holiday Feature` launch does **not** yet exist (teaser must create it live)
 - ✅ OSS readiness files at root: `LICENSE`, `README.md`, `CHANGELOG.md`, `.env.example`, `.gitignore`
 
 ## Open-source readiness checklist
 
-The repo flips public when Ep 13 drops. Audit before that moment:
+The repo flips public when Ep 15 drops. Audit before that moment:
 
 - [x] `LICENSE` (MIT) at root
 - [x] `README.md` at root
@@ -108,24 +108,24 @@ The repo flips public when Ep 13 drops. Audit before that moment:
 
 | Path | Role |
 |---|---|
-| `episodes/ep-13-full-orchestra/README.md` | This document |
-| `episodes/ep-13-full-orchestra/preflight.py` | 12-check preflight harness |
-| `episodes/ep-13-full-orchestra/orchestra/_common.py` | Shared `DV` client + status-code enums |
-| `episodes/ep-13-full-orchestra/orchestra/setup_launch_week.py` | Forces "perfect launch week" state |
-| `episodes/ep-13-full-orchestra/orchestra/teardown_launch_week.py` | Restores "messy mid-launch" for re-rehearsal |
-| `episodes/ep-13-full-orchestra/orchestra/spin_up_launch.py` | Creates a new launch (teaser + Your Turn) |
+| `episodes/ep-15-full-orchestra/README.md` | This document |
+| `episodes/ep-15-full-orchestra/preflight.py` | 12-check preflight harness |
+| `episodes/ep-15-full-orchestra/orchestra/_common.py` | Shared `DV` client + status-code enums |
+| `episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py` | Forces "perfect launch week" state |
+| `episodes/ep-15-full-orchestra/orchestra/teardown_launch_week.py` | Restores "messy mid-launch" for re-rehearsal |
+| `episodes/ep-15-full-orchestra/orchestra/spin_up_launch.py` | Creates a new launch (teaser + Your Turn) |
 
-No new tables, columns, plugins, actions, or agents. Ep 13 is pure orchestration of what's already shipped.
+No new tables, columns, plugins, actions, or agents. Ep 15 is pure orchestration of what's already shipped.
 
 ## Follow-ups (not blockers for the doc; blockers for going public)
 
 - [ ] Tag commits `ep-1` through `ep-12`; push tags
-- [ ] Write LinkedIn copy for Ep 13 + the pinned-post version that lives at the top of James's profile through the campaign window
+- [ ] Write LinkedIn copy for Ep 15 + the pinned-post version that lives at the top of James's profile through the campaign window
 - [ ] Schedule the recording day (Part 1 + Part 2 + teaser in a single half-day session)
 
 ## Cross-references
 
 - **Every prior episode.** The whole point.
 - **Ep 1 cold open** — the bookend cut.
-- **Ep 10 dashboard** — the re-establishing shot for surface #1 of the montage.
-- **Ep 12** — the capacity beat may make a cameo if a frame opens up; otherwise omitted to keep Ep 13 focused on launch state, not env state.
+- **Ep 11 dashboard** — the re-establishing shot for surface #1 of the montage.
+- **Ep 14** — the capacity beat may make a cameo if a frame opens up; otherwise omitted to keep Ep 15 focused on launch state, not env state.

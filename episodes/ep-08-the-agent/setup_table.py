@@ -15,7 +15,7 @@ That flag is enabled per-table inside Copilot Studio when adding the table
 as a Dataverse Knowledge source. The capability is enabled tenant-side via
 the Power Platform admin center (Features → MCP / Knowledge previews).
 This script provisions the data shape; the search-enable step is part of
-the Ep 7 UI demo.
+the Ep 8 UI demo.
 """
 
 import os
@@ -89,7 +89,7 @@ def main():
         print("Table: lc_KnowledgeArticle")
         print("Columns: lc_Title (primary), lc_Summary (memo), lc_Document (file),")
         print("         lc_Category (choice), lc_LaunchId (lookup -> lc_Launch)")
-        print("\nNext: run episodes/ep-07-the-agent/upload_knowledge.py to upload sample KB docs.")
+        print("\nNext: run episodes/ep-08-the-agent/upload_knowledge.py to upload sample KB docs.")
 
 
 if __name__ == "__main__":

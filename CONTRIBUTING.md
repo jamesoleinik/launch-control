@@ -8,7 +8,7 @@ Thanks for your interest! This project is designed to be forked and adapted for 
 2. **Replace the data model** — swap Launches/Milestones/Tasks for your domain (e.g., Onboarding Stages, Release Phases, Incident Categories)
 3. **Rewrite the business skills** — encode YOUR team's process in `business-skills/`
 4. **Update the scripts** — point the Python/CLI scripts at your tables
-5. **Reskin the dashboard** — customize the generative Power Apps page (Ep 10) for the views your team cares about
+5. **Reskin the dashboard** — customize the generative Power Apps page (Ep 11) for the views your team cares about
 
 The three-layer pattern stays the same. Only the business logic changes.
 

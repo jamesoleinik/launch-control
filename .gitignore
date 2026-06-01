@@ -80,7 +80,7 @@ apps/**/.power/
 apps/**/RuntimeTypes.js
 apps/**/*.compiled.js
 
-# Retired code app (replaced by generative page in Ep 9)
+# Retired code app (replaced by generative page in Ep 8)
 apps/launch-brain-hub/
 
 # Social drafts (LinkedIn copy, scratch narrative) — kept out of the public repo

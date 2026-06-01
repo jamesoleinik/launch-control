@@ -1,6 +1,6 @@
-"""episodes/ep-12-agentic-admin/agent_blast_radius.py
+"""episodes/ep-14-agentic-admin/agent_blast_radius.py
 
-Episode 12 proof point #4: enumerate every agent in this env + what it can touch.
+Episode 14 proof point #4: enumerate every agent in this env + what it can touch.
 
 Sources:
   - bot                 (Copilot Studio agents)
@@ -15,9 +15,9 @@ Output sections:
   4. Connector usage roll-up across the env
 
 Use:
-  python episodes/ep-12-agentic-admin/agent_blast_radius.py
-  python episodes/ep-12-agentic-admin/agent_blast_radius.py --json
-  python episodes/ep-12-agentic-admin/agent_blast_radius.py --custom-only
+  python episodes/ep-14-agentic-admin/agent_blast_radius.py
+  python episodes/ep-14-agentic-admin/agent_blast_radius.py --json
+  python episodes/ep-14-agentic-admin/agent_blast_radius.py --custom-only
 """
 from __future__ import annotations
 import argparse, json, os, sys

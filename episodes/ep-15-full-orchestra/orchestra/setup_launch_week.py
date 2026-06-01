@@ -1,4 +1,4 @@
-"""Force the demo launch into 'perfect launch week' state for Ep 13 recording.
+"""Force the demo launch into 'perfect launch week' state for Ep 15 recording.
 
 Idempotent. Safe to re-run between takes.
 Default --dry-run. Pass --apply to actually mutate.
@@ -10,8 +10,8 @@ Sets:
   - inserts a fresh 'All gates passed' lc_statusupdate row tagged Ep12Setup::
 
 Use:
-  python episodes/ep-13-full-orchestra/orchestra/setup_launch_week.py --dry-run
-  python episodes/ep-13-full-orchestra/orchestra/setup_launch_week.py --apply
+  python episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py --dry-run
+  python episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py --apply
 """
 from __future__ import annotations
 import argparse, os, sys

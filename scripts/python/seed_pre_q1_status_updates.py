@@ -1,4 +1,4 @@
-"""Seed pre-Q1-2026 status updates so Ep 12's FetchXML cleanup demo has data to delete.
+"""Seed pre-Q1-2026 status updates so Ep 14's FetchXML cleanup demo has data to delete.
 
 Creates ~12 lc_statusupdate rows backdated to Oct-Dec 2025 using `overriddencreatedon`,
 each tagged in lc_title with a `[PRE-Q1-SEED]` prefix so teardown is trivial:

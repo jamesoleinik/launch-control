@@ -1,6 +1,6 @@
-"""Episode 12 preflight: verify the demo env is in the state Ep 12 needs.
+"""Episode 14 preflight: verify the demo env is in the state Ep 14 needs.
 
-Ep 12 = administration/management plane is agent-driven. Five proof points:
+Ep 14 = administration/management plane is agent-driven. Five proof points:
   1. Auditing on by conversation
   2. Capacity by conversation       <-- new (replaces drift-compare beat)
   3. Bulk cleanup, auditable not destructive (FetchXML preview + confirm)
@@ -8,7 +8,7 @@ Ep 12 = administration/management plane is agent-driven. Five proof points:
   5. The chat is the audit log
 
 This script verifies the env data and admin API reachability needed for the demo.
-Run: python episodes/ep-12-agentic-admin/preflight.py
+Run: python episodes/ep-14-agentic-admin/preflight.py
 """
 import os, sys
 import requests
@@ -46,7 +46,7 @@ def check(name, ok, detail=''):
 
 
 def main():
-    print("Episode 12 preflight\n")
+    print("Episode 14 preflight\n")
     failures = 0
 
     # ---- proof point 3 (cleanup) data shape ----

@@ -1,4 +1,4 @@
-# Episode 7 — The Agent
+# Episode 8 — The Agent
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Copilot Studio agent · ⭐ Dataverse MCP Server (Preview) · ⭐ Dataverse Knowledge (grounded retrieval) · ⭐ Custom API as a tool · ⭐ Declarative agent for M365 Copilot
@@ -16,7 +16,7 @@
 > we're about to demo is everything we've already built, made conversational."_
 
 Episodes 1–5 built the **substrate** — entities, virtual entities, custom
-actions, BYO connectors, and knowledge articles. Episode 7 binds it all to an
+actions, BYO connectors, and knowledge articles. Episode 8 binds it all to an
 agent surface. Twice.
 
 1. **Declarative Agent for M365 Copilot** (Part 1) — a lightweight wrapper
@@ -216,12 +216,12 @@ into both places and re-publish.
 
 Just like Ep 5, we need a way to verify the agent's _capabilities_ are
 correctly wired before pointing a PM at it.
-[`episodes/ep-07-the-agent/preflight.py`](../../episodes/ep-07-the-agent/preflight.py) is a
+[`episodes/ep-08-the-agent/preflight.py`](../../episodes/ep-08-the-agent/preflight.py) is a
 two-mode harness:
 
 ```powershell
-python episodes/ep-07-the-agent/preflight.py --plan       # Markdown plan for review
-python episodes/ep-07-the-agent/preflight.py --run        # Execute, print summary
+python episodes/ep-08-the-agent/preflight.py --plan       # Markdown plan for review
+python episodes/ep-08-the-agent/preflight.py --run        # Execute, print summary
 ```
 
 Note: we **can't programmatically invoke** a Copilot Studio agent from a
@@ -267,7 +267,7 @@ Output (current environment):
 [ OK ] T2: Smoke — Score=38.8, Verdict=NO-GO                      (1248ms)
 [ OK ] T3: lc_githubissue virtual entity returns rows               (1402ms)
 
-8/8 passing | Manual prompt set: episodes/ep-07-the-agent/test_ep6_prompts.md
+8/8 passing | Manual prompt set: episodes/ep-08-the-agent/test_ep6_prompts.md
 ```
 
 ---
@@ -275,16 +275,16 @@ Output (current environment):
 ## What's deliberately NOT in this episode
 
 - **Autonomous behavior.** Triggers, flows, scheduled actions land in
-  Episode 8. Today's agent is reactive: the user asks, it answers.
+  Episode 9. Today's agent is reactive: the user asks, it answers.
 - **Skills as standalone artifacts.** The skills are inline in the system
   prompt; pulling them into separate `.skill` files (or the new Power
   Platform Business Skill catalog) is part of the larger skills story.
 - **Custom UI.** The agent runs in CS Test, M365 Copilot, and Teams. The
   dashboard surface — a generative Power Apps page deployed via
-  `pac model genpage upload` — lands in Episode 10.
+  `pac model genpage upload` — lands in Episode 11.
 - **Code-first runtime.** A Python rebuild of this agent — same skills,
   different stack (GitHub Copilot SDK + Microsoft Agent Framework + the
-  Dataverse MCP server) — lands in Episode 9.
+  Dataverse MCP server) — lands in Episode 10.
 
 ---
 
@@ -305,7 +305,7 @@ Output (current environment):
      Custom API call, synthesized answer
 5. **The Test panel's tool-call trace** — _"This isn't pattern-matching.
    These are real tool calls against a governed data plane."_
-6. **Test harness** — `python episodes/ep-07-the-agent/preflight.py --plan` to show
+6. **Test harness** — `python episodes/ep-08-the-agent/preflight.py --plan` to show
    the substrate checklist, then `--run` for green output, then the manual
    prompt set in `test_ep6_prompts.md`.
 7. **The punchline:**
@@ -325,9 +325,9 @@ Output (current environment):
 | [`agents/launch-coordinator/README.md`](../../agents/launch-coordinator/README.md) | Setup walkthrough and sample conversations |
 | [`data/knowledge/index.yaml`](../../data/knowledge/index.yaml) | Metadata index (title/summary/category/launch) for KB docs |
 | [`data/knowledge/*.md`](../../data/knowledge/) | Four sanitized KB articles (playbook, policy, spec, postmortem) |
-| [`episodes/ep-07-the-agent/upload_knowledge.py`](../../episodes/ep-07-the-agent/upload_knowledge.py) | Idempotent uploader: upserts records, uploads files via SDK |
-| [`episodes/ep-07-the-agent/setup_table.py`](../../episodes/ep-07-the-agent/setup_table.py) | Idempotent table creator (Ep 3 Part 2) |
-| [`episodes/ep-07-the-agent/preflight.py`](../../episodes/ep-07-the-agent/preflight.py) | This episode's substrate harness — `--plan` and `--run` |
+| [`episodes/ep-08-the-agent/upload_knowledge.py`](../../episodes/ep-08-the-agent/upload_knowledge.py) | Idempotent uploader: upserts records, uploads files via SDK |
+| [`episodes/ep-08-the-agent/setup_table.py`](../../episodes/ep-08-the-agent/setup_table.py) | Idempotent table creator (Ep 3 Part 2) |
+| [`episodes/ep-08-the-agent/preflight.py`](../../episodes/ep-08-the-agent/preflight.py) | This episode's substrate harness — `--plan` and `--run` |
 
 ---
 
@@ -338,11 +338,11 @@ Output (current environment):
 $env:PYTHONIOENCODING='utf-8'
 
 # (One time) Ensure Ep 3 Part 2 ran:
-python episodes/ep-07-the-agent/setup_table.py
-python episodes/ep-07-the-agent/upload_knowledge.py
+python episodes/ep-08-the-agent/setup_table.py
+python episodes/ep-08-the-agent/upload_knowledge.py
 
 # Verify the substrate is ready
-python episodes/ep-07-the-agent/preflight.py --run
+python episodes/ep-08-the-agent/preflight.py --run
 
 # Then in Copilot Studio:
 #   1. Create agent "Launch Coordinator"
@@ -366,7 +366,7 @@ These bit us first time and are now handled by the scripts / documented:
 - **`lc_knowledgearticle` not appearing in CS Knowledge picker** — the
   table needs to be in the `LaunchControl` solution AND the tenant-level
   preview flag _"Search support for multiline text and file data types"_
-  must be enabled in PPAC. Both are checked by `episodes/ep-07-the-agent/preflight.py`.
+  must be enabled in PPAC. Both are checked by `episodes/ep-08-the-agent/preflight.py`.
 - **Lookup `@odata.bind` keys are schema-cased** —
   `lc_LaunchId@odata.bind`, not `lc_launchid@odata.bind`. The lowercase
   form fails with _"undeclared property 'lc_launchid'"_. Affects any code
@@ -394,16 +394,16 @@ These bit us first time and are now handled by the scripts / documented:
 
 ## What this unlocks for the rest of the series
 
-- Ep 8 (Autonomous Agents) reuses _exactly_ these business skills and the
+- Ep 9 (Autonomous Agents) reuses _exactly_ these business skills and the
   same Dataverse MCP server, but fronts them with event + recurrence
   triggers on **Launch Sentinel**. The conversation surface becomes
   optional — the agent acts without being asked.
-- Ep 9 (Code-First Agent) takes the same skill definitions and runs them
+- Ep 10 (Code-First Agent) takes the same skill definitions and runs them
   inside ~250 lines of Python — GitHub Copilot SDK as the brain, Microsoft
   Agent Framework as the abstraction, the Dataverse MCP server (stdio) as
   the tool surface. Same skills, different runtime — skills portability
   proven by reuse.
-- Ep 10 (Dashboard) renders a generative Power Apps page over the same
+- Ep 11 (Dashboard) renders a generative Power Apps page over the same
   Dataverse — shipped via `pac model genpage upload`, no code-app required.
   Three surfaces (Copilot Studio chat, autonomous, Python) plus a UI — all
   pointed at one substrate.
@@ -412,7 +412,7 @@ These bit us first time and are now handled by the scripts / documented:
 
 ## Next up
 
-**Episode 8 — Autonomous Agents.** Same skills, same MCP server, but now
+**Episode 9 — Autonomous Agents.** Same skills, same MCP server, but now
 event-triggered. The Launch Sentinel agent fires when `lc_task.lc_isblocked`
 flips to `true` and on a Mon–Fri 08:00 recurrence — writing escalations and
 posting digests without anyone in the chat.

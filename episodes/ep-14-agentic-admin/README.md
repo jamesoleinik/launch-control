@@ -1,4 +1,4 @@
-# Episode 12 — Agentic Administration
+# Episode 14 — Agentic Administration
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Copilot CLI as the admin surface · ⭐ `dataverse@awesome-copilot v1.0.0` plugin · ⭐ Capacity / audit / cleanup / agent blast-radius — all by conversation
@@ -10,11 +10,11 @@
 
 > **Hook:** *"Eleven episodes ago, this launch was a spreadsheet. Tonight, the platform that runs it answers admin questions in chat."*
 
-Every prior episode in this campaign builds **on** the platform — data model, business skills, agents, gen page, native Copilot grounding. Ep 12 turns the camera on the **platform itself**: auditing, capacity, cleanup, agent governance. The admin work that lived in admin centers and PowerShell scripts is now a conversation.
+Every prior episode in this campaign builds **on** the platform — data model, business skills, agents, gen page, native Copilot grounding. Ep 14 turns the camera on the **platform itself**: auditing, capacity, cleanup, agent governance. The admin work that lived in admin centers and PowerShell scripts is now a conversation.
 
 ## Why this matters in the arc
 
-This is the only episode that's about **operating** the platform rather than building **on** it. After ten episodes of "look what you can build," the question every admin in the audience is asking is *"…and how do I run this in production?"* Ep 12 answers it.
+This is the only episode that's about **operating** the platform rather than building **on** it. After ten episodes of "look what you can build," the question every admin in the audience is asking is *"…and how do I run this in production?"* Ep 14 answers it.
 
 ## The five proof points
 
@@ -33,7 +33,7 @@ Agent reads the current setting, shows the diff, asks for confirm, applies. The 
 > *"What's burning capacity in this environment?"*
 > *"Which environments in my tenant are closest to their limits?"*
 
-Agent calls `episodes/ep-12-agentic-admin/capacity_report.py`, parses the structured output, presents the headline numbers. Three pools (Database, File, Log), per-environment + tenant-wide top-N.
+Agent calls `episodes/ep-14-agentic-admin/capacity_report.py`, parses the structured output, presents the headline numbers. Three pools (Database, File, Log), per-environment + tenant-wide top-N.
 
 **Live data we'll see on camera (verified by preflight):**
 
@@ -63,13 +63,13 @@ The on-camera beat is the agent showing the FetchXML it generated **before** run
 
 > *"Show me everything the agents in this environment can read or write."*
 
-Agents have spread through the campaign: Copilot Studio Coordinator (Ep 7), Sentinel autonomous agent (Ep 8), the code-first agent (Ep 9). An admin needs the **standing report**: what tables, what actions, by which agent — without crawling each one's settings page.
+Agents have spread through the campaign: Copilot Studio Coordinator (Ep 8), Sentinel autonomous agent (Ep 9), the code-first agent (Ep 10). An admin needs the **standing report**: what tables, what actions, by which agent — without crawling each one's settings page.
 
 The pitch: *"Before I approve the next agent into production, what's the surface area of the ones I already have?"*
 
-For the recording, the agent calls `episodes/ep-12-agentic-admin/agent_blast_radius.py`, which reads four Dataverse tables — `bot`, `botcomponent`, `workflow`, `connectionreference` — and emits a per-agent inventory: actions (MCP-backed flagged), generative-orchestration on/off, external triggers, knowledge sources, plus a tenant-wide connector-usage roll-up.
+For the recording, the agent calls `episodes/ep-14-agentic-admin/agent_blast_radius.py`, which reads four Dataverse tables — `bot`, `botcomponent`, `workflow`, `connectionreference` — and emits a per-agent inventory: actions (MCP-backed flagged), generative-orchestration on/off, external triggers, knowledge sources, plus a tenant-wide connector-usage roll-up.
 
-**Live data we'll see on camera (verified by preflight):** 3 custom agents in this env — **Launch Coordinator**, **Launch Sentinel**, plus the `Test` agent. Each one's MCP wiring, triggers, and gen-orchestration status are right there in the output. Sentinel's `Daily Trigger` + `When a task is blocked` make explicit what was implicit in Ep 8. Plus 31 pre-built Sales/Service template agents that any admin would also need to govern (collapsed by default with `--custom-only`).
+**Live data we'll see on camera (verified by preflight):** 3 custom agents in this env — **Launch Coordinator**, **Launch Sentinel**, plus the `Test` agent. Each one's MCP wiring, triggers, and gen-orchestration status are right there in the output. Sentinel's `Daily Trigger` + `When a task is blocked` make explicit what was implicit in Ep 9. Plus 31 pre-built Sales/Service template agents that any admin would also need to govern (collapsed by default with `--custom-only`).
 
 The on-camera moment: *"This is every agent that can move data in this environment, and what each one can reach. One prompt. No portal navigation."*
 
@@ -111,7 +111,7 @@ Hold the chat scrollback. Voiceover lands #5: the chat IS the audit log.
 
 Caption: *"Same admin actions. Less navigation. Audit trail by default."*
 
-### Beat 4 — Bridge to Ep 13 (~5 sec)
+### Beat 4 — Bridge to Ep 15 (~5 sec)
 
 > *"The platform runs. The system runs. Next episode: shipping the launch."*
 
@@ -122,7 +122,7 @@ Caption: *"Same admin actions. Less navigation. Audit trail by default."*
 Run before camera turns on:
 
 ```bash
-python episodes/ep-12-agentic-admin/preflight.py
+python episodes/ep-14-agentic-admin/preflight.py
 ```
 
 Six checks. All green at time of writing:
@@ -142,11 +142,11 @@ Manual checks (not scripted):
 
 | Path | Role |
 |---|---|
-| `episodes/ep-12-agentic-admin/README.md` | This document |
-| `episodes/ep-12-agentic-admin/preflight.py` | 6-check preflight harness |
+| `episodes/ep-14-agentic-admin/README.md` | This document |
+| `episodes/ep-14-agentic-admin/preflight.py` | 6-check preflight harness |
 | `scripts/python/seed_pre_q1_status_updates.py` | Backdated cleanup-target seeder |
-| `episodes/ep-12-agentic-admin/capacity_report.py` | Capacity beat (#2) — env + tenant-top |
-| `episodes/ep-12-agentic-admin/agent_blast_radius.py` | Agent governance beat (#4) — per-agent inventory |
+| `episodes/ep-14-agentic-admin/capacity_report.py` | Capacity beat (#2) — env + tenant-top |
+| `episodes/ep-14-agentic-admin/agent_blast_radius.py` | Agent governance beat (#4) — per-agent inventory |
 
 No solution components. No new tables, columns, plugins, or actions. The only env mutation is 12 backdated status updates the demo deletes on camera.
 
@@ -159,14 +159,14 @@ No solution components. No new tables, columns, plugins, or actions. The only en
 
 - **Eps 6 / 7 / 8** — the three agent runtimes whose blast-radius proof point #4 reports on.
 - **Ep 1** — `lc_statusupdate` was created here; the cleanup beat (#3) deletes pre-Q1 rows from this table.
-- **Ep 13** — closes the campaign with the orchestra montage; Ep 12 is the last "individual capability" episode.
+- **Ep 15** — closes the campaign with the orchestra montage; Ep 14 is the last "individual capability" episode.
 
 ---
 
 ## Next up
 
-**Episode 13 — Full Orchestra + Your Turn.** Six surfaces fire in sequence
+**Episode 15 — Full Orchestra + Your Turn.** Six surfaces fire in sequence
 on the same launch row — gen page, Custom API, Python report, GitHub issues
 via the virtual entity, M365 Copilot, "Mark Shipped." Then the camera turns
 to the viewer: `git clone`, one `python` command, a row in their own env.
-The repo flips public the moment Ep 13 drops.
+The repo flips public the moment Ep 15 drops.

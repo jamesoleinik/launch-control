@@ -85,7 +85,7 @@
             <displayname description="Blocker Reason" languagecode="1033" />
           </displaynames>
           <Descriptions>
-            <Description description="Why this task is blocked. Shown as the red-banner text on Ep 9 kanban cards." languagecode="1033" />
+            <Description description="Why this task is blocked. Shown as the red-banner text on Ep 8 kanban cards." languagecode="1033" />
           </Descriptions>
         </attribute>
         <attribute PhysicalName="lc_GitHubIssueId">
@@ -162,7 +162,7 @@
               <displayname description="Is Blocked" languagecode="1033" />
             </displaynames>
             <Descriptions>
-              <Description description="Whether this task is currently blocked. Drives the red banner on Ep 9 kanban cards." languagecode="1033" />
+              <Description description="Whether this task is currently blocked. Drives the red banner on Ep 8 kanban cards." languagecode="1033" />
             </Descriptions>
             <options>
               <option value="1" ExternalValue="" IsHidden="0">
@@ -181,7 +181,7 @@
             <displayname description="Is Blocked" languagecode="1033" />
           </displaynames>
           <Descriptions>
-            <Description description="Whether this task is currently blocked. Drives the red banner on Ep 9 kanban cards." languagecode="1033" />
+            <Description description="Whether this task is currently blocked. Drives the red banner on Ep 8 kanban cards." languagecode="1033" />
           </Descriptions>
         </attribute>
         <attribute PhysicalName="lc_launchid">

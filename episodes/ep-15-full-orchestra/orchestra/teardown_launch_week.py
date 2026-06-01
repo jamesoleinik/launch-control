@@ -9,8 +9,8 @@ Restores:
   - removes the Ep12Setup:: status update rows added by setup_launch_week.py
 
 Use:
-  python episodes/ep-13-full-orchestra/orchestra/teardown_launch_week.py --dry-run
-  python episodes/ep-13-full-orchestra/orchestra/teardown_launch_week.py --apply
+  python episodes/ep-15-full-orchestra/orchestra/teardown_launch_week.py --dry-run
+  python episodes/ep-15-full-orchestra/orchestra/teardown_launch_week.py --apply
 """
 from __future__ import annotations
 import argparse, os, sys

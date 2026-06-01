@@ -1,4 +1,4 @@
-# Episode 8 — Autonomous Agents
+# Episode 9 — Autonomous Agents
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Copilot Studio autonomous agent · ⭐ Event triggers + Recurrence triggers on a single agent · ⭐ Dataverse MCP + Teams MCP composed in one bot
@@ -10,16 +10,16 @@
 
 ## The hook
 
-> _"Episode 7's agent answers when you ask. This one acts without you asking. Every time a task gets blocked. Every morning at 8 AM. Same agent. Same data."_
+> _"Episode 8's agent answers when you ask. This one acts without you asking. Every time a task gets blocked. Every morning at 8 AM. Same agent. Same data."_
 
-Episode 7 made Dataverse conversational. Episode 8 makes it **proactive** — and shows how a single autonomous agent, bound to the **same Dataverse MCP server**, can act on **two completely different trigger types** without spinning up a second surface.
+Episode 8 made Dataverse conversational. Episode 9 makes it **proactive** — and shows how a single autonomous agent, bound to the **same Dataverse MCP server**, can act on **two completely different trigger types** without spinning up a second surface.
 
 1. **Behavior 1 — Event-driven escalation.** A Dataverse row event (`lc_task.lc_isblocked` flips to `true`) fires Sentinel. It classifies severity, writes a structured `lc_statusupdate` row signed `Source: Launch Sentinel`, and goes silent for 24h on the same task.
 2. **Behavior 2 — Scheduled readiness digest.** A recurrence trigger (Mon–Fri 08:00) fires the same agent with no payload. Sentinel queries active launches via the Dataverse MCP `read_query` tool, scores each one with `lc_CalculateLaunchReadiness`, formats a markdown digest, and posts to its Teams **Notes to Self** chat via the Teams MCP server.
 
 The system prompt uses the trigger payload shape as the discriminator (presence of `lc_taskid` → Behavior 1; empty payload → Behavior 2). **One agent. Two triggers. One Dataverse MCP server.** That's the punch line.
 
-Behavior 1 produces rows in the same `lc_statusupdate` table the Coordinator (Episode 7) reads from. Behavior 2 routes to Teams. Same agent, two effectors, both autonomous.
+Behavior 1 produces rows in the same `lc_statusupdate` table the Coordinator (Episode 8) reads from. Behavior 2 routes to Teams. Same agent, two effectors, both autonomous.
 
 ---
 
@@ -69,7 +69,7 @@ Teams MCP SendMessageToSelf → Notes to Self chat
 
 ## One agent, two triggers — why we collapsed Part 2 into Sentinel
 
-The original plan for Episode 8 had **two surfaces** in the autonomous tier: Sentinel (event-driven bot) and a **separate scheduled Agent Flow** with Dataverse MCP steps that posted the digest. The framing was "MCP tools and MCP flow steps are the same primitive."
+The original plan for Episode 9 had **two surfaces** in the autonomous tier: Sentinel (event-driven bot) and a **separate scheduled Agent Flow** with Dataverse MCP steps that posted the digest. The framing was "MCP tools and MCP flow steps are the same primitive."
 
 We built it. It almost worked. The blocker was the preview MCP-step UX in Agent Flows: the natural-language Instructions box reliably accepts raw Dataverse SQL, **but** it could not reliably invoke unbound Custom APIs (like `lc_CalculateLaunchReadiness`) from natural language — the call would silently fail with "An error has occurred" or invoke the wrong tool. Not something you ship on camera.
 
@@ -100,7 +100,7 @@ The full prompt lives in [`agents/launch-sentinel/system-prompt.txt`](../../agen
 
 The skill files are the source of truth:
 
-- [`business-skills/escalation-policy.md`](../../business-skills/escalation-policy.md) — has both an **Interactive mode** section (used by the Coordinator agent in Ep 7) and an **Autonomous mode (Launch Sentinel)** section (used by Sentinel B1). Same skill, two consumers, proving skills are agent-portable.
+- [`business-skills/escalation-policy.md`](../../business-skills/escalation-policy.md) — has both an **Interactive mode** section (used by the Coordinator agent in Ep 8) and an **Autonomous mode (Launch Sentinel)** section (used by Sentinel B1). Same skill, two consumers, proving skills are agent-portable.
 - [`business-skills/launch-readiness-digest.md`](../../business-skills/launch-readiness-digest.md) — new in this episode, owns Sentinel B2.
 
 The mandatory provenance markers (`Source: Launch Sentinel`, `Correlation: task=<id>`, `GeneratedByAutomation: true`) live in the skill, not the prompt. Edit the skill in Dataverse → both the canonical reference and the agent's behavior change. No bot redeploy.
@@ -157,12 +157,12 @@ The original two-surface design depended on the MCP-step type in Agent Flows bei
 
 ## Local validation
 
-`episodes/ep-08-autonomous-agents/preflight.py` is the substrate harness:
+`episodes/ep-09-autonomous-agents/preflight.py` is the substrate harness:
 
 ```
-python episodes/ep-08-autonomous-agents/preflight.py --plan          # show test plan
-python episodes/ep-08-autonomous-agents/preflight.py --run           # P1-P6 + S1-S2 (read-only)
-python episodes/ep-08-autonomous-agents/preflight.py --trigger       # adds T1 (creates ephemeral task, polls, cleans up)
+python episodes/ep-09-autonomous-agents/preflight.py --plan          # show test plan
+python episodes/ep-09-autonomous-agents/preflight.py --run           # P1-P6 + S1-S2 (read-only)
+python episodes/ep-09-autonomous-agents/preflight.py --trigger       # adds T1 (creates ephemeral task, polls, cleans up)
 ```
 
 - **P1–P6**: schema + Custom API + prompt-shape + drift detection
@@ -173,7 +173,7 @@ python episodes/ep-08-autonomous-agents/preflight.py --trigger       # adds T1 (
   If no row appears in time, T1 is **SKIPPED** (not failed) — meaning the
   bot likely isn't published yet.
 
-Manual UI checklist regenerated each run at `episodes/ep-08-autonomous-agents/prompts.md`.
+Manual UI checklist regenerated each run at `episodes/ep-09-autonomous-agents/prompts.md`.
 
 ---
 
@@ -205,7 +205,7 @@ agents/launch-sentinel/
 agents/agent-flows/
 └── daily-readiness-summary.md       # DEFERRED — original standalone-flow design (preserved for future)
 
-episodes/ep-08-autonomous-agents/
+episodes/ep-09-autonomous-agents/
 ├── README.md                        # This file
 ├── preflight.py                     # Substrate harness (P1–P6 + S1–S2 + optional T1)
 └── prompts.md                       # Manual UI checklist (regenerated by --plan)
@@ -219,7 +219,7 @@ No schema changes, no new tables, no new Custom APIs. The whole episode is confi
 
 - The same `lc_statusupdate` table can serve **both** human-authored Coordinator updates and machine-authored Sentinel escalations — the `Source:` marker discriminates at read time.
 - **Skills are the brain of an autonomous agent.** Sentinel calls `describe('skills/Escalation Policy')` and `describe('skills/Launch Readiness Digest')` at the start of every run. Edit the markdown in Dataverse and the agent's behavior changes on the next trigger — no bot redeploy.
-- **Same skill, two agents.** `Escalation-Policy` is consumed by the interactive Launch Coordinator (Ep 7, "Interactive mode" section) AND the autonomous Launch Sentinel (Ep 8, "Autonomous mode" section). One source of policy, two completely different runtime shapes. That's the skills-portability claim made concrete.
+- **Same skill, two agents.** `Escalation-Policy` is consumed by the interactive Launch Coordinator (Ep 8, "Interactive mode" section) AND the autonomous Launch Sentinel (Ep 9, "Autonomous mode" section). One source of policy, two completely different runtime shapes. That's the skills-portability claim made concrete.
 - A **single autonomous agent** can carry **multiple trigger types** (event + recurrence) and **multiple MCP servers** (Dataverse + Teams) without becoming a chat agent. The dispatcher is the prompt itself.
 - The MCP punch line is **stronger** when expressed as "same agent, different triggers, all MCP" than as "two surfaces, one MCP server" — fewer moving parts, tighter story, easier to operate.
 
@@ -229,10 +229,10 @@ No schema changes, no new tables, no new Custom APIs. The whole episode is confi
 
 ## Next up
 
-**Episode 9 — The Code-First Agent.** Same skills. Same Dataverse. Same
+**Episode 10 — The Code-First Agent.** Same skills. Same Dataverse. Same
 Custom API. But now the runtime is ~250 lines of Python — GitHub Copilot SDK
 as the brain, Microsoft Agent Framework as the abstraction, the Dataverse
 MCP server (stdio) as the tool surface. Edit the skill in Dataverse; the
-chat agent (Ep 7), the autonomous agent (Ep 8), **and** the Python agent
-(Ep 9) all change behavior on their next run. Skills portability, proven
+chat agent (Ep 8), the autonomous agent (Ep 9), **and** the Python agent
+(Ep 10) all change behavior on their next run. Skills portability, proven
 by three different runtimes.

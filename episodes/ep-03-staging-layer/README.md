@@ -9,7 +9,7 @@
 
 ## The hook
 
-> _"Last episode the CLI ingested five tracker tables — all isolated. Today the Python SDK migrates them into one unified Launch model, lets us analyze the result with pandas, and lights up an AI prompt column that Episode 11 will read natively."_
+> _"Last episode the CLI ingested five tracker tables — all isolated. Today the Python SDK migrates them into one unified Launch model, lets us analyze the result with pandas, and lights up an AI prompt column that Episode 12 will read natively."_
 
 Episode 1 modeled the unified core (`lc_launch`, `lc_milestone`, `lc_task`, `lc_teammember`, `lc_statusupdate`).
 Episode 2 used the CLI to ingest five raw shadow trackers (`lc_stg_tracker_a…e`) — each carrying full inline provenance (`lc_sourceid`, `lc_sourcefile`, `lc_ingestedat`, `lc_rawjson`).
@@ -45,7 +45,7 @@ Then: _"Let's connect them — in Python."_
 Every unified row that comes from staging carries a **back-reference
 lookup** to the staging row it came from. Provenance is a real
 relationship, not a synthesized string — which means a view, a gen page,
-or an Ep 7 agent can `$expand` from a unified row straight back to its
+or an Ep 8 agent can `$expand` from a unified row straight back to its
 origin row with one query.
 
 | Source staging table | Back-reference lookup on the target | Target unified table |
@@ -246,7 +246,7 @@ can resolve milestone hints against the freshly-promoted set):
    (`lc_sourcestaging<x>id@odata.bind`, per the schema map at the top of
    this episode) is the upsert key. Tracker A's `lc_status == "Blocked"`
    rows also get `lc_isblocked = True` and an `lc_blockerreason` (the
-   staging `lc_notes`) for Ep 10's red-banner card.
+   staging `lc_notes`) for Ep 11's red-banner card.
 5. **Look up** the existing unified row by the back-reference lookup; if
    found → `client.records.update(...)`. If not → `client.records.create(...)`.
 6. **Forward provenance** automatically — the lookup IS the provenance.
@@ -380,9 +380,9 @@ report `0 created, 77 updated`.
 
 ---
 
-## Why Ep 3 matters for Ep 10 (the Launch Command Center)
+## Why Ep 3 matters for Ep 11 (the Launch Command Center)
 
-Episode 10's hero shot — the Launch Command Center generative page with all four
+Episode 11's hero shot — the Launch Command Center generative page with all four
 kanban columns full, every task showing a milestone tag + owner, and Blocked
 cards displaying their red reason banner — only works because Ep 3 populates
 the data with enough breadth and depth. The CSVs in `datamodel/samples/`
@@ -402,21 +402,21 @@ are deliberately sized to land:
   has content. Trackers B/D fall back to a `[Category] (no detail in source)`
   reason — still better than NULL.
 
-The Ep 10 preflight (`python episodes/ep-10-the-dashboard/preflight.py`) verifies
+The Ep 11 preflight (`python episodes/ep-11-the-dashboard/preflight.py`) verifies
 all of the above on the live env. If it ever fails after a fresh ingest, fix it
-in the **Ep 3 sample CSVs**, not in Ep 10 — Ep 10 only renders what Ep 3 lands.
+in the **Ep 3 sample CSVs**, not in Ep 11 — Ep 11 only renders what Ep 3 lands.
 
-## Why Ep 3 matters for Ep 11 (Copilot Just Knows)
+## Why Ep 3 matters for Ep 12 (Copilot Just Knows)
 
-Ep 11's narrative — "I just ask M365 Copilot, no agent, no plugin, no MCP"
+Ep 12's narrative — "I just ask M365 Copilot, no agent, no plugin, no MCP"
 — only works because Ep 3:
 
 - Lands the rows that Copilot needs to ground against (without rows,
   Copilot truthfully responds "I don't have any launches to summarize").
-- Adds the `lc_risksummary` prompt column. The Ep 11 backup prompt
+- Adds the `lc_risksummary` prompt column. The Ep 12 backup prompt
   ("Summarize the risks for the Q3 Widget Launch") reads it directly.
 - Stamps every promoted row with a queryable back-reference lookup, so
   Copilot's grounding pulls the right related-record context when asked
   "where did this task come from?"
 
-Ep 11 promises native intelligence; Ep 3 is where you earn it.
+Ep 12 promises native intelligence; Ep 3 is where you earn it.

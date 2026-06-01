@@ -1,13 +1,13 @@
-# Launch Sentinel — Autonomous Agent (Episode 8)
+# Launch Sentinel — Autonomous Agent (Episode 9)
 
-`Launch Sentinel` is an **autonomous** Copilot Studio agent. Unlike the conversational Launch Coordinator (Ep 7), Sentinel never chats. It runs on **two triggers**, both bound to the same agent and the same Dataverse MCP server:
+`Launch Sentinel` is an **autonomous** Copilot Studio agent. Unlike the conversational Launch Coordinator (Ep 8), Sentinel never chats. It runs on **two triggers**, both bound to the same agent and the same Dataverse MCP server:
 
 1. **Event trigger** — `lc_task` updated with `lc_isblocked = true` → write ONE escalation `lc_statusupdate` row.
 2. **Recurrence trigger** — Mon–Fri 08:00 → post ONE readiness digest to the bot's Teams **Notes to Self** chat.
 
 The system prompt (`system-prompt.txt`) splits these as **Behavior 1** and **Behavior 2** and uses the trigger payload shape as the discriminator (presence of `lc_taskid` → Behavior 1; empty/timestamp-only payload → Behavior 2).
 
-This README documents how to set up the bot in the Copilot Studio UI. Autonomous event triggers, recurrence triggers, and Dataverse event subscriptions are not currently available through the M365 Agents Toolkit / declarative-agent path used in Ep 7.
+This README documents how to set up the bot in the Copilot Studio UI. Autonomous event triggers, recurrence triggers, and Dataverse event subscriptions are not currently available through the M365 Agents Toolkit / declarative-agent path used in Ep 8.
 
 ---
 
@@ -56,13 +56,13 @@ This README documents how to set up the bot in the Copilot Studio UI. Autonomous
                                       ▼
        ┌────────────────────┐                  ┌────────────────────┐
        │ Launch Coordinator │                  │ Launch Sentinel    │
-       │ (Ep 7, interactive)│                  │ (Ep 8, autonomous) │
+       │ (Ep 8, interactive)│                  │ (Ep 9, autonomous) │
        │ uses Esc.Policy    │                  │ B1 → Esc.Policy    │
        │ for chat triage    │                  │ B2 → Readiness Dig.│
        └────────────────────┘                  └────────────────────┘
 ```
 
-Same `Escalation-Policy` skill backs both the interactive Coordinator (Ep 7) and the autonomous Sentinel (Ep 8) — proof that **business skills are agent-portable**. Edit the markdown in Dataverse and both agents pick up the new policy on their next `describe()`.
+Same `Escalation-Policy` skill backs both the interactive Coordinator (Ep 8) and the autonomous Sentinel (Ep 9) — proof that **business skills are agent-portable**. Edit the markdown in Dataverse and both agents pick up the new policy on their next `describe()`.
 
 ### Why fallback (and not strict skill-only)
 
@@ -126,7 +126,7 @@ If the policy changes, the canonical edit happens in `business-skills/escalation
 | 1 | The trigger fires on every modify where `lc_isblocked eq true`, not only on the false→true transition. | Idempotency check in the prompt (`Correlation: task=<id>` marker + 24h cooldown). |
 | 2 | The bot runs under the trigger connection's identity. Status updates are authored by that user. | Document this; use a demo "Launch Bot Service" account in real deployments. |
 | 3 | Trigger latency is tenant-dependent. In this env it typically lands within 10–60 seconds. | For recording, capture a real run as B-roll; do NOT promise live latency on camera. |
-| 4 | Autonomous bots and event triggers are configured in the UI and **are not currently exportable** via the same solution path used in Ep 7. | Episode framing: "this is the UI-built ALM gap; we'll export topics + instructions but not the trigger binding." |
+| 4 | Autonomous bots and event triggers are configured in the UI and **are not currently exportable** via the same solution path used in Ep 8. | Episode framing: "this is the UI-built ALM gap; we'll export topics + instructions but not the trigger binding." |
 | 5 | If the Dataverse MCP server tool calls fail for any reason, the bot exits silently. | Trade-off: prefer "no row" to "bad row." |
 | 6 | The recurrence trigger fires the agent without payload. The system prompt's behavior dispatcher is the LLM, not a deterministic switch. | Behavior 2 narrows the prompt to one SQL query + one Custom API + one Teams call to keep the LLM on-rails; harness check P7 (TBD) will grep the prompt for the "ONLY this query" lock. |
 | 7 | The Teams MCP `SendMessageToSelf` action posts to whichever identity the Teams connection authenticated as. | Use a dedicated demo account when recording so the Notes to Self chat shown on screen is the right one. |
@@ -164,9 +164,9 @@ If the policy changes, the canonical edit happens in `business-skills/escalation
 Run the substrate harness before recording:
 
 ```bash
-python episodes/ep-08-autonomous-agents/preflight.py --plan      # show what gets checked
-python episodes/ep-08-autonomous-agents/preflight.py --run       # full pre-flight + non-destructive smoke
-python episodes/ep-08-autonomous-agents/preflight.py --trigger   # ephemeral task lifecycle (T1)
+python episodes/ep-09-autonomous-agents/preflight.py --plan      # show what gets checked
+python episodes/ep-09-autonomous-agents/preflight.py --run       # full pre-flight + non-destructive smoke
+python episodes/ep-09-autonomous-agents/preflight.py --trigger   # ephemeral task lifecycle (T1)
 ```
 
 The harness verifies:

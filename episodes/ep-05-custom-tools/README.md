@@ -473,7 +473,7 @@ preflight needed on-screen.**
 
 ## What's deliberately NOT in this episode
 
-- **A Copilot Studio agent.** That's Episode 9 — _The Agent_. The point of
+- **A Copilot Studio agent.** That's Episode 8 — _The Agent_. The point of
   this episode is _the tools exist and are independently verified_.
   Pointing an agent at them is the next episode's payoff.
 - **A custom MCP server we host ourselves.** This episode shows BYO MCP via

@@ -1,4 +1,4 @@
-"""Spin up a brand-new launch from a name. The Ep 13 'Your Turn' teaser.
+"""Spin up a brand-new launch from a name. The Ep 15 'Your Turn' teaser.
 
 Default --dry-run. Pass --apply to actually create rows.
 
@@ -10,8 +10,8 @@ Creates:
 Designed to complete in <5 sec on camera.
 
 Use:
-  python episodes/ep-13-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature"
-  python episodes/ep-13-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature" --apply
+  python episodes/ep-15-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature"
+  python episodes/ep-15-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature" --apply
 """
 from __future__ import annotations
 import argparse, os, sys

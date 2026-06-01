@@ -1,4 +1,4 @@
-# Episode 10 — The Dashboard
+# Episode 11 — The Dashboard
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Generative Power Apps page · ⭐ `pac model genpage upload` (typed Dataverse access + Fluent UI) · ⭐ Model-driven app shell auto-generated from the Ep 1 tables
@@ -14,7 +14,7 @@ This episode is the visual payoff. Eight episodes of plumbing — tables, skills
 
 ## Why generative pages, not a code app
 
-The original Episode 10 plan was a **two-act**: model-driven app first, then a Power Apps code-first ("code app") that we'd hand-design and ship. We built that code app. It works. It's archived at [`apps/launch-brain-hub/DEPRECATED.md`](../../apps/launch-brain-hub/DEPRECATED.md).
+The original Episode 11 plan was a **two-act**: model-driven app first, then a Power Apps code-first ("code app") that we'd hand-design and ship. We built that code app. It works. It's archived at [`apps/launch-brain-hub/DEPRECATED.md`](../../apps/launch-brain-hub/DEPRECATED.md).
 
 We pivoted because the gen-page narrative is **stronger and tighter**:
 
@@ -70,13 +70,13 @@ This option leans into the campaign's "skills all the way down" theme: data mode
 - Readiness verdict pill computed client-side from milestone aggregates (GO / AT-RISK / NO-GO)
 - Milestone timeline with the deepened data popping (16 chips, color-coded)
 - Kanban with all four columns populated (no empty columns is critical — that's why we did the data deepening)
-- Status updates in the side rail showing entries badged by source (Coordinator from Ep 7, Sentinel from Ep 8, Python agent from Ep 9, plus the System messages from Ep 3)
+- Status updates in the side rail showing entries badged by source (Coordinator from Ep 8, Sentinel from Ep 9, Python agent from Ep 10, plus the System messages from Ep 3)
 
-### Beat 3 — Cold-open setup for Ep 11 (~15 sec)
+### Beat 3 — Cold-open setup for Ep 12 (~15 sec)
 
 > *"Same Dataverse data we've been building since Ep 1. AI authored the agents. AI authored the page. Tomorrow — AI just answers from M365 Copilot, no app open."*
 
-This line is load-bearing for Episode 11 — Dataverse Intelligence binds Copilot's environment to the most-recently-used Power Apps environment, so we *must* close Ep 10 having just opened the gen page if we want Ep 11 to land cleanly on camera.
+This line is load-bearing for Episode 12 — Dataverse Intelligence binds Copilot's environment to the most-recently-used Power Apps environment, so we *must* close Ep 11 having just opened the gen page if we want Ep 12 to land cleanly on camera.
 
 ## One-time setup before recording (fully scripted)
 
@@ -119,7 +119,7 @@ pac model genpage upload \
   --add-to-sitemap
 
 # 5. Promote the gen page to be the FIRST SubArea (default landing)
-python ../../episodes/ep-10-the-dashboard/set_genpage_default.py
+python ../../episodes/ep-11-the-dashboard/set_genpage_default.py
 ```
 
 After phase 2, the play URL lands directly on the Launch Command Center page:
@@ -134,7 +134,7 @@ After phase 2, the play URL lands directly on the Launch Command Center page:
 Run the preflight harness:
 
 ```bash
-python episodes/ep-10-the-dashboard/preflight.py
+python episodes/ep-11-the-dashboard/preflight.py
 ```
 
 It verifies:
@@ -153,9 +153,9 @@ If any check fails, fix it before recording. The most common cause of failure is
 
 ## How the demo data got rich (the Ep 3 backstory)
 
-Ep 10's panels look populated only because Episode 3's pipeline does the work. The chain:
+Ep 11's panels look populated only because Episode 3's pipeline does the work. The chain:
 
-1. **Sample CSVs** in `datamodel/samples/` (`tracker-a.sample.csv`, `tracker-b.sample.csv`, `tracker-c.sample.csv`, `tracker-d.sample.csv`, `tracker-e.sample.csv`) — A/B/D each carry a `milestone` hint column added during the Ep 10 pivot so promoted tasks always link to a milestone.
+1. **Sample CSVs** in `datamodel/samples/` (`tracker-a.sample.csv`, `tracker-b.sample.csv`, `tracker-c.sample.csv`, `tracker-d.sample.csv`, `tracker-e.sample.csv`) — A/B/D each carry a `milestone` hint column added during the Ep 11 pivot so promoted tasks always link to a milestone.
 2. **Bulk re-ingest** (`scripts/python/bulk_reingest.py`) lands all CSVs into staging tables `lc_TrackerA..E` under a single `lc_ImportRun`.
 3. **Promotion** (`scripts/python/promote.py`) runs the milestone-trackers (C, E) first to seed `lc_milestone`, refreshes its name → id index, then runs the task-trackers (A, B, D), resolving each `milestone` hint to a real `lc_milestone` lookup via `_resolve_milestone()`.
 
@@ -165,7 +165,7 @@ The promotion script is idempotent (upserts via the back-reference lookup column
 
 ## Why we disabled three cloud flows
 
-While iterating Ep 10, we caught the demo creating duplicate tasks during ingest (some `lc_TrackerA` source rows mapped to **9 copies** of the same task). The cause turned out to be three legacy Power Automate cloud flows wired up in earlier episodes that triggered on `lc_task` add/modify/delete and called Copilot Studio (Sentinel agent), which in turn — depending on its prompt and tools — could create new `lc_task` records, looping back through the trigger.
+While iterating Ep 11, we caught the demo creating duplicate tasks during ingest (some `lc_TrackerA` source rows mapped to **9 copies** of the same task). The cause turned out to be three legacy Power Automate cloud flows wired up in earlier episodes that triggered on `lc_task` add/modify/delete and called Copilot Studio (Sentinel agent), which in turn — depending on its prompt and tools — could create new `lc_task` records, looping back through the trigger.
 
 Disabled (via `scripts/python/_disable_flows.py`):
 
@@ -177,9 +177,9 @@ For the recording, leave them off. Re-enable after by flipping `statecode` back 
 
 ## Files touched in this episode
 
-- `episodes/ep-10-the-dashboard/README.md` — this file
-- `episodes/ep-10-the-dashboard/preflight.py` — preflight harness
-- `episodes/ep-10-the-dashboard/set_genpage_default.py` — promotes the gen page to the first SubArea (default landing)
+- `episodes/ep-11-the-dashboard/README.md` — this file
+- `episodes/ep-11-the-dashboard/preflight.py` — preflight harness
+- `episodes/ep-11-the-dashboard/set_genpage_default.py` — promotes the gen page to the first SubArea (default landing)
 - `apps/launch-command-center/launch-command-center.tsx` — the gen page source (uploaded with `--compiled-code-file`)
 - `apps/launch-command-center/RuntimeTypes.ts` — typed Dataverse schema generated by `pac model genpage generate-types`
 - `scripts/python/_disable_flows.py` — turns the three loop-prone cloud flows off
@@ -191,24 +191,24 @@ For the recording, leave them off. Re-enable after by flipping `statecode` back 
 - No virtual-entity wiring on the page (gen pages can include `github_issues` later if we point them at it; we punt that to a future bonus).
 - No custom theming beyond what gen pages give us out of the box.
 
-We get all of those back in Ep 13 ("Full Orchestra") if they're worth showing — but a 90-second LinkedIn short doesn't have room for them, and chasing them was eating the recording schedule.
+We get all of those back in Ep 15 ("Full Orchestra") if they're worth showing — but a 90-second LinkedIn short doesn't have room for them, and chasing them was eating the recording schedule.
 
 ## On-camera checklist
 
 Before you hit record:
 
-- [ ] `python episodes/ep-10-the-dashboard/preflight.py` returns all green
+- [ ] `python episodes/ep-11-the-dashboard/preflight.py` returns all green
 - [ ] Q3 Widget Launch page in the model-driven app loads without error
 - [ ] You're authenticated to make.powerapps.com in the demo environment
 - [ ] Browser zoom is 110-125% so the kanban columns and chips are readable on a phone
 - [ ] You have the gen-page prompt copied to clipboard (Beat 2)
-- [ ] You can produce a clean cut after Beat 3 — the next thing the viewer should see is Episode 11's M365 Copilot prompt
+- [ ] You can produce a clean cut after Beat 3 — the next thing the viewer should see is Episode 12's M365 Copilot prompt
 
 ---
 
 ## Next up
 
-**Episode 11 — Copilot Just Knows.** We close the dashboard tab. With
+**Episode 12 — Copilot Just Knows.** We close the dashboard tab. With
 Dataverse Intelligence on, native M365 Copilot reads the same tables —
 no agent, no plugin, no MCP. _"You built the schema. Microsoft handles
 the grounding."_
