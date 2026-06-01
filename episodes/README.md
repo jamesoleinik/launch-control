@@ -20,7 +20,6 @@ The "Launch Control" LinkedIn series — fifteen short episodes building one pro
 | [10](ep-10-code-first-agent/) | The Code-First Agent | Same skills, different runtime — Python agent that pulls skills from Dataverse |
 | [11](ep-11-the-dashboard/) | The Dashboard | Generative Power Apps page deployed via `pac model genpage upload` |
 | [12](ep-12-copilot-just-knows/) | Copilot Just Knows | Native Copilot intelligence over Dataverse — no agent needed |
-| [13](ep-13-clawpilot-dataverse/) | Clawpilot + Dataverse | Wire Microsoft's Clawpilot desktop assistant to Dataverse via the shared `~/.copilot/` substrate the Copilot CLI already uses |
 | [14](ep-14-agentic-admin/) | Agentic Administration | The management plane is agent-driven — capacity, audit, cleanup, blast-radius |
 | [15](ep-15-full-orchestra/) | Full Orchestra + Your Turn | Six surfaces in 60 seconds + open-source CTA |
 

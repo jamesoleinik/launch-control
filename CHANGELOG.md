@@ -2,7 +2,7 @@
 
 All notable changes to **Launch Control** are documented here, organized by episode. Each entry corresponds to a git tag (`ep-01` through `ep-13`) — `git checkout ep-NN` to see the repo as it was at the end of that episode.
 
-> **Tag history note (May 2026).** The series was originally a 13-episode arc, and the immutable git tags `ep-01..ep-13` reflect that numbering. Two episodes were later inserted: Cowork Plugin at position 7, and Clawpilot + Dataverse at the end of the agent-surfaces run as the new position 13. That shifts the arc to 15 episodes. Existing tags are **not** renamed (that would rewrite published history); the table below maps each existing tag to its current episode slot. New tags (`ep-07-cowork`, `ep-13-clawpilot`, then `ep-08-…ep-15-…` as the shifted episodes re-ship) will use the new numbering going forward.
+> **Tag history note (May 2026).** The series was originally a 13-episode arc, and the immutable git tags `ep-01..ep-13` reflect that numbering. One episode was later inserted: Cowork Plugin at position 7. That shifts the arc to 14 visible episodes. Existing tags are **not** renamed (that would rewrite published history); the table below maps each existing tag to its current episode slot. New tags (`ep-07-cowork`, then `ep-08-…ep-15-…` as the shifted episodes re-ship) will use the new numbering going forward.
 >
 > | Tag | Original # | Current # | Folder |
 > |---|---|---|---|
@@ -11,7 +11,6 @@ All notable changes to **Launch Control** are documented here, organized by epis
 > | `ep-09` | 9 | **10** | `episodes/ep-10-code-first-agent/` |
 > | `ep-10` | 10 | **11** | `episodes/ep-11-the-dashboard/` |
 > | `ep-11` | 11 | **12** | `episodes/ep-12-copilot-just-knows/` |
-> | _(new)_ | — | **13** | `episodes/ep-13-clawpilot-dataverse/` |
 > | `ep-12` | 12 | **14** | `episodes/ep-14-agentic-admin/` |
 > | `ep-13` | 13 | **15** | `episodes/ep-15-full-orchestra/` |
 

@@ -142,8 +142,7 @@ No solution components. No tables, columns, plugins, or actions. **The platform 
 
 ## Next up
 
-**Episode 13 — Clawpilot + Dataverse.** Native M365 Copilot proved the platform
-can answer without an agent. Episode 13 brings the **desktop** surface online:
-Clawpilot wraps the GitHub Copilot CLI and shares the same `~/.copilot/`
-substrate, so the Dataverse MCP server we registered in Episode 1 lights up in
-an Electron desktop app with no new wiring.
+**Episode 14 — Agentic Administration.** Native M365 Copilot proved the data
+plane can answer without an agent. Episode 14 flips to the **management plane**:
+capacity, audit, cleanup, and blast-radius — all agent-driven, all from the
+terminal.

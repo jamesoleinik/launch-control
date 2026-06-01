@@ -111,3 +111,7 @@ launch-clean-copilot.ps1
 connectors/*/_settings.generated.json
 connectors/*/.connector-id
 
+
+# Internal / not for public repo
+episodes/ep-99-clawpilot-dataverse/
+
