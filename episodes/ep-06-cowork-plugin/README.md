@@ -227,13 +227,18 @@ is validated manually.
 |---|---|
 | [`README.md`](README.md) | Episode spec, narrative, setup recipe, pitfalls, and file inventory. |
 | [`recording-script.md`](recording-script.md) | Concrete shot list, voiceover, captions, and recording workflow. |
+| [`SKILL.md`](SKILL.md) | Recording-time playbook \u2014 hard rules, eight-step recipe table, prompts to give the coding agent. |
 | [`preflight.py`](preflight.py) | Read-only local harness for repo files + Dataverse connectivity. |
+| [`setup_demo.py`](setup_demo.py) | Idempotent Dataverse-side demo prep: WhoAmI, table check, readiness-API check, seed `Q3 Widget Launch`, full preflight. |
 
 ## Related repo artifacts
 
 | File/folder | Role |
 |---|---|
 | [`business-skills/`](../../business-skills/) | Existing schema/rule skills; Step 6 adds the Cowork-specific schema-aware skill here. |
+| [`business-skills/cowork-dataverse-mcp.md`](../../business-skills/cowork-dataverse-mcp.md) | The schema-aware Business Skill for this episode \u2014 tables, lookup nav-property casing, readiness rule, escalation tiers. |
+| [`plugins/cowork-dataverse-mcp/`](../../plugins/cowork-dataverse-mcp/) | Teams app manifest + Copilot plugin descriptor + `build.ps1` packager for the Cowork plugin. |
+| [`scripts/seed_q3_widget_launch.py`](../../scripts/seed_q3_widget_launch.py) | Idempotent seed for the deterministic demo data the recording prompts depend on. |
 | [`business-skills/launch-readiness-checklist.md`](../../business-skills/launch-readiness-checklist.md) | Readiness rule: always invoke `lc_CalculateLaunchReadiness`, never hand-tally. |
 | [`business-skills/status-transition-rules.md`](../../business-skills/status-transition-rules.md) | Canonical status columns and allowed transitions. |
 | [`business-skills/escalation-policy.md`](../../business-skills/escalation-policy.md) | Escalation routing for blocked launches and tasks. |
@@ -249,19 +254,28 @@ is validated manually.
 # from launch-control/
 $env:PYTHONIOENCODING='utf-8'
 
-# 1. Confirm local substrate
-python episodes/ep-06-cowork-plugin/preflight.py --plan
-python episodes/ep-06-cowork-plugin/preflight.py --run
+# 1. Auth (one-time per session; interactive if MFA needed)
+az login --tenant <your-tenant-id> --scope https://<your-org>.crm.dynamics.com/.default
 
-# 2. Complete tenant-side setup manually
-# - Entra app registration
-# - Power Platform Allowed MCP Client
-# - Teams Developer Portal OAuth registration
-# - Cowork plugin package build
-# - M365 Admin Center upload + limited publish
-# - Cowork Connect
+# 2. Dataverse-side demo prep (idempotent): WhoAmI + tables + readiness API
+#    check + seed Q3 Widget Launch + full preflight.
+python episodes/ep-06-cowork-plugin/setup_demo.py
 
-# 3. Manual Cowork prompt
+# 3. Build the Cowork plugin package (substitute placeholders + zip)
+cd plugins/cowork-dataverse-mcp
+./build.ps1 -DataverseUrl "https://<your-org>.crm.dynamics.com" `
+            -OAuthRegistrationId "<Teams Dev Portal OAuth Registration ID>"
+cd ../..
+
+# 4. Tenant-side, in-portal (no API for these):
+# - Entra app registration (Tenant ID, Client ID, secret, Dynamics CRM perm, admin consent)
+# - Power Platform admin center -> Allowed MCP Client = Entra Client ID
+# - Teams Developer Portal -> OAuth registration (Base URL = Dataverse org URL,
+#   scope = "{DataverseOrgUrl}/.default offline_access")
+# - M365 Admin Center -> Integrated apps -> Upload custom apps -> out/launch-control-cowork-plugin.zip
+# - Cowork -> Add plugin -> Launch Control -> Connect
+
+# 5. Demo prompt in Cowork
 # What is blocking Q3 Widget Launch, and should we slip?
 ```
 

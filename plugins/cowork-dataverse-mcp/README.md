@@ -12,6 +12,8 @@ A Teams app package + a Copilot plugin descriptor:
 |---|---|
 | `manifest.json` | Teams app manifest (Microsoft Teams v1.19). References `plugin-action.json` under `copilotAgents.plugins[]`. |
 | `plugin-action.json` | Copilot plugin descriptor (v2.4 schema). Declares an `McpServer` runtime pointing at `{DATAVERSE_ORG_URL}/api/mcp` with `OAuthPluginVault` auth bound to `{TEAMS_OAUTH_REGISTRATION_ID}`. |
+| `color.png`, `outline.png` | Required by the Teams manifest validator. Placeholder LC marks \u2014 swap for real brand icons before broad rollout. |
+| `build.ps1` | One-command builder: substitutes placeholders, generates a fresh Teams App GUID, and zips everything into `out/launch-control-cowork-plugin.zip`. |
 
 The package is intentionally tiny because the **server side** (Dataverse
 MCP server) already exposes every table, lookup, and Custom API. The
@@ -34,22 +36,22 @@ Before zipping and uploading, replace the placeholders:
 > `referenceId` takes the **Teams OAuth Registration ID**. They are
 > different IDs from different portals \u2014 see Episode 6 README \u00a7Pitfalls.
 
-## Build + upload (manual)
+## Build + upload
+
+One command does all the substitution + zipping. Sources stay templated;
+output lands in `out/` (gitignored):
 
 ```powershell
-# from repo root
 cd plugins/cowork-dataverse-mcp
-
-# 1. Substitute placeholders (one-liner; or do it by hand)
-$dvUrl = "<your Dataverse org URL>"
-$oauthId = "<Teams Developer Portal OAuth Registration ID>"
-$id = [guid]::NewGuid().ToString()
-(Get-Content manifest.json) | ForEach-Object { $_ -replace '00000000-0000-0000-0000-000000000000', $id } | Set-Content manifest.json
-(Get-Content plugin-action.json) | ForEach-Object { $_ -replace '\{DATAVERSE_ORG_URL\}', $dvUrl -replace '\{TEAMS_OAUTH_REGISTRATION_ID\}', $oauthId } | Set-Content plugin-action.json
-
-# 2. Pack \u2014 Cowork expects a zip with manifest.json at the root
-Compress-Archive -Path manifest.json, plugin-action.json, color.png, outline.png -DestinationPath launch-control-cowork-plugin.zip -Force
+./build.ps1 `
+    -DataverseUrl "https://<your-org>.crm.dynamics.com" `
+    -OAuthRegistrationId "<Teams Dev Portal OAuth Registration ID>"
+# Optional: -AppId <existing guid>   (default: fresh guid each build)
+# Optional: -Version "0.1.1"         (default: 0.1.0)
 ```
+
+That writes `out/launch-control-cowork-plugin.zip` containing the
+substituted `manifest.json`, `plugin-action.json`, and both icons.
 
 Then in **Microsoft 365 Admin Center \u2192 Integrated apps \u2192 Upload custom apps**,
 upload `launch-control-cowork-plugin.zip`. Publish to a small test audience
@@ -80,7 +82,6 @@ Control package can".
 
 ## Iconography
 
-`color.png` (192x192) and `outline.png` (32x32 transparent) are required by
-the Teams manifest but are **not** in source control \u2014 drop your own
-brand icons here before packaging. The Teams validator will reject the
-package if either is missing.
+`color.png` (192x192) and `outline.png` (32x32) ship as placeholder LC
+marks so the Teams validator accepts the package out of the box. Replace
+both before promoting beyond a test audience.
