@@ -1,0 +1,34 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.19/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.19",
+  "version": "0.1.0",
+  "id": "00000000-0000-0000-0000-000000000000",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/blob/main/PRIVACY.md",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/blob/main/TERMS.md"
+  },
+  "name": {
+    "short": "Launch Control",
+    "full": "Launch Control \u2014 Dataverse MCP plugin for Cowork"
+  },
+  "description": {
+    "short": "Talk to your Launch Control Dataverse environment from Cowork.",
+    "full": "Custom plugin that lets Microsoft 365 Cowork query the Launch Control Dataverse environment through the built-in Dataverse MCP server at /api/mcp. Surfaces launches, milestones, tasks, blockers, status updates, and readiness verdicts \u2014 under the signed-in user's Dataverse permissions."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#5C2D91",
+  "copilotAgents": {
+    "plugins": [
+      {
+        "id": "launch-control-dataverse-mcp",
+        "file": "plugin-action.json"
+      }
+    ]
+  },
+  "validDomains": []
+}
