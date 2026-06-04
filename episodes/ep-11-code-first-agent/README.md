@@ -1,4 +1,4 @@
-# Episode 10 — The Code-First Agent
+# Episode 11 — The Code-First Agent
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ GitHub Copilot SDK · ⭐ Microsoft Agent Framework · ⭐ Dataverse MCP server (stdio) · ⭐ Skills hydrated from Dataverse on every run
@@ -9,16 +9,16 @@
 
 ## The hook
 
-> _"Episode 8 was Copilot Studio. Episode 9 was the autonomous Sentinel. Today's agent? Pure Python. Different runtime, different stack — same brain. Three agents. One source of truth. Edit the skill in Dataverse, all three change."_
+> _"Episode 9 was Copilot Studio. Episode 10 was the autonomous Sentinel. Today's agent? Pure Python. Different runtime, different stack — same brain. Three agents. One source of truth. Edit the skill in Dataverse, all three change."_
 
-Episodes 6 and 7 lived inside Copilot Studio's hosted runtime. Beautiful demos, but viewers naturally ask: _"yeah but I write code — what does this look like in my editor?"_ Episode 10 is the answer. We rebuild the Launch Coordinator as a **code-first Python agent** using:
+Episodes 6 and 7 lived inside Copilot Studio's hosted runtime. Beautiful demos, but viewers naturally ask: _"yeah but I write code — what does this look like in my editor?"_ Episode 11 is the answer. We rebuild the Launch Coordinator as a **code-first Python agent** using:
 
 - **GitHub Copilot SDK** as the LLM brain (`github-copilot-sdk`)
 - **Microsoft Agent Framework** as the agent abstraction (`agent-framework-github-copilot`)
 - **Dataverse MCP server** as the tool surface (`npx @microsoft/dataverse mcp <orgUrl>`, stdio)
 - **Same business skills** as Episodes 6 and 7, pulled live from Dataverse on every run
 
-The point isn't to do anything the hosted agents can't. The point is: **the brain is portable**. Skill markdown stored in Dataverse drives behavior across three completely different runtimes — Copilot Studio chat (Ep 8), Copilot Studio autonomous (Ep 9), and now a 250-line Python program (Ep 10).
+The point isn't to do anything the hosted agents can't. The point is: **the brain is portable**. Skill markdown stored in Dataverse drives behavior across three completely different runtimes — Copilot Studio chat (Ep 9), Copilot Studio autonomous (Ep 10), and now a 250-line Python program (Ep 11).
 
 ---
 
@@ -33,7 +33,7 @@ $ python agents/launch-coordinator-py/agent.py
 │ Editable brain Dataverse skills (pulled on every run)   │
 │ Tool surface   Dataverse MCP server (stdio)             │
 │ Environment    https://&lt;your-org&gt;.crm.dynamics.com         │
-╰──── Episode 10 - the code-first agent ───────────────────╯
+╰──── Episode 11 - the code-first agent ───────────────────╯
 
 ⠋ Pulling skills from Dataverse...
 
@@ -65,7 +65,7 @@ I'll invoke the Custom API per the skill's instructions and report the result.
 ╰─────────────────╯
 ```
 
-The **brain-sync table** is the Episode 10 money shot. Every line in that table came from a `GET /api/data/v9.2/skills` call against the Dataverse environment, two seconds before the agent started. Edit a skill in Dataverse, re-run, the line counts shift — and so does the verdict downstream.
+The **brain-sync table** is the Episode 11 money shot. Every line in that table came from a `GET /api/data/v9.2/skills` call against the Dataverse environment, two seconds before the agent started. Edit a skill in Dataverse, re-run, the line counts shift — and so does the verdict downstream.
 
 ---
 
@@ -133,9 +133,9 @@ The agent uses `agent.run(prompt, stream=True)` and renders tool calls (`→ rea
 
 | Runtime | Episode | Edit surface | Auth | Skill load |
 | --- | --- | --- | --- | --- |
-| **Copilot Studio chat** | Ep 8 | `make.powerautomate.com` UI | M365 user | MCP `describe('skills/...')` |
-| **Copilot Studio autonomous** | Ep 9 | Same UI, autonomous binding | Service principal (CIB) | MCP `describe('skills/...')` |
-| **Python (code-first)** | Ep 10 | VS Code, your editor | GitHub Copilot OAuth + Azure CLI | REST `GET /skills` → `./.skills/*.md` |
+| **Copilot Studio chat** | Ep 9 | `make.powerautomate.com` UI | M365 user | MCP `describe('skills/...')` |
+| **Copilot Studio autonomous** | Ep 10 | Same UI, autonomous binding | Service principal (CIB) | MCP `describe('skills/...')` |
+| **Python (code-first)** | Ep 11 | VS Code, your editor | GitHub Copilot OAuth + Azure CLI | REST `GET /skills` → `./.skills/*.md` |
 
 All three:
 - Read the same `Launch Readiness Checklist` skill record in Dataverse
@@ -153,7 +153,7 @@ All three:
 | 0:15 | Terminal: `python agent.py` | "Watch the brain land." |
 | 0:30 | Brain-sync table appears | "Four skills, just pulled from Dataverse." |
 | 0:45 | Spinner running | "Spawning the MCP server, warming up the model." |
-| 1:00 | First token, then streamed response | "Same logic Ep 8 ran. Same verdict Ep 9 emails." |
+| 1:00 | First token, then streamed response | "Same logic Ep 9 ran. Same verdict Ep 10 emails." |
 | 1:30 | Verdict panel: NO-GO | "Edit the skill in Dataverse — watch the verdict change." |
 | 1:45 | Power Apps: edit Launch Readiness Checklist body | (cut) |
 | 2:00 | Terminal: re-run agent, line count shifts | "One brain. Three agents. Code-first or low-code, your choice." |
@@ -173,7 +173,7 @@ All three:
 
 ## Test harness
 
-`episodes/ep-10-code-first-agent/preflight.py` is the preflight equivalent of Ep 9's harness. It verifies:
+`episodes/ep-11-code-first-agent/preflight.py` is the preflight equivalent of Ep 10's harness. It verifies:
 
 - **P1** `agent.py` imports cleanly
 - **P2** `sync_skills.py` exposes `sync()` with the expected signature
@@ -185,14 +185,14 @@ All three:
 - **S1** Live: run `sync_skills.sync()` against the configured environment, assert ≥1 skill written
 
 ```
-python episodes/ep-10-code-first-agent/preflight.py
+python episodes/ep-11-code-first-agent/preflight.py
 ```
 
 ---
 
 ## Next up
 
-**Episode 11 — The Dashboard.** Three agents are populating the same tracker.
+**Episode 12 — The Dashboard.** Three agents are populating the same tracker.
 Time to surface it. We describe a Launch Command Center in plain English to
 Power Apps and ship it as a **generative Power Apps page** via
 `pac model genpage upload` — typed Dataverse access, Fluent UI, sitemap

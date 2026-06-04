@@ -1,4 +1,4 @@
-# Episode 6 — Roles & Reach
+# Episode 8 — Roles & Reach
 
 **Status:** ✅ Four roles + four teams live in the environment · ✅ Caller self-joined to all four · 🚧 Smoke-test not yet built · 🎬 Not yet recorded
 **Features:** ⭐ Four flat security roles (Member / Owner / Viewer / Admin) authored by the coding agent · ⭐ Coverage over Eps 1–5: `lc_*` tables, virtual entities, the Custom API, and the BYO MCP connectors · ⭐ One owner-team per role for assignment hygiene
@@ -9,10 +9,10 @@
 
 ## The hook
 
-> _"Five episodes in: a data model, ingested data, virtual entities federating SharePoint and GitHub, a Custom API, two BYO MCP connectors. All useful. All wide open — every test user can read every row and call every action. Episode 6 is where 'shippable' starts."_
+> _"Five episodes in: a data model, ingested data, virtual entities federating SharePoint and GitHub, a Custom API, two BYO MCP connectors. All useful. All wide open — every test user can read every row and call every action. Episode 8 is where 'shippable' starts."_
 
 We've spent five episodes adding **reach** — more tables, more sources, more
-tools. Ep 6 adds the second axis: **who can see what, and who can do what**. We
+tools. Ep 9 adds the second axis: **who can see what, and who can do what**. We
 don't reach for the full Dataverse security model (BUs nested, field-level
 security, hierarchical security, AAD group teams, record-share-via-POA). We
 reach for the simplest thing that's actually useful: four flat roles, four
@@ -134,7 +134,7 @@ Resolved 22 privilege ids.
   ✅ add self ↔ 'lc Admins'
 ```
 
-That's the substrate Episode 6 demonstrates. Re-runs are no-ops on creation
+That's the substrate Episode 8 demonstrates. Re-runs are no-ops on creation
 and idempotently re-sync privileges.
 
 ---
@@ -245,7 +245,7 @@ someday.
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here — test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | _(planned)_ Runs the Part 2 four-lens query and prints the row-count table. |
 | [`datamodel/security/role-matrix.md`](../../datamodel/security/role-matrix.md) | _(planned)_ Human-readable rendering of the privilege matrix above, kept in sync with the script as documentation. |
-| [`episodes/ep-06-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, is the caller a member of any of them, are the `lc_*` tables resolved. |
+| [`episodes/ep-08-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, is the caller a member of any of them, are the `lc_*` tables resolved. |
 
 ---
 

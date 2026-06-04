@@ -1,4 +1,4 @@
-# Episode 12 — Copilot Just Knows
+# Episode 13 — Copilot Just Knows
 
 **Status:** ✅ Built · 🎬 Not yet recorded
 **Features:** ⭐ Dataverse Intelligence (preview) · ⭐ Native M365 Copilot grounding over `lc_launch` / `lc_milestone` / `lc_task` / `lc_teammember` — no agent, no plugin, no MCP
@@ -10,7 +10,7 @@
 
 > **Hook:** *"Eight episodes building a system. Now I open M365 Copilot, ask in plain English, and it just answers — no agent, no plugin, no MCP."*
 
-This is the smallest episode in the campaign and it's the one that lands the platform punchline. Every prior episode put **something** between the user and the data — a custom action (Ep 5), a Copilot Studio agent + MCP (Ep 8), an autonomous agent (Ep 9), a code-first agent (Ep 10), a generative page (Ep 11). Ep 12 takes all of it away.
+This is the smallest episode in the campaign and it's the one that lands the platform punchline. Every prior episode put **something** between the user and the data — a custom action (Ep 5), a Copilot Studio agent + MCP (Ep 9), an autonomous agent (Ep 10), a code-first agent (Ep 11), a generative page (Ep 12). Ep 13 takes all of it away.
 
 The data model from Ep 1, the relationships from Ep 3, the prompt column from Ep 3, the team-member assignments from Ep 3 — Copilot reads them natively. **You built the schema. Microsoft handles the grounding.**
 
@@ -18,7 +18,7 @@ The data model from Ep 1, the relationships from Ep 3, the prompt column from Ep
 
 This is the "you don't have to build everything" episode. After eight episodes of *making* — agents, skills, custom actions, virtual entities — the message is: **the moment your data is in Dataverse, the most popular Copilot in the world already knows how to read it.** No connector. No tool registration. No prompt engineering.
 
-It also sets up the Ep 8 ↔ Ep 12 split-screen punchline: same business question, two surfaces. **Custom agent for control. Native Copilot for reach.**
+It also sets up the Ep 9 ↔ Ep 13 split-screen punchline: same business question, two surfaces. **Custom agent for control. Native Copilot for reach.**
 
 ## Pre-record gate (load-bearing)
 
@@ -36,7 +36,7 @@ Open M365 Copilot and ask `What's in the Launches table?` — if it returns colu
 
 Copilot grounds against the most-recently-used Power Apps **environment**, not the most-recently-used app. Day-of sequence:
 
-1. Open the Ep 11 gen page (Launch Command Center) in the demo environment. Click around for 30 seconds.
+1. Open the Ep 12 gen page (Launch Command Center) in the demo environment. Click around for 30 seconds.
 2. Close the tab.
 3. Open M365 Copilot. The cleanest visual is the Word side panel; Teams or `copilot.microsoft.com` also work.
 4. Start the demo prompts.
@@ -47,7 +47,7 @@ Without this priming step, viewers re-trying the demo with a different MRU env s
 
 ### Beat 1 — "I don't need a UI for this." (~20 sec)
 
-Cold open from Ep 11: gen page is open, kanban is full, looks great. Pause.
+Cold open from Ep 12: gen page is open, kanban is full, looks great. Pause.
 
 > *"This is great when I'm in the Launch app. But I'm not always in the app. Sometimes I'm in Word writing a status update. Or in Teams in a 1:1. And I just want to ask — and get an answer."*
 
@@ -107,7 +107,7 @@ Bridge to Ep 14 (one sentence, end of episode):
 
 ## Why this is a doc-only commit
 
-Ep 12 produces no code, no agent, and no app. The only artifact in the repo is this document, the recording, and the LinkedIn post. The "feature" being shown is **Microsoft's** — it ships with Dataverse Intelligence whether or not we touched anything.
+Ep 13 produces no code, no agent, and no app. The only artifact in the repo is this document, the recording, and the LinkedIn post. The "feature" being shown is **Microsoft's** — it ships with Dataverse Intelligence whether or not we touched anything.
 
 That's the message: **the more your business state lives in Dataverse, the more leverage you get from things you didn't build.**
 
@@ -119,14 +119,14 @@ Run before the camera turns on:
 - [ ] M365 Admin Center → Dataverse Intelligence enabled
 - [ ] PPAC → demo env → Dataverse Intelligence on, indexing delay survived (≥ 60 min since flip)
 - [ ] Smoke prompt (`What's in the Launches table?`) returns grounded answer
-- [ ] Ep 11 gen page opened + clicked through in demo env (priming)
+- [ ] Ep 12 gen page opened + clicked through in demo env (priming)
 - [ ] Word + Copilot side panel open and signed in as the demo user
 - [ ] Recording: prompts typed live, not pasted (pasting reads as "AI is filling the box")
 - [ ] Backup prompt staged in clipboard in case one flops
 
 ## Files touched in this episode
 
-- `episodes/ep-12-copilot-just-knows/README.md` (this file)
+- `episodes/ep-13-copilot-just-knows/README.md` (this file)
 - `scripts/python/audit_ep11_prompts.py` — prompt-data preflight (no environment changes)
 
 No solution components. No tables, columns, plugins, or actions. **The platform did the work.**
@@ -135,8 +135,8 @@ No solution components. No tables, columns, plugins, or actions. **The platform 
 
 - **Ep 3** — data model rows + the `lc_risksummary` prompt column on `lc_launch` feed the backup prompt
 - **Ep 3** — task ↔ milestone ↔ launch wiring + teammember assignments make Prompt 2 (traversal) work
-- **Ep 8** — custom Copilot Studio agent; the left side of the split-screen
-- **Ep 11** — gen page used to prime context before recording
+- **Ep 9** — custom Copilot Studio agent; the left side of the split-screen
+- **Ep 12** — gen page used to prime context before recording
 
 ---
 

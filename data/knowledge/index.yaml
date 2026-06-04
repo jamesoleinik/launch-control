@@ -1,4 +1,4 @@
-# Map of file -> metadata used by episodes/ep-08-the-agent/upload_knowledge.py.
+# Map of file -> metadata used by episodes/ep-09-the-agent/upload_knowledge.py.
 # Categories must match the lc_Category choice values in lc_KnowledgeArticle.
 # Linked launches are matched against lc_Launch.lc_Name (case-insensitive).
 articles:

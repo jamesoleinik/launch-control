@@ -1,6 +1,8 @@
 # Episode 4 — Extending & Enforcing the Model
 
-**Status:** ✅ Part 1 built and verified · ✅ Part 2 + Part 3 scripts written and verified end-to-end · 🎬 Not yet recorded
+https://github.com/jamesoleinik/launch-control/raw/master/episodes/ep-04-extending-and-enforcing/video.mp4
+
+**Status:** ✅ Part 1 built and verified · ✅ Part 2 + Part 3 scripts written and verified end-to-end · 🎬 Recorded
 **Features:** ⭐ Virtual Entities (custom GitHub Issues provider, .NET 4.6.2) · ⭐ **Server-side rule trio** (three sync plugin steps on `lc_task` Update — block, unblock, completion-guard) authored by the coding agent — guardrails the agent layer must honor
 **Layer:** 🟢 Layer 1 expands (Data — without copying it) + 🟢 server-side enforcement expressed as code
 **Coding agent:** Claude Code · **Runtime:** .NET Framework 4.6.2 plugin (Sandbox) for both the VE provider AND the enforcement step
@@ -329,8 +331,8 @@ That's the closing beat of Episode 4 — the coding agent extending the platform
   the source systems is a meaningful next step but it's a write-path concern
   with its own auth story; out of scope for the "connecting" beat.
 - **Security roles + business units.** RBAC over this now-federated model
-  is the entire subject of [Episode 6 — Roles & Reach](../ep-06-rbac/). We
-  finish Ep 4 with three rules visible to everyone; Ep 6 is where _who can
+  is the entire subject of [Episode 8 — Roles & Reach](../ep-08-rbac/). We
+  finish Ep 4 with three rules visible to everyone; Ep 8 is where _who can
   see what_ gets answered.
 - **Multi-action / multi-condition rules.** The three enforcement steps we
   author are intentionally minimal — each is one condition + one action (or

@@ -1,6 +1,8 @@
 # Episode 1 — AI-Powered Data Modeling
 
-**Status:** ✅ Built · 🎬 Not yet recorded
+https://github.com/jamesoleinik/launch-control/raw/master/episodes/ep-01-data-modeling/video.mp4
+
+**Status:** ✅ Built · 🎬 Recorded
 **Features:** ⭐ Official Dataverse plugins for Copilot & Claude Code · ⭐ Mapping-driven schema · ⭐ Provenance from day one
 **Layer:** 🟢 Layer 1 (Data) — the foundation
 **Coding agent:** GitHub Copilot (with `dataverse@awesome-copilot`) · **Runtime:** `PowerPlatform-Dataverse-Client` (Python)

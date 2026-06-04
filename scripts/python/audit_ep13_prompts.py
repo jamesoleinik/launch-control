@@ -1,4 +1,4 @@
-"""Episode 12 prompt preflight: verify the data shape Dataverse Intelligence will need
+"""Episode 13 prompt preflight: verify the data shape Dataverse Intelligence will need
 to answer the three demo prompts (and the backup) on recording day.
 
 Prompts vouched for:
@@ -53,7 +53,7 @@ def check(name, ok, detail=''):
 
 
 def main():
-    print(f"Episode 12 prompt preflight (launch: {LAUNCH_NAME!r})\n")
+    print(f"Episode 13 prompt preflight (launch: {LAUNCH_NAME!r})\n")
     failures = 0
 
     # P1: launch row exists with name + status + description + target date

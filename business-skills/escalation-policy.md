@@ -147,9 +147,9 @@ When the blocker clears:
 ## Autonomous mode (Launch Sentinel)
 
 The sections above describe the **interactive mode** — used by the Launch
-Coordinator agent (Ep 8), which talks to humans and walks the full
+Coordinator agent (Ep 9), which talks to humans and walks the full
 notification chain. This section describes the **autonomous mode** used by
-the Launch Sentinel agent (Ep 9) when its event trigger fires on a
+the Launch Sentinel agent (Ep 10) when its event trigger fires on a
 `lc_task` record where `lc_isblocked = true`.
 
 Same policy, different consumer: Sentinel doesn't notify humans

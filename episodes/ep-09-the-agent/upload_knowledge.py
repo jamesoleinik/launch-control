@@ -12,9 +12,9 @@ For every entry in index.yaml:
 Idempotent: re-running updates summary/category and overwrites the file column.
 
 Usage:
-    python launch-control/episodes/ep-08-the-agent/upload_knowledge.py
-    python launch-control/episodes/ep-08-the-agent/upload_knowledge.py --dry-run
-    python launch-control/episodes/ep-08-the-agent/upload_knowledge.py --only escalation-policy.md
+    python launch-control/episodes/ep-09-the-agent/upload_knowledge.py
+    python launch-control/episodes/ep-09-the-agent/upload_knowledge.py --dry-run
+    python launch-control/episodes/ep-09-the-agent/upload_knowledge.py --only escalation-policy.md
 """
 
 from __future__ import annotations

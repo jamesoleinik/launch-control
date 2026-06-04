@@ -6,11 +6,11 @@ All notable changes to **Launch Control** are documented here, organized by epis
 >
 > | Tag | Original # | Current # | Folder |
 > |---|---|---|---|
-> | `ep-07` | 7 | **8** | `episodes/ep-08-the-agent/` |
-> | `ep-08` | 8 | **9** | `episodes/ep-09-autonomous-agents/` |
-> | `ep-09` | 9 | **10** | `episodes/ep-10-code-first-agent/` |
-> | `ep-10` | 10 | **11** | `episodes/ep-11-the-dashboard/` |
-> | `ep-11` | 11 | **12** | `episodes/ep-12-copilot-just-knows/` |
+> | `ep-07` | 7 | **8** | `episodes/ep-09-the-agent/` |
+> | `ep-08` | 8 | **9** | `episodes/ep-10-autonomous-agents/` |
+> | `ep-09` | 9 | **10** | `episodes/ep-11-code-first-agent/` |
+> | `ep-10` | 10 | **11** | `episodes/ep-12-the-dashboard/` |
+> | `ep-11` | 11 | **12** | `episodes/ep-13-copilot-just-knows/` |
 > | `ep-12` | 12 | **14** | `episodes/ep-14-agentic-admin/` |
 > | `ep-13` | 13 | **15** | `episodes/ep-15-full-orchestra/` |
 
@@ -30,31 +30,31 @@ Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 - Locked runtime: Copilot CLI + `dataverse@awesome-copilot v1.0.0` plugin as the canonical admin surface.
 - Backdated seed data so the audit/cleanup beats have something real to chew on.
 
-## [ep-11] — Copilot Just Knows (Dataverse Intelligence) _(now Episode 12)_
+## [ep-11] — Copilot Just Knows (Dataverse Intelligence) _(now Episode 13)_
 
 - Episode doc + `prompt-data` preflight covering the three demo prompts + one backup.
 - Showcase: native M365 Copilot answers about Launches/Milestones/Tasks with **no agent in the middle** — Dataverse Intelligence is the wiring.
 
-## [ep-10] — The Dashboard _(now Episode 11)_
+## [ep-10] — The Dashboard _(now Episode 12)_
 
 - Shipped `apps/launch-command-center/` — a generative Power Apps page deployed via `pac model genpage upload` (programmatic, no maker-portal click-ops).
 - Discovered + documented the `pac model genpage` path; set the page as the default landing for the model-driven app.
-- `episodes/ep-11-the-dashboard/{set_genpage_default.py, inspect_sitemap.py, preflight.py}`.
+- `episodes/ep-12-the-dashboard/{set_genpage_default.py, inspect_sitemap.py, preflight.py}`.
 
-## [ep-09] — The Code-First Agent _(now Episode 10)_
+## [ep-09] — The Code-First Agent _(now Episode 11)_
 
 - `agents/launch-coordinator-py/` — a Python agent that pulls the **same business skills** the declarative agent uses, proving the skills are runtime-portable.
 - Demonstrates: Dataverse as the skill registry; any runtime (Copilot Studio, Claude, custom Python) can consume.
 
-## [ep-08] — Autonomous Agents _(now Episode 9)_
+## [ep-08] — Autonomous Agents _(now Episode 10)_
 
 - `agents/launch-sentinel/` — event-triggered autonomous agent with an explicit escalation policy.
 - Refined the escalation rules in `business-skills/` so both the declarative coordinator and the autonomous sentinel route the same way.
 
-## [ep-07] — The Agent _(now Episode 8)_
+## [ep-07] — The Agent _(now Episode 9)_
 
 - `agents/launch-coordinator/` — declarative Copilot Studio agent grounded on Dataverse + the knowledge substrate.
-- Added `data/knowledge/` (sanitized KB articles) and the `episodes/ep-08-the-agent/{setup_table.py, upload_knowledge.py}` ingestion path.
+- Added `data/knowledge/` (sanitized KB articles) and the `episodes/ep-09-the-agent/{setup_table.py, upload_knowledge.py}` ingestion path.
 
 ## [ep-06] — Roles & Reach (Simple RBAC)
 

@@ -26,8 +26,8 @@ Architecture:
        [ Dataverse: data + Custom APIs ]
 
 The same business skills (Launch Readiness Checklist, Escalation
-Policy, ...) drive Copilot Studio (Ep 8), the Sentinel autonomous
-flow (Ep 9), and this Python agent (Ep 10). Three runtimes, one brain.
+Policy, ...) drive Copilot Studio (Ep 9), the Sentinel autonomous
+flow (Ep 10), and this Python agent (Ep 11). Three runtimes, one brain.
 
 Run:
     python agents/launch-coordinator-py/agent.py
@@ -133,7 +133,7 @@ def render_banner(dataverse_url: str) -> None:
         Text("Environment    ", style="dim") + Text(dataverse_url, style="green"),
     )
     console.print(Panel(body, title="[bold]Launch Coordinator (Python)[/bold]",
-                        subtitle="[dim]Episode 10 - the code-first agent[/dim]",
+                        subtitle="[dim]Episode 11 - the code-first agent[/dim]",
                         border_style="cyan"))
 
 

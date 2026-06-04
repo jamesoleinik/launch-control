@@ -1,6 +1,8 @@
 # Episode 2 — Process Modeling
 
-**Status:** ✅ Built · 🎬 Not yet recorded
+https://github.com/jamesoleinik/launch-control/raw/master/episodes/ep-02-business-skills/video.mp4
+
+**Status:** ✅ Built · 🎬 Recorded
 **Features:** ⭐ Business Skills as process · ⭐ `@microsoft/dataverse` CLI-driven authoring + ingestion
 **Layer:** 🔵 Layer 2 (Intelligence) + 🟢 Layer 1 (Data)
 **Coding agent:** GitHub Copilot · **Runtime:** `@microsoft/dataverse` CLI
@@ -196,7 +198,7 @@ and it falls out of the CLI workflow for free.
 ## What this unlocks
 
 - **Process against real data.** The Launch Readiness Checklist can now actually walk
-  live records. Episode 8 will plug an agent into the same skills.
+  live records. Episode 9 will plug an agent into the same skills.
 - **Reproducible imports.** Drop a new CSV in `datamodel/samples/` and add a mapping —
   no code changes, full provenance.
 - **A foundation for migration.** Episode 3 (Python SDK + pandas) will read these

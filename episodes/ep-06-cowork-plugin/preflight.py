@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only local preflight for Episode 7 - Cowork Plugin for Dataverse."""
+"""Read-only local preflight for Episode 6 - Cowork Plugin for Dataverse."""
 
 import argparse
 import importlib.util
@@ -27,7 +27,7 @@ CORE_TABLES = ["lc_launch", "lc_milestone", "lc_task", "lc_teammember", "lc_stat
 READINESS_API = "lc_CalculateLaunchReadiness"
 
 
-PLAN = """# Episode 7 - Cowork Plugin for Dataverse preflight
+PLAN = """# Episode 6 - Cowork Plugin for Dataverse preflight
 
 Read-only checks before recording:
 
@@ -372,7 +372,7 @@ def run_all():
 
 def render_console(results):
     print()
-    print(C.BOLD + "Episode 7 - Cowork Plugin Preflight" + C.END)
+    print(C.BOLD + "Episode 6 - Cowork Plugin Preflight" + C.END)
     print("=" * 72)
     passed = sum(1 for r in results if r.passed)
     total = len(results)
@@ -394,7 +394,7 @@ def render_console(results):
 
 def render_markdown(results):
     lines = [
-        "# Episode 7 - Cowork Plugin Preflight Results",
+        "# Episode 6 - Cowork Plugin Preflight Results",
         "",
         f"**Environment:** `{_dataverse_url() or 'not set'}`",
         "",

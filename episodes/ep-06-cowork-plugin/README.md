@@ -1,4 +1,4 @@
-# Episode 7 — Cowork Plugin for Dataverse
+# Episode 6 — Cowork Plugin for Dataverse
 
 **Status:** 🚧 In development · 🎬 Not yet recorded
 **Features:** ⭐ Microsoft 365 Cowork custom plugin · ⭐ Dataverse MCP Server · ⭐ Teams Developer Portal OAuth registration · ⭐ Schema-aware Business Skill
@@ -14,11 +14,11 @@
 > conversation where the launch team already works — inside Microsoft 365
 > Cowork and Copilot chat."_
 
-Episodes 1–6 built the substrate: the unified `lc_*` model, staging
-promotion, virtual entities, server-side guardrails, custom actions, MCP
-connectors, and role boundaries. Episode 7 is the reach layer: a **Teams
+Episodes 1–5 built the substrate: the unified `lc_*` model, staging
+promotion, virtual entities, server-side guardrails, custom actions, and
+MCP connectors. Episode 6 is the reach layer: a **Teams
 custom plugin** that lets Cowork connect directly to the Dataverse MCP server
-for the Launch Control environment.
+for the Launch Control environment. (Role boundaries follow in Episode 8.)
 
 The important part is not another chat UI. It is this:
 
@@ -113,7 +113,7 @@ This mirrors the Episode 5 connector story, but with a different surface:
 
 - Episode 5 registered remote MCP servers as Power Platform custom connectors
   in [`connectors/`](../../connectors/).
-- Episode 7 registers the Dataverse MCP server as a Cowork custom plugin so
+- Episode 6 registers the Dataverse MCP server as a Cowork custom plugin so
   users can talk to Launch Control inside Microsoft 365 chat.
 
 ---
@@ -173,8 +173,8 @@ So the hardening checklist is part of the episode, not an appendix:
 
 ```powershell
 # from launch-control/
-python episodes/ep-07-cowork-plugin/preflight.py --plan
-python episodes/ep-07-cowork-plugin/preflight.py --run
+python episodes/ep-06-cowork-plugin/preflight.py --plan
+python episodes/ep-06-cowork-plugin/preflight.py --run
 ```
 
 What it checks:
@@ -212,7 +212,7 @@ is validated manually.
    highlighting logical names, lookups, and status fields.
 7. **Real test** — Cowork answers a readiness/status question over known
    records and related tables.
-8. **Preflight** — `python episodes/ep-07-cowork-plugin/preflight.py --run`
+8. **Preflight** — `python episodes/ep-06-cowork-plugin/preflight.py --run`
    shows the repo and Dataverse substrate are ready.
 9. **The punchline:**
    > _"The user sees a chat. The admin sees OAuth, app IDs, scopes, and
@@ -250,8 +250,8 @@ is validated manually.
 $env:PYTHONIOENCODING='utf-8'
 
 # 1. Confirm local substrate
-python episodes/ep-07-cowork-plugin/preflight.py --plan
-python episodes/ep-07-cowork-plugin/preflight.py --run
+python episodes/ep-06-cowork-plugin/preflight.py --plan
+python episodes/ep-06-cowork-plugin/preflight.py --run
 
 # 2. Complete tenant-side setup manually
 # - Entra app registration
@@ -301,7 +301,7 @@ python episodes/ep-07-cowork-plugin/preflight.py --run
 
 ## Next up
 
-**Episode 8 — The Agent.** Cowork was the enterprise chat front door. Episode 8
+**Episode 9 — The Agent.** Cowork was the enterprise chat front door. Episode 9
 moves the same Dataverse substrate into the **declarative** Launch Coordinator
 in Copilot Studio — same `lc_*` model, same readiness Custom API, hosted
 conversation surface.

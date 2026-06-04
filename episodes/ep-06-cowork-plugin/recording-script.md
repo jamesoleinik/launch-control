@@ -1,4 +1,4 @@
-# Episode 7 — Cowork Plugin for Dataverse: Recording Script
+# Episode 6 — Cowork Plugin for Dataverse: Recording Script
 
 **Target length:** 4–6 minutes
 **Format:** LinkedIn short-form technical demo
@@ -13,7 +13,7 @@
 |---:|---|---|---|
 | 0:00 | Cowork chat | Show prompt already typed: `What is blocking Q3 Widget Launch, and should we slip?` | "We have Launch Control in Dataverse. Now we want the launch team to ask about it where they already work — Microsoft 365 Cowork and Copilot chat." |
 | 0:08 | Architecture card | Show `Cowork → Teams custom plugin → OAuthPluginVault → Dataverse MCP → lc_* tables` | "The chat is simple. The plumbing is not. A custom plugin has to authenticate, reach the Dataverse MCP endpoint, and understand the Launch Control schema." |
-| 0:18 | Title card | `Episode 7 — Cowork Plugin for Dataverse` | "This episode is the Cowork front door." |
+| 0:18 | Title card | `Episode 6 — Cowork Plugin for Dataverse` | "This episode is the Cowork front door." |
 
 ---
 
@@ -23,8 +23,8 @@
 
 | Time | Shot | On-screen action | Narration |
 |---:|---|---|---|
-| 0:25 | VS Code | Open `episodes/ep-07-cowork-plugin/README.md`, scroll to the eight-step recipe. | "The MVP findings came down to a repeatable eight-step setup. Most failures are not AI failures. They are ID, URL, scope, permission, or stale package failures." |
-| 0:38 | Terminal | Run `python episodes/ep-07-cowork-plugin/preflight.py --plan`. | "Before recording, I run a read-only preflight. It checks that the repo and Dataverse substrate are ready before I touch Cowork on camera." |
+| 0:25 | VS Code | Open `episodes/ep-06-cowork-plugin/README.md`, scroll to the eight-step recipe. | "The MVP findings came down to a repeatable eight-step setup. Most failures are not AI failures. They are ID, URL, scope, permission, or stale package failures." |
+| 0:38 | Terminal | Run `python episodes/ep-06-cowork-plugin/preflight.py --plan`. | "Before recording, I run a read-only preflight. It checks that the repo and Dataverse substrate are ready before I touch Cowork on camera." |
 
 ### 2. Entra app registration
 
@@ -90,7 +90,7 @@
 |---:|---|---|---|
 | 4:58 | Teams Developer Portal | Show OAuth registration app restrictions. | "After validation, harden the OAuth registration. Restrict it from 'any Teams app' to the deployed plugin's Teams App ID." |
 | 5:08 | README pitfalls | Show pitfalls list. | "The checklist is the governance story: correct IDs, correct URL, correct scope, correct permissions, fresh deployment, and a schema skill." |
-| 5:20 | Terminal | Run `python episodes/ep-07-cowork-plugin/preflight.py --run`. | "The preflight stays read-only. It proves the repo, package, skill, auth, tables, and readiness API are ready for the next take." |
+| 5:20 | Terminal | Run `python episodes/ep-06-cowork-plugin/preflight.py --run`. | "The preflight stays read-only. It proves the repo, package, skill, auth, tables, and readiness API are ready for the next take." |
 | 5:35 | Closing card | Show architecture again. | "The user sees a chat. The admin sees OAuth, app IDs, scopes, and governance. The agent sees Dataverse MCP plus a schema skill. All three have to be right." |
 
 ---
@@ -163,8 +163,8 @@ Expected:
 
 ## B-roll checklist
 
-- `episodes/ep-07-cowork-plugin/README.md`
-- `episodes/ep-07-cowork-plugin/preflight.py --plan`
+- `episodes/ep-06-cowork-plugin/README.md`
+- `episodes/ep-06-cowork-plugin/preflight.py --plan`
 - Power Platform environment Dataverse MCP client settings
 - Allowed MCP Client row with Entra Application ID
 - Teams Developer Portal OAuth registration
@@ -196,7 +196,7 @@ Expected:
 1. Run local preflight before opening portals:
 
    ```powershell
-   python episodes/ep-07-cowork-plugin/preflight.py --run
+   python episodes/ep-06-cowork-plugin/preflight.py --run
    ```
 
 2. Reset browser state:
@@ -238,7 +238,7 @@ Expected:
 ## End-card copy
 
 ```text
-Episode 7: Cowork Plugin for Dataverse
+Episode 6: Cowork Plugin for Dataverse
 
 A Teams custom plugin connects Microsoft 365 Cowork to the Dataverse MCP server.
 The Business Skill makes the answers Launch Control-aware.

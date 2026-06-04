@@ -1,4 +1,4 @@
-"""Episode 11 preflight: verify the demo data is rich enough for the gen-page recording.
+"""Episode 12 preflight: verify the demo data is rich enough for the gen-page recording.
 
 Checks:
   - Q3 Widget Launch exists
@@ -11,7 +11,7 @@ Checks:
   - >=8 status updates exist
   - Cloud flows that were causing duplicate-task creation are disabled
 
-Run: python episodes/ep-11-the-dashboard/preflight.py
+Run: python episodes/ep-12-the-dashboard/preflight.py
 """
 import os, sys, requests
 from collections import Counter
@@ -45,7 +45,7 @@ def check(name, ok, detail=''):
 
 
 def main():
-    print("Episode 11 preflight\n")
+    print("Episode 12 preflight\n")
     failures = 0
 
     launches = fetch("/api/data/v9.2/lc_launchs?$select=lc_launchid,lc_name&$filter=lc_name eq 'Q3 Widget Launch'")
@@ -112,7 +112,7 @@ def main():
     if failures:
         print(f"❌ {failures} check(s) failed.")
         return 1
-    print("✅ All checks passed — Ep 11 demo data is recording-ready.")
+    print("✅ All checks passed — Ep 12 demo data is recording-ready.")
     return 0
 
 
