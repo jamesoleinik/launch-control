@@ -6,6 +6,14 @@
 **Coding agent:** GitHub Copilot + Teams Developer Portal + M365 Admin Center
 **Runtime:** Microsoft 365 Cowork / Copilot chat + Dataverse MCP Server (`/api/mcp_preview`, 3-tool `search`/`describe`/`execute` surface)
 
+> ⚠️ **Preview-only capability:** Invoking Dataverse custom APIs (e.g. our
+> `lc_launchreadiness` action) through the MCP `execute` tool is a **Dataverse
+> preview MCP** feature available **only on `/api/mcp_preview`**. It is **not
+> yet rolled out to the GA `/api/mcp` endpoint**. The plugin and OAuth scope in
+> this episode are intentionally pinned to the preview endpoint so the
+> readiness-as-custom-API workflow keeps working; expect to repoint
+> `mcpServerUrl` (and re-record results) when the capability ships to GA.
+
 ---
 
 ## The hook
@@ -351,13 +359,18 @@ needs before producing the upload zip:
 
 ```markdown
 # MCP workflow skill — Hard rules (skills/dataverse-launchcontrol-mcp/SKILL.md)
-1. Readiness questions are answered by re-reading the `lc_risksummary`
-   AI prompt column on `lc_launch` and the open/blocked `lc_task` rows —
-   never hand-tally milestone statuses.
+1. Readiness questions are answered by invoking the `lc_launchreadiness`
+   Dataverse **custom API** via `execute(operation='execute', …)` — this is
+   a **preview-only** MCP capability (`/api/mcp_preview`); it is NOT
+   available on the GA `/api/mcp` endpoint. The custom API internally
+   re-reads the `lc_risksummary` AI prompt column on `lc_launch` and the
+   open/blocked `lc_task` rows. Never hand-tally milestone statuses.
 2. Stay within the LaunchControl environment; do not call other orgs.
 3. Three tools only: `search` (discovery), `describe` (schema / API
-   signature), `execute` (operation = read | create | update | delete).
-   Always `describe` before `execute` for case-sensitive parameter names.
+   signature), `execute` (operation = read | create | update | delete |
+   execute). Always `describe` before `execute` for case-sensitive
+   parameter names — especially for custom API actions where bound
+   entity / parameter names must match exactly.
 ```
 
 ```markdown
@@ -694,7 +707,9 @@ swap the `provision` block to `oauth/update`, bump `name`, then re-run
   Teams Developer Portal OAuth Registration ID. Mixing them breaks auth.
 - **Wrong MCP URL** — the endpoint is the Dataverse org URL plus `/api/mcp_preview`
   (the preview surface — `search`/`describe`/`execute`).
-  GA `/api/mcp` is the older 11-tool CRUD shape with a narrower tool set.
+  GA `/api/mcp` is the older 11-tool CRUD shape with a narrower tool set
+  and **does not yet support invoking Dataverse custom APIs** (e.g.
+  `lc_launchreadiness`) — that capability is preview-only today.
   Note the underscore in `mcp_preview`: `/api/mcp/preview` (slash) does not exist.
 - **Wrong scope** — use `{DataverseOrgUrl}/.default offline_access`, not a
   generic Graph scope.
