@@ -14,65 +14,11 @@
 > readiness-as-custom-API workflow keeps working; expect to repoint
 > `mcpServerUrl` (and re-record results) when the capability ships to GA.
 
----
-
-## The hook
-
-> _"We already taught agents how to talk to Launch Control. Now we put that
-> conversation where the launch team already works — inside Microsoft 365
-> Cowork and Copilot chat."_
-
-Episodes 1–5 built the substrate: the unified `lc_*` model, staging
-promotion, virtual entities, server-side guardrails, custom actions, and
-MCP connectors. Episode 6 is the reach layer: a **Teams
-custom plugin** that lets Cowork connect directly to the Dataverse MCP server
-for the Launch Control environment. (Role boundaries follow in Episode 8.)
-
-The important part is not another chat UI. It is this:
-
-```text
-Cowork / Copilot chat
-  → custom Teams plugin package
-  → OAuthPluginVault
-  → https://<org>.crm.dynamics.com/api/mcp_preview
-  → Launch Control Dataverse data, governed by the signed-in user
-```
-
-Same data. Same security. Same business skills. New front door.
-
----
-
-## The narrative beat
-
-The opening question is deliberately plain:
-
-```text
-User → "What is blocking Q3 Widget Launch, and should we slip?"
-```
-
-Without schema guidance, Cowork can get lost: lookup columns, logical names,
-choice values, and relationship names are not intuitive to a human and they
-are not always obvious to the model. The two MVP findings that shape this
-episode are blunt:
-
-- Authentication and packaging take too much effort to get right the first
-  time.
-- Lookup handling is fragile unless the plugin is paired with a full
-  schema-aware skill.
-
-So the episode has two payoffs:
-
-1. **The plugin connects.** Cowork can discover and call the Dataverse MCP
-   server from inside Microsoft 365.
-2. **The answers are Launch Control answers.** A Business Skill tells the
-   model which tables, columns, lookups, status fields, and rules matter.
-
-```text
-Cowork → Dataverse MCP → lc_launch / lc_milestone / lc_task
-       → Business Skill: status columns, lookups, readiness rules
-       ← "NO-GO. Security review and CDN provisioning are blocked.
-          Per the escalation policy, a one-week slip requires Director approval."
-```
+> 📖 **Companion guide:** This episode codifies (and automates) the manual
+> click-through recipe from Saiful Khan's
+> [Copilot Cowork × Dataverse Plugin Setup](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/)
+> blog. Every blog Step is mapped to a Part below — read it first if you'd
+> rather see the portal-only path before automating it.
 
 ---
 
@@ -92,29 +38,6 @@ Cowork → Dataverse MCP → lc_launch / lc_milestone / lc_task
 > Tenant plumbing — now fully scriptable, but still highly privileged.
 
 **🛠 Runs in:** GitHub Copilot CLI (coding agent in your terminal)
-
-> ⚠️ **Heads-up — this Part runs with tenant-admin scope.** It mints an
-> Entra app + client secret, grants `Dynamics CRM/user_impersonation`
-> with admin consent, creates a Dataverse System Administrator app user,
-> toggles the Dataverse MCP Allowed-Client list, and registers a
-> Teams Dev Portal OAuth client. Each one is a low-frequency, high-blast-
-> radius operation — record it once per environment, keep the output
-> `.deploy/ep-06/<timestamp>.json` gitignored, and rotate the secret on
-> schedule (see Part 1's `oauth/update` rotation block in `m365agents.yml`).
-
-Most failed Cowork demos are not model failures — they are ID, URL, scope,
-or permission failures. Through Episode 5 we treated the Teams Dev Portal
-OAuth client registration as a click-through. **That is no longer true.**
-The Microsoft 365 Agents Toolkit CLI (`atk`, the renamed Teams Toolkit
-CLI) exposes the `oauth/register` driver, which calls the same Dev Portal
-Graph endpoint (`POST /api/v1.0/oAuthConfigurations`) the portal UI uses.
-A 19-line `m365agents.yml` + `atk provision` replaces the click-through
-and returns the `oAuthConfigId` you put into `OAuthPluginVault.referenceId`.
-
-So Part 1 is now: Entra app + redirects (Graph), Dataverse app user +
-role (Web API), Power Platform allowed-client toggle (admin API), and
-Teams Dev Portal OAuth registration (`atk provision`) — end-to-end
-scripted, zero portal clicks.
 
 ### Defaults (the agent should NOT ask for these)
 
@@ -206,7 +129,7 @@ console output (truncated):
 ✓ Allowed MCP Client row: LaunchControl-Cowork-MCP  →  enabled
 ✓ atk provision: OAuth registration created
 → referenceId (base64) = YWRmYTQ1NDIt…ODQzNA==
-→ decoded              = adfa4542-…##b2cb2ac2-539f-43a7-bc70-bbbbfea88434
+→ decoded              = <tenant-guid>##<oAuthConfigId-guid>
 ```
 
 ### Gotchas baked into the script (learned the hard way)
@@ -261,6 +184,10 @@ console output (truncated):
 
 ### 📚 References
 
+- 📖 **Companion guide — Saiful Khan's blog, the manual click-through path this Part automates:**
+  - [Step 1: Create the App Registration](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-1-create-the-app-registration) (+ [add the Dataverse MCP permission](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#add-the-dataverse-mcp-permission), [add the redirect URI](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#add-the-redirect-uri))
+  - [Step 2: Configure the Power Platform environment](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-2-configure-the-power-platform-environment) (+ [allowed MCP client](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#add-the-allowed-mcp-client), [capture Dataverse URL](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#capture-the-dataverse-url))
+  - [Step 3: Create the OAuth registration in Teams Developer Portal](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-3-create-the-oauth-registration-in-teams-developer-portal) (+ [Base URL](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#base-url), [Authorization endpoint](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#authorization-endpoint), [Token endpoint](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#token-endpoint), [Scope](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#scope), [Client ID and secret](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#client-id-and-secret))
 - [Microsoft 365 Agents Toolkit CLI overview](https://learn.microsoft.com/microsoftteams/platform/toolkit/microsoft-365-agents-toolkit-cli) — `atk` command surface
 - [`oauth/register` action reference](https://aka.ms/teamsfx-actions/oauth-register) — required args, write-back env keys
 - [Dataverse MCP server overview](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp) — GA `/api/mcp` and preview `/api/mcp_preview`, allowed clients, scopes
@@ -406,6 +333,9 @@ GET /lc_launches?$select=lc_name
 
 ### 📚 References
 
+- 📖 **Companion guide — Saiful Khan's blog, the manual path this Part automates:**
+  - [Step 4: Build the plugin](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-4-build-the-plugin) (+ [Import Plugin Builder skill](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#import-plugin-builder-skill), [Build Dataverse Plugin with Template](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#build-dataverse-plugin-with-template))
+  - [Step 6: Create a schema-aware skill](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-6-create-a-schema-aware-skill) — our Schema skill + Business-skills loader generalise this idea (one skill per `lc_*` table + a loader that pulls the rest from Dataverse)
 - [Cowork plugin manifest schema (devPreview)](https://learn.microsoft.com/microsoft-365/copilot/extensibility/) — `agentConnectors` + `agentSkills`
 - [`scripts/cli/upload-skills.mjs`](../../scripts/cli/upload-skills.mjs) — confirms the `skill` table contract (entity set `skills`, `uniquename` / `description` / `body`)
 - [`agents/launch-coordinator-py/sync_skills.py`](../../agents/launch-coordinator-py/sync_skills.py) — same read pattern Scout uses
@@ -432,6 +362,11 @@ M365 Admin Center
                       └─ Upload custom agent  ← drop the zip here
 ```
 
+### 📚 References
+
+- 📖 **Companion guide — Saiful Khan's blog, the manual path this Part automates:**
+  - [Step 5: Deploy the plugin](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-5-deploy-the-plugin) (+ [Connect Plugin](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#connect-plugin) — the one step that still has to happen inside Cowork)
+
 ---
 
 ## Part 4 · Show the plugin in use
@@ -440,21 +375,6 @@ M365 Admin Center
 
 **🛠 Runs in:** Cowork (chat window inside M365 Copilot)
 
-This is the demo beat — and it's the one where the plugin earns its keep.
-The scenario: you're 8 weeks out from launching a Dataverse-backed
-LaunchControl app. New Power Platform release notes just dropped, and
-the Power Platform Community forums are lit up with people hitting fresh
-issues. You don't want to read all of that yourself, and you definitely
-don't want to leave the findings as a chat reply that vanishes. You want
-Cowork to do the analysis, then **write tasks back into your launch** so
-the risks live in Dataverse alongside everything else.
-
-The mechanic for Part 4 is the **Business Skill** pattern: instead of
-typing the whole workflow as a one-off prompt, the logic lives as a
-versioned skill (`Launch Risk Scout`) inside Dataverse. Cowork pulls
-the skill via the plugin's `search` tool, installs it as a local skill
-for this chat, then runs it. The same skill can be re-run from any
-client, in any chat, by name.
 
 ### Cowork prompt 1 — discover the skill
 
@@ -466,7 +386,7 @@ client, in any chat, by name.
 What Cowork does: business-skills loader fires the plugin's `search`
 tool, which routes via the preview MCP to `tables/skill` + `skills/`
 paths, finds `Launch Risk Scout`
-(skillId `520194bd-f660-f111-a826-000d3a5a5cf3`,
+(skillId `<your-skill-guid>`,
 uniquename `lc_launchriskscout`), and `describe`s it. Cowork echoes
 back the skill's purpose, the `LaunchName` input, the tables it reads
 (`lc_launch`, `lc_milestone`), and the table it writes (`lc_task`).
@@ -512,37 +432,13 @@ refreshed readiness `Score` and `Decision`. Every write carries the
 
 ### 📚 References
 
+- 📖 **Companion guide — Saiful Khan's blog, the manual scenario this Part mirrors:**
+  - [Step 7: Test with a real scenario](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#step-7-test-with-a-real-scenario)
+  - [Example prompts](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#example-prompts) — [list records](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#list-records), [add records](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#add-records), [details on a record](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#details-on-a-record), [build dashboard](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#build-dashboard), [create report](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#create-report), [send email with context](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#send-email-with-context), [create PPT](https://flowaltdelete.ca/2026/05/21/copilot-cowork-dataverse-plugin-setup/#create-ppt-with-context-brand)
 - [Power Platform Community — Dataverse forum](https://community.powerplatform.com/t5/Microsoft-Dataverse/bd-p/PowerApps1) — the source for prompt 1
 - [Power Platform release notes](https://learn.microsoft.com/power-platform/release-plan/) — second source for prompt 1
 - [`tmp/cowork-template-extracted/`](../../tmp/cowork-template-extracted/) — bundled `render.py` (bootstrap only)
 - [`SKILL.md`](SKILL.md) — recording-time playbook, hard rules, eight-step recipe
-
----
-
-## Appendix · Governance and hardening
-
-> Custom plugins need the same governance story as pre-built plugins.
-
-Rafsan Huseynov's feedback is the guardrail beat: pre-built plugins are easy
-to manage and remove; custom plugins can accumulate versions, stale packages,
-and unclear ownership if teams do not govern them.
-
-So the hardening checklist is part of the episode, not an afterthought:
-
-- Restrict the Teams OAuth registration scope (`applicableToApps`) — start with
-  `AnyApp` for validation, tighten to `SpecificApp` once the plugin's Teams App
-  ID is stable in `m365agents.yml`.
-- Increment plugin version on every re-upload; do not rely on Cowork picking
-  up stale packages.
-- Publish first to a small audience, then widen.
-- Track which users, domains, prompts, and outputs use the plugin.
-- Keep domain-specific packages separate: HR, finance, healthcare, and Launch
-  Control should not share one opaque plugin.
-- Respect Dataverse permissions and add Purview / sensitivity guardrails for
-  highly confidential data.
-- Rotate the OAuth client secret on schedule — use the `oauth/update` block
-  in `m365agents.yml` (remember to change another field to force the PATCH;
-  see Part 1 gotcha #2).
 
 ---
 
@@ -573,31 +469,6 @@ is validated manually.
 
 ---
 
-## What you see on screen
-
-1. **Hook** — Cowork chat in Teams: _"What is blocking Q3 Widget Launch, and
-   should we slip?"_
-2. **MCP endpoint** — Power Platform environment settings: Dataverse MCP
-   client access enabled; Allowed MCP Client row shows the Entra Client ID.
-3. **OAuth registration** — Teams Developer Portal: Dataverse base URL,
-   tenant auth/token endpoints, scope = `/.default offline_access`, copy the
-   OAuth Registration ID.
-4. **Plugin package** — VS Code: highlight `/api/mcp_preview`, `OAuthPluginVault`, and
-   `referenceId`.
-5. **Deploy** — M365 Admin Center: upload custom app, publish to yourself,
-   open Cowork, add plugin, Connect.
-6. **Business Skill** — VS Code: schema-aware skill in `business-skills/`,
-   highlighting logical names, lookups, and status fields.
-7. **Real test** — Cowork answers a readiness/status question over known
-   records and related tables.
-8. **Preflight** — `python episodes/ep-06-cowork-plugin/preflight.py --run`
-   shows the repo and Dataverse substrate are ready.
-9. **The punchline:**
-   > _"The user sees a chat. The admin sees OAuth, app IDs, scopes, and
-   > governance. The agent sees Dataverse MCP plus a schema skill. All three
-   > have to be right."_
-
----
 
 ## Files in this episode
 
@@ -729,23 +600,6 @@ swap the `provision` block to `oauth/update`, bump `name`, then re-run
 
 ---
 
-## What this unlocks for the rest of the series
-
-- The will-be-renumbered **Agent** episode can contrast Copilot Studio and
-  Cowork: same Dataverse MCP server, different orchestration surface.
-- The code-first agent can reuse the same schema-aware skill: the runtime
-  changes, the business instructions do not.
-- The finale gets one more surface in the orchestra: Launch Control from
-  Microsoft 365 chat, governed by Dataverse and tenant admin controls.
-
----
-
-## Next up
-
-**Episode 9 — The Agent.** Cowork was the enterprise chat front door. Episode 9
-moves the same Dataverse substrate into the **declarative** Launch Coordinator
-in Copilot Studio — same `lc_*` model, same `lc_risksummary` prompt column,
-hosted conversation surface.
 
 ## Live deployment state
 
