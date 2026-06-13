@@ -26,26 +26,34 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 
 ---
 
-## Part 1 · Attach an artifact to a launch and search inside it
+## Part 1 · Pull an artifact from SharePoint, land it on a launch, search inside it
 
-> This is the new capability. After this beat, the platform has built embeddings over the PDF and agentic search returns content from inside the file.
+> This is the new capability, end to end. Scout fetches the beta-tester report from SharePoint (or OneDrive, or a public URL) using its own connectors, then uploads it onto the Dataverse launch record through MCP. The platform builds embeddings on commit. Agentic search returns content from inside the file.
 
-**🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app.
+**🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app. The artifact lives in SharePoint; Dataverse never sees a local file path.
 
-The upload itself is an MCP call. Scout reads the PDF off disk with its filesystem tool, then fires `init_file_upload` → HTTP PUT to the returned SAS URL → `commit_file_upload` against the `lc_launch` file column. Same trio that Part 2 uses to attach the skill resource. Then a single `search_data` proves the embeddings landed.
+The point of this beat is the bridge. Scout already reaches the places where unstructured artifacts live: the web, SharePoint, OneDrive, Teams. The new MCP file-upload trio (`init_file_upload` → HTTP PUT to the returned SAS URL → `commit_file_upload`) lets Scout land those artifacts on the system of record without a human in the loop. Then `search_data` answers questions from inside them.
 
-1. **Step 1a. Upload the PDF via Scout.** Paste this into Scout chat (replace `<repo>` with the absolute path to the repo on your machine; do not type the angle brackets):
+**Pre-record:** put `sample-feedback.pdf` somewhere Scout can read it. The script assumes SharePoint. OneDrive or a public URL work the same way (swap the source phrase in Step 1a).
+
+- SharePoint: upload to the LaunchControl team site, `Documents/Beta Feedback/Q3 Widget Launch - sample-feedback.pdf`.
+- OneDrive: put it in your personal `Documents/LaunchControl/` folder.
+- Public URL fallback: any HTTPS URL Scout can fetch (e.g., the raw GitHub link to the file in this repo).
+
+1. **Step 1a. Have Scout fetch and upload.** Paste this into Scout chat (swap the SharePoint phrase for OneDrive/URL if that's your source):
 
    ```
-   Use the Launch Control MCP server. Read the file at
-   <repo>/episodes/ep-07-scout-autopilot/sample-feedback.pdf and
-   attach it to the lc_launch row whose lc_name is
-   "Q3 Widget Launch" on its file column. Use init_file_upload to
-   get a SAS URL, PUT the bytes to it with x-ms-blob-type: BlockBlob,
-   then commit_file_upload. Tell me when commit returns.
+   On the LaunchControl SharePoint site, find the file named
+   "Q3 Widget Launch - sample-feedback.pdf" under
+   Documents/Beta Feedback. Read it. Then use the Launch Control MCP
+   server to attach it to the lc_launch row whose lc_name is
+   "Q3 Widget Launch", on its file column. Use init_file_upload to
+   get a SAS URL, PUT the bytes you just read with
+   x-ms-blob-type: BlockBlob, then commit_file_upload. Tell me when
+   commit returns.
    ```
 
-   Scout's tool-use panel should show `search` (to find the launch row), then `init_file_upload`, then an HTTP PUT, then `commit_file_upload`. Wait ~30 seconds after commit for the platform to build embeddings.
+   Scout's tool-use panel should show its SharePoint/Graph tool fetch the file, then `search` to resolve the launch row, then `init_file_upload`, the HTTP PUT, then `commit_file_upload`. Wait ~30 seconds after commit for the platform to build embeddings.
 
 2. **Step 1b. Ask the question.** Paste:
 
@@ -57,7 +65,7 @@ The upload itself is an MCP call. Scout reads the PDF off disk with its filesyst
 
    Scout's first move should be `search` to resolve the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query.
 
-> Prefer to upload through the portal? Open the LaunchControl model-driven app, open the **Q3 Widget Launch** record, drop the PDF on the file column, save. The rest of the beat is identical.
+> Don't have SharePoint handy? Substitute *"Fetch this URL: https://raw.githubusercontent.com/jamesoleinik/launch-control/master/episodes/ep-07-scout-autopilot/sample-feedback.pdf"* in Step 1a; everything downstream is identical. Or upload through the LaunchControl model-driven app's Files section on the Q3 Widget Launch record and skip Step 1a.
 
 ---
 

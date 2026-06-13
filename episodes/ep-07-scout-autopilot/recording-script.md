@@ -36,7 +36,7 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 | **0:00–0:03** | Still · the 17-tool, 6-area MCP catalog. | "The Dataverse MCP server grew up." | ⬇ **The MCP server grew up.** |
 | **0:03–0:07** | Hard cut to a Scout chat answer streaming a verbatim PDF excerpt. | "And it brought files with it." | ⬇ **And it brought files with it.** |
 | **0:07–0:25** ⭐ **Intro · The new tool shape (18s)** | Cut between the tool catalog still and `dataverse-mcp-tools.json` open in VS Code. Highlight `search`, `describe`, `search_data`. | "The shape moved from CRUD per table to discovery: search, describe, read. Agents ask in English, the server finds the right table or skill." | ⬇ **Search. Describe. Read.** |
-| **0:25–0:50** ⭐ **Part 1 · Scout uploads the PDF + agentic search (25s)** | Scout chat fullscreen. James pastes the Part 1a prompt. Scout's tool-use panel fires `search` → `init_file_upload` → HTTP PUT → `commit_file_upload`. Speed-ramp 2x through the tool-use panel. Drop to 1x as James pastes the Part 1b prompt. The answer streams a verbatim quote from inside the PDF. | "The file upload itself is an MCP call. Scout reads the PDF off disk, fires init_file_upload, PUTs the bytes to the SAS URL, commits. The platform builds embeddings on commit. Then I ask Scout what's blocking Q3 and the answer comes from inside that PDF." | ⬇ 0:25 **Scout uploads the file.** → 0:38 **Embeddings built on commit.** → 0:44 **Search finds content, not columns.** |
+| **0:25–0:50** ⭐ **Part 1 · Scout pulls from SharePoint + uploads + agentic search (25s)** | Scout chat fullscreen. James pastes the Part 1a prompt. Tool-use panel shows Scout's SharePoint connector fetch the PDF, then `search` → `init_file_upload` → HTTP PUT → `commit_file_upload`. Speed-ramp 2x through the panel. Drop to 1x. James pastes the Part 1b question. The answer streams a verbatim quote from inside the PDF. | "Scout already reaches the web, SharePoint, OneDrive. The new MCP file tools let it land what it finds on the system of record. So Scout pulls the beta-tester report from SharePoint, attaches it to the launch in Dataverse, the platform embeds it, and then the same agent answers what's blocking Q3 from inside that file." | ⬇ 0:25 **From SharePoint to Dataverse.** → 0:38 **Embeddings built on commit.** → 0:44 **Search finds content, not columns.** |
 | **0:50–1:30** ⭐ **Part 2 · Co-author the skill, save it to Dataverse (40s)** | Scout chat. James pastes the Part 2 seed prompt. Scout drafts the skill body inline; the markdown scrolls in the answer pane. James types one short iteration ("In the dedup step, match by filename in the existing lc_task description"). Scout amends in place. James types "Save it." Scout's tool-use panel fires four MCP calls in order: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "Then I built the morning skill with Scout. Same chat. I said what I want, Scout drafted the steps in markdown, we tightened the dedup rule together, then I said save it. Four tool calls. The skill is a row in Dataverse now. Any agent that finds it can run it." | ⬇ 0:50 **Tell Scout what you want.** → 1:05 **Iterate in chat.** → 1:18 **Say "save it."** → 1:25 **Skill = row in Dataverse.** |
 | **1:30–1:55** ⭐ **Part 3 · Always-on Scout (25s)** | Scout → Automations → open "Morning Launch Control update". Edit. Paste the 3 new step bodies (2x speed on the typing). Save. Click Run now. Cut to Teams · the summary DM lands with launch name, risk summary, and the new task names. | "Then Scout puts it on a schedule. Discover the skill. Run it. DM me the result. Every weekday at nine. The morning sweep runs itself." | ⬇ 1:30 **Step 1: discover.** → 1:38 **Step 2: run.** → 1:46 **Step 3: report.** → 1:52 **Always on.** |
 | **1:55–2:00** | End card. *"Next: Episode 8: RBAC."* `github.com/jamesoleinik/launch-control` | "Same data. Same security. Now always on." | ⬇ **Episode 8 next: RBAC.** |
@@ -55,22 +55,26 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 
 Two prompts back to back, one iteration line, and three automation-step bodies. All verbatim. Dry-run each one before recording so the four-call MCP panel and the streaming chat answers are warm.
 
-### Part 1 prompt: Scout uploads the PDF, then finds content inside it (0:25–0:50)
+### Part 1 prompt: Scout pulls from SharePoint, uploads via MCP, then searches inside it (0:25–0:50)
 
-Two prompts back to back in Scout chat. No Power Apps. The upload is the MCP file-upload trio fired by Scout. Wait ~30 seconds between commit and the search prompt so embeddings have time to build.
+Two prompts back to back in Scout chat. No Power Apps. The upload is the MCP file-upload trio, but the *source* of the file is SharePoint (or OneDrive, or a public URL) reached through Scout's own connectors. This is the bridge the episode is selling: unstructured external content lands on the system of record without a human. Wait ~30 seconds between commit and the search prompt so embeddings have time to build.
 
-#### Step 1a. Upload via Scout (paste verbatim, replace `<repo>`)
+#### Step 1a. Fetch from SharePoint + upload via MCP (paste verbatim)
 
 ```
-Use the Launch Control MCP server. Read the file at
-<repo>/episodes/ep-07-scout-autopilot/sample-feedback.pdf and
-attach it to the lc_launch row whose lc_name is "Q3 Widget Launch"
-on its file column. Use init_file_upload to get a SAS URL, PUT the
-bytes to it with x-ms-blob-type: BlockBlob, then commit_file_upload.
-Tell me when commit returns.
+On the LaunchControl SharePoint site, find the file named
+"Q3 Widget Launch - sample-feedback.pdf" under
+Documents/Beta Feedback. Read it. Then use the Launch Control MCP
+server to attach it to the lc_launch row whose lc_name is
+"Q3 Widget Launch", on its file column. Use init_file_upload to
+get a SAS URL, PUT the bytes you just read with
+x-ms-blob-type: BlockBlob, then commit_file_upload. Tell me when
+commit returns.
 ```
 
-Hold the tool-use panel as `init_file_upload` → HTTP PUT → `commit_file_upload` fire. Speed-ramp 2x is fine here; the panel is supporting cast, not the hero shot. Wait ~30 seconds after commit before pasting Step 1b.
+Hold the tool-use panel as Scout's SharePoint/Graph tool fetches the file, then `init_file_upload` → HTTP PUT → `commit_file_upload` fire. Speed-ramp 2x is fine here; the panel is supporting cast. The narrative beat is "two systems, one chat." Wait ~30 seconds after commit before pasting Step 1b.
+
+If SharePoint is not set up on the recording machine, swap the first sentence for `Fetch this URL: https://raw.githubusercontent.com/jamesoleinik/launch-control/master/episodes/ep-07-scout-autopilot/sample-feedback.pdf`. The story changes from "from SharePoint" to "from the web"; the value beat is the same.
 
 #### Step 1b. Ask the question (paste verbatim, 1x, no speed-ramp)
 
@@ -189,7 +193,8 @@ Save. Click **Run now**. Hold on the Teams DM when it lands.
   Re-run `scripts/python/promote.py` if any counts are off.
 - [ ] **Files column on `lc_launch`** enabled and "Available for Search" is on. (The platform setting that triggers embedding indexing.)
 - [ ] **No `Launch Readiness Sweep` skill row exists yet** in the Dataverse `skill` table. (The Part 2 "Save it." beat is the hero shot. Delete the row from Power Apps if it exists from a prior take.)
-- [ ] **No `sample-feedback.pdf` attached to Q3 Widget Launch** in the file column. (The Part 1 Scout upload is the hero shot. Remove any prior attachment via Power Apps or by deleting the file annotation directly.)
+- [ ] **`sample-feedback.pdf` staged in SharePoint** at `LaunchControl site > Documents > Beta Feedback > Q3 Widget Launch - sample-feedback.pdf`. (Or OneDrive at `Documents/LaunchControl/Q3 Widget Launch - sample-feedback.pdf` if you're swapping the prompt; or skip if you're falling back to the public-URL phrasing.) The PDF still lives in this repo at `episodes/ep-07-scout-autopilot/sample-feedback.pdf` as the source of truth.
+- [ ] **No `sample-feedback.pdf` attached to Q3 Widget Launch** in the file column. (The Part 1 SharePoint-to-Dataverse bridge is the hero shot. Remove any prior attachment via Power Apps or by deleting the file annotation directly.)
 - [ ] **The "Morning Launch Control update" Scout Automation exists** with its current single step ("Send me today's daily LaunchControl launch report in Teams"). The hero shot is editing it in place.
 - [ ] **Browser windows + apps pre-loaded:**
   1. Microsoft Scout desktop, Chat panel open, fullscreen-ready (the Part 1 and Part 2 hero windows).
