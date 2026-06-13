@@ -4,21 +4,27 @@
 
 The intake sweep. When invoked against a launch, Scout scans the
 places where issues actually get reported (SharePoint and email),
-then **uses the new Dataverse MCP agentic `search` tool to check
-whether an existing task on the launch already covers the same issue,
-matching against task fields *and* the content of any files attached
-to those tasks**. If a match exists, the new collateral is appended
-to the matching task instead of creating a duplicate. If not, a new
-task is filed with the source attached.
+then **uses the new Dataverse MCP tool shape to check whether an
+existing task on the launch already covers the same issue** before
+filing anything. The agent calls `search` to locate the `lc_task`
+entity, `describe` to load its schema, then `read_query` (the
+execute surface) to pull the open tasks on the launch and compare
+them, in-context, against each new finding. When a candidate looks
+plausible but not certain, the agent calls `file_download` to read
+inside the candidate's attached collateral and break the tie. If a
+match exists, the new artifact is attached to the matching task and
+a one-line update is appended. If not, a new task is filed with the
+source attached.
 
 The whole point of this skill is duplicate prevention. Filing the
 same bug five mornings in a row is worse than not filing it at all,
-because it trains the team to ignore the queue. The new MCP `search`
-tool makes the dedup feasible: it returns hits not just from column
-metadata but from the content of attached PDFs, emails, transcripts.
-So a finding worded *"export to CSV is hanging"* matches an existing
-task whose attached repro PDF says *"the export hangs for 30 seconds
-then crashes"* even though the task title says nothing about hangs.
+because it trains the team to ignore the queue. What makes the new
+MCP shape work for this is the combination: `read_query` returns the
+candidates the agent needs to compare against, and `file_download`
+lets the agent open a candidate's attached PDF in-context when the
+title and notes alone are not enough to decide. The dedup decision
+lives in the agent, on real candidate rows, with real file content
+available on demand.
 
 Sources of truth this skill sweeps:
 
@@ -64,32 +70,52 @@ the last 7 days.
 For each match capture: subject, from, sent date, the matched signal,
 a 1-2 sentence excerpt, and any attachments.
 
-### Step 4 (key step): Dedup via agentic `search` over rows + attachments
+### Step 4 (key step): Dedup via `read_query` over open tasks on the launch
 
-For each finding from Steps 2 and 3, **call the MCP `search` tool**
-with the finding's one-line summary plus the most distinctive excerpt
-phrase as the query, scoped to `lc_task` rows on the target launch.
+For each finding from Steps 2 and 3, decide whether an existing task
+already covers it. This is the value beat of the skill, so do it
+deliberately.
 
-`search` returns hits based on both:
+**4a. Pull the candidate set with `read_query`.** One call, scoped to
+open tasks on this launch:
 
-- column data (`lc_name`, `lc_description`)
-- the **content of files attached** to those task rows, via the
-  platform's embedding index over committed file columns.
+```sql
+SELECT lc_taskid, lc_title, lc_notes, lc_priority, lc_taskstatus,
+       lc_relateddocuments_name
+FROM lc_task
+WHERE _lc_launchid_value = '<launch GUID>'
+  AND lc_taskstatus IN (10600301, 10600302)
+ORDER BY modifiedon DESC
+```
 
-This is the headline reason the new tool shape matters for this
-skill. The old shape would force a literal-string scan over
-`lc_description`; the new shape matches *semantic* overlap, including
-text that only lives inside an attached repro PDF.
+(`10600301` = Not Started, `10600302` = In Progress. Done tasks
+should not block deduplication of new findings.)
 
-Treat the dedup decision as:
+**4b. Compare each finding against the candidate set, in-context.**
+For each finding, the agent reads `lc_title` and `lc_notes` on every
+candidate and decides whether the candidate covers the same
+underlying issue. The comparison is semantic, not literal: a finding
+worded *"export to CSV is hanging"* matches a task whose notes say
+*"export hangs ~30s then crashes the app"*. Use plain reasoning over
+the candidate set; do not try to match by string equality.
 
-- **Strong match** (high score, top hit, content overlap visible in
-  the matched excerpt): the finding is a duplicate. **Do not create a
-  new task.** Go to Step 5a.
-- **No match** or weak match: the finding is new. Go to Step 5b.
+**4c. Break ties with `file_download` when needed.** If a candidate's
+`lc_relateddocuments_name` is non-empty and the title plus notes are
+not enough to decide, call `file_download` against that task's
+`lc_relateddocuments` column to read the attached collateral
+in-context, then decide. Only download when the decision is
+genuinely ambiguous; do not download for every candidate.
 
-When in doubt, prefer match. A duplicate filed by mistake is far
-worse than a new artifact appended to the right existing task.
+Classify each finding as:
+
+- **Strong match.** A candidate clearly covers the same issue. Go to
+  Step 5a (enrich).
+- **No match.** Nothing in the candidate set covers the finding. Go
+  to Step 5b (create).
+
+When in doubt between strong and weak, prefer match. A duplicate
+filed by mistake is far worse than a new artifact appended to the
+right existing task.
 
 ### Step 5a: Strong match. Enrich the existing task
 
@@ -142,8 +168,8 @@ Return a single chat message with four sections:
 2. **New tasks.** Task name, source, one-line excerpt, link.
 3. **Enriched tasks (the dedup wins).** Existing task name, the
    matched signal phrase from the source, the new attachment's
-   filename, and a note that the agent matched via `search` over the
-   prior attached collateral when applicable.
+   filename, and (when applicable) a note that the agent broke the
+   tie by `file_download`-ing the prior attached collateral.
 4. **No-op cases.** Sources that produced zero findings, in one line.
 
 When invoked from a Scout Automation, also post the same summary as

@@ -2,7 +2,7 @@
 
 Why: Episode 7's Part 2 (the on-camera "run the sweep" beat) needs an
 existing baseline of tasks on Q3 Widget Launch so the skill's dedup
-step (which uses the new MCP `search` tool over rows AND attached files)
+step (which uses `read_query` to pull the launch's open tasks and
 is the visible value beat. Two seeded tasks are deliberate dedup
 targets for the on-camera findings: the export-crash bug matches
 `sample-feedback.pdf`, and the pricing-mismatch bug matches the seed

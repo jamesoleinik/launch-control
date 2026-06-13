@@ -20,8 +20,10 @@ Emits PDFs into `episodes/ep-07-scout-autopilot/seed-artifacts/`:
                                  reject against.
 
 Requires `reportlab`. The bodies are seeded with the same risk
-phrases that `sample-feedback.pdf` uses so `search_data` will find
-them.
+phrases that `sample-feedback.pdf` uses, so when the agent dedups by
+calling `file_download` against the candidate task's
+`lc_relateddocuments` and reading inside, the right tasks score
+above the noise.
 """
 
 from __future__ import annotations

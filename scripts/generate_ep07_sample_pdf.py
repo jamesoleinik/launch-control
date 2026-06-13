@@ -1,8 +1,8 @@
-"""Generate the on-camera sample PDF for ep-07.
+"""Generate the sample PDF for ep-07.
 
 Produces episodes/ep-07-scout-autopilot/sample-feedback.pdf — a short
-beta-tester report seeded with distinctive risk phrases the
-`search_data` tool will pick up during the recording:
+beta-tester report seeded with distinctive risk phrases the agent
+will pick up via `file_download` during the dedup beat:
 
 - "blocker"
 - "escalation"
@@ -10,7 +10,8 @@ beta-tester report seeded with distinctive risk phrases the
 - "customer impact"
 
 The PDF should be uploaded onto the Q3 Widget Launch record before
-the recording so that Scout's agentic search has something to find.
+the recording so that Scout has something to find when it sweeps
+SharePoint.
 
 Re-runnable. Overwrites the existing PDF.
 """

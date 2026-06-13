@@ -32,10 +32,12 @@ from auth import get_token, load_env  # noqa: E402
 
 SKILL_NAME = "Launch Readiness Sweep"
 SKILL_DESCRIPTION = (
-    "Scheduled morning sweep. Pulls at-risk launches, searches inside "
-    "their uploaded artifacts for risk language, files new lc_task rows "
-    "for new findings, then posts one Teams summary. Designed to be the "
-    "first step of a Microsoft Scout Automation."
+    "Scheduled morning sweep. Pulls at-risk launches, dedups each "
+    "finding against the launch's open lc_task rows via read_query "
+    "(and file_download on any ambiguous candidate's attached "
+    "collateral), enriches matches, files new lc_task rows for new "
+    "findings, then posts one Teams summary. Designed to be the first "
+    "step of a Microsoft Scout Automation."
 )
 SKILL_UNIQUE_NAME = "lc_launchreadinesssweep"
 SKILL_BODY_PATH = (
