@@ -1,0 +1,681 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "read_query",
+        "description": "Dataverse SQL supports only basic SELECT queries with an explicit list of selected fields. \nIf aggregates are used, do not mix aggregated and non-aggregated columns in the SELECT list without a GROUP BY clause. \nIf a query requires comparing to an aggregate (for example, > AVG), do not use subqueries. \nInstead, split the logic into two queries: one to compute the aggregate and another to filter using literal values.\nGETDATE() and GETUTCDATE() functions are supported in predicates but not in the SELECT list.\nThe following features are allowed:\n\nTOP (without OFFSET). Example: SELECT TOP 20 col1 FROM table1\nSimple column-to-literal, column-to-column and column-to-date value function WHERE filters. Example: SELECT age FROM table1 WHERE age > 10 and haircolor=eyecolor or hiredate<GETUTCDATE()\nORDER BY. Example: SELECT col1, age FROM table1 ORDER BY age\nGROUP BY. Only the following aggregates are supported: COUNT, SUM, AVG, MIN, MAX. Example: SELECT col1, COUNT(col2) AS player_count FROM table1 GROUP BY col1.\nJOINs. Example: SELECT table1.col1, table1.col2, table2.col1 FROM table1 JOIN table2 ON table1.col1 = table2.col1\n\nThe following features are NOT supported:\n\nSubqueries are not allowed in SELECT, WHERE, or FROM clauses.\nHAVING. Example: SELECT col1,COUNT(id) AS player_count FROM table1 GROUP BY col1 HAVING COUNT(id) >= 3\nDISTINCT in select lists. Example: SELECT DISTINCT col1 from table1\nSubqueries (in SELECT, WHERE, FROM). Example: SELECT col1, col2 FROM table1 WHERE col1 IN (SELECT col3 FROM table2)\nWITH keyword. Example: WITH Sales AS (WITH Sales SELECT CxId, SUM(Amt) AS Exp FROM Orders GROUP BY CxId ) SELECT CxId, Exp FROM Sales\nOFFSET keyword. Example: SELECT Id, col1 FROM table1 ORDER BY Id OFFSET\nUNION keyword. Example: SELECT col1, col2 FROM table1 WHERE col3 = 'Sales' UNION SELECT col1, col2 FROM table1 WHERE col3 = 'Marketing'\nCAST keyword. Example: SELECT CAST('123' AS INT) AS ValueInt\nCONVERT keyword. Example: SELECT CONVERT(DATE, OrderDate) AS OrderDateOnly, CONVERT(DECIMAL(10,2), Amt) AS Amount FROM Orders\nCASE keyword. Example: SELECT Id, col1, col2, CASE WHEN Sal >= 100 THEN 'High' WHEN Sal >= 500 THEN 'Medium' ELSE 'Low' END AS SalCat FROM table1\nIF-ELSE keyword. Example: SELECT Id, col1, col2, CASE WHEN Sal > 100 THEN 'High' ELSE 'Low' END AS SalCat FROM table1\nAdvanced functions like: ROUND keyword. Example: SELECT PName, ROUND(Price, 2) AS RoundedPrice FROM table1\nDATE functions. Example: DATEDIFF(), DATEADD(), DATE()\nComplex conditions or unsupported aggregate argument types\nJOINs on aggregates. Example: SELECT c.CxId, c.CxName, s.Exp FROM Cxs c JOIN (SELECT CxId, SUM(Amt) AS Exp FROM Orders GROUP BY CxId) AS s ON c.CxId = s.CxId WHERE s.Exp > 100",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "querytext": {
+              "type": "string",
+              "description": "The SELECT SQL query to execute. Use list_tables tool to identify the logical table name. Then, use describe_table tool to find the logical names of the attributes along with their supported data types. Ensure that any SQL query you construct follows proper syntax and strictly adheres to the correct data types for each attribute."
+            }
+          },
+          "required": [
+            "querytext"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "create_table",
+        "description": "Create a new table in Dataverse with the specified columns",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "Logical name (schema name) of the new Dataverse table. DO NOT include table prefixes, just the table name"
+            },
+            "displayname": {
+              "type": "string",
+              "description": "Display name for the new table"
+            },
+            "description": {
+              "type": "string",
+              "description": "Description for the new table"
+            },
+            "item": {
+              "type": "array",
+              "description": "Array of column definitions for the new table.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Display name of the column (no publisher prefix)."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "choice",
+                      "multiselect",
+                      "customer",
+                      "multiline text",
+                      "duration",
+                      "time zone",
+                      "language",
+                      "phone",
+                      "email",
+                      "url",
+                      "lookup",
+                      "money",
+                      "string",
+                      "integer",
+                      "decimal",
+                      "boolean",
+                      "datetime",
+                      "double",
+                      "text area",
+                      "ticker symbol",
+                      "rich text",
+                      "file",
+                      "image"
+                    ],
+                    "description": "Column data type."
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "description": "Whether the column is required."
+                  },
+                  "relatedtable": {
+                    "type": "string",
+                    "description": "Required when type is 'lookup' or 'customer'. Logical name of the target table."
+                  },
+                  "choices": {
+                    "type": "array",
+                    "description": "Required when type is 'choice' or 'multiselect'. Array of option values.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "value"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "description": "Display label for the choice option."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "description": "Numeric value for the choice option."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "tablename",
+            "displayname",
+            "item"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "update_table",
+        "description": "Update an existing table in Dataverse by adding new columns",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "Logical name (schema name) of the existing table to update. Use list_tables to find the logical (schema) name of custom tables with default prefix like crb69_tablename."
+            },
+            "item": {
+              "type": "array",
+              "description": "Array of column definitions to add to the table.",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "type"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Display name of the column (no publisher prefix)."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "choice",
+                      "multiselect",
+                      "customer",
+                      "multiline text",
+                      "duration",
+                      "time zone",
+                      "language",
+                      "phone",
+                      "email",
+                      "url",
+                      "lookup",
+                      "money",
+                      "string",
+                      "integer",
+                      "decimal",
+                      "boolean",
+                      "datetime",
+                      "double",
+                      "text area",
+                      "ticker symbol",
+                      "rich text",
+                      "file",
+                      "image"
+                    ],
+                    "description": "Column data type."
+                  },
+                  "required": {
+                    "type": "boolean",
+                    "description": "Whether the column is required."
+                  },
+                  "relatedtable": {
+                    "type": "string",
+                    "description": "Required when type is 'lookup' or 'customer'. Logical name of the target table."
+                  },
+                  "choices": {
+                    "type": "array",
+                    "description": "Required when type is 'choice' or 'multiselect'. Array of option values.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "label",
+                        "value"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "label": {
+                          "type": "string",
+                          "description": "Display label for the choice option."
+                        },
+                        "value": {
+                          "type": "integer",
+                          "description": "Numeric value for the choice option."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "newDisplayName": {
+              "type": "string",
+              "description": "New display name for the table. If not provided, the display name will not be changed."
+            },
+            "description": {
+              "type": "string",
+              "description": "Update Description for the table. If not provided, the description will not be changed."
+            }
+          },
+          "required": [
+            "tablename",
+            "item"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "delete_table",
+        "description": "Proceed solely on explicit user consent then only DELETE a table in the Dataverse database",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "Logical name (schema name) of the table to delete. Use list_tables to find the logical (schema) name of custom tables with default prefix like crb69_tablename."
+            },
+            "hasUserApproved": {
+              "type": "boolean",
+              "description": "Set this to true only after asking the user if they are ok with the deletion and you have received an affirmative response"
+            }
+          },
+          "required": [
+            "tablename",
+            "hasUserApproved"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "create_record",
+        "description": "INSERT a row into a table in the Dataverse database and returns the GUID ID of the created record. Call describe first if the table's schema is unknown - DO NOT guess column logical names from display names. Choice columns require numeric option values, not labels.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "The logical (schema) name of table to insert into. Use list_tables to find the logical name of custom tables with default prefix like crb69_tablename"
+            },
+            "item": {
+              "type": "object",
+              "description": "Record field values as key-value pairs. Keys are column logical names from describe. Values: strings, numbers, or booleans for simple fields. For lookup/customer fields use an object: {\"relatedTable\": \"account\", \"name\": \"Contoso Ltd\", \"recordId\": \"6D52BA41-0C1C-4B6F-91EF-731E78D3D34B\"}. For choice fields use the numeric option value. For multi-select choice use comma-separated values like \"100000002,100000004\".",
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "tablename",
+            "item"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "update_record",
+        "description": "UPDATE a row into a table in the Dataverse database. Call describe first if the table's schema is unknown - DO NOT guess column logical names from display names. Choice columns require numeric option values, not labels.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "The logical name (schema name) of the table to update a record in. Use list_tables to find the logical name of custom tables with default prefix like crb69_tablename."
+            },
+            "recordId": {
+              "type": "string",
+              "description": "The GUID of the record id"
+            },
+            "item": {
+              "type": "object",
+              "description": "Properties to update as key-value pairs. Keys are column logical names from describe. Values: strings, numbers, or booleans for simple fields. For lookup/customer fields use an object: {\"relatedTable\": \"account\", \"name\": \"Contoso Ltd\", \"recordId\": \"6D52BA41-0C1C-4B6F-91EF-731E78D3D34B\"}. For choice fields use the numeric option value. For multi-select choice use comma-separated values like \"100000002,100000004\".",
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "tablename",
+            "recordId",
+            "item"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "delete_record",
+        "description": "Proceed solely on explicit user consent then only DELETE a row from a table in the Dataverse database",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "The logical name (schema name) of the table to delete a record from. Use list_tables to find the logical (schema) name of custom tables with default prefix like crb69_tablename."
+            },
+            "hasUserApproved": {
+              "type": "boolean",
+              "description": "Set this to true only after asking the user if they are ok with the deltion and you have received an affirmative response"
+            },
+            "recordId": {
+              "type": "string",
+              "description": "The GUID of the record id"
+            }
+          },
+          "required": [
+            "tablename",
+            "hasUserApproved",
+            "recordId"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "search",
+        "description": "Find table schemas, skills, and scopes in Dataverse by keyword.\n\nSearches across:\n- Table schemas (when you need table structure/fields)\n- Skills (business process instructions)\n- Scopes (scopes with their entity lists)\n\nReturns filesystem-style paths:\n  tables/{tablename}\n  skills/{skillname}\n  scopes/{scopeName}\n\nOptional: Pass scope to filter table results to a specific scope's entities.\n\nExamples:\n  search(\"opportunity\")\n  → Find relevant skills, table schemas, and scopes for opportunity\n\n  search(\"sales\", scope=\"msft_dvtablesearch_aiplugin_model_SalesHub\")\n  → Find tables within Sales scope matching 'sales'\n\nUse describe() tool on returned paths to see full details.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search keywords or phrase"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max results to return (default: 50, max: 100)"
+            },
+            "scope": {
+              "type": "string",
+              "description": "Optional. Scope table results to a specific scope's entities. Get scope names from describe('scopes/')."
+            }
+          },
+          "required": [
+            "query"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "upsert_skill",
+        "description": "Add or update a Business Skill in Dataverse. To update an existing skill, provide id or name to identify it. Provide unlinkScope: true when updating scope to replace existing scopes rather than merge.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the skill"
+            },
+            "description": {
+              "type": "string",
+              "description": "The description of the skill"
+            },
+            "body": {
+              "type": "string",
+              "description": "The detailed body content of the skill"
+            },
+            "id": {
+              "type": "string",
+              "description": "The GUID of the skill to update. Preferred over name when available to avoid ambiguity."
+            },
+            "uniquename": {
+              "type": "string",
+              "description": "Unique name for the skill. Auto-generated if not provided. Must start with a customization prefix(ex: new_)."
+            },
+            "scope": {
+              "type": "string",
+              "description": "JSON array of app scope names to associate with the skill, e.g. [\"scopeA\", \"scopeB\"]"
+            },
+            "unlinkScope": {
+              "type": "boolean",
+              "description": "When true, replaces existing scopes with the provided scope list. When false or omitted, merges with existing scopes. Required when scope is provided."
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "body"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "create_skill_resource",
+        "description": "Creates a skillresource record linked to a skill. Once the record exists, upload the file content using init_file_upload and commit_file_upload. Upload values: tablename: \"skillresource\", recordId: {skillresourceid from result}, fileAttributeName: \"filecontent\", fileName: {just the file name, not the full path}.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "skillid": {
+              "type": "string",
+              "description": "The GUID of the skill that owns this resource"
+            },
+            "filename": {
+              "type": "string",
+              "description": "Relative path of the file from the skill root (where SKILL.md resides). Example: path/to/resourcefile.md"
+            },
+            "uniquename": {
+              "type": "string",
+              "description": "Unique name for the resource. Auto-generated from the skill uniquename and filename if not provided. Must start with a customization prefix(ex: new_)."
+            }
+          },
+          "required": [
+            "skillid",
+            "filename"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "delete_skill",
+        "description": "Delete a Business Skill by name or ID. Prefer id over name to avoid ambiguity; name will fail if multiple skills share the same name.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the skill to delete"
+            },
+            "id": {
+              "type": "string",
+              "description": "The GUID of the skill to delete"
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": true,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "describe",
+        "description": "Use this tool to get comprehensive details for any path from search().\r\n\r\n\t\t\tWorks with all resource types:\r\n\t\t\t- Catalog listing → List all tables, skills, or scopes\r\n\t\t\t- Data records → Full JSON with URL\r\n\t\t\t- Table schemas → Markdown with fields, types, relationships, example queries\r\n\t\t\t- Skills → Full skill with description and body/instructions, and list of resources\r\n\t\t\t- Skill resources → resource files attached to a skill (content truncated for large files)\r\n\t\t\t- Scopes → Scope metadata with name, description, and entity list\r\n\r\n\t\t\tPath formats (from search results):\r\n\t\t\t  tables/                                           - List all available tables\r\n\t\t\t  tables/account/records/{uuid}                    - Full record of {uuid} in account table\r\n\t\t\t  tables/opportunity                                - Opportunity table schema\r\n\t\t\t  skills/                                          - List all available business skills\r\n\t\t\t  skills/{skillname}                               - Business Skill detail and resource list\r\n\t\t\t  skills/{skillname}/skillresources/{filename}     - Business Skill resource file content by filename relative path\r\n\t\t\t  skills/{skillname}/skillresources/{uuid}         - Business Skill resource using skillresource ID\r\n\t\t\t  scopes/                                          - List all available scopes\r\n\t\t\t  scopes/{scopeName}                               - Scope details with entity list\r\n\r\n\t\t\tOptional: Pass scope to filter tables/ listing to a specific scope's entities.\r\n\r\n\t\t\tExamples:\r\n\t\t\t  describe('tables/')\r\n\t\t\t  → List all available tables\r\n\r\n\t\t\t  describe('tables/', scope='msft_dvtablesearch_aiplugin_model_SalesHub')\r\n\t\t\t  → List only tables belonging to the Sales scope\r\n\r\n\t\t\t  describe('tables/account/records/{guid}')\r\n\t\t\t  → Complete account data with URL\r\n\r\n\t\t\t  describe('tables/opportunity')\r\n\t\t\t  → Full schema with SQL field types, relationships, example queries\r\n\r\n\t\t\t  describe('skills/Sales-Call-Logging')\r\n\t\t\t  → Full business skill with description and body/instructions, and list of resources\r\n\r\n\t\t\t  describe('skills/Sales-Call-Logging/skillresources/path/to/resourcefile.md')\r\n\t\t\t  → Skill resource file content, which is truncated if too large. Use the file_download tool to download the full file with tablename:skillresource, recordId:{skillresourceid}, fileAttributeName:'filecontent'\r\n\r\n\t\t\t  describe('skills/Sales-Call-Logging/skillresources/{uuid}')\r\n\t\t\t  → Skill resource using skillresource ID\r\n\r\n\t\t\t  describe('scopes/')\r\n\t\t\t  → List all available scopes\r\n\r\n\t\t\t  describe('scopes/msft_dvtablesearch_aiplugin_model_SalesHub')\r\n\t\t\t  → Scope details with entities",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Path from search() results (e.g., tables/, tables/account/records/{guid}, tables/opportunity, skills/, skills/{name}, skills/{name}/skillresources/{path/to/file}, skills/{name}/skillresources/{id}, scopes/, scopes/{scopeName})"
+            },
+            "scope": {
+              "type": "string",
+              "description": "Optional. Scope tables/ or skills/ listing to a specific scope's entities. Get scope names from describe('scopes/')."
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "search_data",
+        "description": "Search for data and within files in Dataverse for a given scope. This tool searches for records which contain query keywords. It also searches within file contents for Dataverse tables that have file columns enabled for search, and returns matching content.\r\n\r\n\t\t\tReturns filesystem-style paths for matching records (e.g. tables/account/records/{guid}).\r\n\t\t\tIf the search was within a file content it would also include the matching content. \r\n\t\t\t\te.g. \r\n\t\t\t\t\ttables/account/records/{guid}\r\n\t\t\t\t\tcontent: ...text from the file that matched the search query...\r\n\r\n\t\t\tRequired: Pass scope to limit the search to correct scopes. Call describe('scopes/') and describe('scopes/{scopeName}') to find the appropriate scope.\r\n\r\n\t\t\tExamples:\r\n\t\t\t  search_data('contoso', scope='msft_dvtablesearch_aiplugin_model_SalesHub')\r\n\t\t\t  → Find records and matching file content for 'contoso' within the Sales scope\r\n\t\t\tUse describe() tool on returned paths to see full record details.\r\n\r\n\t\t\tIf you need to find the right table schema or skill, use the search() tool instead.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search keywords or phrase."
+            },
+            "scope": {
+              "type": "string",
+              "description": "Search scope. Call describe('scopes/') and scopes/{scopeName} to find the appropriate scope"
+            }
+          },
+          "required": [
+            "query",
+            "scope"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "init_file_upload",
+        "description": "Step 1 of file upload: generates a SAS URL for uploading a file to a Dataverse record. Returns a SAS URL and continuationToken. Upload the file content via HTTP PUT to the SAS URL, then call commit_file_upload with the continuationToken. Important: Do not change the file extension if it fails to upload.\r\n\r\n\t\t\tExamples:\r\n\t\t\t  Upload a skill resource file:\r\n\t\t\t    tablename: \"skillresource\", recordId: {skillresourceid}, fileAttributeName: \"filecontent\", fileName: {resourcefile.md}",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "Logical name of the table containing the record"
+            },
+            "recordId": {
+              "type": "string",
+              "description": "GUID of the record to attach the file to"
+            },
+            "fileAttributeName": {
+              "type": "string",
+              "description": "Logical name of the file column on the table"
+            },
+            "fileName": {
+              "type": "string",
+              "description": "Name of the file to upload including extension"
+            }
+          },
+          "required": [
+            "tablename",
+            "recordId",
+            "fileAttributeName",
+            "fileName"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "commit_file_upload",
+        "description": "Step 3 of file upload: commits a completed file upload. Call this only after the file has been successfully uploaded via HTTP PUT to the SAS URL from init_file_upload.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "continuationToken": {
+              "type": "string",
+              "description": "Continuation token returned by init_file_upload"
+            },
+            "fileName": {
+              "type": "string",
+              "description": "Name of the uploaded file including extension"
+            }
+          },
+          "required": [
+            "continuationToken",
+            "fileName"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        }
+      },
+      {
+        "name": "file_download",
+        "description": "Generates a SAS URL for downloading a file from a Dataverse record.\r\n\r\n\t\t\tExamples:\r\n\t\t\t  Download a skill resource file:\r\n\t\t\t    tablename: \"skillresource\", recordId: {skillresourceid}, fileAttributeName: \"filecontent\"",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tablename": {
+              "type": "string",
+              "description": "Logical name of the table containing the record"
+            },
+            "recordId": {
+              "type": "string",
+              "description": "GUID of the record"
+            },
+            "fileAttributeName": {
+              "type": "string",
+              "description": "Logical name of the file column on the table"
+            }
+          },
+          "required": [
+            "tablename",
+            "recordId",
+            "fileAttributeName"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "id": 2,
+  "jsonrpc": "2.0"
+}
