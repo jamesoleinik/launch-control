@@ -59,13 +59,22 @@ Two prompts back to back, one iteration line, and three automation-step bodies. 
 
 Three prompts. The first is a free discovery beat. The second is the seed for the skill (deliberately under-specified now that Scout has just seen the tool catalog). The third saves it.
 
-#### Step 1a. "Check out the latest Dataverse MCP tool shapes." (paste verbatim, one sentence)
+#### Step 1a. Discover and inventory the tool shape (paste verbatim, hold at 1x while the table renders)
 
 ```
-Check out the latest Dataverse MCP tool shapes.
+Connect to the Launch Control Dataverse MCP server and give me a
+full inventory of the tools it exposes today. For each tool: the
+exact tool name, a one-line description of what it does, the
+required arguments (name and type), and which of the eight tool
+areas it belongs to (discovery, query, custom logic, records,
+tables, business skills, files, or other). At the end, call out
+which tools are preview-only versus also on the GA endpoint, and
+which tool is the one I'd reach for to find an existing task whose
+attached PDF mentions a specific phrase. Format the answer as a
+table grouped by area.
 ```
 
-Scout introspects the MCP server and renders its tools across the discovery, query, records, tables, business-skills, and files areas. Hold the answer at 1x; the rendered tool list scrolling past is the visual proof that the shape really did change. Cut tight at the moment the list finishes rendering.
+Scout introspects the MCP server, calls `describe` against each tool, and renders a grouped table across all eight areas (discovery, query, custom logic, records, tables, business skills, files, other) with the required-argument signatures and the preview-vs-GA call-out. Hold at 1x while the table renders; the call-out line that names `search_data` as the inside-PDF tool is the lead-in to Part 1. Cut tight at the moment the table finishes.
 
 #### Step 1b. Seed the skill (paste verbatim, deliberately short)
 
