@@ -96,43 +96,41 @@ worse than a new artifact appended to the right existing task.
 For each finding with a strong-match existing task:
 
 1. Attach the new source artifact to the existing task via the MCP
-   file-upload trio against the task's file column:
+   file-upload trio against the task's file column (`lc_relateddocuments`):
    - `init_file_upload({tablename: "lc_task", recordId: <existing
-     task id>, fileAttributeName: "<file column>", fileName:
+     task id>, fileAttributeName: "lc_relateddocuments", fileName:
      <source filename>})`
    - HTTP PUT the bytes to the returned `sasUrl` with
      `x-ms-blob-type: BlockBlob`.
    - `commit_file_upload({continuationToken, fileName})`.
 
-   The file column may already hold a prior artifact. The new file
-   replaces it; the prior artifact remains discoverable through the
-   task's annotations history. If your environment uses a multi-file
-   attachment pattern (a child entity), follow that instead.
+   The file column holds a single file. The new file replaces the
+   prior artifact; the prior artifact remains discoverable through the
+   task's annotations history.
 
 2. Call `update_record` against the matched task with:
-   - `lc_description` = the existing description plus a single
-     appended line: `Update <YYYY-MM-DD>: <source URL or sender + subject>`.
+   - `lc_notes` = the existing notes plus a single appended line:
+     `Update <YYYY-MM-DD>: <source URL or sender + subject>`.
 
-Do not change `lc_status` or `lc_priority` on enriched tasks.
+Do not change `lc_taskstatus` or `lc_priority` on enriched tasks.
 
 ### Step 5b: No match. File a new task
 
 For each non-matching finding, call `create_record` against `lc_task`
 with:
 
-- `lc_name` = a one-line summary of the issue (~60 chars).
-- `lc_description` = the matched excerpt, plus a `Source: <URL or
+- `lc_title` = a one-line summary of the issue (~60 chars).
+- `lc_notes` = the matched excerpt, plus a `Source: <URL or
   sender + subject>` line.
-- `lc_status` = `Open`.
+- `lc_taskstatus` = `NotStarted`.
 - `lc_priority` = `High` if the signal is `blocker`, `escalation`,
-  `P0`, or `can't ship`; otherwise `Normal`.
+  `P0`, or `can't ship`; otherwise `Medium`.
 - `lc_launchid` = the launch GUID via the lookup shape
   `{ "relatedTable": "lc_launch", "recordId": "<guid>" }`.
-- `lc_source` = `sharepoint-sweep` for SharePoint findings,
-  `email-sweep` for email findings.
 
 Then attach the source artifact to the new task via the same
-file-upload trio (`init_file_upload` → HTTP PUT → `commit_file_upload`).
+file-upload trio (`init_file_upload` → HTTP PUT → `commit_file_upload`)
+against `lc_relateddocuments`.
 
 ### Step 6: Report back to the invoker
 

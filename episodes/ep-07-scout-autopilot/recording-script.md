@@ -189,7 +189,7 @@ Save. Click **Run now**. Hold on the Teams DM when it lands.
   ```
   Re-run `scripts/python/promote.py` if any counts are off.
 - [ ] **Files column on `lc_launch`** enabled and "Available for Search" is on. (The platform setting that triggers embedding indexing.)
-- [ ] **Files column on `lc_task`** enabled with "Available for Search" turned on. The seeder and the on-camera enrichment both attach to tasks. Default logical name is `lc_artifact`; if yours differs, set `LC_TASK_FILE_COLUMN=<logicalname>` before running the seeder.
+- [ ] **`lc_relateddocuments` file column on `lc_task`** enabled with "Available for Search" turned on. The seeder and the on-camera enrichment both attach to this column.
 - [ ] **No `Launch Readiness Sweep` skill row exists yet** in the Dataverse `skill` table. (The Part 1 "Save it." beat is the hero shot. Delete the row from Power Apps if it exists from a prior take.)
 - [ ] **Baseline tasks seeded.** From the repo root, with `.env` pointed at the demo environment and `az login` against the demo tenant:
   ```powershell
@@ -197,10 +197,10 @@ Save. Click **Run now**. Hold on the Teams DM when it lands.
   python scripts/generate_q3_seed_artifacts.py
   python scripts/seed_q3_sample_tasks.py
   ```
-  This creates **10 `lc_task` rows on Q3 Widget Launch** with `lc_source = 'seed'` (idempotent: any prior `lc_source = 'seed'` rows on Q3 get cleared first). **Three of them ship with PDFs attached**, including the two intentional dedup targets: *Bug: Export to CSV crashes* (matches the SharePoint PDF below) and *Bug: Pricing page disagrees with billing* (matches the email below). Wait ~30s after the script finishes so embeddings build over the newly attached PDFs.
+  This creates **10 `lc_task` rows on Q3 Widget Launch** with titles prefixed `[SEED]` (idempotent: any prior `[SEED]`-prefixed rows on Q3 get cleared first; the title prefix is the seed identifier because `lc_task` has no `lc_source` column). **Three of them ship with PDFs attached to `lc_relateddocuments`**, including the two intentional dedup targets: *Bug: Export to CSV crashes* (matches the SharePoint PDF below) and *Bug: Pricing page disagrees with billing* (matches the email below). Wait ~30s after the script finishes so embeddings build over the newly attached PDFs.
 - [ ] **SharePoint finding staged** at `https://a365preview001.sharepoint.com/sites/LaunchControl/`. Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` as `Q3-widget-feedack.pdf`. Its content overlaps the seeded *export-to-CSV crash* baseline task; the on-camera sweep should match and enrich, not duplicate.
 - [ ] **Email finding staged.** Send yourself (or the Q3 launch team mailbox) one short message with subject like `Q3 Widget Launch: pricing page disagrees with billing` and a body containing the word `escalation`. Content overlaps the seeded *pricing mismatch* baseline; same enrichment behavior expected.
-- [ ] **No prior `sharepoint-sweep` or `email-sweep` tasks on Q3.** Delete any `lc_task` rows where `lc_source IN ('sharepoint-sweep', 'email-sweep')` and the parent launch is `Q3 Widget Launch`. The on-camera sweep should produce **0 of these**: both findings should be enriched onto existing seed tasks. (If any from prior takes still exist, the dedup story still works but the headline count is less clean.)
+- [ ] **No prior sweep-filed tasks on Q3** beyond the `[SEED]` baseline. The on-camera sweep should produce **2 findings, 0 new, 2 enriched** (the seed PDFs win the dedup match). If a prior take left non-`[SEED]` tasks behind that contain `escalation`/`blocker` phrasing, delete them so the headline count stays clean.
 - [ ] **The "Morning Launch Control update" Scout Automation exists** with its current single step ("Send me today's daily LaunchControl launch report in Teams"). The hero shot is editing it in place.
 - [ ] **Browser windows + apps pre-loaded:**
   1. Microsoft Scout desktop, Chat panel open, fullscreen-ready (the Part 1 and Part 2 hero windows).
@@ -228,14 +228,15 @@ $env:PYTHONIOENCODING='utf-8'
 #     purpose: the delete is rare and operator-confirmed.)
 
 # 2. Re-seed the baseline tasks on Q3 (idempotent; deletes prior
-#    lc_source='seed' rows on Q3 then re-creates them and re-attaches
+#    [SEED]-prefixed rows on Q3 then re-creates them and re-attaches
 #    the 3 PDFs). This restores the dedup baseline for the next take.
 python scripts/seed_q3_sample_tasks.py
 
-# 3. Remove any sweep-filed tasks on Q3 Widget Launch so the Part 2
+# 3. Remove any non-[SEED] sweep-filed tasks on Q3 so the Part 2
 #    summary's "enriched" counts are clean.
 #    (Manual: Power Apps -> Tables -> Task -> filter on
-#     lc_source IN ('sharepoint-sweep','email-sweep') -> Delete.)
+#     lc_title not starting with '[SEED]' AND parent launch is
+#     Q3 Widget Launch AND created in this session -> Delete.)
 
 # 4. Revert the "Morning Launch Control update" automation to its single
 #    starting step. (Scout -> Automations -> Edit -> delete added steps, restore
