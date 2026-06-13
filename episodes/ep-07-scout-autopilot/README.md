@@ -164,7 +164,10 @@ This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior t
 
    ```
    Run the skill body loaded in the previous step against the Launch
-   Control MCP server. Follow it exactly. Do not paraphrase.
+   Control MCP server. Run it against every active launch whose
+   lc_status is At Risk or Blocked (the skill's built-in fallback
+   when no launch is named). Follow the body exactly. Do not
+   paraphrase.
    ```
 
    **Step 3. Report:**
