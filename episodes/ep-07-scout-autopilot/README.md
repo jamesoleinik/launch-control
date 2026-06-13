@@ -202,6 +202,8 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 - **Microsoft Scout** desktop, Frontier preview, signed in as a user with Dataverse access to the target environment.
 - The **Launch Control MCP server** registered in Scout: Settings → Extensions → MCP Servers → `https://<your-org>.crm.dynamics.com/api/mcp`. Sign in.
 
+> **Why `/api/mcp` and not `/api/mcp_preview`.** Episode 6 wires the Cowork plugin to `/api/mcp_preview` — the 3-tool `search` / `describe` / `execute` agentic surface. Episode 7 wires Scout to `/api/mcp` — the 15-tool GA surface. The dedup beat in this episode depends on tools that live on the GA surface (`read_query` for the candidate set, `file_download` for the ambiguous-candidate tie-break) and are not all present on the preview surface. The two endpoints share a Dataverse org but have different tool shapes; do not swap one for the other.
+
 ### Optional (only for the non-Scout fallback path)
 
 If you cannot run Scout (CI machine, headless tenant, evaluation without Frontier enrollment) and want to use `scripts/upsert_launch_readiness_sweep.py` instead of the Part 1 Scout prompt:
