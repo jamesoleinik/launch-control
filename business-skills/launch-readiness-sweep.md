@@ -4,27 +4,26 @@
 
 The intake sweep. When invoked against a launch, Scout scans the
 places where issues actually get reported (SharePoint and email),
-then **uses the new Dataverse MCP tool shape to check whether an
-existing task on the launch already covers the same issue** before
-filing anything. The agent calls `search` to locate the `lc_task`
-entity, `describe` to load its schema, then `read_query` (the
-execute surface) to pull the open tasks on the launch and compare
-them, in-context, against each new finding. When a candidate looks
-plausible but not certain, the agent calls `file_download` to read
-inside the candidate's attached collateral and break the tie. If a
-match exists, the new artifact is attached to the matching task and
-a one-line update is appended. If not, a new task is filed with the
-source attached.
+then **uses the new Dataverse MCP preview tool shape to check whether
+an existing task on the launch already covers the same issue** before
+filing anything. The dedup decision lives in a single call:
+`search_data`, scoped to the LaunchControl search model, returns the
+candidate `lc_task` rows whose title, notes, or **attached
+collateral** match the finding. The agent reads the matched-content
+excerpt the tool returns and decides. If a match exists, the new
+artifact is attached to the matching task and a one-line update is
+appended. If not, a new task is filed with the source attached.
 
 The whole point of this skill is duplicate prevention. Filing the
 same bug five mornings in a row is worse than not filing it at all,
 because it trains the team to ignore the queue. What makes the new
-MCP shape work for this is the combination: `read_query` returns the
-candidates the agent needs to compare against, and `file_download`
-lets the agent open a candidate's attached PDF in-context when the
-title and notes alone are not enough to decide. The dedup decision
-lives in the agent, on real candidate rows, with real file content
-available on demand.
+preview MCP shape work for this is `search_data`: one call surfaces
+candidates whose evidence lives inside an attached PDF on
+`lc_relateddocuments`, not just in task titles and notes. The agent
+no longer has to pull a candidate set and `file_download` every
+ambiguous attachment to decide; the tool returns the relevant
+excerpt directly. `file_download` remains a fallback when an excerpt
+is not enough.
 
 Sources of truth this skill sweeps:
 
@@ -40,15 +39,16 @@ Sources of truth this skill sweeps:
 If the invoker named a launch, call `read_query` to resolve it:
 
 ```sql
-SELECT lc_launchid, lc_name
+SELECT lc_launchid, lc_name, lc_risksummary
 FROM lc_launch
 WHERE statecode = 0
   AND lc_name LIKE '%<name>%'
 ```
 
-If the invoker did not name a launch, fall back to all launches with
-`lc_status IN ('At Risk', 'Blocked')` and run Steps 2 through 6 for
-each one.
+Capture `lc_risksummary` (the Ep-5 AI prompt column) for the report
+in Step 6. If the invoker did not name a launch, fall back to all
+launches with `lc_status IN ('At Risk', 'Blocked')` and run Steps 2
+through 6 for each one.
 
 ### Step 2: Sweep SharePoint for issue reports on this launch
 
@@ -70,48 +70,50 @@ the last 7 days.
 For each match capture: subject, from, sent date, the matched signal,
 a 1-2 sentence excerpt, and any attachments.
 
-### Step 4 (key step): Dedup via `read_query` over open tasks on the launch
+### Step 4 (key step): Dedup via `search_data` across rows + attached file content
 
 For each finding from Steps 2 and 3, decide whether an existing task
-already covers it. This is the value beat of the skill, so do it
-deliberately.
+already covers it. This is the value beat of the skill and the reason
+this episode uses `/api/mcp_preview` instead of GA — `search_data` is
+preview-only.
 
-**4a. Pull the candidate set with `read_query`.** One call, scoped to
-open tasks on this launch:
+**4a. Run `search_data` once per finding.** Build a short, distinctive
+query phrase from the finding (the most specific noun-phrase from the
+excerpt: e.g. *"export to CSV crashes on big compositions"*, not
+*"export issue"*). Scope-bind to the LaunchControl search model:
 
-```sql
-SELECT lc_taskid, lc_title, lc_notes, lc_priority, lc_taskstatus,
-       lc_relateddocuments_name
-FROM lc_task
-WHERE _lc_launchid_value = '<launch GUID>'
-  AND lc_taskstatus IN (10600301, 10600302)
-ORDER BY modifiedon DESC
+```json
+{
+  "name": "search_data",
+  "arguments": {
+    "query": "<finding phrase>",
+    "scope": "new_dvtablesearch_aiplugin_model_lc_Model"
+  }
+}
 ```
 
-(`10600301` = Not Started, `10600302` = In Progress. Done tasks
-should not block deduplication of new findings.)
+`search_data` returns row paths of the form
+`tables/lc_task/records/<guid>` along with excerpts of matched content
+from inside the `lc_relateddocuments` file column on those rows
+(provided the column has *Available for Search* enabled in the table
+metadata). Filter the returned rows to `lc_task` only, and only those
+whose `_lc_launchid_value` matches the current launch (call
+`read_query` to look up the launch id on each candidate if the path
+alone is insufficient).
 
-**4b. Compare each finding against the candidate set, in-context.**
-For each finding, the agent reads `lc_title` and `lc_notes` on every
-candidate and decides whether the candidate covers the same
-underlying issue. The comparison is semantic, not literal: a finding
-worded *"export to CSV is hanging"* matches a task whose notes say
-*"export hangs ~30s then crashes the app"*. Use plain reasoning over
-the candidate set; do not try to match by string equality.
+**4b. Read the matched excerpt and classify the finding.** For each
+candidate `lc_task` row `search_data` returned, read the matched
+content excerpt. The match is semantic: a finding worded *"export to
+CSV is hanging"* will surface a task whose attached PDF says *"export
+hangs ~30s then crashes the app on a 500-row composition"*. Classify:
 
-**4c. Break ties with `file_download` when needed.** If a candidate's
-`lc_relateddocuments_name` is non-empty and the title plus notes are
-not enough to decide, call `file_download` against that task's
-`lc_relateddocuments` column to read the attached collateral
-in-context, then decide. Only download when the decision is
-genuinely ambiguous; do not download for every candidate.
-
-Classify each finding as:
-
-- **Strong match.** A candidate clearly covers the same issue. Go to
+- **Strong match.** The excerpt clearly covers the same issue. Go to
   Step 5a (enrich).
-- **No match.** Nothing in the candidate set covers the finding. Go
-  to Step 5b (create).
+- **No match.** `search_data` returned zero rows, or none of the
+  returned excerpts cover the finding. Go to Step 5b (create).
+- **Ambiguous.** An excerpt looks plausible but is not decisive. Call
+  `file_download` against that task's `lc_relateddocuments` to read
+  the full document, then decide. Use this path sparingly.
 
 When in doubt between strong and weak, prefer match. A duplicate
 filed by mistake is far worse than a new artifact appended to the
@@ -162,14 +164,15 @@ against `lc_relateddocuments`.
 
 Return a single chat message with four sections:
 
-1. **Headline.** Launch name, count of SharePoint findings, count of
-   email findings, count of new tasks filed, count of existing tasks
-   enriched.
+1. **Headline.** Launch name, the launch's verbatim `lc_risksummary`,
+   count of SharePoint findings, count of email findings, count of
+   new tasks filed, count of existing tasks enriched.
 2. **New tasks.** Task name, source, one-line excerpt, link.
 3. **Enriched tasks (the dedup wins).** Existing task name, the
    matched signal phrase from the source, the new attachment's
-   filename, and (when applicable) a note that the agent broke the
-   tie by `file_download`-ing the prior attached collateral.
+   filename, and the excerpt `search_data` returned from the prior
+   attached collateral (so the reader sees the evidence the dedup
+   decision was based on).
 4. **No-op cases.** Sources that produced zero findings, in one line.
 
 When invoked from a Scout Automation, also post the same summary as
@@ -182,5 +185,10 @@ a Teams direct message to the runner.
 - It does **not** update launch or milestone records. The only writes
   it performs are `lc_task` `create_record`, `update_record` (Step 5a
   description append), and the file uploads attached to those tasks.
-- It does **not** call the readiness Custom API.
+- It does **not** call the readiness Custom API. (It could, via
+  `invoke_api` on the preview MCP — that is a different skill.)
+- It does **not** hand-tally readiness from milestone or task status
+  counts. Readiness comes from the launch's `lc_risksummary` AI
+  prompt column plus the blocked `lc_task` rows, never from a
+  derived count.
 - It does **not** delete anything. Stale tasks are the runner's call.

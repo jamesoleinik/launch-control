@@ -1,16 +1,19 @@
 # Episode 7: The Dataverse MCP face-lift, in Scout, on a schedule
 
 **Status:** 🚧 In development · 🎬 Not yet recorded
-**Features:** ⭐ The new Dataverse MCP tool shape (15 tools, NL-driven) · ⭐ File upload into Dataverse records · ⭐ File download into the agent's context for dedup tie-breaks · ⭐ Business Skills authored *into* Dataverse via the MCP server · ⭐ Microsoft Scout Automations
+**Features:** ⭐ The new Dataverse MCP **preview** tool shape (18 tools, NL-driven) · ⭐ Semantic search across records *and* attached file content in one call (`search_data`) · ⭐ Custom API invocation from the agent (`invoke_api`) · ⭐ AI Prompt execution from the agent (`execute_prompt`) · ⭐ Business Skills authored *into* Dataverse via the MCP server · ⭐ Microsoft Scout Automations
 **Layer:** 🟣 Layer 3 reach. The always-on agent surface
 **Coding agent:** None for the demo. The "agent" in this episode is Microsoft Scout itself.
-**Runtime:** Microsoft Scout (Frontier) desktop + Dataverse MCP Server (`/api/mcp`, GA) + the LaunchControl solution from Episodes 1–6
+**Runtime:** Microsoft Scout (Frontier) desktop + Dataverse MCP Server (`/api/mcp_preview`, **preview**) + the LaunchControl solution from Episodes 1–6
 
-> 📖 **What changed under the covers.** The Dataverse MCP server moved from per-entity `list / get / create / update / delete` to a small, NL-driven shape. The authoritative catalog used in this episode is checked in as [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json). The shape splits into **Discovery** (`search`, `describe`), **Query** (`read_query` — the "execute" surface), **Records** (`create_record` / `update_record` / `delete_record`), **Tables** (`create_table` / `update_table` / `delete_table`), **Business Skills** (`upsert_skill` / `delete_skill` / `create_skill_resource`), and **Files** (`init_file_upload` / `commit_file_upload` / `file_download`).
+> 📖 **What changed under the covers.** The Dataverse MCP server moved from per-entity `list / get / create / update / delete` to a small, NL-driven shape. The authoritative catalog used in this episode is checked in as [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json). On the preview endpoint the shape splits into **Discovery** (`search`, `describe`, **`search_data`**), **Query** (`read_query` — the "execute" surface), **Custom logic** (**`invoke_api`**, **`execute_prompt`**), **Records** (`create_record` / `update_record` / `delete_record`), **Tables** (`create_table` / `update_table` / `delete_table`), **Business Skills** (`upsert_skill` / `delete_skill` / `create_skill_resource`), and **Files** (`init_file_upload` / `commit_file_upload` / `file_download`).
 
-> 🆕 **Two net-new platform capabilities** ride on that shape:
-> 1. **File uploads into records.** `init_file_upload` returns a SAS URL, you PUT the bytes, then `commit_file_upload` finalizes. The file lands on a file column of the target record.
-> 2. **File download into the agent.** `file_download` pulls the bytes of a record's file column back into the agent's context, so the agent can read inside an existing task's attached PDF when it needs to break a dedup tie that title + notes alone cannot settle.
+> 🆕 **Three net-new preview-only capabilities** ride on that shape, and they are the reason this episode targets `/api/mcp_preview` instead of GA `/api/mcp`:
+> 1. **`search_data` — semantic search over records *and* attached file content in one call.** Scope-bound to a Dataverse search model. Returns row paths (e.g. `tables/lc_task/records/<guid>`) plus matched content excerpts from inside file columns that have *Available for Search* enabled. This is what powers the dedup beat in Part 2: one call decides whether a finding is already covered, including when the evidence is inside a PDF on a task's `lc_relateddocuments`.
+> 2. **`invoke_api` — call a Dataverse Custom API by name.** Lets the agent invoke server-side logic without dropping out to Web API plumbing (the natural place to expose Episodes 4-5 graders, retry orchestrators, or any other Custom API).
+> 3. **`execute_prompt` — run an AI Prompt by id.** The agent can fire `lc_risksummary` (or any other Prompt column) on demand, not just on row save.
+>
+> Files still ride along too: `init_file_upload` → PUT → `commit_file_upload` attaches bytes to a record's file column, and `file_download` pulls them back into the agent's context as a fallback when `search_data`'s excerpt is not enough.
 
 ---
 
@@ -38,7 +41,7 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 Check out the latest Dataverse MCP tool shapes.
 ```
 
-This is a free beat. Scout calls the MCP server's introspection (`describe`, plus a `list-tools`-style read) and renders the 17 tools across the six areas. On camera it's the visual proof that the shape really did change. Hold the answer at 1x; the tool list scrolling past is the hero shot for the intro into Part 1.
+This is a free beat. Scout calls the MCP server's introspection (`describe`, plus a `list-tools`-style read) and renders the **18 preview tools** across the eight areas. On camera it's the visual proof that the shape really did change, and that `search_data`, `invoke_api`, and `execute_prompt` are the three the GA endpoint does not yet have. Hold the answer at 1x; the tool list scrolling past is the hero shot for the intro into Part 1.
 
 ### The seed prompt (paste verbatim into Scout chat)
 
@@ -48,13 +51,13 @@ SharePoint site and our Q3 launch mailbox for issues reported on a
 launch, like blockers, escalations, regressions, slips, can't-ship,
 P0s.
 
-The key rule: never file a duplicate. Before creating a task, pull
-the open tasks on the launch through the MCP server and compare
-each finding against them. If a candidate looks plausible but the
-title and notes are not enough to decide, open the attached
-collateral and read inside it before committing. If there's a
-match, attach the new collateral to the existing task and append an
-update line. Only file a new task when there is no match.
+The key rule: never file a duplicate. Before creating a task, ask
+the MCP server whether any open task on this launch already covers
+the finding. The search must look inside the attached collateral on
+existing tasks too, not just at task titles and notes, because the
+matching evidence will often live inside a PDF. If there's a match,
+attach the new collateral to the existing task and append an update
+line. Only file a new task when there is no match.
 
 Draft the skill body inline. We'll iterate. When I say "save it,"
 save it to Dataverse as Launch Readiness Sweep.
@@ -93,7 +96,7 @@ cd C:\path\to\launch-control
 python scripts/upsert_launch_readiness_sweep.py
 ```
 
-The script uses `.env` `DATAVERSE_URL` + `AzureCliCredential` to mint the bearer for `/api/mcp`. It exists for environments where Scout is not available; the on-camera path is the co-authoring prompt above.
+The script uses `.env` `DATAVERSE_URL` + `AzureCliCredential` to mint the bearer for `/api/mcp_preview`. It exists for environments where Scout is not available; the on-camera path is the co-authoring prompt above.
 
 ---
 
@@ -121,7 +124,7 @@ This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior t
    Run the Launch Readiness Sweep against Q3 Widget Launch.
    ```
 
-   Scout's tool-use panel should show, in order: `search('launch readiness sweep')` and `describe` to load the skill body, then the skill itself executing. The skill fires Scout's SharePoint and Outlook connectors, then on the Launch Control MCP server: `read_query` (resolve the launch), `read_query` (pull open `lc_task` rows on the launch — the dedup candidate set), per-finding in-context comparison, optional `file_download` on an ambiguous candidate's `lc_relateddocuments`, then `update_record` + the file-upload trio per matched task (`init_file_upload` → HTTP PUT → `commit_file_upload`). The chat closes with the skill's four-section summary (headline + new tasks + **enriched tasks** + no-ops).
+   Scout's tool-use panel should show, in order: `search('launch readiness sweep')` and `describe` to load the skill body, then the skill itself executing. The skill fires Scout's SharePoint and Outlook connectors, then on the Launch Control MCP server: `read_query` (resolve the launch and fetch its `lc_risksummary`), and then **`search_data`** once per finding, scope-bound to the `lc_Model` search scope. `search_data` returns the dedup decision in a single call, because the response includes both candidate row paths (`tables/lc_task/records/<guid>`) and excerpts of matched content from inside the `lc_relateddocuments` PDFs on those rows. Optional `file_download` only fires when an excerpt is ambiguous. Then `update_record` + the file-upload trio (`init_file_upload` → HTTP PUT → `commit_file_upload`) per matched task. The chat closes with the skill's four-section summary (headline + new tasks + **enriched tasks** + no-ops).
 
 2. **Step 2b. Read inside what got attached.** Paste:
 
@@ -131,7 +134,7 @@ This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior t
    actually says. Use the Launch Control MCP server.
    ```
 
-   Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `file_download` against that task's `lc_relateddocuments` to read the bytes. The answer should quote from inside the newly attached PDF.
+   Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `file_download` against that task's `lc_relateddocuments` to read the bytes. The answer should quote from inside the newly attached PDF. (`search_data` returns excerpts but not the full file; this beat shows the file-download path is still the right tool when you need the whole document.)
 
 ---
 
@@ -199,10 +202,11 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 
 - Episodes 1–6 substrate present in the target environment: the `lc_launch` / `lc_milestone` / `lc_task` / `lc_statusupdate` tables, at least one launch in `At Risk` or `Blocked` state (`Q3 Widget Launch` is the standing demo data), and the Ep-5 `lc_risksummary` AI prompt column on `lc_launch`.
 - **Files enabled** on the `lc_task` table (the seeder attaches to tasks, and the enrichment path attaches to tasks) **and** on the `lc_launch` table. On `lc_task` the column is `lc_relateddocuments` (matches the seeder); on `lc_launch` the existing files column is fine.
+- **`Available for Search` enabled** on the `lc_relateddocuments` file column of `lc_task` (Power Apps → Tables → Task → Columns → `Related Documents` → *Searchable*). This is the toggle that lets `search_data` index the PDF body content; without it, the dedup beat collapses to title + notes only.
 - **Microsoft Scout** desktop, Frontier preview, signed in as a user with Dataverse access to the target environment.
-- The **Launch Control MCP server** registered in Scout: Settings → Extensions → MCP Servers → `https://<your-org>.crm.dynamics.com/api/mcp`. Sign in.
+- The **Launch Control MCP server** registered in Scout: Settings → Extensions → MCP Servers → `https://<your-org>.crm.dynamics.com/api/mcp_preview`. Sign in.
 
-> **Why `/api/mcp` and not `/api/mcp_preview`.** Episode 6 wires the Cowork plugin to `/api/mcp_preview` — the 3-tool `search` / `describe` / `execute` agentic surface. Episode 7 wires Scout to `/api/mcp` — the 15-tool GA surface. The dedup beat in this episode depends on tools that live on the GA surface (`read_query` for the candidate set, `file_download` for the ambiguous-candidate tie-break) and are not all present on the preview surface. The two endpoints share a Dataverse org but have different tool shapes; do not swap one for the other.
+> **Why `/api/mcp_preview` and not `/api/mcp`.** This episode uses the **preview** endpoint because the dedup story depends on three preview-only tools: `search_data` (semantic search over rows *and* indexed file content in one call), `invoke_api` (call a Custom API by name from the agent), and `execute_prompt` (run an AI Prompt by id from the agent). GA `/api/mcp` is a strict subset (15 tools); it does not yet expose those three. Episode 6's Cowork plugin uses the same `/api/mcp_preview` endpoint, so Scout and Cowork are pointing at the same surface — the difference is just the wrapper. Note the underscore in `mcp_preview`; `/api/mcp/preview` (slash) does not exist.
 
 ### Optional (only for the non-Scout fallback path)
 

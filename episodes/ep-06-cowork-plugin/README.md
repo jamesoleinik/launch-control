@@ -4,7 +4,7 @@
 **Features:** ⭐ Microsoft 365 Cowork custom plugin · ⭐ Dataverse MCP Server · ⭐ Teams Developer Portal OAuth registration · ⭐ Schema-aware Business Skill
 **Layer:** 🟣 Layer 3 expands (the conversational surface — Microsoft 365 Cowork / Copilot chat)
 **Coding agent:** GitHub Copilot + Teams Developer Portal + M365 Admin Center
-**Runtime:** Microsoft 365 Cowork / Copilot chat + Dataverse MCP Server (`/api/mcp_preview`, 3-tool `search`/`describe`/`execute` surface)
+**Runtime:** Microsoft 365 Cowork / Copilot chat + Dataverse MCP Server (`/api/mcp_preview`, 18-tool preview surface; this plugin exposes 3 of them — `search` / `describe` / `read_query` — to Cowork through `agentSkills[]`)
 
 > ⚠️ **Preview-only capability:** Invoking Dataverse custom APIs (e.g. our
 > `lc_launchreadiness` action) through the MCP `execute` tool is a **Dataverse
@@ -459,7 +459,7 @@ What it checks:
 | P1 | `.env` + `DATAVERSE_URL` + `scripts/auth.py` | Local repo can authenticate the same way every episode does |
 | P2 | Cowork schema-aware Business Skill in `business-skills/` | Step 6 exists before filming |
 | P3 | Cowork plugin package files are present | Manifest/action/package scaffold exists, even if still stubbed |
-| P4 | Plugin action points at `/api/mcp_preview` and uses `OAuthPluginVault` | The package is wired to the preview Dataverse MCP (3-tool surface) |
+| P4 | Plugin action points at `/api/mcp_preview` and uses `OAuthPluginVault` | The package is wired to the preview Dataverse MCP (18-tool preview surface; plugin exposes 3 to Cowork) |
 | T1 | `WhoAmI` via `scripts/auth.py` | Dataverse connectivity works |
 | T2 | Core `lc_*` table metadata exists | Cowork has real Launch Control schema to query |
 
@@ -577,10 +577,12 @@ swap the `provision` block to `oauth/update`, bump `name`, then re-run
   Client ID in the Allowed MCP Client row. The plugin `referenceId` uses the
   Teams Developer Portal OAuth Registration ID. Mixing them breaks auth.
 - **Wrong MCP URL** — the endpoint is the Dataverse org URL plus `/api/mcp_preview`
-  (the preview surface — `search`/`describe`/`execute`).
-  GA `/api/mcp` is the older 11-tool CRUD shape with a narrower tool set
-  and **does not yet support invoking Dataverse custom APIs** (e.g.
-  `lc_launchreadiness`) — that capability is preview-only today.
+  (the preview surface — 18 tools today, of which this plugin exposes
+  `search` / `describe` / `read_query` to Cowork via `agentSkills[]`).
+  GA `/api/mcp` is a strict subset (15 tools) and **does not yet support
+  invoking Dataverse custom APIs** (`invoke_api`), running AI Prompts
+  (`execute_prompt`), or semantic search across rows + indexed file
+  content (`search_data`) — those three are preview-only today.
   Note the underscore in `mcp_preview`: `/api/mcp/preview` (slash) does not exist.
 - **Wrong scope** — use `{DataverseOrgUrl}/.default offline_access`, not a
   generic Graph scope.
