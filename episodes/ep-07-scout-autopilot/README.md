@@ -16,98 +16,106 @@
 
 ## The shape of the demo
 
-Four beats, end-to-end inside Microsoft Scout. Nothing in this episode is invented by hand. Every "skill body," every artifact, every automation step is real and lives in Dataverse or in Scout's automation surface.
+Three beats, end-to-end inside Microsoft Scout. Nothing in this episode is invented by hand. Every artifact, every line of skill body, every automation step is real and lives in Dataverse or in Scout's automation surface.
 
-1. **Push the skill into Dataverse via the MCP server itself.** Run [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py). That script calls `upsert_skill` and `create_skill_resource` against `/api/mcp`, then uses the file-upload tools to upload the canonical markdown body as the skill's resource. The skill is now a row in the Dataverse `skill` table, discoverable by name from any MCP-aware agent.
-2. **Attach a real artifact to a launch.** Drag [`sample-feedback.pdf`](sample-feedback.pdf) onto the `Q3 Widget Launch` record. The PDF contains seeded risk phrases (`blocker`, `escalation`, `can't ship`, `customer impact`). The platform indexes the file content into embeddings on commit.
-3. **Show the agentic search live.** In Scout chat, ask one question about the launch ("What is the top unresolved customer concern on Q3 Widget Launch?"). Scout calls `search_data`, gets back a content excerpt from inside the PDF, and answers from it.
-4. **Make it always-on.** Open the existing "Morning Launch Control update" Scout Automation (the daily report from Episode 6) and extend it: step 1 = discover and load the new skill, step 2 = run it, step 3 = DM the result. Save. Hit *Run now*. The Teams summary lands.
+1. **Attach a real artifact to a launch and search inside it from chat.** Drag [`sample-feedback.pdf`](sample-feedback.pdf) onto the `Q3 Widget Launch` record. The PDF contains seeded risk phrases (`blocker`, `escalation`, `can't ship`, `customer impact`); the platform builds embeddings on commit. Then in Scout chat, ask one question about the launch. Scout calls `search_data` and answers with a verbatim excerpt from inside the PDF. This is the new capability that motivates everything else.
+2. **Co-author a Business Skill with Scout in chat, then save it to Dataverse.** Hand Scout the goal in plain English. Scout drafts the skill body. Iterate live (one or two small edits). Then say *"save it as the Launch Readiness Sweep business skill."* Scout fires four MCP calls in order on the Launch Control server, `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`, and the skill lands as a row in the Dataverse `skill` table, discoverable by name from any MCP-aware agent.
+3. **Make it always-on.** Open the existing "Morning Launch Control update" Scout Automation (the daily report from Episode 6) and extend it: step 1 = discover and load the new skill, step 2 = run it, step 3 = DM the result. Save. Hit *Run now*. The Teams summary lands.
 
-The narrative is "Scout is the surface. Dataverse is the brain." The new MCP shape is what makes that hand-off feel native, because Scout's first move on any new request is `search` against Dataverse, just like a junior teammate would search the wiki.
+The narrative is "Scout is the surface. Dataverse is the brain." The new MCP shape is what makes that hand-off feel native, because authoring, discovery, and execution all happen through the same small tool set the agent already has.
 
 ---
 
-## Part 1 · Have Scout push the Business Skill into Dataverse
+## Part 1 · Attach an artifact to a launch and search inside it
 
-> The skill body lives in source control. The skill itself lives in Dataverse. The push happens through the same MCP server Scout already has registered.
+> This is the new capability. After this beat, the platform has built embeddings over the PDF and agentic search returns content from inside the file.
+
+**🛠 Runs in:** your browser (Power Apps) and Microsoft Scout desktop (Chat).
+
+1. Open the LaunchControl model-driven app.
+2. Open the **Q3 Widget Launch** record.
+3. In the **Files** section (the file column on `lc_launch`), upload [`episodes/ep-07-scout-autopilot/sample-feedback.pdf`](sample-feedback.pdf).
+4. Save the record. Wait ~30 seconds for the platform to build embeddings.
+5. In Scout chat, paste:
+
+   ```
+   What is the top unresolved customer concern on Q3 Widget Launch?
+   Use the Launch Control MCP server. If a file is attached to that
+   launch, search inside it.
+   ```
+
+   Scout's first move should be `search` to find the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query.
+
+> Want to upload via MCP instead of the portal? Any MCP-aware agent can do it with one prompt: *"Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` onto the Q3 Widget Launch record's file column using the Launch Control MCP server."*
+
+---
+
+## Part 2 · Co-author the Business Skill with Scout, then save it to Dataverse
+
+> The headline of the new MCP shape. The agent doesn't load a pre-written skill. It writes one with you, then commits it. The rules live next to the data, authored where the data lives.
 
 **🛠 Runs in:** Microsoft Scout desktop, Chat.
 
-This is the move the new MCP shape was designed for. Scout has `upsert_skill`, `create_skill_resource`, `init_file_upload`, and `commit_file_upload` available the moment the Launch Control MCP server is registered (Part 4 of the prereqs below). Combined with Scout's filesystem tool reading the canonical markdown body off disk, Scout can land the skill end-to-end from one prompt.
-
-### The prompt (paste verbatim into Scout chat)
+### The seed prompt (paste verbatim into Scout chat)
 
 ```
-Use the Launch Control MCP server. Read the file at
-<repo>/business-skills/launch-readiness-sweep.md and upsert it as
-a Business Skill in Dataverse with name "Launch Readiness Sweep",
-unique name "lc_launchreadinesssweep", and a one-sentence
-description summarising what the skill does. Then create a skill
-resource for that skill named launch-readiness-sweep.md and upload
-the same file contents into the resource's filecontent column via
-init_file_upload, an HTTP PUT to the returned SAS URL, then
+I want a Business Skill that runs every weekday morning and tells me
+what changed on my at-risk launches overnight.
+
+Pull the at-risk launches from Dataverse via the Launch Control MCP
+server (read_query). For each one, use search_data scoped to the
+launch to look inside any attached files for risk language: blocker,
+escalation, can't ship, customer impact. De-duplicate against
+existing lc_task rows on the launch. For each surviving finding,
+create an lc_task with lc_source = 'file-sweep'. Post one Teams
+summary at the end.
+
+Draft the markdown body of that skill now. Show me the draft inline
+before you save anything. We will iterate together. When I say
+"save it," upsert it as a Dataverse Business Skill on the Launch
+Control MCP server with name "Launch Readiness Sweep" and unique
+name "lc_launchreadinesssweep". Attach the same markdown as a
+skill resource via create_skill_resource + init_file_upload +
 commit_file_upload.
 ```
 
-Replace `<repo>` with the absolute path to this repo on the recording machine. Scout's tool-use panel should show four MCP calls in order: **upsert_skill** → **create_skill_resource** → **init_file_upload** → **commit_file_upload**. The final reply summarises with the new skill's GUID.
+### Iterate (two passes on camera)
 
-Re-running the prompt is safe. `upsert_skill` updates in place on `uniquename`, and the file upload overwrites the previous resource bytes.
+Scout returns a draft. The draft will be close to (but not identical to) [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md), which is the canonical reference body checked into this repo. Make two small edits, one at a time, so the iteration loop is visible:
+
+- *"In the dedup step, match by URL or filename in the existing `lc_task.lc_description`, not just by exact-string compare."*
+- *"In the Teams summary, include the verbatim `lc_risksummary` value for each at-risk launch."*
+
+Scout amends the draft in place after each.
+
+### Save
+
+When the draft is close enough, type:
+
+```
+Looks good. Save it.
+```
+
+Scout's tool-use panel should show four MCP calls fire in order: **upsert_skill** → **create_skill_resource** → **init_file_upload** → **commit_file_upload**. The final reply summarises with the new skill's GUID.
 
 ### Verify
 
-Open Power Apps → Tables → **Skill** → **Launch Readiness Sweep**. The body column should show the markdown from `business-skills/launch-readiness-sweep.md`. Open Related → **Skill Resources** to see the `launch-readiness-sweep.md` resource with the bytes attached.
+Open Power Apps → Tables → **Skill** → **Launch Readiness Sweep**. The body column shows the markdown from the chat draft. Open Related → **Skill Resources** to see the `launch-readiness-sweep.md` resource with the bytes attached.
 
-### Non-Scout fallback (for CI, headless tenants, or repro from a tenant that does not yet have Scout enrolled)
+### Non-Scout fallback (CI, headless tenants, or pre-Frontier evaluation)
 
-The same four MCP calls are wrapped in [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py). Run it from a terminal:
+If Scout is not available, the canonical reference body in `business-skills/launch-readiness-sweep.md` plus the four-call upsert are wrapped in [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py). Run it once:
 
 ```powershell
 cd C:\path\to\launch-control
 python scripts/upsert_launch_readiness_sweep.py
 ```
 
-The script uses the `.env` `DATAVERSE_URL` and `AzureCliCredential` to mint the bearer for `/api/mcp`. It exists for environments where Scout is not available; the on-camera path is the Scout prompt above.
+The script uses `.env` `DATAVERSE_URL` + `AzureCliCredential` to mint the bearer for `/api/mcp`. It exists for environments where Scout is not available; the on-camera path is the co-authoring prompt above.
 
 ---
 
-## Part 2 · Attach an artifact to a launch
-
-> This is the on-camera proof that file upload is real. After this step, the platform has built embeddings over the PDF and the next agentic search will find content from inside it.
-
-**🛠 Runs in:** your browser, in Power Apps, against the `lc_launch` record for `Q3 Widget Launch`.
-
-1. Open the LaunchControl model-driven app.
-2. Open the **Q3 Widget Launch** record.
-3. In the **Files** section (the file column on `lc_launch`), upload [`episodes/ep-07-scout-autopilot/sample-feedback.pdf`](sample-feedback.pdf).
-4. Save the record.
-
-Under the covers the maker portal calls the same `init_file_upload` / SAS PUT / `commit_file_upload` sequence the MCP server exposes. The embeddings are built asynchronously and are typically ready within a minute or two for a file this small.
-
-> Want to upload via MCP instead of the portal? Any MCP-aware coding agent (Claude Desktop, the GitHub Copilot CLI with the Dataverse MCP server registered) can do it with one prompt: *"Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` onto the Q3 Widget Launch record's file column using the Launch Control MCP server."*
-
----
-
-## Part 3 · Search inside files from Scout chat
-
-> The headline moment. The right answer comes from inside the PDF, not from any column you defined.
-
-**🛠 Runs in:** Microsoft Scout desktop, Chat.
-
-Make sure the Launch Control MCP server is registered in Scout: Settings → Extensions → MCP Servers → add `https://<your-org>.crm.dynamics.com/api/mcp` and sign in.
-
-Then type into Scout chat:
-
-```
-What is the top unresolved customer concern on Q3 Widget Launch?
-Use the Launch Control MCP server. If a file is attached to that
-launch, search inside it.
-```
-
-Scout's first move should be `search` to find the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query. Scout should surface at least one of them with a verbatim excerpt.
-
----
-
-## Part 4 · Make it always-on with a Scout Automation
+## Part 3 · Make it always-on with a Scout Automation
 
 > The arc of the series closes here. Episode 6 gave Cowork the plugin. Episode 7 gives Scout the schedule.
 

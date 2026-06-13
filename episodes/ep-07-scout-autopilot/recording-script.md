@@ -35,11 +35,11 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 |---|---|---|---|
 | **0:00–0:03** | Still · the 17-tool, 6-area MCP catalog. | "The Dataverse MCP server grew up." | ⬇ **The MCP server grew up.** |
 | **0:03–0:07** | Hard cut to a Scout chat answer streaming a verbatim PDF excerpt. | "And it brought files with it." | ⬇ **And it brought files with it.** |
-| **0:07–0:27** ⭐ **Part 1 · The new tool shape (20s)** | Cut between the tool catalog still and `dataverse-mcp-tools.json` open in VS Code. Highlight `search`, `describe`, `search_data`. | "The shape moved from CRUD per table to discovery: search, describe, read. Agents ask in English, the server finds the right table or skill." | ⬇ **Search. Describe. Read.** |
-| **0:27–0:52** ⭐ **Part 2 · Upload + agentic search (25s)** | Browser, Power Apps, Q3 Widget Launch record. Drag the `sample-feedback.pdf` onto the file column. Cut to Scout chat. Type the Part 2 prompt. The answer streams a quote from inside the PDF. | "Files now land directly on Dataverse records. The platform builds embeddings over them. So when I ask Scout what's blocking Q3, the answer comes from inside the PDF I just dropped on the record." | ⬇ **Drop file. Embeddings built.** → 0:42 **Search finds content, not columns.** |
-| **0:52–1:17** ⭐ **Part 3 · The skill is a row in Dataverse (25s)** | Microsoft Scout chat. James types the **Part 3 prompt** (the upsert prompt). Scout's tool-use panel shows four calls fire in order: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "Business Skills live in Dataverse too. One Scout prompt authors the skill through the same MCP server we just used. Four tool calls. The skill is a row. Any agent that finds it can run it." | ⬇ **Scout writes the skill.** → 1:08 **Skill = row in Dataverse.** |
-| **1:17–1:52** ⭐ **Part 4 · Always-on Scout (35s)** | Scout → Automations → open "Morning Launch Control update". Edit. Paste the 3 new step bodies (cut for time, 2x speed on the typing). Save. Click Run now. Cut to Teams · the summary DM lands with launch name, risk summary, and the new task names. | "Then Scout puts it on a schedule. Step one, discover the skill. Step two, run it. Step three, DM me the result. Every weekday at nine. The morning sweep runs itself. New artifacts get indexed automatically. The agent surface keeps up." | ⬇ 1:17 **Step 1: discover the skill.** → 1:27 **Step 2: run it.** → 1:37 **Step 3: DM the summary.** → 1:47 **Always on.** |
-| **1:52–2:00** | End card. *"Next: Episode 8: RBAC."* `github.com/jamesoleinik/launch-control` | "Same data. Same security. Now always on." | ⬇ **Episode 8 next: RBAC.** |
+| **0:07–0:25** ⭐ **Intro · The new tool shape (18s)** | Cut between the tool catalog still and `dataverse-mcp-tools.json` open in VS Code. Highlight `search`, `describe`, `search_data`. | "The shape moved from CRUD per table to discovery: search, describe, read. Agents ask in English, the server finds the right table or skill." | ⬇ **Search. Describe. Read.** |
+| **0:25–0:50** ⭐ **Part 1 · Upload + agentic search (25s)** | Browser, Power Apps, Q3 Widget Launch record. Drag `sample-feedback.pdf` onto the file column. Save. Cut to Scout chat. Type the Part 1 prompt. The answer streams a quote from inside the PDF. | "Files now land directly on Dataverse records. The platform builds embeddings over them. So when I ask Scout what's blocking Q3, the answer comes from inside the PDF I just dropped on the record." | ⬇ **Drop file. Embeddings built.** → 0:40 **Search finds content, not columns.** |
+| **0:50–1:30** ⭐ **Part 2 · Co-author the skill, save it to Dataverse (40s)** | Scout chat. James pastes the Part 2 seed prompt. Scout drafts the skill body inline; the markdown scrolls in the answer pane. James types one short iteration ("In the dedup step, match by filename in the existing lc_task description"). Scout amends in place. James types "Save it." Scout's tool-use panel fires four MCP calls in order: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "Then I built the morning skill with Scout. Same chat. I said what I want, Scout drafted the steps in markdown, we tightened the dedup rule together, then I said save it. Four tool calls. The skill is a row in Dataverse now. Any agent that finds it can run it." | ⬇ 0:50 **Tell Scout what you want.** → 1:05 **Iterate in chat.** → 1:18 **Say "save it."** → 1:25 **Skill = row in Dataverse.** |
+| **1:30–1:55** ⭐ **Part 3 · Always-on Scout (25s)** | Scout → Automations → open "Morning Launch Control update". Edit. Paste the 3 new step bodies (2x speed on the typing). Save. Click Run now. Cut to Teams · the summary DM lands with launch name, risk summary, and the new task names. | "Then Scout puts it on a schedule. Discover the skill. Run it. DM me the result. Every weekday at nine. The morning sweep runs itself." | ⬇ 1:30 **Step 1: discover.** → 1:38 **Step 2: run.** → 1:46 **Step 3: report.** → 1:52 **Always on.** |
+| **1:55–2:00** | End card. *"Next: Episode 8: RBAC."* `github.com/jamesoleinik/launch-control` | "Same data. Same security. Now always on." | ⬇ **Episode 8 next: RBAC.** |
 
 ---
 
@@ -53,13 +53,11 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 
 ## ⭐ Prompts to type on camera
 
-Three prompts and three automation-step bodies. All verbatim. Dry-run
-each one before recording so caches are warm and auth is past.
+Two prompts, one iteration line, and three automation-step bodies. All verbatim. Dry-run each one before recording so the four-call MCP panel and the streaming chat answers are warm.
 
-### Part 2 prompt: Scout finds content inside the PDF (0:38–0:52)
+### Part 1 prompt: Scout finds content inside the PDF (0:36–0:50)
 
-The drag-and-drop happens first. Wait ~30 seconds after the file
-commits before recording this beat so embeddings are ready.
+The drag-and-drop in Power Apps happens first. Wait ~30 seconds after the file commits before recording this beat so embeddings are ready.
 
 Type into Scout chat:
 
@@ -69,41 +67,70 @@ Use the Launch Control MCP server. If a file is attached to that
 launch, search inside it.
 ```
 
-Hold the streaming answer at 1x. The verbatim excerpt from the PDF
-is the hero shot. Do not speed-ramp.
+Hold the streaming answer at 1x. The verbatim excerpt from the PDF is the hero shot. Do not speed-ramp.
 
-### Part 3 prompt: Scout authors the skill in Dataverse (0:52–1:17)
+### Part 2 prompt: Co-author the skill in Scout chat (0:50–1:30)
 
-Type into Scout chat. Replace `<repo>` with the absolute path to the repo on the recording machine before recording (do not type the angle brackets on camera).
+This is the longest beat and the new hero of the episode. The flow is **seed → draft → one iteration → save**. The producer's job is to make sure the four MCP tool-use bubbles land on camera at the end.
+
+#### Step 2a. Paste the seed prompt verbatim into Scout chat (~5s on screen)
 
 ```
-Use the Launch Control MCP server. Read the file at
-<repo>/business-skills/launch-readiness-sweep.md and upsert it as
-a Business Skill in Dataverse with name "Launch Readiness Sweep",
-unique name "lc_launchreadinesssweep", and a one-sentence
-description summarising what the skill does. Then create a skill
-resource for that skill named launch-readiness-sweep.md and upload
-the same file contents into the resource's filecontent column via
-init_file_upload, an HTTP PUT to the returned SAS URL, then
+I want a Business Skill that runs every weekday morning and tells me
+what changed on my at-risk launches overnight.
+
+Pull the at-risk launches from Dataverse via the Launch Control MCP
+server (read_query). For each one, use search_data scoped to the
+launch to look inside any attached files for risk language: blocker,
+escalation, can't ship, customer impact. De-duplicate against
+existing lc_task rows on the launch. For each surviving finding,
+create an lc_task with lc_source = 'file-sweep'. Post one Teams
+summary at the end.
+
+Draft the markdown body of that skill now. Show me the draft inline
+before you save anything. We will iterate together. When I say
+"save it," upsert it as a Dataverse Business Skill on the Launch
+Control MCP server with name "Launch Readiness Sweep" and unique
+name "lc_launchreadinesssweep". Attach the same markdown as a
+skill resource via create_skill_resource + init_file_upload +
 commit_file_upload.
 ```
 
-Scout's tool-use panel should show four MCP calls fire in order:
-`upsert_skill` → `create_skill_resource` → `init_file_upload` →
-`commit_file_upload`. Hold on the panel through the four calls,
-then cut to Power Apps on the new Skill row at the moment of the
-final reply. Do not speed-ramp this beat. The four tool-use bubbles
-are the hero shot.
+Scout drafts the markdown body inline. Let the draft stream at 1x for ~10s, scrolling so the viewer sees that it really is multi-step skill body markdown. The draft will be close to the canonical reference in `business-skills/launch-readiness-sweep.md`.
 
-> Fallback: the same four MCP calls are wrapped in
-> `scripts/upsert_launch_readiness_sweep.py`. Useful for tenants
-> that have not yet enrolled Scout but not used on camera.
+#### Step 2b. One iteration on camera (~10s)
 
-### Part 4: three automation step bodies (1:17–1:47)
+Type one short message:
 
-In Scout → Automations → Morning Launch Control update → Edit, paste
-each of these into a separate step in order. The first replaces the
-existing single step.
+```
+In the dedup step, match by filename in the existing lc_task
+description, not just by exact-string compare.
+```
+
+Scout amends the draft. The amendment shows up in the chat as a diff or a re-rendered section. Hold for ~5s.
+
+#### Step 2c. Save (~10s)
+
+Type:
+
+```
+Looks good. Save it.
+```
+
+Scout's tool-use panel fires four MCP calls in order. Hold on the panel through all four:
+
+1. **upsert_skill** (name=`Launch Readiness Sweep`, uniquename=`lc_launchreadinesssweep`)
+2. **create_skill_resource** (filename=`launch-readiness-sweep.md`)
+3. **init_file_upload** (tablename=`skillresource`, fileAttributeName=`filecontent`)
+4. **commit_file_upload**
+
+Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → Related → Skill Resources → the attached file. Do not speed-ramp this cut. The four tool-use bubbles plus the new Skill row are the hero shots.
+
+> Fallback: if Scout is unavailable, the same canonical body and four-call upsert are wrapped in `scripts/upsert_launch_readiness_sweep.py`. Reference body: `business-skills/launch-readiness-sweep.md`.
+
+### Part 3: three automation step bodies (1:30–1:52)
+
+In Scout → Automations → Morning Launch Control update → Edit, paste each of these into a separate step in order. Step 1 replaces the existing single step.
 
 **Step 1. Discover and load the skill:**
 
