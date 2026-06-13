@@ -47,9 +47,9 @@ This is a free beat. Scout calls the MCP server's introspection (`describe`, plu
 
 ```
 Now let's build a skill that uses these. Sweep our LaunchControl
-SharePoint site and our Q3 launch mailbox for issues reported on a
-launch, like blockers, escalations, regressions, slips, can't-ship,
-P0s.
+SharePoint site at <https://<tenant>.sharepoint.com/sites/LaunchControl>
+and our Q3 launch mailbox for issues reported on a launch, like
+blockers, escalations, regressions, slips, can't-ship, P0s.
 
 The key rule: never file a duplicate. Before creating a task, ask
 the MCP server whether any open task on this launch already covers
@@ -62,6 +62,8 @@ line. Only file a new task when there is no match.
 Draft the skill body inline. We'll iterate. When I say "save it,"
 save it to Dataverse as Launch Readiness Sweep.
 ```
+
+> 💡 Swap `<tenant>` for your real M365 tenant short name (e.g. `contoso`) and the site path for wherever the LaunchControl docs actually live. The on-camera env uses `https://m365cpi13620341.sharepoint.com/sites/LaunchControl`.
 
 Notice what is still NOT in the prompt: tool names, upsert plumbing, unique-name. Scout picks the right MCP tools from the catalog it just discovered. What *is* in the prompt is the dedup intent, because dedup is the value beat and the dedup behavior is the whole reason the new tool shape matters here.
 

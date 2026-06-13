@@ -71,21 +71,23 @@ Scout introspects the MCP server and renders its tools across the discovery, que
 
 ```
 Now let's build a skill that uses these. Sweep our LaunchControl
-SharePoint site and our Q3 launch mailbox for issues reported on a
-launch, like blockers, escalations, regressions, slips, can't-ship,
-P0s.
+SharePoint site at <https://<tenant>.sharepoint.com/sites/LaunchControl>
+and our Q3 launch mailbox for issues reported on a launch, like
+blockers, escalations, regressions, slips, can't-ship, P0s.
 
-The key rule: never file a duplicate. Before creating a task, pull
-the open tasks on the launch through the MCP server and compare
-each finding against them. If a candidate looks plausible but the
-title and notes are not enough to decide, open the attached
-collateral and read inside it before committing. If there's a
-match, attach the new collateral to the existing task and append an
-update line. Only file a new task when there is no match.
+The key rule: never file a duplicate. Before creating a task, ask
+the MCP server whether any open task on this launch already covers
+the finding. The search must look inside the attached collateral on
+existing tasks too, not just at task titles and notes, because the
+matching evidence will often live inside a PDF. If there's a match,
+attach the new collateral to the existing task and append an update
+line. Only file a new task when there is no match.
 
 Draft the skill body inline. We'll iterate. When I say "save it,"
 save it to Dataverse as Launch Readiness Sweep.
 ```
+
+> Before the take, swap `<tenant>` for the real M365 short name and confirm the site path matches where the LaunchControl docs actually live (on-camera env: `https://m365cpi13620341.sharepoint.com/sites/LaunchControl`). Leaving the literal angle brackets in is fine on camera if the take is a private rehearsal; for the published take, paste the real URL.
 
 No tool names, no upsert plumbing. The dedup rule *is* in the prompt because dedup is the value beat of the episode. Let the draft stream at 1x for ~10s; the markdown body scrolling is the hero shot.
 
