@@ -27,48 +27,46 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 
 ---
 
-## Part 1 · Push the Business Skill into Dataverse
+## Part 1 · Have Scout push the Business Skill into Dataverse
 
-> The skill body lives in source control. The skill itself lives in Dataverse. The push happens through the MCP server.
+> The skill body lives in source control. The skill itself lives in Dataverse. The push happens through the same MCP server Scout already has registered.
 
-**🛠 Runs in:** your terminal (one-shot Python script).
+**🛠 Runs in:** Microsoft Scout desktop, Chat.
 
-### Defaults (the script should NOT ask for these)
+This is the move the new MCP shape was designed for. Scout has `upsert_skill`, `create_skill_resource`, `init_file_upload`, and `commit_file_upload` available the moment the Launch Control MCP server is registered (Part 4 of the prereqs below). Combined with Scout's filesystem tool reading the canonical markdown body off disk, Scout can land the skill end-to-end from one prompt.
 
-| Input | Default | Source |
-|---|---|---|
-| Dataverse environment | The URL in your `.env` `DATAVERSE_URL` | `.env` |
-| MCP endpoint | `/api/mcp` (GA) | hard-coded in [`upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py) |
-| Skill name | `Launch Readiness Sweep` | hard-coded |
-| Skill unique name | `lc_launchreadinesssweep` | hard-coded |
-| Skill body | [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md) | hard-coded |
+### The prompt (paste verbatim into Scout chat)
 
-### Run it
+```
+Use the Launch Control MCP server. Read the file at
+<repo>/business-skills/launch-readiness-sweep.md and upsert it as
+a Business Skill in Dataverse with name "Launch Readiness Sweep",
+unique name "lc_launchreadinesssweep", and a one-sentence
+description summarising what the skill does. Then create a skill
+resource for that skill named launch-readiness-sweep.md and upload
+the same file contents into the resource's filecontent column via
+init_file_upload, an HTTP PUT to the returned SAS URL, then
+commit_file_upload.
+```
+
+Replace `<repo>` with the absolute path to this repo on the recording machine. Scout's tool-use panel should show four MCP calls in order: **upsert_skill** → **create_skill_resource** → **init_file_upload** → **commit_file_upload**. The final reply summarises with the new skill's GUID.
+
+Re-running the prompt is safe. `upsert_skill` updates in place on `uniquename`, and the file upload overwrites the previous resource bytes.
+
+### Verify
+
+Open Power Apps → Tables → **Skill** → **Launch Readiness Sweep**. The body column should show the markdown from `business-skills/launch-readiness-sweep.md`. Open Related → **Skill Resources** to see the `launch-readiness-sweep.md` resource with the bytes attached.
+
+### Non-Scout fallback (for CI, headless tenants, or repro from a tenant that does not yet have Scout enrolled)
+
+The same four MCP calls are wrapped in [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py). Run it from a terminal:
 
 ```powershell
 cd C:\path\to\launch-control
 python scripts/upsert_launch_readiness_sweep.py
 ```
 
-You should see four steps print:
-
-```
-Pushing 'Launch Readiness Sweep' to https://orgXXX.crm.dynamics.com via /api/mcp ...
-  -> skill id <guid>
-Registering resource 'launch-readiness-sweep.md' ...
-  -> resource id <guid>
-Initiating file upload for the resource body ...
-Uploading bytes via PUT ...
-Committing upload ...
-
-Done.
-```
-
-Re-running the script is safe. `upsert_skill` updates in place on `uniquename`. The file upload overwrites the previous resource bytes.
-
-### Verify
-
-Open Power Apps → Tables → **Skill** → **Launch Readiness Sweep**. The body column should show the markdown from `business-skills/launch-readiness-sweep.md`. Open Related → **Skill Resources** to see the `launch-readiness-sweep.md` resource with the bytes attached.
+The script uses the `.env` `DATAVERSE_URL` and `AzureCliCredential` to mint the bearer for `/api/mcp`. It exists for environments where Scout is not available; the on-camera path is the Scout prompt above.
 
 ---
 
@@ -170,12 +168,18 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 - Episodes 1–6 substrate present in the target environment: the `lc_launch` / `lc_milestone` / `lc_task` / `lc_statusupdate` tables, at least one launch in `At Risk` or `Blocked` state (`Q3 Widget Launch` is the standing demo data), and the Ep-5 `lc_risksummary` AI prompt column on `lc_launch`.
 - **Files enabled** on the `lc_launch` table. Specifically a file column with **"Available for Search"** turned on (the platform setting that triggers embedding generation on commit). If your column is named differently from the demo, no code change is needed; only the on-screen drag-and-drop target differs.
 - **Microsoft Scout** desktop, Frontier preview, signed in as a user with Dataverse access to the target environment.
-- **Python 3.10+** with `requests`, `python-dotenv`, `azure-identity`, and `reportlab` (only needed if you want to regenerate the sample PDF). Install:
+- The **Launch Control MCP server** registered in Scout: Settings → Extensions → MCP Servers → `https://<your-org>.crm.dynamics.com/api/mcp`. Sign in. Tool count should be 17.
+
+### Optional (only for the non-Scout fallback path)
+
+If you cannot run Scout (CI machine, headless tenant, evaluation without Frontier enrollment) and want to use `scripts/upsert_launch_readiness_sweep.py` instead of the Part 1 Scout prompt:
+
+- Python 3.10+ with `requests`, `python-dotenv`, `azure-identity`. (`reportlab` is only needed to regenerate the sample PDF.)
   ```powershell
   pip install requests python-dotenv azure-identity reportlab
   ```
-- `.env` at the repo root with `DATAVERSE_URL` set to the target environment.
-- Azure CLI signed in (`az login`). The push script uses `AzureCliCredential` to mint the token for the MCP server.
+- `.env` at the repo root with `DATAVERSE_URL` set.
+- Azure CLI signed in (`az login`). The script uses `AzureCliCredential` to mint the token for the MCP server.
 
 ---
 
