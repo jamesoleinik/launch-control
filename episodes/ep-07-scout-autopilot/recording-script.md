@@ -66,7 +66,23 @@ Inventory every tool on the Launch Control Dataverse MCP server as
 a single markdown table, sorted by area then name. Columns: Area,
 Tool, Description (max 12 words), Required args (name:type, comma
 separated). Areas: discovery, query, custom logic, records, tables,
-business skills, files, other. No prose before or after the table.
+business skills, files, other.
+
+Below the table, add a short "Preview-only" section that breaks out
+these three net-new tools with a 2-3 sentence description each,
+explaining what each one unlocks for an agent:
+
+- search_data — semantic search over records and attached file
+  content in one call. Note the scope arg, the row-path return
+  shape, and the Available-for-Search prereq for inside-file hits.
+- invoke_api — call a Dataverse Custom API by name. Call out that
+  it lets the agent fire server-side logic (graders, retry
+  orchestrators) without Web API plumbing.
+- execute_prompt — run an AI Prompt by id. Call out that the agent
+  can fire lc_risksummary or any other Prompt column on demand,
+  not just on row save.
+
+No other prose.
 ```
 
 Scout introspects the MCP server, calls `describe` against each tool, and renders a grouped table across all eight areas (discovery, query, custom logic, records, tables, business skills, files, other) with the required-argument signatures and the preview-vs-GA call-out. Hold at 1x while the table renders; the call-out line that names `search_data` as the inside-PDF tool is the lead-in to Part 1. Cut tight at the moment the table finishes.

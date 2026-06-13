@@ -42,7 +42,23 @@ Inventory every tool on the Launch Control Dataverse MCP server as
 a single markdown table, sorted by area then name. Columns: Area,
 Tool, Description (max 12 words), Required args (name:type, comma
 separated). Areas: discovery, query, custom logic, records, tables,
-business skills, files, other. No prose before or after the table.
+business skills, files, other.
+
+Below the table, add a short "Preview-only" section that breaks out
+these three net-new tools with a 2-3 sentence description each,
+explaining what each one unlocks for an agent:
+
+- search_data — semantic search over records and attached file
+  content in one call. Note the scope arg, the row-path return
+  shape, and the Available-for-Search prereq for inside-file hits.
+- invoke_api — call a Dataverse Custom API by name. Call out that
+  it lets the agent fire server-side logic (graders, retry
+  orchestrators) without Web API plumbing.
+- execute_prompt — run an AI Prompt by id. Call out that the agent
+  can fire lc_risksummary or any other Prompt column on demand,
+  not just on row save.
+
+No other prose.
 ```
 
 This is a free beat. Scout calls the MCP server's introspection (`describe`, plus a `list-tools`-style read) and renders the **18 preview tools** across the eight areas. On camera it's the visual proof that the shape really did change, and that `search_data`, `invoke_api`, and `execute_prompt` are the three the GA endpoint does not yet have. Hold the answer at 1x; the tool list scrolling past is the hero shot for the intro into Part 1.
