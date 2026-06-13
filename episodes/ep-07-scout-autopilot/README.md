@@ -131,9 +131,9 @@ This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior t
 2. **Step 2b. Read inside what got attached.** Paste:
 
    ```
-   On Q3 Widget Launch, pull up the existing task that just got new
-   collateral attached and tell me what the new source document
-   actually says. Use the Launch Control MCP server.
+   On Q3 Widget Launch, pull any task that just got created or
+   updated and tell me what the new source document actually says.
+   Use the Launch Control MCP server.
    ```
 
    Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `file_download` against that task's `lc_relateddocuments` to read the bytes. The answer should quote from inside the newly attached PDF. (`search_data` returns excerpts but not the full file; this beat shows the file-download path is still the right tool when you need the whole document.)

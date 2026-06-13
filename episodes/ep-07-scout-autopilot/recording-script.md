@@ -137,9 +137,9 @@ Tool-use panel sequence: Scout calls `search('launch readiness sweep')` then `de
 #### Step 2b. Read inside what got attached (paste verbatim, 1x, no speed-ramp)
 
 ```
-On Q3 Widget Launch, pull up the existing task that just got new
-collateral attached and tell me what the new source document
-actually says. Use the Launch Control MCP server.
+On Q3 Widget Launch, pull any task that just got created or updated
+and tell me what the new source document actually says. Use the
+Launch Control MCP server.
 ```
 
 Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `file_download` against that task's `lc_relateddocuments` column. The verbatim excerpt from the newly attached PDF (e.g. *"export crash"* or *"pricing page disagrees with billing"*) is the hero shot of Part 2.
