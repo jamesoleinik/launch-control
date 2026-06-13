@@ -36,7 +36,7 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 | **0:00–0:03** | Still · the 17-tool, 6-area MCP catalog. | "The Dataverse MCP server grew up." | ⬇ **The MCP server grew up.** |
 | **0:03–0:07** | Hard cut to a Scout chat answer streaming a verbatim PDF excerpt. | "And it brought files with it." | ⬇ **And it brought files with it.** |
 | **0:07–0:25** ⭐ **Intro · The new tool shape (18s)** | Cut between the tool catalog still and `dataverse-mcp-tools.json` open in VS Code. Highlight `search`, `describe`, `search_data`. | "The shape moved from CRUD per table to discovery: search, describe, read. Agents ask in English, the server finds the right table or skill." | ⬇ **Search. Describe. Read.** |
-| **0:25–0:50** ⭐ **Part 1 · Upload + agentic search (25s)** | Browser, Power Apps, Q3 Widget Launch record. Drag `sample-feedback.pdf` onto the file column. Save. Cut to Scout chat. Type the Part 1 prompt. The answer streams a quote from inside the PDF. | "Files now land directly on Dataverse records. The platform builds embeddings over them. So when I ask Scout what's blocking Q3, the answer comes from inside the PDF I just dropped on the record." | ⬇ **Drop file. Embeddings built.** → 0:40 **Search finds content, not columns.** |
+| **0:25–0:50** ⭐ **Part 1 · Scout uploads the PDF + agentic search (25s)** | Scout chat fullscreen. James pastes the Part 1a prompt. Scout's tool-use panel fires `search` → `init_file_upload` → HTTP PUT → `commit_file_upload`. Speed-ramp 2x through the tool-use panel. Drop to 1x as James pastes the Part 1b prompt. The answer streams a verbatim quote from inside the PDF. | "The file upload itself is an MCP call. Scout reads the PDF off disk, fires init_file_upload, PUTs the bytes to the SAS URL, commits. The platform builds embeddings on commit. Then I ask Scout what's blocking Q3 and the answer comes from inside that PDF." | ⬇ 0:25 **Scout uploads the file.** → 0:38 **Embeddings built on commit.** → 0:44 **Search finds content, not columns.** |
 | **0:50–1:30** ⭐ **Part 2 · Co-author the skill, save it to Dataverse (40s)** | Scout chat. James pastes the Part 2 seed prompt. Scout drafts the skill body inline; the markdown scrolls in the answer pane. James types one short iteration ("In the dedup step, match by filename in the existing lc_task description"). Scout amends in place. James types "Save it." Scout's tool-use panel fires four MCP calls in order: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "Then I built the morning skill with Scout. Same chat. I said what I want, Scout drafted the steps in markdown, we tightened the dedup rule together, then I said save it. Four tool calls. The skill is a row in Dataverse now. Any agent that finds it can run it." | ⬇ 0:50 **Tell Scout what you want.** → 1:05 **Iterate in chat.** → 1:18 **Say "save it."** → 1:25 **Skill = row in Dataverse.** |
 | **1:30–1:55** ⭐ **Part 3 · Always-on Scout (25s)** | Scout → Automations → open "Morning Launch Control update". Edit. Paste the 3 new step bodies (2x speed on the typing). Save. Click Run now. Cut to Teams · the summary DM lands with launch name, risk summary, and the new task names. | "Then Scout puts it on a schedule. Discover the skill. Run it. DM me the result. Every weekday at nine. The morning sweep runs itself." | ⬇ 1:30 **Step 1: discover.** → 1:38 **Step 2: run.** → 1:46 **Step 3: report.** → 1:52 **Always on.** |
 | **1:55–2:00** | End card. *"Next: Episode 8: RBAC."* `github.com/jamesoleinik/launch-control` | "Same data. Same security. Now always on." | ⬇ **Episode 8 next: RBAC.** |
@@ -53,13 +53,26 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 
 ## ⭐ Prompts to type on camera
 
-Two prompts, one iteration line, and three automation-step bodies. All verbatim. Dry-run each one before recording so the four-call MCP panel and the streaming chat answers are warm.
+Two prompts back to back, one iteration line, and three automation-step bodies. All verbatim. Dry-run each one before recording so the four-call MCP panel and the streaming chat answers are warm.
 
-### Part 1 prompt: Scout finds content inside the PDF (0:36–0:50)
+### Part 1 prompt: Scout uploads the PDF, then finds content inside it (0:25–0:50)
 
-The drag-and-drop in Power Apps happens first. Wait ~30 seconds after the file commits before recording this beat so embeddings are ready.
+Two prompts back to back in Scout chat. No Power Apps. The upload is the MCP file-upload trio fired by Scout. Wait ~30 seconds between commit and the search prompt so embeddings have time to build.
 
-Type into Scout chat:
+#### Step 1a. Upload via Scout (paste verbatim, replace `<repo>`)
+
+```
+Use the Launch Control MCP server. Read the file at
+<repo>/episodes/ep-07-scout-autopilot/sample-feedback.pdf and
+attach it to the lc_launch row whose lc_name is "Q3 Widget Launch"
+on its file column. Use init_file_upload to get a SAS URL, PUT the
+bytes to it with x-ms-blob-type: BlockBlob, then commit_file_upload.
+Tell me when commit returns.
+```
+
+Hold the tool-use panel as `init_file_upload` → HTTP PUT → `commit_file_upload` fire. Speed-ramp 2x is fine here; the panel is supporting cast, not the hero shot. Wait ~30 seconds after commit before pasting Step 1b.
+
+#### Step 1b. Ask the question (paste verbatim, 1x, no speed-ramp)
 
 ```
 What is the top unresolved customer concern on Q3 Widget Launch?
@@ -67,7 +80,7 @@ Use the Launch Control MCP server. If a file is attached to that
 launch, search inside it.
 ```
 
-Hold the streaming answer at 1x. The verbatim excerpt from the PDF is the hero shot. Do not speed-ramp.
+Hold the streaming answer at 1x. The verbatim excerpt from the PDF is the hero shot of Part 1.
 
 ### Part 2 prompt: Co-author the skill in Scout chat (0:50–1:30)
 
@@ -175,16 +188,16 @@ Save. Click **Run now**. Hold on the Teams DM when it lands.
   ```
   Re-run `scripts/python/promote.py` if any counts are off.
 - [ ] **Files column on `lc_launch`** enabled and "Available for Search" is on. (The platform setting that triggers embedding indexing.)
-- [ ] **No `Launch Readiness Sweep` skill row exists yet** in the Dataverse `skill` table. (The Part 3 push is the hero shot. Delete the row from Power Apps if it exists from a prior take.)
-- [ ] **No `sample-feedback.pdf` attached to Q3 Widget Launch** in the file column. (The Part 2 drag-and-drop is the hero shot. Remove any prior attachment.)
+- [ ] **No `Launch Readiness Sweep` skill row exists yet** in the Dataverse `skill` table. (The Part 2 "Save it." beat is the hero shot. Delete the row from Power Apps if it exists from a prior take.)
+- [ ] **No `sample-feedback.pdf` attached to Q3 Widget Launch** in the file column. (The Part 1 Scout upload is the hero shot. Remove any prior attachment via Power Apps or by deleting the file annotation directly.)
 - [ ] **The "Morning Launch Control update" Scout Automation exists** with its current single step ("Send me today's daily LaunchControl launch report in Teams"). The hero shot is editing it in place.
 - [ ] **Browser windows + apps pre-loaded:**
-  1. Power Apps, on the `Q3 Widget Launch` record, scrolled to the Files section.
-  2. Power Apps, second tab, on the Skill table (for the Part 3 cut).
-  3. Microsoft Scout desktop, Chat panel open.
-  4. Microsoft Scout desktop, second window, Automations panel open on "Morning Launch Control update" in view mode.
+  1. Microsoft Scout desktop, Chat panel open, fullscreen-ready (the Part 1 and Part 2 hero windows).
+  2. Microsoft Scout desktop, second window, Automations panel open on "Morning Launch Control update" in view mode.
+  3. Power Apps, on the Skill table (for the Part 2 closing cut to the new `Launch Readiness Sweep` row).
+  4. Power Apps, second tab, on the `Q3 Widget Launch` record's Files section (kept in reserve for the optional B-roll cut after the Part 1 upload, and for between-takes cleanup).
   5. Teams, DM with self (or the launch-team channel), scrolled to bottom.
-  6. **VS Code** at repo root with `dataverse-mcp-tools.json` open in a tab (Part 1 still). No terminal needed on camera. The Scout chat replaces every terminal beat from prior episodes.
+  6. **VS Code** at repo root with `dataverse-mcp-tools.json` open in a tab (Intro still). No terminal needed on camera. Scout chat replaces every terminal beat from prior episodes.
 - [ ] **Title / end cards** at 1920×1080 in `social/video-scripts/assets/`:
   - `ep07-end-card.png`: *"Next: Episode 8: RBAC.\n\ngithub.com/jamesoleinik/launch-control"*
 
@@ -198,12 +211,13 @@ If you take 2+ runs:
 # from launch-control/
 $env:PYTHONIOENCODING='utf-8'
 
-# 1. Remove the skill row so the Part 3 push is the hero shot again.
+# 1. Remove the skill row so the Part 2 "Save it." is the hero shot again.
 #    (Manual: Power Apps -> Tables -> Skill -> Launch Readiness Sweep -> Delete.
 #     There is no Dataverse MCP `delete_skill` call wired into our scripts on
 #     purpose: the delete is rare and operator-confirmed.)
 
-# 2. Remove the attached sample-feedback.pdf from Q3 Widget Launch.
+# 2. Remove the attached sample-feedback.pdf from Q3 Widget Launch so the
+#    Part 1 Scout upload is the hero shot again.
 #    (Manual: Power Apps -> Q3 Widget Launch -> Files section -> X on the file.)
 
 # 3. Revert the "Morning Launch Control update" automation to its single

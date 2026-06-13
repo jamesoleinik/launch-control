@@ -30,13 +30,24 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 
 > This is the new capability. After this beat, the platform has built embeddings over the PDF and agentic search returns content from inside the file.
 
-**🛠 Runs in:** your browser (Power Apps) and Microsoft Scout desktop (Chat).
+**🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app.
 
-1. Open the LaunchControl model-driven app.
-2. Open the **Q3 Widget Launch** record.
-3. In the **Files** section (the file column on `lc_launch`), upload [`episodes/ep-07-scout-autopilot/sample-feedback.pdf`](sample-feedback.pdf).
-4. Save the record. Wait ~30 seconds for the platform to build embeddings.
-5. In Scout chat, paste:
+The upload itself is an MCP call. Scout reads the PDF off disk with its filesystem tool, then fires `init_file_upload` → HTTP PUT to the returned SAS URL → `commit_file_upload` against the `lc_launch` file column. Same trio that Part 2 uses to attach the skill resource. Then a single `search_data` proves the embeddings landed.
+
+1. **Step 1a. Upload the PDF via Scout.** Paste this into Scout chat (replace `<repo>` with the absolute path to the repo on your machine; do not type the angle brackets):
+
+   ```
+   Use the Launch Control MCP server. Read the file at
+   <repo>/episodes/ep-07-scout-autopilot/sample-feedback.pdf and
+   attach it to the lc_launch row whose lc_name is
+   "Q3 Widget Launch" on its file column. Use init_file_upload to
+   get a SAS URL, PUT the bytes to it with x-ms-blob-type: BlockBlob,
+   then commit_file_upload. Tell me when commit returns.
+   ```
+
+   Scout's tool-use panel should show `search` (to find the launch row), then `init_file_upload`, then an HTTP PUT, then `commit_file_upload`. Wait ~30 seconds after commit for the platform to build embeddings.
+
+2. **Step 1b. Ask the question.** Paste:
 
    ```
    What is the top unresolved customer concern on Q3 Widget Launch?
@@ -44,9 +55,9 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
    launch, search inside it.
    ```
 
-   Scout's first move should be `search` to find the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query.
+   Scout's first move should be `search` to resolve the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query.
 
-> Want to upload via MCP instead of the portal? Any MCP-aware agent can do it with one prompt: *"Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` onto the Q3 Widget Launch record's file column using the Launch Control MCP server."*
+> Prefer to upload through the portal? Open the LaunchControl model-driven app, open the **Q3 Widget Launch** record, drop the PDF on the file column, save. The rest of the beat is identical.
 
 ---
 
