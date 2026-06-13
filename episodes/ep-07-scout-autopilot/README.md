@@ -26,46 +26,36 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 
 ---
 
-## Part 1 · Pull an artifact from SharePoint, land it on a launch, search inside it
+## Part 1 · Scout discovers external feedback, files it as a task, and reads inside it
 
-> This is the new capability, end to end. Scout fetches the beta-tester report from SharePoint (or OneDrive, or a public URL) using its own connectors, then uploads it onto the Dataverse launch record through MCP. The platform builds embeddings on commit. Agentic search returns content from inside the file.
+> The bridge, end to end, with no hand-holding in the prompt. Scout finds the customer feedback wherever it lives (SharePoint in this take), creates a task in Dataverse, attaches the source file to that task, and then a second prompt answers a question from inside the file.
 
-**🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app. The artifact lives in SharePoint; Dataverse never sees a local file path.
+**🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app. The artifact lives in SharePoint. The task that captures it lives in Dataverse as soon as Scout finishes the first prompt.
 
-The point of this beat is the bridge. Scout already reaches the places where unstructured artifacts live: the web, SharePoint, OneDrive, Teams. The new MCP file-upload trio (`init_file_upload` → HTTP PUT to the returned SAS URL → `commit_file_upload`) lets Scout land those artifacts on the system of record without a human in the loop. Then `search_data` answers questions from inside them.
+The point is the value chain: an agent that can reach the web/SharePoint/OneDrive plus the new MCP write + file-upload tools means "we got new customer feedback" turns into a tracked task with the source document attached, in one chat, with no human file-shuffle. Then `search_data` answers questions from inside the attached file.
 
-**Pre-record:** put `sample-feedback.pdf` somewhere Scout can read it. The script assumes SharePoint. OneDrive or a public URL work the same way (swap the source phrase in Step 1a).
+**Pre-record:** stage the source document where Scout's connectors can find it. For this take it lives on the LaunchControl SharePoint site (`https://a365preview001.sharepoint.com/sites/LaunchControl/`) as `Q3-widget-feedack.pdf`. (OneDrive or a public URL work the same; just adjust your "where to look" expectation.) Confirm `lc_task` has a file column enabled with "Available for Search" turned on, or move the file column to `lc_launch` and tell Scout to attach there instead.
 
-- SharePoint: upload to the LaunchControl team site, `Documents/Beta Feedback/Q3 Widget Launch - sample-feedback.pdf`.
-- OneDrive: put it in your personal `Documents/LaunchControl/` folder.
-- Public URL fallback: any HTTPS URL Scout can fetch (e.g., the raw GitHub link to the file in this repo).
-
-1. **Step 1a. Have Scout fetch and upload.** Paste this into Scout chat (swap the SharePoint phrase for OneDrive/URL if that's your source):
+1. **Step 1a. Tell Scout.** Paste this verbatim into Scout chat. Two sentences. No path. No filename. No instructions about tasks or MCP. The agent figures the rest out from the tools available to it:
 
    ```
-   On the LaunchControl SharePoint site, find the file named
-   "Q3 Widget Launch - sample-feedback.pdf" under
-   Documents/Beta Feedback. Read it. Then use the Launch Control MCP
-   server to attach it to the lc_launch row whose lc_name is
-   "Q3 Widget Launch", on its file column. Use init_file_upload to
-   get a SAS URL, PUT the bytes you just read with
-   x-ms-blob-type: BlockBlob, then commit_file_upload. Tell me when
-   commit returns.
+   We just got new customer feedback on the Q3 Widget Launch.
+   Check our LaunchControl SharePoint site for it.
    ```
 
-   Scout's tool-use panel should show its SharePoint/Graph tool fetch the file, then `search` to resolve the launch row, then `init_file_upload`, the HTTP PUT, then `commit_file_upload`. Wait ~30 seconds after commit for the platform to build embeddings.
+   Scout's tool-use panel should show, in order: its SharePoint/Graph search and read, then on the Launch Control MCP server `search` (to resolve the launch row), `create_record` (file a new `lc_task` summarizing what the customer said, `lc_source = 'customer-feedback'`), `init_file_upload`, an HTTP PUT to the SAS URL, then `commit_file_upload` to attach the source PDF to the new task. Wait ~30 seconds after commit for the platform to build embeddings over the attached file.
 
 2. **Step 1b. Ask the question.** Paste:
 
    ```
-   What is the top unresolved customer concern on Q3 Widget Launch?
-   Use the Launch Control MCP server. If a file is attached to that
-   launch, search inside it.
+   On Q3 Widget Launch, what's the most recent customer-feedback
+   task saying? Use the Launch Control MCP server, and if a file is
+   attached to that task, search inside it.
    ```
 
-   Scout's first move should be `search` to resolve the launch's scope, then `search_data` with that scope. The answer should quote from inside `sample-feedback.pdf`. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded for this query.
+   Scout's first move should be `read_query` (or `search`) to find the newest `lc_task` with `lc_source = 'customer-feedback'` on the launch, then `search_data` scoped to that task. The answer should quote from inside the attached PDF. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded.
 
-> Don't have SharePoint handy? Substitute *"Fetch this URL: https://raw.githubusercontent.com/jamesoleinik/launch-control/master/episodes/ep-07-scout-autopilot/sample-feedback.pdf"* in Step 1a; everything downstream is identical. Or upload through the LaunchControl model-driven app's Files section on the Q3 Widget Launch record and skip Step 1a.
+> Don't have SharePoint handy? Substitute a public URL ("Fetch this URL: ...") or OneDrive in Step 1a; everything downstream is identical. Or upload through the LaunchControl model-driven app and skip Step 1a.
 
 ---
 
