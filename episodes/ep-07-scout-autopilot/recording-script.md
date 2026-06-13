@@ -65,9 +65,8 @@ Three prompts. The first is a free discovery beat. The second is the seed for th
 Inventory every tool on the Launch Control Dataverse MCP server as
 a single markdown table, sorted by area then name. Columns: Area,
 Tool, Description (max 12 words), Required args (name:type, comma
-separated), Preview-only (Y/N), Inside-PDF search (Y/N). Areas:
-discovery, query, custom logic, records, tables, business skills,
-files, other. No prose before or after the table.
+separated). Areas: discovery, query, custom logic, records, tables,
+business skills, files, other. No prose before or after the table.
 ```
 
 Scout introspects the MCP server, calls `describe` against each tool, and renders a grouped table across all eight areas (discovery, query, custom logic, records, tables, business skills, files, other) with the required-argument signatures and the preview-vs-GA call-out. Hold at 1x while the table renders; the call-out line that names `search_data` as the inside-PDF tool is the lead-in to Part 1. Cut tight at the moment the table finishes.

@@ -41,9 +41,8 @@ The narrative is "Scout is the surface. Dataverse is the brain." The new MCP sha
 Inventory every tool on the Launch Control Dataverse MCP server as
 a single markdown table, sorted by area then name. Columns: Area,
 Tool, Description (max 12 words), Required args (name:type, comma
-separated), Preview-only (Y/N), Inside-PDF search (Y/N). Areas:
-discovery, query, custom logic, records, tables, business skills,
-files, other. No prose before or after the table.
+separated). Areas: discovery, query, custom logic, records, tables,
+business skills, files, other. No prose before or after the table.
 ```
 
 This is a free beat. Scout calls the MCP server's introspection (`describe`, plus a `list-tools`-style read) and renders the **18 preview tools** across the eight areas. On camera it's the visual proof that the shape really did change, and that `search_data`, `invoke_api`, and `execute_prompt` are the three the GA endpoint does not yet have. Hold the answer at 1x; the tool list scrolling past is the hero shot for the intro into Part 1.
