@@ -19,7 +19,7 @@
 Three beats, end-to-end inside Microsoft Scout. The skill is authored first, then run, then put on a schedule. Nothing in this episode is invented by hand. Every artifact, every line of skill body, every automation step is real and lives in Dataverse or in Scout's automation surface.
 
 1. **Co-author the Business Skill with Scout in chat, then save it to Dataverse.** Hand Scout the goal in plain English ("sweep SharePoint and email for new issues reported on a launch, file a task per finding, attach the source"). Scout drafts the skill body inline. Iterate live. Then say *"save it."* Scout fires four MCP calls in order on the Launch Control server, `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`, and the skill lands as a row in the Dataverse `skill` table, discoverable by name from any MCP-aware agent.
-2. **Run the skill on Q3 Widget Launch and watch it work.** Tell Scout *"run the Launch Readiness Sweep against Q3 Widget Launch."* Scout sweeps the LaunchControl SharePoint site and the Q3 mailbox, files one `lc_task` per finding, attaches the source document or email to each task via the MCP file-upload trio. Then a single follow-up question (*"what did it find?"*) gets answered with a verbatim excerpt from inside one of the attached files via `search_data`.
+2. **Run the skill on Q3 Widget Launch and watch dedup do its job.** Tell Scout *"run the Launch Readiness Sweep against Q3 Widget Launch."* Scout sweeps the LaunchControl SharePoint site and the Q3 mailbox. For each finding, Scout calls the new MCP **`search`** tool against the launch's existing tasks; `search` matches not just on column data but on the **content of files already attached** to those tasks. Findings that match an existing task get *enriched* (the new artifact is attached to the matching task, the description gets an "Update" line), not duplicated. Genuinely new findings get a fresh `lc_task` with the source attached. Then a single follow-up question (*"what did it find?"*) gets answered with a verbatim excerpt via `search_data`.
 3. **Make it always-on.** Open the existing "Morning Launch Control update" Scout Automation (the daily report from Episode 6) and extend it: step 1 = discover and load the new skill, step 2 = run it, step 3 = DM the result. Save. Hit *Run now*. The Teams summary lands.
 
 The narrative is "Scout is the surface. Dataverse is the brain." The new MCP shape is what makes that hand-off feel native, because authoring, discovery, and execution all happen through the same small tool set the agent already has.
@@ -46,22 +46,26 @@ This is a free beat. Scout calls the MCP server's introspection (`describe`, plu
 Now let's build a skill that uses these. Sweep our LaunchControl
 SharePoint site and our Q3 launch mailbox for issues reported on a
 launch, like blockers, escalations, regressions, slips, can't-ship,
-P0s. For each finding, file a task on the matching launch in
-Dataverse and attach the source document or email to the task so
-the collateral lives next to the work. Don't re-file what's already
-there.
+P0s.
+
+The key rule: never file a duplicate. Before creating a task,
+search the launch's existing tasks for a match, and have the search
+look inside the files already attached to those tasks too. If
+there's a match, attach the new collateral to the existing task
+and append an update line. Only file a new task when there is no
+match.
 
 Draft the skill body inline. We'll iterate. When I say "save it,"
 save it to Dataverse as Launch Readiness Sweep.
 ```
 
-Notice what is no longer in this prompt: tool names, upsert plumbing, unique-name suggestions, attachment-tool ordering, what to put in the Teams summary. Scout just discovered the tool shape in the previous prompt. It picks the right tools from what it knows.
+Notice what is still NOT in the prompt: tool names, upsert plumbing, unique-name. Scout picks the right MCP tools from the catalog it just discovered. What *is* in the prompt is the dedup intent, because dedup is the value beat and the dedup behavior is the whole reason the new `search` shape matters here.
 
 ### Iterate (one pass on camera)
 
 Scout returns a draft. The draft will be close to (but not identical to) [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md), which is the canonical reference body checked into this repo. Make one small edit so the iteration loop is visible:
 
-- *"For email findings, dedup by message subject plus sender, not just subject. Two people can file the same complaint."*
+- *"When there's a strong match, don't just attach: also append a one-line 'Update' to the existing task's description so the history is visible without opening the file."*
 
 Scout amends the draft in place.
 
@@ -98,12 +102,22 @@ The script uses `.env` `DATAVERSE_URL` + `AzureCliCredential` to mint the bearer
 
 **🛠 Runs in:** Microsoft Scout desktop, Chat. No portal. No app.
 
-**Pre-record:** stage at least two findings the sweep will pick up.
+**Pre-record:** seed the dedup baseline, then stage the on-camera findings.
 
-- **SharePoint.** Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` to the LaunchControl SharePoint site (`https://a365preview001.sharepoint.com/sites/LaunchControl/`) as `Q3-widget-feedack.pdf`. The PDF is seeded with `blocker`, `escalation`, `can't ship`, `customer impact`.
-- **Email.** Forward yourself (or send to the Q3 launch team mailbox) one short message with subject like "Q3 Widget Launch: pricing page mismatch" and a body containing the word `escalation`.
+- **Baseline tasks (run from this repo).** With your `.env` pointed at the demo environment and `az login` against the demo tenant, run:
 
-You don't have to use both, but the sweep is more compelling when it shows mixed sources in one summary. Confirm `lc_task` has a file column enabled with "Available for Search" turned on so embeddings build on attached collateral.
+  ```powershell
+  pip install --quiet reportlab requests python-dotenv azure-identity
+  python scripts/generate_q3_seed_artifacts.py
+  python scripts/seed_q3_sample_tasks.py
+  ```
+
+  This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior `lc_source = 'seed'` rows get cleared first). Three of them have PDFs attached, including one whose attached PDF describes an *export-to-CSV crash* and one whose attached PDF describes a *pricing page mismatch*. Those two are the dedup targets the on-camera sweep will hit. The other seven exist so the `search` tool has a realistic corpus to score against. **Confirm `lc_task` has a file column** enabled with **"Available for Search" turned on** so embeddings build over the attached collateral. The seeder defaults to `lc_artifact`; override with `LC_TASK_FILE_COLUMN=<name>` if yours differs.
+
+- **SharePoint (on-camera finding).** Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` to the LaunchControl SharePoint site (`https://a365preview001.sharepoint.com/sites/LaunchControl/`) as `Q3-widget-feedack.pdf`. The PDF is seeded with `blocker`, `escalation`, `can't ship`, `customer impact`, and its content overlaps the seeded *export-to-CSV crash* baseline task. **The sweep should match it and attach to that existing task, not create a new one.**
+- **Email (on-camera finding).** Forward yourself (or send to the Q3 launch team mailbox) one short message with subject like *"Q3 Widget Launch: pricing page disagrees with billing"* and a body containing `escalation`. Same idea: content overlaps the seeded *pricing mismatch* baseline. **Expected behavior: enrichment, not duplication.**
+
+The mix matters for the story. The on-camera sweep should produce **2 findings, 0 new tasks, 2 enriched existing tasks**. The headline of the summary is the dedup, not the file count.
 
 1. **Step 2a. Run the skill.** Paste this verbatim into Scout chat:
 
@@ -111,18 +125,18 @@ You don't have to use both, but the sweep is more compelling when it shows mixed
    Run the Launch Readiness Sweep against Q3 Widget Launch.
    ```
 
-   Scout's tool-use panel should show, in order: `search('launch readiness sweep')` and `describe` to load the skill body, then the skill itself executing. The skill fires Scout's SharePoint and Outlook connectors, then on the Launch Control MCP server: `read_query` (resolve the launch), `read_query` (dedup), `create_record` × N (one task per finding), and the file-upload trio per task (`init_file_upload` → HTTP PUT → `commit_file_upload`). The chat closes with the skill's three-section summary (headline + per-finding + no-ops). Wait ~30 seconds after the last commit so embeddings have time to build over the attached collateral.
+   Scout's tool-use panel should show, in order: `search('launch readiness sweep')` and `describe` to load the skill body, then the skill itself executing. The skill fires Scout's SharePoint and Outlook connectors, then on the Launch Control MCP server: `read_query` (resolve the launch), then for each finding the new MCP **`search`** tool scoped to `lc_task` on the launch (this is the dedup beat: the panel should show `search` returning hits that include excerpts from inside *already attached* PDFs), then `update_record` + the file-upload trio per matched task (`init_file_upload` → HTTP PUT → `commit_file_upload`). The chat closes with the skill's four-section summary (headline + new tasks + **enriched tasks** + no-ops). Wait ~30 seconds after the last commit so embeddings have time to build over the newly attached collateral.
 
 2. **Step 2b. Read inside what got attached.** Paste:
 
    ```
-   On Q3 Widget Launch, pull up the newest sharepoint-sweep task and
-   tell me what the source document actually says. Use the Launch
-   Control MCP server. If a file is attached to that task, search
-   inside it.
+   On Q3 Widget Launch, pull up the existing task that just got new
+   collateral attached and tell me what the new source document
+   actually says. Use the Launch Control MCP server. If a file is
+   attached to that task, search inside it.
    ```
 
-   Scout's first move should be `read_query` to find the newest `lc_task` with `lc_source = 'sharepoint-sweep'` on the launch, then `search_data` scoped to that task. The answer should quote from inside the attached PDF. Both **"export crash"** and **"pricing page disagrees with billing"** are seeded.
+   Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `search_data` scoped to that task. The answer should quote from inside the newly attached PDF (e.g. *"export crash"* or *"pricing page disagrees with billing"*).
 
 ---
 
@@ -174,8 +188,11 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 |---|---|---|
 | Business Skill (source) | [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md) | Canonical body of the skill |
 | Push script | [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py) | One-shot, idempotent. Calls `upsert_skill` + `create_skill_resource` + file-upload via the new MCP server |
-| Sample artifact | [`sample-feedback.pdf`](sample-feedback.pdf) | Seeded beta-tester report. Drag onto a launch on camera |
-| PDF generator | [`scripts/generate_ep07_sample_pdf.py`](../../scripts/generate_ep07_sample_pdf.py) | Regenerate the sample if you want to change the seeded phrases |
+| Sample artifact (on-camera) | [`sample-feedback.pdf`](sample-feedback.pdf) | Uploaded to SharePoint as `Q3-widget-feedack.pdf` on camera; the sweep should match this against the *export-to-CSV crash* baseline task and enrich, not duplicate |
+| PDF generator (sample) | [`scripts/generate_ep07_sample_pdf.py`](../../scripts/generate_ep07_sample_pdf.py) | Regenerate the on-camera sample if you want to change the seeded phrases |
+| Baseline seeder | [`scripts/seed_q3_sample_tasks.py`](../../scripts/seed_q3_sample_tasks.py) | One-shot, idempotent. Creates 10 `lc_task` rows on Q3 Widget Launch with `lc_source = 'seed'`, 3 with attached PDFs. Two are intentional dedup targets for the on-camera sweep |
+| Baseline artifact generator | [`scripts/generate_q3_seed_artifacts.py`](../../scripts/generate_q3_seed_artifacts.py) | Reportlab. Emits the 3 baseline PDFs to `seed-artifacts/` |
+| Baseline artifacts | [`seed-artifacts/`](seed-artifacts/) | The 3 PDFs the seeder attaches; phrasing overlaps the on-camera findings so `search`-over-attachments finds them |
 | Tool catalog | [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json) | Authoritative JSON-RPC `tools/list` response from the new MCP shape. Cited from this README and from the social post |
 | This README | `episodes/ep-07-scout-autopilot/README.md` | Repro-only |
 | Recording script | [`recording-script.md`](recording-script.md) | Producer cues, prompts, B-roll timing |
@@ -185,7 +202,7 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 ## Prerequisites
 
 - Episodes 1–6 substrate present in the target environment: the `lc_launch` / `lc_milestone` / `lc_task` / `lc_statusupdate` tables, at least one launch in `At Risk` or `Blocked` state (`Q3 Widget Launch` is the standing demo data), and the Ep-5 `lc_risksummary` AI prompt column on `lc_launch`.
-- **Files enabled** on the `lc_launch` table. Specifically a file column with **"Available for Search"** turned on (the platform setting that triggers embedding generation on commit). If your column is named differently from the demo, no code change is needed; only the on-screen drag-and-drop target differs.
+- **Files enabled** on the `lc_task` table (the seeder attaches to tasks, and the on-camera enrichment attaches to tasks) **and** on the `lc_launch` table. Each needs a file column with **"Available for Search"** turned on so the platform builds embeddings on commit. The seeder defaults the task file column to `lc_artifact`; override with `LC_TASK_FILE_COLUMN=<logicalname>` if yours differs.
 - **Microsoft Scout** desktop, Frontier preview, signed in as a user with Dataverse access to the target environment.
 - The **Launch Control MCP server** registered in Scout: Settings → Extensions → MCP Servers → `https://<your-org>.crm.dynamics.com/api/mcp`. Sign in. Tool count should be 17.
 
