@@ -64,9 +64,8 @@ Three prompts. The first is a free discovery beat. The second is the seed for th
 ```
 Inventory every tool on the Launch Control Dataverse MCP server as
 a single markdown table, sorted by area then name. Columns: Area,
-Tool, Description (max 12 words), Required args (name:type, comma
-separated). Areas: discovery, query, custom logic, records, tables,
-business skills, files, other.
+Tool, Description (max 12 words). Areas: discovery, query, custom
+logic, records, tables, business skills, files, other.
 
 Below the table, add a short "Preview-only" section that breaks out
 these three net-new tools with a 2-3 sentence description each,
