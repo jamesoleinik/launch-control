@@ -48,8 +48,8 @@ This is a free beat. Scout calls the MCP server's introspection (`describe`, plu
 ```
 Now let's build a skill that uses these. Sweep our LaunchControl
 SharePoint site at <https://<tenant>.sharepoint.com/sites/LaunchControl>
-and our Q3 launch mailbox for issues reported on a launch, like
-blockers, escalations, regressions, slips, can't-ship, P0s.
+for issues reported on a launch, like blockers, escalations,
+regressions, slips, can't-ship, P0s.
 
 The key rule: never file a duplicate. Before creating a task, ask
 the MCP server whether any open task on this launch already covers
