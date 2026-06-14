@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Launch Control Dataverse MCP — Server Map</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #273449;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --line: #475569;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+  }
+  .wrap { width: 100%; max-width: 720px; }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .server {
+    background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%);
+    color: white;
+    text-align: center;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 15px;
+    box-shadow: 0 4px 18px rgba(14, 165, 233, 0.35);
+    margin: 0 auto 0;
+    width: fit-content;
+    min-width: 320px;
+  }
+  .trunk {
+    width: 2px;
+    height: 28px;
+    background: var(--line);
+    margin: 0 auto;
+  }
+  .areas {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .area {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .area h2 {
+    margin: 0;
+    padding: 10px 8px;
+    font-size: 12px;
+    text-align: center;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--line);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  .area .count {
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 4px;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    flex: 1;
+  }
+  li {
+    padding: 6px 10px;
+    font-size: 11.5px;
+    font-family: "Cascadia Code", Consolas, monospace;
+    color: var(--ink);
+    border-bottom: 1px dashed rgba(148,163,184,0.15);
+    text-align: center;
+    word-break: break-word;
+  }
+  li:last-child { border-bottom: none; }
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Launch Control · Dataverse MCP Server</h1>
+  <div class="sub">16 tools · 5 functional areas</div>
+
+  <div class="server">launch_control MCP</div>
+  <div class="trunk"></div>
+
+  <div class="areas">
+    <section class="area">
+      <h2>Discovery <span class="count">2</span></h2>
+      <ul>
+        <li>search</li>
+        <li>describe</li>
+      </ul>
+    </section>
+
+    <section class="area">
+      <h2>Query &amp; Search <span class="count">2</span></h2>
+      <ul>
+        <li>read_query</li>
+        <li>search_data</li>
+      </ul>
+    </section>
+
+    <section class="area">
+      <h2>Records &amp; Files <span class="count">6</span></h2>
+      <ul>
+        <li>create_record</li>
+        <li>update_record</li>
+        <li>delete_record</li>
+        <li>init_file_upload</li>
+        <li>commit_file_upload</li>
+        <li>file_download</li>
+      </ul>
+    </section>
+
+    <section class="area">
+      <h2>Tables <span class="count">3</span></h2>
+      <ul>
+        <li>create_table</li>
+        <li>update_table</li>
+        <li>delete_table</li>
+      </ul>
+    </section>
+
+    <section class="area">
+      <h2>Skills <span class="count">3</span></h2>
+      <ul>
+        <li>upsert_skill</li>
+        <li>delete_skill</li>
+        <li>create_skill_resource</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="footer">Generated 2026-06-14 · Launch Control Dataverse MCP server inventory</div>
+</div>
+</body>
+</html>

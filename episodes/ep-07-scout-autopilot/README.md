@@ -1,31 +1,27 @@
 # Episode 7: The Dataverse MCP face-lift, in Scout, on a schedule
 
 **Status:** 🚧 In development · 🎬 Not yet recorded
-**Features:** ⭐ The new Dataverse MCP **preview** tool shape (18 tools, NL-driven) · ⭐ Semantic search across records *and* attached file content in one call (`search_data`) · ⭐ Custom API invocation from the agent (`invoke_api`) · ⭐ AI Prompt execution from the agent (`execute_prompt`) · ⭐ Business Skills authored *into* Dataverse via the MCP server · ⭐ Microsoft Scout Automations
+**Features:** ⭐ The Dataverse MCP **preview** tool shape · ⭐ Semantic search across records *and* attached files in one call (`search_data`) · ⭐ Business Skills authored *into* Dataverse · ⭐ Microsoft Scout Automations
 **Layer:** 🟣 Layer 3 reach. The always-on agent surface
-**Coding agent:** None for the demo. The "agent" in this episode is Microsoft Scout itself.
-**Runtime:** Microsoft Scout (Frontier) desktop + Dataverse MCP Server (`/api/mcp_preview`, **preview**) + the LaunchControl solution from Episodes 1–6
+**Runtime:** Microsoft Scout (Frontier) desktop + Dataverse MCP Server (`/api/mcp_preview`) + the LaunchControl solution from Episodes 1–6
 
-> 📖 **What changed under the covers.** The Dataverse MCP server moved from per-entity `list / get / create / update / delete` to a small, NL-driven shape. The authoritative catalog used in this episode is checked in as [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json). On the preview endpoint the shape splits into **Discovery** (`search`, `describe`, **`search_data`**), **Query** (`read_query` — the "execute" surface), **Custom logic** (**`invoke_api`**, **`execute_prompt`**), **Records** (`create_record` / `update_record` / `delete_record`), **Tables** (`create_table` / `update_table` / `delete_table`), **Business Skills** (`upsert_skill` / `delete_skill` / `create_skill_resource`), and **Files** (`init_file_upload` / `commit_file_upload` / `file_download`).
+![Launch Control Dataverse MCP server map: 16 tools across 5 functional areas](assets/launch-control-mcp-map.png)
 
-> 🆕 **Three net-new preview-only capabilities** ride on that shape, and they are the reason this episode targets `/api/mcp_preview` instead of GA `/api/mcp`:
-> 1. **`search_data` — semantic search over records *and* attached file content in one call.** Scope-bound to a Dataverse search model. Returns row paths (e.g. `tables/lc_task/records/<guid>`) plus matched content excerpts from inside file columns that have *Available for Search* enabled. This is what powers the dedup beat in Part 2: one call decides whether a finding is already covered, including when the evidence is inside a PDF on a task's `lc_relateddocuments`.
-> 2. **`invoke_api` — call a Dataverse Custom API by name.** Lets the agent invoke server-side logic without dropping out to Web API plumbing (the natural place to expose Episodes 4-5 graders, retry orchestrators, or any other Custom API).
-> 3. **`execute_prompt` — run an AI Prompt by id.** The agent can fire `lc_risksummary` (or any other Prompt column) on demand, not just on row save.
->
-> Files still ride along too: `init_file_upload` → PUT → `commit_file_upload` attaches bytes to a record's file column, and `file_download` pulls them back into the agent's context as a fallback when `search_data`'s excerpt is not enough.
+> 📖 **What changed.** The Dataverse MCP server moved from per-entity CRUD to a small NL-driven shape: **16 tools across 5 areas** (Discovery, Query & Search, Records & Files, Tables, Skills), shown above. The preview endpoint also exposes two custom-logic tools, `invoke_api` and `execute_prompt`, used for the Part 3 schedule extensions. Authoritative catalog: [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json). Interactive map: [`assets/launch-control-mcp-map.html`](assets/launch-control-mcp-map.html).
+
+> 🆕 **The single tool that earns this episode is `search_data`.** Semantic search over records *and* attached file content in one call, scoped to a Dataverse search model. Returns row paths plus matched-content excerpts from inside file columns that have *Available for Search* enabled. That is what powers the dedup beat in Part 2: one call decides whether a finding is already covered, including when the evidence is inside a PDF on a task's `lc_relateddocuments`.
 
 ---
 
 ## The shape of the demo
 
-Three beats, end-to-end inside Microsoft Scout. The skill is authored first, then run, then put on a schedule. Nothing in this episode is invented by hand. Every artifact, every line of skill body, every automation step is real and lives in Dataverse or in Scout's automation surface.
+Three beats, end-to-end inside Microsoft Scout.
 
-1. **Co-author the Business Skill with Scout in chat, then save it to Dataverse.** Hand Scout the goal in plain English ("sweep SharePoint and email for new issues reported on a launch, file a task per finding, attach the source"). Scout drafts the skill body inline. Iterate live. Then say *"save it."* Scout fires four MCP calls in order on the Launch Control server, `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`, and the skill lands as a row in the Dataverse `skill` table, discoverable by name from any MCP-aware agent.
-2. **Run the skill on Q3 Widget Launch and watch dedup do its job.** Tell Scout *"run the Launch Readiness Sweep against Q3 Widget Launch."* Scout sweeps the runner's Outlook inbox and Microsoft Teams. For each finding, Scout calls **`search_data`** once against the LaunchControl search scope to ask the MCP server whether any open task on the launch already covers it. `search_data` searches across `lc_task` fields *and* the indexed body content of PDFs attached to `lc_relateddocuments` in a single call, and returns the matching row path plus the excerpt that matched. Findings that match an existing task get *enriched* (the new artifact is attached to the matching task, the description gets an "Update" line), not duplicated. Genuinely new findings get a fresh `lc_task` with the source attached. `file_download` is reserved for follow-up reads when the excerpt is not enough; the dedup decision itself is one call.
-3. **Make it always-on.** Open the existing "Morning Launch Control update" Scout Automation (the daily report from Episode 6) and extend it: step 1 = discover and load the new skill, step 2 = run it, step 3 = DM the result. Save. Hit *Run now*. The Teams summary lands.
+1. **Co-author the Business Skill with Scout, then save it to Dataverse.** Hand Scout the goal in plain English. Scout drafts the skill body inline, iterates, then fires four MCP calls (`upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`) and the skill lands as a row in the Dataverse `skill` table, discoverable by name from any MCP-aware agent.
+2. **Run the skill on Q3 Widget Launch and watch `search_data` do dedup.** Tell Scout *"run the Launch Readiness Sweep against Q3 Widget Launch."* Scout sweeps Outlook + Teams. For each finding it calls `search_data` once: matches against `lc_task` fields *and* the indexed body content of attached PDFs in a single call. Matches get *enriched* (new artifact attached, "Update" line appended). Genuinely new findings get a fresh `lc_task` with the source attached.
+3. **Make it always-on.** Extend the existing "Morning Launch Control update" Scout Automation: discover the skill, run it, DM the result. The Teams summary lands every weekday at 9am.
 
-The narrative is "Scout is the surface. Dataverse is the brain." The new MCP shape is what makes that hand-off feel native, because authoring, discovery, and execution all happen through the same small tool set the agent already has.
+The narrative is "Scout is the surface. Dataverse is the brain."
 
 ---
 
