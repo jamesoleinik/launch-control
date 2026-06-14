@@ -36,7 +36,7 @@ the export crash."*). The launch name `Q3 Widget Launch` is visible.
 | **0:00–0:03** | Still · the 17-tool, 6-area MCP catalog. | "The Dataverse MCP server grew up." | ⬇ **The MCP server grew up.** |
 | **0:03–0:07** | Hard cut to a Scout chat answer streaming a verbatim PDF excerpt. | "And it brought files with it." | ⬇ **And it brought files with it.** |
 | **0:07–0:18** ⭐ **Intro · The new preview tool shape (11s)** | Cut between the tool catalog still and `dataverse-mcp-tools.json` open in VS Code. Highlight `search`, `describe`, `read_query`, **`search_data`**, `invoke_api`, `execute_prompt`. | "The preview shape moved from CRUD per table to discovery, query, and a search tool that reads inside attachments. Eighteen tools today, three of them preview-only. Agents ask in English, the server finds the right thing, including matches inside the PDFs you attached." | ⬇ **Search. Describe. Read inside files.** |
-| **0:18–1:05** ⭐ **Part 1 · Discover the tools live, co-author the skill, save it (47s)** | Scout chat fullscreen. James pastes the Part 1a discovery prompt; Scout renders the tool catalog inline. Cut tight. James pastes the Part 1b seed prompt (short, no tool names, but with the dedup-via-read-then-read-inside rule called out). Scout drafts the skill body inline; markdown scrolls. James types one iteration. Scout amends. James types "Save it." Tool-use panel fires four MCP calls: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "First I had Scout check the latest Dataverse MCP tool shapes. Discovery, query, records, tables, business skills, files. Then I told Scout what I wanted: sweep SharePoint and email for issues on a launch, and never file a duplicate. Pull the launch's open tasks, compare, and if the title and notes aren't enough, open the attached PDF and read inside before deciding. I didn't name a single tool. Scout drafted it, we tightened one rule, I said save it. Four MCP calls. The skill is a row in Dataverse." | ⬇ **'Check the tool shapes.'** → 0:30 **New shape, six areas.** → 0:42 **Tell Scout: never file a duplicate.** → 0:55 **Say "save it."** → 1:02 **Skill = row in Dataverse.** |
+| **0:18–1:05** ⭐ **Part 1 · Discover the tools live, co-author the skill, save it (47s)** | Scout chat fullscreen. James pastes the Part 1a discovery prompt; Scout renders the tool catalog inline. Cut tight. James pastes the Part 1b seed prompt (short, no tool names, but with the dedup-via-read-then-read-inside rule called out). Scout drafts the skill body inline; markdown scrolls. James types one iteration. Scout amends. James types "Save it." Tool-use panel fires four MCP calls: `upsert_skill` → `create_skill_resource` → `init_file_upload` → `commit_file_upload`. Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row → the resource attached. | "First I had Scout check the latest Dataverse MCP tool shapes. Discovery, query, records, tables, business skills, files. Then I told Scout what I wanted: sweep my inbox and Teams for issues on a launch, and never file a duplicate. Ask the server whether any open task already covers the finding, including matches inside the attached collateral. I didn't name a single tool. Scout drafted it, we tightened one rule, I said save it. Four MCP calls. The skill is a row in Dataverse." | ⬇ **'Check the tool shapes.'** → 0:30 **New shape, six areas.** → 0:42 **Tell Scout: never file a duplicate.** → 0:55 **Say "save it."** → 1:02 **Skill = row in Dataverse.** |
 | **1:05–1:35** ⭐ **Part 2 · Run the skill on Q3, watch `search_data` do dedup, read inside what got attached (30s)** | Scout chat. James pastes `Run the Launch Readiness Sweep against Q3 Widget Launch.` Tool-use panel: `search`/`describe` to load the skill, then the skill executes. The new beat: per finding, **`search_data`** fires once against the LaunchControl model scope and returns matching `lc_task` row paths *plus the excerpt from inside the attached PDF* that triggered the match. That's the dedup moment, one call. Then `update_record` + the file-upload trio attaches the new source to the matched task. Speed-ramp 3x through the panel; drop to 1x on the `search_data` call (zoom on the excerpt block in the result) and on the closing summary, which should call out *N enriched, 0 new*. James pastes the Part 2b question. Answer streams a verbatim quote from inside the newly attached PDF via `file_download`. | "Then I ran it on Q3. For every finding, Scout called `search_data` once. It searched task fields *and inside the attached PDFs* in one shot, and returned the excerpt that matched. Both findings matched. So the new collateral got attached to the existing tasks instead of filing duplicates. No noise added to the queue." | ⬇ **Run the skill.** → 1:13 **One call, matches inside the PDF.** → 1:23 **2 enriched, 0 duplicates.** → 1:30 **Answer from inside the new PDF.** |
 | **1:35–1:55** ⭐ **Part 3 · Always-on Scout (20s)** | Scout → Automations → open "Morning Launch Control update". Edit. Paste the 3 new step bodies (2x speed on the typing). Save. Click Run now. Cut to Teams · the summary DM lands with launch name, the new task names, and the verbatim risk excerpt. | "Then Scout puts it on a schedule. Discover the skill. Run it. DM me the result. Every weekday at nine." | ⬇ **Step 1: discover.** → 1:42 **Step 2: run.** → 1:48 **Step 3: report.** → 1:52 **Always on.** |
 | **1:55–2:00** | End card. *"Next: Episode 8: RBAC."* `github.com/jamesoleinik/launch-control` | "Same data. Same security. Now always on." | ⬇ **Episode 8 next: RBAC.** |
@@ -89,10 +89,9 @@ Scout introspects the MCP server, calls `describe` against each tool, and render
 #### Step 1b. Seed the skill (paste verbatim, deliberately short)
 
 ```
-Now let's build a skill that uses these. Sweep our LaunchControl
-SharePoint site at <https://<tenant>.sharepoint.com/sites/LaunchControl>
-for issues reported on a launch, like blockers, escalations,
-regressions, slips, can't-ship, P0s.
+Now let's build a skill that uses these. Sweep my Outlook inbox and
+my Microsoft Teams messages for issues reported on a launch, like
+blockers, escalations, regressions, slips, can't-ship, P0s.
 
 The key rule: never file a duplicate. Before creating a task, ask
 the MCP server whether any open task on this launch already covers
@@ -105,8 +104,6 @@ line. Only file a new task when there is no match.
 Draft the skill body inline. We'll iterate. When I say "save it,"
 save it to Dataverse as Launch Readiness Sweep.
 ```
-
-> Before the take, swap `<tenant>` for the real M365 short name and confirm the site path matches where the LaunchControl docs actually live (on-camera env: `https://m365cpi13620341.sharepoint.com/sites/LaunchControl`). Leaving the literal angle brackets in is fine on camera if the take is a private rehearsal; for the published take, paste the real URL.
 
 No tool names, no upsert plumbing. The dedup rule *is* in the prompt because dedup is the value beat of the episode. Let the draft stream at 1x for ~10s; the markdown body scrolling is the hero shot.
 
@@ -143,17 +140,30 @@ Hard cut to Power Apps → Skill table → the new `Launch Readiness Sweep` row 
 
 ### Part 2 prompts: Run the skill on Q3, then read inside what it filed (1:05–1:35)
 
-Two prompts back to back. The skill from Part 1 is doing the work now; Scout is just the host. Wait ~30 seconds between Step 2a's last `commit_file_upload` and Step 2b so embeddings have time to build over the attached collateral.
+Three prompts back to back. The skill from Part 1 is doing the work now; Scout is just the host. Wait ~30 seconds between the `seed_q3_sample_tasks.py` run and Step 2a so embeddings have time to build over the seeded PDFs.
 
-#### Step 2a. Run the skill (paste verbatim, one short sentence)
+#### Step 2a. Prove `search_data` works on its own (paste verbatim, hold at 1x)
+
+```
+Using the Launch Control MCP server, call search_data once with
+the query "export to CSV crashes the app" and scope
+"new_dvtablesearch_aiplugin_model_lc_Model". Show me the raw tool
+response: every row path it returned, and for each row path the
+matched-content excerpt. Do not summarise. Do not call any other
+tool.
+```
+
+This is the hero shot for Part 2. Scout fires exactly one MCP call, `search_data`. The response panel should include the `tables/lc_task/records/<guid>` row path for the seeded export-crash task plus a matched-content excerpt **quoted from inside that task's attached PDF**. Zoom the excerpt block at 1x. The point is to make `search_data`'s power visible on its own before the skill wraps it.
+
+#### Step 2b. Run the skill (paste verbatim, one short sentence)
 
 ```
 Run the Launch Readiness Sweep against Q3 Widget Launch.
 ```
 
-Tool-use panel sequence: Scout calls `search('launch readiness sweep')` then `describe` to load the skill body, then follows the body. That means: Scout's SharePoint search and read, Scout's Outlook search and read, then on the Launch Control MCP server `read_query` (resolve the launch and fetch `lc_risksummary`), then **`search_data`** once per finding (scope `new_dvtablesearch_aiplugin_model_lc_Model`). The result panel for `search_data` is the visual proof — hold at 1x and zoom on the matched-content excerpt block, which is text *from inside the attached PDF*, not from the task's columns. Then `update_record` + `init_file_upload` → HTTP PUT → `commit_file_upload` per matched task. Optional `file_download` only if a `search_data` excerpt is ambiguous (not expected on camera). Drop to 1x on the closing four-section summary (headline + new + **enriched** + no-ops). The expected mix for the on-camera take is **2 findings, 0 new tasks, 2 enriched**.
+Tool-use panel sequence: Scout calls `search('launch readiness sweep')` then `describe` to load the skill body, then follows the body. That means: Scout's Outlook search and read, Scout's Teams search and read, then on the Launch Control MCP server `read_query` (resolve the launch and fetch `lc_risksummary`), then **`search_data`** once per finding (scope `new_dvtablesearch_aiplugin_model_lc_Model`). The result panel for `search_data` is the visual proof again, this time inside the skill loop. Then `update_record` + `init_file_upload` → HTTP PUT → `commit_file_upload` per task touched. Optional `file_download` only if a `search_data` excerpt is ambiguous (not expected on camera). Drop to 1x on the closing four-section summary (headline + new + **enriched** + no-ops). The expected mix for the on-camera take is **2 findings, 1 new task (mobile auth callback), 1 enriched (export-to-CSV crash)**.
 
-#### Step 2b. Read inside what got attached (paste verbatim, 1x, no speed-ramp)
+#### Step 2c. Read inside what got attached (paste verbatim, 1x, no speed-ramp)
 
 ```
 On Q3 Widget Launch, pull any task that just got created or updated
@@ -222,8 +232,10 @@ Save. Click **Run now**. Hold on the Teams DM when it lands.
   python scripts/seed_q3_sample_tasks.py
   ```
   This creates **10 `lc_task` rows on Q3 Widget Launch** with titles prefixed `[SEED]` (idempotent: any prior `[SEED]`-prefixed rows on Q3 get cleared first; the title prefix is the seed identifier because `lc_task` has no `lc_source` column). **Three of them ship with PDFs attached to `lc_relateddocuments`**, including the two intentional dedup targets: *Bug: Export to CSV crashes* (matches the SharePoint PDF below) and *Bug: Pricing page disagrees with billing* (matches the email below).
-- [ ] **SharePoint finding staged** at `https://a365preview001.sharepoint.com/sites/LaunchControl/`. Upload `episodes/ep-07-scout-autopilot/sample-feedback.pdf` as `Q3-widget-feedack.pdf`. Its content overlaps the seeded *export-to-CSV crash* baseline task; the on-camera sweep should match and enrich, not duplicate.
-- [ ] **Email finding staged.** Send yourself (or the Q3 launch team mailbox) one short message with subject like `Q3 Widget Launch: pricing page disagrees with billing` and a body containing the word `escalation`. Content overlaps the seeded *pricing mismatch* baseline; same enrichment behavior expected.
+- [ ] **Trigger emails sent to the on-camera demo inbox `jamesol@a365preview001.onmicrosoft.com`** within ~10 minutes of the take. Send two short messages from a different account (any external-looking sender):
+  - **Email A (enrich).** Subject: `Q3 Widget Launch - export to CSV crashes the app for Northwind`. Body: 2-3 sentences naming `Q3 Widget Launch` in the first line and describing the export-to-CSV crash on a large composition. Attach a short PDF named `Q3-widget-export-crash-northwind.pdf` repeating the same text. Topic overlaps the seeded *export-to-CSV crash* baseline task whose attached PDF the dedup beat should match.
+  - **Email B (new task).** Subject: `Q3 Widget Launch - mobile auth callback fails after SSO`. Body: 2-3 sentences naming `Q3 Widget Launch` in the first line and describing a mobile OAuth callback that 500s after the IdP redirect. Attach `Q3-widget-mobile-auth-callback.pdf` repeating the description. No seed task covers this; should file a fresh `lc_task`.
+- [ ] **Trigger Teams posts (optional but recommended).** Post the same two messages into a channel the runner is in (with the PDFs as channel attachments) so the Teams sweep beat also has live data.
 - [ ] **No prior sweep-filed tasks on Q3** beyond the `[SEED]` baseline. The on-camera sweep should produce **2 findings, 0 new, 2 enriched** (the seed PDFs win the dedup match). If a prior take left non-`[SEED]` tasks behind that contain `escalation`/`blocker` phrasing, delete them so the headline count stays clean.
 - [ ] **The "Morning Launch Control update" Scout Automation exists** with its current single step ("Send me today's daily LaunchControl launch report in Teams"). The hero shot is editing it in place.
 - [ ] **Browser windows + apps pre-loaded:**
@@ -267,7 +279,7 @@ python scripts/seed_q3_sample_tasks.py
 #    the original "Send me today's daily LaunchControl launch report in
 #    Teams" step.)
 
-# 5. (Optional) Re-stage the SharePoint doc or the email if you've removed them.
+# 5. (Optional) Re-send the two trigger emails (and re-post in Teams) if you've cleared the prior inbox state.
 #    The pre-record checklist above lists the seeded variants.
 ```
 

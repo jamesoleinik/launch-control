@@ -3,7 +3,7 @@
 ## Description
 
 The intake sweep. When invoked against a launch, Scout scans the
-places where issues actually get reported (SharePoint and email),
+places where issues actually get reported (Outlook inbox and Teams),
 then **uses the new Dataverse MCP preview tool shape to check whether
 an existing task on the launch already covers the same issue** before
 filing anything. The dedup decision lives in a single call:
@@ -27,10 +27,11 @@ is not enough.
 
 Sources of truth this skill sweeps:
 
-1. **The LaunchControl SharePoint site.** Documents, beta feedback,
-   support exports.
-2. **The Q3 launch team mailbox** (`q3-launch@<tenant>`) plus the
-   runner's own inbox.
+1. **The runner's Outlook inbox** plus the shared team mailbox.
+   Customer reports, beta-tester replies, support escalations,
+   internal status updates.
+2. **Microsoft Teams.** Channel messages and chat threads where the
+   launch is named.
 
 ## Instructions
 
@@ -50,25 +51,26 @@ in Step 6. If the invoker did not name a launch, fall back to all
 launches with `lc_status IN ('At Risk', 'Blocked')` and run Steps 2
 through 6 for each one.
 
-### Step 2: Sweep SharePoint for issue reports on this launch
-
-Use Scout's SharePoint connector. Query the LaunchControl site for
-documents that reference the launch by name or short code and contain
-at least one issue signal: **blocker, escalation, regression, slip,
-can't ship, customer impact, defect, P0, P1**.
-
-For each match capture: title, URL, the signal it matched on, and a
-1-2 sentence excerpt. Skip anything older than 30 days.
-
-### Step 3: Sweep email for issue reports on this launch
+### Step 2: Sweep Outlook for issue reports on this launch
 
 Use Scout's Outlook connector. Search the runner's inbox plus the
 shared team mailbox for messages whose subject or body references the
-launch and contains an issue signal (same list as Step 2). Limit to
-the last 7 days.
+launch and contains at least one issue signal: **blocker, escalation,
+regression, slip, can't ship, customer impact, defect, P0, P1**.
+Limit to the last 7 days.
 
 For each match capture: subject, from, sent date, the matched signal,
 a 1-2 sentence excerpt, and any attachments.
+
+### Step 3: Sweep Teams for issue reports on this launch
+
+Use Scout's Teams connector. Search channel messages and chats the
+runner has access to for posts that reference the launch by name or
+short code and contain at least one issue signal (same list as Step 2).
+Limit to the last 7 days.
+
+For each match capture: channel or chat name, author, posted date,
+the matched signal, a 1-2 sentence excerpt, and any attachments.
 
 ### Step 4 (key step): Dedup via `search_data` across rows + attached file content
 
@@ -165,7 +167,7 @@ against `lc_relateddocuments`.
 Return a single chat message with four sections:
 
 1. **Headline.** Launch name, the launch's verbatim `lc_risksummary`,
-   count of SharePoint findings, count of email findings, count of
+   count of Outlook findings, count of Teams findings, count of
    new tasks filed, count of existing tasks enriched.
 2. **New tasks.** Task name, source, one-line excerpt, link.
 3. **Enriched tasks (the dedup wins).** Existing task name, the
