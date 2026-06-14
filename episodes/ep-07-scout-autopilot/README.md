@@ -7,6 +7,8 @@
 
 ![Launch Control Dataverse MCP server map: 16 tools across 5 functional areas](assets/launch-control-mcp-map.png)
 
+> 🤖 **What is Microsoft Scout?** Microsoft's first **Autopilot** agent: an always-on personal agent that works autonomously under its own governed Entra identity, integrated across Teams, Outlook, OneDrive, SharePoint, and MCP servers, with context learned over time by Work IQ. Built on the **OpenClaw** open-source stack and available today in Frontier preview. ([announcement](https://www.microsoft.com/en-us/microsoft-365/blog/2026/06/02/introducing-microsoft-scout-your-always-on-personal-agent/))
+
 > 📖 **What changed.** The Dataverse MCP server moved from per-entity CRUD to a small NL-driven shape: **16 tools across 5 areas** (Discovery, Query & Search, Records & Files, Tables, Skills), shown above. The preview endpoint also exposes two custom-logic tools, `invoke_api` and `execute_prompt`, used for the Part 3 schedule extensions. Authoritative catalog: [`dataverse-mcp-tools.json`](dataverse-mcp-tools.json). Interactive map: [`assets/launch-control-mcp-map.html`](assets/launch-control-mcp-map.html).
 
 > 🆕 **The single tool that earns this episode is `search_data`.** Semantic search over records *and* attached file content in one call, scoped to a Dataverse search model. That is what powers the dedup beat in Part 2: one call decides whether a finding is already covered, including when the evidence is inside a PDF on a task's `lc_relateddocuments`.
