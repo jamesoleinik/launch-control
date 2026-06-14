@@ -195,6 +195,8 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 | Business Skill (source) | [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md) | Canonical body of the skill |
 | Push script | [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py) | One-shot, idempotent. Calls `upsert_skill` + `create_skill_resource` + file-upload via the new MCP server |
 | Baseline seeder | [`scripts/seed_q3_sample_tasks.py`](../../scripts/seed_q3_sample_tasks.py) | One-shot, idempotent. Creates 12 `lc_task` rows on Q3 Widget Launch (titles prefixed `[SEED]`), 3 of which are intentional duplicates about the same export-to-CSV crash (the "look at the chaos" beat for Step 2a). Uses the Dataverse Web API directly |
+| Trigger email sender (PowerShell) | [`scripts/send_q3_trigger_emails.ps1`](../../scripts/send_q3_trigger_emails.ps1) | Sends Email A (enrich) and Email B (new task) into `jamesol@a365preview001.onmicrosoft.com` via Microsoft Graph PowerShell with interactive `Mail.Send` consent. Preferred on a workstation |
+| Trigger email sender (Python) | [`scripts/send_q3_trigger_emails.py`](../../scripts/send_q3_trigger_emails.py) | Same two emails, AzureCliCredential path. For service-principal / CI scenarios where Mail.Send is preconsented |
 | Baseline artifact generator | [`scripts/generate_q3_seed_artifacts.py`](../../scripts/generate_q3_seed_artifacts.py) | Reportlab. Emits the 3 baseline PDFs to `seed-artifacts/` |
 | Baseline artifacts | [`seed-artifacts/`](seed-artifacts/) | The 3 PDFs the seeder attaches; phrasing overlaps the trigger email topics so dedup lands |
 | Seed-prefix cleanup | [`scripts/remove_seed_prefix.py`](../../scripts/remove_seed_prefix.py) | One-shot, idempotent. Strips the `[SEED] ` title prefix from the seeded tasks once you no longer need the marker (e.g. before sharing the environment) |
@@ -255,10 +257,28 @@ This creates **12 baseline `lc_task` rows** on Q3 Widget Launch (idempotent: pri
 
 ### Setup B · Send the trigger artifacts (so the sweep has something to find)
 
-The sweep needs real inbox + Teams traffic to act on. Send these into the on-camera demo mailbox `jamesol@a365preview001.onmicrosoft.com` from a different account a few minutes before the take so they're sitting at the top of the inbox when the sweep fires:
+The sweep needs real inbox + Teams traffic to act on. Two automated sender scripts ship with this episode; either one sends both trigger emails to `jamesol@a365preview001.onmicrosoft.com` with a PDF attached:
 
-- **Email A (will enrich an existing task).** Sender: any external-looking address. Subject: `Q3 Widget Launch - export to CSV crashes the app for Northwind`. Body: 2-3 sentences describing the export-to-CSV crash on a large composition, naming `Q3 Widget Launch` in the first line. Attach a short PDF named `Q3-widget-export-crash-northwind.pdf` containing the same description. This finding **overlaps a seeded baseline task's attached PDF**, so `search_data` should match it inside-the-PDF and the skill should enrich the existing task, not file a duplicate.
+```powershell
+# Preferred on a workstation: PowerShell, uses Connect-MgGraph and
+# pops a one-time browser consent for the Mail.Send scope.
+pwsh -File scripts/send_q3_trigger_emails.ps1
+```
 
-- **Email B (will create a new task).** Sender: any external-looking address. Subject: `Q3 Widget Launch - mobile auth callback fails after SSO`. Body: 2-3 sentences describing a brand-new issue (mobile OAuth callback returns 500 after the IdP redirect), naming `Q3 Widget Launch` in the first line. Attach a short PDF named `Q3-widget-mobile-auth-callback.pdf` repeating the same description. No seed task covers this, so `search_data` should return no in-launch matches and the skill should file a fresh `lc_task` with the PDF attached.
+```powershell
+# Service-principal / CI alternative: Python, uses AzureCliCredential.
+# Requires the signed-in client to be preconsented for Mail.Send on
+# the tenant (the default Azure CLI public client is not, so this
+# path is for app-registration scenarios).
+python scripts/send_q3_trigger_emails.py
+```
 
-Optionally also post one or both into a Teams channel the runner is in (subject becomes the channel post title; the PDF becomes a channel attachment) so the Teams sweep beat also has live data to work with. The runtime account `jamesol@a365preview001.onmicrosoft.com` is what `.env` is pointed at on camera; swap for your own if reproducing.
+Both senders create the same two emails:
+
+- **Email A (will enrich an existing task).** Subject: `Q3 Widget Launch - export to CSV crashes the app for Northwind`. Body names `Q3 Widget Launch` in the first line and describes the export-to-CSV crash on a large composition. Attached PDF (`Q3-widget-export-crash-northwind.pdf`) repeats the same description. This finding **overlaps a seeded baseline task's attached PDF**, so `search_data` should match it inside-the-PDF and the skill should enrich the existing task, not file a duplicate.
+
+- **Email B (will create a new task).** Subject: `Q3 Widget Launch - mobile auth callback fails after SSO`. Body names `Q3 Widget Launch` in the first line and describes a mobile OAuth callback that 500s after the IdP redirect. Attached PDF (`Q3-widget-mobile-auth-callback.pdf`) repeats the description. No seed task covers this, so `search_data` should return no in-launch matches and the skill should file a fresh `lc_task` with the PDF attached.
+
+Both sender and recipient are `jamesol@a365preview001.onmicrosoft.com` on camera, so the emails arrive from "me to me". Swap `RECIPIENT` in the scripts (and Outlook will also need a different from-address) if you reproduce on a different tenant.
+
+Optionally also post one or both into a Teams channel the runner is in (subject becomes the channel post title; the PDF becomes a channel attachment) so the Teams sweep beat also has live data to work with.
