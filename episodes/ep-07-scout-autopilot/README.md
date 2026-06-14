@@ -86,6 +86,8 @@ Looks good. Save it.
 
 Scout's tool-use panel should show four MCP calls fire in order: **upsert_skill** → **create_skill_resource** → **init_file_upload** → **commit_file_upload**. The final reply summarises with the new skill's GUID.
 
+> 📄 **The exact body Scout produced on the on-camera take is checked in for reference** at [`reference-launch-readiness-sweep.md`](reference-launch-readiness-sweep.md). It is preserved verbatim (including the tool-call gotchas Scout discovered live) so anyone watching the video can compare what they see Scout draft against the captured artifact. The hand-curated, canonical version lives at [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md) and is the one pushed to Dataverse for ongoing use.
+
 ### Verify
 
 Open Power Apps → Tables → **Skill** → **Launch Readiness Sweep**. The body column shows the markdown from the chat draft. Open Related → **Skill Resources** to see the `launch-readiness-sweep.md` resource with the bytes attached.
@@ -279,3 +281,15 @@ Whichever path you use, the same two messages land:
 - **Email B (will create a new task).** Subject: `Q3 Widget Launch - mobile auth callback fails after SSO`. Body names `Q3 Widget Launch` in the first line and describes a mobile OAuth callback that 500s after the IdP redirect. Attached PDF (`Q3-widget-mobile-auth-callback.pdf`) repeats the description. No seed task covers this, so `search_data` should return no in-launch matches and the skill should file a fresh `lc_task` with the PDF attached.
 
 Optionally also post one or both into a Teams channel the runner is in (subject becomes the channel post title; the PDF becomes a channel attachment) so the Teams sweep beat also has live data to work with.
+
+---
+
+## Appendix · Reference skill, as Scout produced it on camera
+
+The exact `Launch Readiness Sweep` skill body Scout drafted and saved during the recorded Part 1 run is preserved at [`reference-launch-readiness-sweep.md`](reference-launch-readiness-sweep.md). It is checked in verbatim so the artifact the audience sees Scout author lines up with a real, fetchable file in the repo. Differences from the canonical body in [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md):
+
+- Includes the live tool-call gotchas Scout discovered while drafting: `read_query`'s `querytext` parameter, the `tablename`/`item` payload shape, `hasUserApproved: true` on `delete_record`, the `search_data` skill-scope-vs-model-scope distinction.
+- Includes a Phase 2a Microsoft Graph PowerShell snippet for pulling Outlook attachment bytes (WorkIQ surfaces metadata only).
+- Carries the real skill identity from the run: skillId `2af0c533-0768-f111-a825-000d3a323beb`, uniquename `cr719_launchreadinesssweep`.
+
+The canonical body in `business-skills/` remains the source of truth for ongoing pushes to Dataverse; this reference file is preserved as the "what Scout actually wrote on camera" artifact.
