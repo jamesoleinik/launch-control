@@ -118,12 +118,7 @@ The whole Part 2 demo turns on one preview-only tool: **`search_data`**. It is t
 1. **Step 2a. Prove `search_data` works on its own (and show the mess this skill prevents).** Before running the skill, fire `search_data` directly so the audience sees the tool's power independent of any skill plumbing. Paste this verbatim into Scout chat:
 
    ```
-   Using the Launch Control MCP server, call search_data once with
-   the query "export to CSV crashes the app" and scope
-   "new_dvtablesearch_aiplugin_model_lc_Model". Show me the raw
-   tool response: every row path it returned, and for each row path
-   the matched-content excerpt. Do not summarise. Do not call any
-   other tool.
+   Do I have any open tasks for export issues with the Q3 Widget Launch
    ```
 
    The reply should return **three different `lc_task` row paths for Q3 Widget Launch**, all about the same export-to-CSV crash. The baseline was seeded with intentional duplicates — the QA blocker (which has a PDF attached, so the matched-content excerpt is quoted from inside the PDF), a parallel Field Eng row filed off a Northwind repro, and a CSM intake row off a customer escalation. That's the motivating mess this episode is about. Three rows in the queue today for one bug, because three different reporters had no way to know an existing task already covered it. The single `search_data` call surfaces all three plus the inside-PDF excerpt from the one with collateral, which is exactly the signal the skill in Step 2b uses to prevent the *next* duplicate from being filed. Hold at 1x on the three row paths and the excerpt block.

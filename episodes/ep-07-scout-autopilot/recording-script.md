@@ -145,12 +145,7 @@ Three prompts back to back. The skill from Part 1 is doing the work now; Scout i
 #### Step 2a. Prove `search_data` works on its own (paste verbatim, hold at 1x)
 
 ```
-Using the Launch Control MCP server, call search_data once with
-the query "export to CSV crashes the app" and scope
-"new_dvtablesearch_aiplugin_model_lc_Model". Show me the raw tool
-response: every row path it returned, and for each row path the
-matched-content excerpt. Do not summarise. Do not call any other
-tool.
+Do I have any open tasks for export issues with the Q3 Widget Launch
 ```
 
 This is the hero shot for Part 2 and it lands two beats at once. First, Scout fires exactly one MCP call, `search_data`, and the response includes **three different `lc_task` row paths for Q3 Widget Launch**, all about the same export-to-CSV crash (the baseline was seeded with intentional duplicates: QA blocker with a PDF attached, Field Eng repro off Northwind, CSM intake off a customer escalation). Hold at 1x on the three row paths so the audience sees the chaos: three tasks in the queue today for one bug, because three reporters had no way to know it was already filed. Second, the row that has the attached PDF returns a matched-content excerpt **quoted from inside the PDF** — proof that `search_data` indexes file content, not just columns, and the exact signal the skill in Step 2b uses to prevent the next duplicate. Zoom the excerpt block at 1x.
