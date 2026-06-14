@@ -72,6 +72,24 @@ SEED_TASKS: list[dict] = [
         "attach": "q3-bug-export-crash.pdf",
     },
     {
+        "title": "CSV export hangs then app crashes (Northwind report)",
+        "notes": (
+            "Northwind reported the same CSV export crash from a "
+            "different repro path. Likely the same root cause as the "
+            "QA blocker. Tracked separately by Field Eng. Owner: TBD."
+        ),
+        "priority": PRIORITY_HIGH,
+    },
+    {
+        "title": "Customer escalation: export-to-CSV hang on large compositions",
+        "notes": (
+            "Inbound CSM escalation. Customer hits a 30s hang on "
+            "Export to CSV with large widget compositions and then "
+            "the app crashes. Filed by CSM intake. Owner: unassigned."
+        ),
+        "priority": PRIORITY_HIGH,
+    },
+    {
         "title": "Bug: Pricing page disagrees with billing on Q3 promo tier",
         "notes": (
             "Pricing Ops filed an escalation. The promo page advertises "
@@ -287,8 +305,11 @@ def main() -> int:
     print(f"Seed done. Created {created} lc_task rows ({attached} with attached PDFs)")
     print(f"  Launch: {LAUNCH_NAME}  ({launch_id})")
     print(f"  Dedup targets for the on-camera sweep:")
-    print(f"    - 'Bug: Export to CSV crashes ...'  matches sample-feedback.pdf")
-    print(f"    - 'Bug: Pricing page disagrees ...' matches the seed email")
+    print(f"    - 'Export to CSV crashes ...' (x3 duplicates: QA blocker + Northwind + CSM)")
+    print(f"      Only the first has a PDF attached; search_data should surface")
+    print(f"      all three on the export query (plus the matched excerpt from")
+    print(f"      the PDF), which is the motivating chaos Step 2a illustrates.")
+    print(f"    - 'Bug: Pricing page disagrees ...' matches the pricing demo")
     return 0
 
 

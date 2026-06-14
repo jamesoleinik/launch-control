@@ -111,7 +111,7 @@ The whole Part 2 demo turns on one preview-only tool: **`search_data`**. It is t
 
 > 🧰 **Before you start the on-camera flow below, two things have to be true:** (A) the Q3 Widget Launch dedup baseline must be seeded, and (B) the two trigger emails (and optional Teams posts) must be in the demo inbox. Both are one-time setup, not part of the recording. See [Appendix · Part 2 setup](#appendix--part-2-setup) at the bottom of this README for the exact commands and message bodies. Expected take outcome at the end of Step 2b: **2 findings, 1 enriched, 1 new task filed.**
 
-1. **Step 2a. Prove `search_data` works on its own.** Before running the skill, fire `search_data` directly so the audience sees the tool's power independent of any skill plumbing. Paste this verbatim into Scout chat:
+1. **Step 2a. Prove `search_data` works on its own (and show the mess this skill prevents).** Before running the skill, fire `search_data` directly so the audience sees the tool's power independent of any skill plumbing. Paste this verbatim into Scout chat:
 
    ```
    Using the Launch Control MCP server, call search_data once with
@@ -122,7 +122,7 @@ The whole Part 2 demo turns on one preview-only tool: **`search_data`**. It is t
    other tool.
    ```
 
-   The reply should include a `tables/lc_task/records/<guid>` row path for the seeded "export crash" task and a matched-content excerpt **quoted from inside that task's attached PDF**. That excerpt, returned by a single tool call, is the visual proof that `search_data` searches inside attached file content. Hold at 1x on the excerpt.
+   The reply should return **three different `lc_task` row paths for Q3 Widget Launch**, all about the same export-to-CSV crash. The baseline was seeded with intentional duplicates — the QA blocker (which has a PDF attached, so the matched-content excerpt is quoted from inside the PDF), a parallel Field Eng row filed off a Northwind repro, and a CSM intake row off a customer escalation. That's the motivating mess this episode is about. Three rows in the queue today for one bug, because three different reporters had no way to know an existing task already covered it. The single `search_data` call surfaces all three plus the inside-PDF excerpt from the one with collateral, which is exactly the signal the skill in Step 2b uses to prevent the *next* duplicate from being filed. Hold at 1x on the three row paths and the excerpt block.
 
 2. **Step 2b. Run the skill.** Now invoke the skill with the dedup loop in place. Paste this verbatim into Scout chat:
 
@@ -135,8 +135,7 @@ The whole Part 2 demo turns on one preview-only tool: **`search_data`**. It is t
 3. **Step 2c. Read inside what got attached.** Paste:
 
    ```
-   On Q3 Widget Launch, pull any task that just got created or
-   updated and tell me what the new source document actually says.
+   Pull any task that just got created or updated for the Q3 Widget Launch and tell me what the new source document actually says.
    Use the Launch Control MCP server.
    ```
 
@@ -195,7 +194,7 @@ From this morning forward Scout owns the sweep. New artifacts uploaded onto laun
 |---|---|---|
 | Business Skill (source) | [`business-skills/launch-readiness-sweep.md`](../../business-skills/launch-readiness-sweep.md) | Canonical body of the skill |
 | Push script | [`scripts/upsert_launch_readiness_sweep.py`](../../scripts/upsert_launch_readiness_sweep.py) | One-shot, idempotent. Calls `upsert_skill` + `create_skill_resource` + file-upload via the new MCP server |
-| Baseline seeder | [`scripts/seed_q3_sample_tasks.py`](../../scripts/seed_q3_sample_tasks.py) | One-shot, idempotent. Creates 10 `lc_task` rows on Q3 Widget Launch (titles prefixed `[SEED]`), 3 with PDFs attached to `lc_relateddocuments`. Two are intentional dedup targets for the sweep. Uses the Dataverse Web API directly |
+| Baseline seeder | [`scripts/seed_q3_sample_tasks.py`](../../scripts/seed_q3_sample_tasks.py) | One-shot, idempotent. Creates 12 `lc_task` rows on Q3 Widget Launch (titles prefixed `[SEED]`), 3 of which are intentional duplicates about the same export-to-CSV crash (the "look at the chaos" beat for Step 2a). Uses the Dataverse Web API directly |
 | Baseline artifact generator | [`scripts/generate_q3_seed_artifacts.py`](../../scripts/generate_q3_seed_artifacts.py) | Reportlab. Emits the 3 baseline PDFs to `seed-artifacts/` |
 | Baseline artifacts | [`seed-artifacts/`](seed-artifacts/) | The 3 PDFs the seeder attaches; phrasing overlaps the trigger email topics so dedup lands |
 | Seed-prefix cleanup | [`scripts/remove_seed_prefix.py`](../../scripts/remove_seed_prefix.py) | One-shot, idempotent. Strips the `[SEED] ` title prefix from the seeded tasks once you no longer need the marker (e.g. before sharing the environment) |
@@ -252,7 +251,7 @@ python scripts/generate_q3_seed_artifacts.py
 python scripts/seed_q3_sample_tasks.py
 ```
 
-This creates 10 baseline `lc_task` rows on Q3 Widget Launch (idempotent: prior tasks whose title starts with `[SEED]` get cleared first; the seed identifier is the title prefix because `lc_task` has no `lc_source` column on it). Three of them have PDFs attached to **`lc_relateddocuments`**, including one whose attached PDF describes an *export-to-CSV crash* and one whose attached PDF describes a *pricing page mismatch*. Those two are the dedup targets the sweep will hit when the new inbox / Teams findings come in on the same topics. The other seven exist so the agent has a realistic candidate set to reason over.
+This creates **12 baseline `lc_task` rows** on Q3 Widget Launch (idempotent: prior tasks whose title starts with `[SEED]` get cleared first; the seed identifier is the title prefix because `lc_task` has no `lc_source` column on it). The seeded set is intentionally messy: **three of those rows are about the same export-to-CSV crash**, filed by three different reporters (QA blocker with a PDF attached, Field Eng repro off Northwind, CSM intake off a customer escalation). That triple is the motivating "look at the chaos this skill prevents" beat for Step 2a — `search_data` surfaces all three in one call, plus the inside-PDF excerpt from the one with collateral. One other row is about a pricing-page mismatch, and the remaining rows exist so the agent has a realistic candidate set to reason over. The export-crash trio and the pricing row are the dedup targets the Step 2b sweep will hit when the trigger emails come in.
 
 ### Setup B · Send the trigger artifacts (so the sweep has something to find)
 
