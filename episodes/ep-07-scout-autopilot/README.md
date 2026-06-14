@@ -34,7 +34,15 @@ The narrative is "Scout is the surface. Dataverse is the brain."
 ### The discovery prompt (paste verbatim into Scout chat first)
 
 ```
-Inventory every tool on the Launch Control Dataverse MCP server as a single markdown table, grouped by area. Columns: Area, Tool, Description. Group read_query and Search_data , and the File tools with the record tools by area. Build a html visual of the server after the table that isn't too wide and lists the tool names vertically. And then open the visual.
+Inventory every tool on the Launch Control Dataverse MCP server as a
+single markdown table, grouped by area. Columns: Area, Tool,
+Description.
+
+Group read_query and search_data together, and group the File tools
+with the Record tools.
+
+After the table, build an HTML visual of the server that isn't too
+wide and lists the tool names vertically. Then open the visual.
 ```
 
 This is a free beat. Scout calls the MCP server's introspection (`describe`, plus a `list-tools`-style read) and renders the **18 preview tools** across the eight areas. On camera it's the visual proof that the shape really did change, and that `search_data`, `invoke_api`, and `execute_prompt` are the three the GA endpoint does not yet have. Hold the answer at 1x; the tool list scrolling past is the hero shot for the intro into Part 1.
