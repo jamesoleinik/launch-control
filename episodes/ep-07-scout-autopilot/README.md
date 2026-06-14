@@ -135,7 +135,6 @@ The whole Part 2 demo turns on one preview-only tool: **`search_data`**. It is t
 
    ```
    Pull any task that just got created or updated for the Q3 Widget Launch and tell me what the new source document actually says.
-   Use the Launch Control MCP server.
    ```
 
    Scout's first move should be `read_query` to find the most-recently-updated `lc_task` on the launch, then `file_download` against that task's `lc_relateddocuments` to read the bytes. The answer should quote from inside the newly attached PDF. (`search_data` returns excerpts but not the full file; this beat shows the file-download path is still the right tool when you need the whole document.)
