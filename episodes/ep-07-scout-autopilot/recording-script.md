@@ -180,27 +180,21 @@ In Scout → Automations → Morning Launch Control update → Edit, paste each 
 **Step 1. Discover and load the skill:**
 
 ```
-Use the Launch Control MCP server. Call search('launch readiness
-sweep') against it, take the top result of type skill, then call
-describe on that path to load the skill body verbatim. Hold the
-body for the next step.
+Find the Launch Readiness Sweep skill on the Launch Control MCP
+server and load its body. Hold it for the next step.
 ```
 
 **Step 2. Execute the skill:**
 
 ```
-Run the skill body loaded in the previous step against the Launch
-Control MCP server. Run it against every active launch whose
-lc_status is At Risk or Blocked (the skill's built-in fallback
-when no launch is named). Follow the body exactly. Do not
-paraphrase.
+Run the Launch Readiness Sweep against every active launch that
+is At Risk or Blocked.
 ```
 
 **Step 3. Report:**
 
 ```
-Send me the Teams summary the skill produced in Step 2. Keep the
-formatting from the skill output.
+DM me the Teams summary the sweep produced.
 ```
 
 Save. Click **Run now**. Hold on the Teams DM when it lands.
