@@ -2,15 +2,15 @@
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/copilot/plugin/v2.4/schema.json",
   "schema_version": "v2.4",
   "name_for_human": "Launch Control",
-  "namespace": "launch_control_dataverse_mcp",
+  "namespace": "launchcontrol",
   "description_for_human": "Query Launch Control launches, milestones, tasks, blockers, and readiness verdicts from Cowork.",
   "description_for_model": "Connects to the Dataverse MCP server for the Launch Control environment. Use to answer questions about lc_launch, lc_milestone, lc_task, lc_teammember, and lc_statusupdate rows; to invoke the lc_CalculateLaunchReadiness Custom API; and to traverse lookup relationships between launches and their milestones and tasks. The schema-aware Business Skill `cowork-dataverse-mcp.md` ships alongside this plugin and is the source of truth for logical names, lookups, status fields, readiness, and escalation rules \u2014 load it before answering.",
   "runtimes": [
     {
-      "type": "McpServer",
+      "type": "RemoteMCPServer",
       "auth": {
         "type": "OAuthPluginVault",
-        "referenceId": "{TEAMS_OAUTH_REGISTRATION_ID}"
+        "reference_id": "{TEAMS_OAUTH_REGISTRATION_ID}"
       },
       "spec": {
         "url": "{DATAVERSE_ORG_URL}/api/mcp"
@@ -19,7 +19,6 @@
     }
   ],
   "capabilities": {
-    "localization": {},
     "conversation_starters": [
       { "text": "What is blocking Q3 Widget Launch, and should we slip?" },
       { "text": "Which milestone owns the blocker, and who should follow up?" },

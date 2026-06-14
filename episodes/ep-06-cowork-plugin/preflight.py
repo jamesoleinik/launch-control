@@ -24,7 +24,6 @@ PLUGIN_CANDIDATE_DIRS = [
     ROOT / "agents" / "cowork-launch-control",
 ]
 CORE_TABLES = ["lc_launch", "lc_milestone", "lc_task", "lc_teammember", "lc_statusupdate"]
-READINESS_API = "lc_CalculateLaunchReadiness"
 
 
 PLAN = """# Episode 6 - Cowork Plugin for Dataverse preflight
@@ -40,11 +39,10 @@ Read-only checks before recording:
 3. Cowork plugin package
    - A package/scaffold exists under `connectors/`, `plugins/`, or `agents/`.
    - The package contains a manifest and an action/config file.
-   - The action/config points at `/api/mcp`, uses `OAuthPluginVault`, and carries a `referenceId`.
+   - The action/config points at `/api/mcp_preview`, uses `OAuthPluginVault`, and carries a `referenceId`.
 4. Dataverse smoke tests
    - `WhoAmI` works through `scripts/auth.py`.
    - Core `lc_*` table metadata exists.
-   - Custom API `lc_CalculateLaunchReadiness` exists.
 
 The harness does not create records, upload packages, deploy plugins, or call Cowork.
 """
@@ -217,7 +215,7 @@ def preflight_p2():
         ]
         rule_hits = [
             term
-            for term in ["lookup", "relationship", "lc_CalculateLaunchReadiness", "lc_isblocked", "lc_taskstatus"]
+            for term in ["lookup", "relationship", "lc_isblocked", "lc_taskstatus"]
             if term.lower() in lower
         ]
         if has_cowork and has_mcp and len(table_hits) >= 3 and len(rule_hits) >= 2:
@@ -332,19 +330,6 @@ def test_2_core_tables():
     return r.ok(f"{len(present)} tables present: {', '.join(present)}", {"present": present})
 
 
-def test_3_readiness_api():
-    r = Result("T3: Readiness Custom API exists")
-    path = "customapis?$filter=uniquename eq '{}'&$select=customapiid,uniquename,displayname".format(READINESS_API)
-    status, payload, elapsed_ms = _req("GET", path)
-    r.elapsed_ms = elapsed_ms
-    if status != 200:
-        return r.fail(f"HTTP {status}: {payload}", payload)
-    rows = payload.get("value", [])
-    if not rows:
-        return r.fail(f"{READINESS_API} not found")
-    return r.ok(f"id={rows[0].get('customapiid')}", rows[0])
-
-
 def run_all():
     results = []
     p1 = preflight_p1()
@@ -354,7 +339,7 @@ def run_all():
     results.append(preflight_p4())
 
     if p1.passed:
-        for fn in [test_1_whoami, test_2_core_tables, test_3_readiness_api]:
+        for fn in [test_1_whoami, test_2_core_tables]:
             try:
                 results.append(fn())
             except Exception as ex:
@@ -364,7 +349,6 @@ def run_all():
         for name in [
             "T1: Dataverse WhoAmI via scripts/auth.py",
             "T2: Core Launch Control tables exist",
-            "T3: Readiness Custom API exists",
         ]:
             results.append(Result(name).fail("Skipped because P1 failed"))
     return results

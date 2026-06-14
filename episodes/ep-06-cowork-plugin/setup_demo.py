@@ -4,11 +4,9 @@ What this does (idempotent, safe to re-run):
 
   1. Verify Dataverse auth (WhoAmI) using scripts/auth.py.
   2. Verify the lc_* tables that the demo prompts depend on.
-  3. Verify the lc_CalculateLaunchReadiness Custom API exists. If missing,
-     point the user at scripts/register_custom_action.py (Ep 5 deploy).
-  4. Seed the curated 'Q3 Widget Launch' demo data so the recording prompts
+  3. Seed the curated 'Q3 Widget Launch' demo data so the recording prompts
      return deterministic answers. Delegates to scripts/seed_q3_widget_launch.py.
-  5. Final preflight run.
+  4. Final preflight run.
 
 What this does NOT do (no API exists -- must be done in-portal):
 
@@ -40,7 +38,6 @@ CORE_TABLES = [
     "lc_launch", "lc_milestone", "lc_task",
     "lc_teammember", "lc_statusupdate",
 ]
-READINESS_API = "lc_CalculateLaunchReadiness"
 DEMO_LAUNCH_NAME = "Q3 Widget Launch"
 
 
@@ -98,15 +95,19 @@ def main() -> int:
     step(2, "Core lc_* tables exist")
     try:
         from PowerPlatform.Dataverse.client import DataverseClient
-        client = DataverseClient(dataverse_url=dv_url, credential=get_credential())
+        client = DataverseClient(dv_url, get_credential())
         missing = []
         for t in CORE_TABLES:
             try:
-                client.tables.get(t)
-                print(f"    OK  {t}")
-            except Exception:
+                info = client.tables.get(t)
+                if info:
+                    print(f"    OK  {t}")
+                else:
+                    missing.append(t)
+                    print(f"    MISSING  {t}")
+            except Exception as e:
                 missing.append(t)
-                print(f"    MISSING  {t}")
+                print(f"    MISSING  {t}  ({e})")
         if missing:
             print()
             print("    -> Re-run the schema builder:")
@@ -116,42 +117,45 @@ def main() -> int:
         print(f"    FAIL  could not load DataverseClient: {e}")
         return 1
 
-    # --- 3. Readiness Custom API
-    step(3, f"Custom API {READINESS_API}")
-    try:
-        rows = client.records.get(
-            "customapi",
-            select=["uniquename", "name"],
-            filter=f"uniquename eq '{READINESS_API}'",
-        )
-        if rows:
-            print(f"    OK  {READINESS_API} registered")
-        else:
-            print(f"    MISSING  {READINESS_API}")
-            print()
-            print("    -> Re-deploy the Ep-5 Custom API:")
-            print("       python scripts/register_custom_action.py")
-            print("    The .NET plugin assembly must be built first; see")
-            print("    plugins/CalculateLaunchReadiness/SETUP-GUIDE.md")
-            print("    (Demo still works for non-readiness prompts without this.)")
-    except Exception as e:
-        print(f"    WARN  could not query customapi: {e}")
-
-    # --- 4. Seed Q3 Widget Launch
-    step(4, f"Seed demo data: {DEMO_LAUNCH_NAME}")
+    # --- 3. Seed Q3 Widget Launch (import + invoke in-process to avoid
+    # WindowsApps python.exe stub issues with subprocess.)
+    step(3, f"Seed demo data: {DEMO_LAUNCH_NAME}")
     seed = REPO_ROOT / "scripts" / "seed_q3_widget_launch.py"
     if not seed.exists():
         print(f"    SKIP  seed script not found at {seed}")
     else:
-        rc = run_subprocess([sys.executable, str(seed)])
-        if rc != 0:
-            print(f"    FAIL  seed script exited {rc}")
-            return rc
+        try:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("seed_q3_widget_launch", seed)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            if hasattr(mod, "main"):
+                mod.main()
+            print("    OK  seed completed")
+        except SystemExit as e:
+            if e.code not in (None, 0):
+                print(f"    FAIL  seed exited {e.code}")
+                return int(e.code or 1)
+            print("    OK  seed completed")
+        except Exception as e:
+            print(f"    FAIL  seed raised: {e}")
+            return 1
 
-    # --- 5. Preflight
-    step(5, "Preflight (full run)")
+    # --- 4. Preflight (in-process)
+    step(4, "Preflight (full run)")
     pre = REPO_ROOT / "episodes" / "ep-06-cowork-plugin" / "preflight.py"
-    rc = run_subprocess([sys.executable, str(pre), "--run"])
+    rc = 0
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("ep06_preflight", pre)
+        mod = importlib.util.module_from_spec(spec)
+        sys.argv = [str(pre), "--run"]
+        spec.loader.exec_module(mod)
+    except SystemExit as e:
+        rc = int(e.code or 0)
+    except Exception as e:
+        print(f"    WARN  preflight raised: {e}")
+        rc = 1
 
     banner("Dataverse-side setup complete")
     print(

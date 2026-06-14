@@ -1,5 +1,34 @@
 # Cowork \u2194 Dataverse MCP \u2014 plugin package
 
+> ## \u26a0\ufe0f DEPRECATED \u2014 wrong manifest archetype
+>
+> This hand-rolled package used `copilotAgents.plugins[]` (and later
+> `copilotAgents.declarativeAgents[]`) under the Teams **v1.19** schema.
+> Neither shape is accepted by the **Copilot Agents & Connectors** deploy
+> surface as of 2026-06. Uploads either fail validation outright (v0.1.x)
+> or validate but leave **Next** greyed because the wizard recognizes the
+> package as a Teams app, not a Copilot agent (v0.2.x).
+>
+> **Use the authoritative template instead:**
+>
+> ```powershell
+> Expand-Archive ..\..\artifacts\dataverse-mcp.cowork-template.zip ..\..\tmp\cowork-template-extracted -Force
+> python ..\..\tmp\cowork-template-extracted\render.py `
+>   --template ..\..\tmp\cowork-template-extracted `
+>   --values ..\..\artifacts\launchcontrol-cowork-values.json `
+>   --out ..\cowork-dataverse-mcp-v2 `
+>   --zip
+> # produces ..\dataverse-launchcontrol.zip \u2014 upload that.
+> ```
+>
+> The template uses the `vDevPreview` schema with `agentConnectors[]` +
+> `agentSkills[]`, which is what Cowork's plugin picker actually surfaces.
+>
+> This folder is kept only for historical reference and the rendered
+> `out/` artifacts from earlier attempts. Do not deploy from it.
+
+---
+
 Custom Microsoft 365 Cowork plugin that talks to the **Dataverse MCP server**
 of the Launch Control environment. This is the artifact deployed in
 **Episode 6 \u2014 Cowork Plugin for Dataverse**.
@@ -51,13 +80,19 @@ cd plugins/cowork-dataverse-mcp
 ```
 
 That writes `out/launch-control-cowork-plugin.zip` containing the
-substituted `manifest.json`, `plugin-action.json`, and both icons.
+substituted `manifest.json`, `plugin-action.json`, `declarative-agent.json`,
+and both icons.
 
-Then in **Microsoft 365 Admin Center \u2192 Integrated apps \u2192 Upload custom apps**,
+Then in **Microsoft 365 Admin Center → Copilot → Agents → All Agents → Add agent**,
 upload `launch-control-cowork-plugin.zip`. Publish to a small test audience
-first. Open Cowork, **Add plugin \u2192 Launch Control**, click **Connect**,
+first. Open Cowork, **Add plugin → Launch Control**, click **Connect**,
 complete the OAuth flow. The plugin should now appear in the connected
 list.
+
+> **Don't use** *Integrated apps → Upload custom apps* — that surface is
+> Teams-app-only as of 2026-06. Declarative-agent-bearing packages are
+> funnelled through the new Copilot Agents & Connectors hub. The wizard
+> silently greys out **Next** if you pick the wrong path.
 
 ## Verify
 

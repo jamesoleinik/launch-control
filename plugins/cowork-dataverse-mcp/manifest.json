@@ -23,6 +23,12 @@
   },
   "accentColor": "#5C2D91",
   "copilotAgents": {
+    "declarativeAgents": [
+      {
+        "id": "launch-control-declarative-agent",
+        "file": "declarative-agent.json"
+      }
+    ],
     "plugins": [
       {
         "id": "launch-control-dataverse-mcp",

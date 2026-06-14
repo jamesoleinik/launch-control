@@ -37,6 +37,9 @@ $pa = $pa -replace '\{DATAVERSE_ORG_URL\}',         [regex]::Escape($DataverseUr
 $pa = $pa -replace '\{TEAMS_OAUTH_REGISTRATION_ID\}', $OAuthRegistrationId
 $pa | Set-Content (Join-Path $out "plugin-action.json") -NoNewline
 
+# declarative-agent.json (copied as-is — no placeholder substitution today)
+Copy-Item (Join-Path $here "declarative-agent.json") (Join-Path $out "declarative-agent.json") -Force
+
 # icons (required by Teams manifest validator)
 Copy-Item (Join-Path $here "color.png")   (Join-Path $out "color.png")   -Force
 Copy-Item (Join-Path $here "outline.png") (Join-Path $out "outline.png") -Force
@@ -44,6 +47,7 @@ Copy-Item (Join-Path $here "outline.png") (Join-Path $out "outline.png") -Force
 $zip = Join-Path $out "launch-control-cowork-plugin.zip"
 Compress-Archive -Path (Join-Path $out "manifest.json"), `
                        (Join-Path $out "plugin-action.json"), `
+                       (Join-Path $out "declarative-agent.json"), `
                        (Join-Path $out "color.png"), `
                        (Join-Path $out "outline.png") `
                  -DestinationPath $zip -Force
@@ -57,7 +61,9 @@ Write-Host "  OAuth ref id  : $OAuthRegistrationId"
 Write-Host "  Package zip   : $zip"
 Write-Host ""
 Write-Host "Next:"
-Write-Host "  1) M365 Admin Center -> Integrated apps -> Upload custom apps -> $zip"
+Write-Host "  1) M365 Admin Center -> Copilot -> Agents -> All Agents -> Add agent -> $zip"
+Write-Host "     (NOT Integrated apps -> Upload custom apps -- that's Teams-app-only; declarative-agent"
+Write-Host "      packages go through the new Copilot Agents & Connectors hub.)"
 Write-Host "  2) Publish to a small test audience"
 Write-Host "  3) In Cowork: Add plugin -> Launch Control -> Connect (complete OAuth)"
 Write-Host "  4) After validation, harden the Teams OAuth registration to App ID $AppId"

@@ -29,11 +29,15 @@ Developer Portal because both portals are interactive and policy-sensitive.
 
 ## Hard rules
 
-1. **Confirm the target tenant + Dataverse environment first.** Show the
-   user the `DATAVERSE_URL` from `.env` and ask them to confirm. Episode 6
+1. **Default target is `Product Launch 2.0`** (env id
+   `2e2dd60a-e6c7-eeb7-b61d-d4709d8dae07`, URL
+   `https://org40ae6a46.crm.dynamics.com`). Verify this against
+   `DATAVERSE_URL` in `.env` and proceed silently if they match — do
+   **not** stop to ask the user to confirm. Only halt if `.env`
+   disagrees, in which case surface the mismatch and wait. Episode 6
    touches Entra, Power Platform, Teams Developer Portal, M365 Admin
-   Center, and Cowork — all multi-tenant blast-radius. Do not proceed
-   until the user says yes.
+   Center, and Cowork — all multi-tenant blast-radius, so a mismatch
+   really is a stop-the-line event, but a match is not.
 2. **Python only**, per the `dv-overview` skill. The plugin package is
    plain JSON; the preflight is Python. No Node, no PowerShell beyond
    simple file substitution.
@@ -43,6 +47,21 @@ Developer Portal because both portals are interactive and policy-sensitive.
 4. **Never invent IDs.** When wiring the plugin package, the two GUIDs the
    user pastes are real values from real portals. Do not auto-generate
    them or guess.
+5. **The Entra app MUST have `https://teams.microsoft.com/api/platform/v1.0/oAuthRedirect`
+   as a Web redirect URI** — Teams Dev Portal OAuth callbacks there.
+   Without it Cowork "Connect" fails with the generic *"Authentication is
+   still processing"* toast and Entra returns `AADSTS50011`. `deploy.py`
+   Phase A sets this via `az ad app update --web-redirect-uris`; never
+   skip that step.
+6. **After teardown + redeploy, force the Dev Portal OAuth row to resync.**
+   `atk oauth/register` dedupes by `name` and silently returns the existing
+   row with its old (now-deleted) clientId baked in. Sign-in then fails
+   with `AADSTS700016: Application with identifier '<old appId>' was not
+   found`. `deploy.py` Phase E handles this when `LC_OAUTH_CONFIG_ID` is
+   already in `env/.env.dev`: it rewrites `m365agents.yml` in-memory to
+   `oauth/update` with a bumped `name` so atk's diff routine PATCHes the
+   row to the current clientId + secret. If you ever run `atk provision`
+   outside `deploy.py` after a teardown, mirror the swap manually.
 
 ---
 
@@ -53,7 +72,7 @@ Developer Portal because both portals are interactive and policy-sensitive.
 | 1 | Entra app registration | Azure portal | Tenant ID, Client ID, secret, Dynamics CRM permission, admin consent |
 | 2 | Power Platform Allowed MCP Client | PPAC env settings | Dataverse MCP enabled; row with Entra Client ID |
 | 3 | Teams Developer Portal OAuth registration | dev.teams.microsoft.com | OAuth Registration ID (NOT the Entra Client ID) |
-| 4 | Plugin package | Repo: `plugins/cowork-dataverse-mcp/` | manifest.json + plugin-action.json wired with `/api/mcp` + `OAuthPluginVault` + the OAuth Registration ID |
+| 4 | Plugin package | Repo: `plugins/cowork-dataverse-mcp-v2/` | manifest.json wired with `/api/mcp_preview` + `OAuthPluginVault` + the OAuth referenceId (base64 `<tenantId>##<oAuthConfigId>`) |
 | 5 | Deploy + Connect | M365 Admin Center + Cowork | Plugin uploaded, published to a small audience, Connected in Cowork |
 | 6 | Schema-aware Business Skill | Repo: `business-skills/cowork-dataverse-mcp.md` | Tables, lookups, status fields, readiness rule, escalation policy |
 | 7 | Real-world test | Cowork chat | The four demo prompts in `recording-script.md#Demo prompts` |
@@ -69,7 +88,30 @@ Developer Portal because both portals are interactive and policy-sensitive.
 > recipe. Show me the `DATAVERSE_URL` from `.env` and ask me to confirm
 > we're targeting the correct tenant before we touch any portal."*
 
-### Part 1 — Entra app registration (on-camera, manual)
+### Part 1 — Entra app + app user + MCP allowlist + Dev Portal OAuth (scripted)
+
+> *"Run the headless deploy for Part 1: Entra app**
+> *`LaunchControl-Cowork-MCP` with `Dynamics CRM/user_impersonation`*
+> *(delegated) and admin consent, a 12-month client secret, a*
+> *Dataverse Application User in `Product Launch 2.0`*
+> *(env id `2e2dd60a-e6c7-eeb7-b61d-d4709d8dae07`,*
+> *URL `https://org40ae6a46.crm.dynamics.com`) with the `System*
+> *Administrator` role, the `allowedmcpclients` row enabled for the*
+> *new appId via the Dataverse Web API, and the Teams Dev Portal OAuth*
+> *registration via `atk provision` against `m365agents.yml`. Persist*
+> *the secret to `.deploy/ep-06/<timestamp>.json` and*
+> *`env/.env.dev.user` only — never print it. Print the resulting*
+> *`referenceId` at the end. Do not ask me to confirm any of these*
+> *defaults; they are authoritative for this episode."*
+
+(All five inputs above are episode-level defaults — see
+[`README.md` §Defaults](README.md#defaults-the-agent-should-not-ask-for-these).
+Override only by editing the prompt explicitly.)
+
+### Part 1 (legacy) — Entra app registration (on-camera, manual)
+
+Kept for the manual recording path only. Skip when running the scripted
+Part 1 above.
 
 > *"Walk me through creating an Entra app registration named
 > `LaunchControl-Cowork-Dataverse-MCP`. Capture Tenant ID and Client ID
@@ -143,7 +185,7 @@ After Part 4 + Part 6, the preflight must be fully green:
 python episodes/ep-06-cowork-plugin/preflight.py --run
 ```
 
-Expected: **7/7 passing** (P1–P4 + T1–T3).
+Expected: **6/6 passing** (P1–P4 + T1–T2).
 
 After Part 5 + Part 7, validate in Cowork manually — there is no
 programmatic test path because the chat surface is in M365 chat, not
@@ -153,24 +195,37 @@ exposed via an API the harness can call.
 
 ## Cleanup (for re-recording)
 
-Episode 6's footprint is mostly **tenant-side**, not Dataverse-side. To
-reset for a clean re-record:
+Most of Episode 6's footprint is **tenant-side**, not Dataverse-side, but
+Phases A/B/D/E now have a scripted reverse. For a clean dry-run or
+re-record:
 
-1. **Cowork** — Remove plugin from your Cowork chat (per-user).
-2. **M365 Admin Center → Integrated apps** — Delete the uploaded custom
-   app entry (per-tenant).
-3. **Teams Developer Portal → OAuth registrations** — Delete the
-   `LaunchControl-Dataverse-MCP` registration (or rotate the secret if you
-   want to keep the registration).
-4. **Power Platform Allowed MCP Client** — Remove the row that points at
-   the Entra Client ID (per-environment).
-5. **Entra app registration** — Delete the app registration, or just
-   rotate the client secret if you plan to re-record soon.
+```powershell
+python episodes/ep-06-cowork-plugin/teardown.py
+```
+
+That script:
+
+1. Deletes the Teams Dev Portal OAuth registration referenced by
+   `env/.env.dev` `LC_OAUTH_CONFIG_ID` (Graph
+   `DELETE /api/v1.0/oAuthConfigurations/{id}` via `atk` token), then
+   clears the key so the next `deploy.py` re-registers fresh.
+2. Removes the `LaunchControl-Cowork-MCP` row from
+   `allowedmcpclients` (leaves `microsoftcowork` enabled).
+3. Removes the Dataverse Application User (systemuser bound to the app).
+4. Deletes the Entra app registration (and its service principal).
+5. Wipes `env/.env.dev.user` and rotates `.deploy/ep-06/*` into
+   `.deploy/ep-06/_archive/`.
+
+Still manual (no public API):
+
+- **Cowork** — Remove plugin from your Cowork chat (per-user).
+- **M365 Admin Center → Copilot Agents & Connectors** — Delete the
+  uploaded custom agent entry (per-tenant).
 
 No Dataverse data needs to be wiped — Episode 6 is read-mostly on the
 `lc_*` substrate and reuses Episode 1–5 artifacts unchanged.
 
-The repo artifacts (`plugins/cowork-dataverse-mcp/`,
+The repo artifacts (`plugins/cowork-dataverse-mcp*/`,
 `business-skills/cowork-dataverse-mcp.md`) **stay** between recordings —
 they're the source-controlled outputs of the episode.
 

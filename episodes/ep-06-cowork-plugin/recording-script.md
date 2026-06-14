@@ -39,7 +39,7 @@
 |---:|---|---|---|
 | 1:15 | Power Platform admin center | Open environment settings for the Launch Control Dataverse environment. | "Step two is the Power Platform side. Enable Dataverse MCP client access for the environment." |
 | 1:25 | PPAC settings | Show Allowed MCP Client row. Highlight Application ID. | "The Allowed MCP Client row uses the Entra Application ID. This is one of the easy mix-ups: this is not the Teams OAuth registration ID." |
-| 1:37 | Browser address bar / settings | Highlight org URL: `https://<org>.crm.dynamics.com`. | "Also copy the exact Dataverse org URL. The plugin endpoint will be this URL plus `/api/mcp`." |
+| 1:37 | Browser address bar / settings | Highlight org URL: `https://<org>.crm.dynamics.com`. | "Also copy the exact Dataverse org URL. The plugin endpoint will be this URL plus `/api/mcp_preview`." |
 
 ### 4. Teams Developer Portal OAuth registration
 
@@ -56,7 +56,7 @@
 | Time | Shot | On-screen action | Narration |
 |---:|---|---|---|
 | 2:38 | VS Code | Open plugin package files under the local Cowork package folder. | "Step four is the custom plugin package." |
-| 2:44 | VS Code | Highlight `mcpServerUrl` or URL value ending in `/api/mcp`. | "The MCP server URL must end in `/api/mcp`. Missing that suffix is a common failure." |
+| 2:44 | VS Code | Highlight `mcpServerUrl` or URL value ending in `/api/mcp_preview`. | "The MCP server URL must end in `/api/mcp_preview` (note the underscore). Missing that suffix or using the GA `/api/mcp` shape is a common failure." |
 | 2:52 | VS Code | Highlight auth block: `OAuthPluginVault`. | "The auth type uses OAuthPluginVault so Cowork can bind to the Teams OAuth registration." |
 | 3:00 | VS Code | Highlight `referenceId`. | "The reference ID is the Teams Developer Portal OAuth Registration ID. That is the second big ID mix-up." |
 
@@ -74,7 +74,7 @@
 |---:|---|---|---|
 | 3:45 | VS Code | Open `business-skills/` and the Cowork schema skill. | "Step six is the quality unlock: a schema-aware Business Skill." |
 | 3:52 | VS Code | Highlight `lc_launch`, `lc_milestone`, `lc_task`, lookups, status fields. | "Cowork should not ask the user for logical names. The skill teaches tables, relationships, lookup fields, status values, and where readiness comes from." |
-| 4:05 | VS Code | Highlight references to readiness and status rules. | "For Launch Control, readiness must call `lc_CalculateLaunchReadiness`; status changes follow the business skill rules. The model should not hand-tally gates." |
+| 4:05 | VS Code | Highlight references to readiness and status rules. | "For Launch Control, readiness is sourced from the `lc_risksummary` AI prompt column on `lc_launch` — status changes follow the business skill rules. The model should not hand-tally gates." |
 
 ### 8. Real-world test
 
@@ -90,7 +90,7 @@
 |---:|---|---|---|
 | 4:58 | Teams Developer Portal | Show OAuth registration app restrictions. | "After validation, harden the OAuth registration. Restrict it from 'any Teams app' to the deployed plugin's Teams App ID." |
 | 5:08 | README pitfalls | Show pitfalls list. | "The checklist is the governance story: correct IDs, correct URL, correct scope, correct permissions, fresh deployment, and a schema skill." |
-| 5:20 | Terminal | Run `python episodes/ep-06-cowork-plugin/preflight.py --run`. | "The preflight stays read-only. It proves the repo, package, skill, auth, tables, and readiness API are ready for the next take." |
+| 5:20 | Terminal | Run `python episodes/ep-06-cowork-plugin/preflight.py --run`. | "The preflight stays read-only. It proves the repo, package, skill, auth, and tables are ready for the next take." |
 | 5:35 | Closing card | Show architecture again. | "The user sees a chat. The admin sees OAuth, app IDs, scopes, and governance. The agent sees Dataverse MCP plus a schema skill. All three have to be right." |
 
 ---
@@ -100,7 +100,7 @@
 - "The chat is simple. The plumbing is not."
 - "Most failed demos are ID, URL, scope, permission, or stale deployment failures."
 - "Power Platform gets the Entra Client ID. The plugin action gets the Teams OAuth Registration ID. Do not mix them."
-- "The endpoint is the Dataverse org URL plus `/api/mcp`."
+- "The endpoint is the Dataverse org URL plus `/api/mcp_preview`."
 - "A successful OAuth prompt does not grant data the user cannot read in Dataverse."
 - "The plugin connects the pipe. The Business Skill makes the answer correct."
 - "Do not make users speak logical names. Put the schema in the skill."
@@ -168,7 +168,7 @@ Expected:
 - Power Platform environment Dataverse MCP client settings
 - Allowed MCP Client row with Entra Application ID
 - Teams Developer Portal OAuth registration
-- Plugin package file showing `/api/mcp`
+- Plugin package file showing `/api/mcp_preview`
 - M365 Admin Center custom app upload
 - Cowork plugin Connect flow
 - Cowork answer over Launch Control records
@@ -184,7 +184,7 @@ Expected:
 | Cold open | `Cowork → custom plugin → Dataverse MCP → Launch Control` |
 | PPAC allowlist | `Allowed MCP Client = Entra Application ID` |
 | Teams OAuth | `Plugin referenceId = Teams OAuth Registration ID` |
-| Package wiring | `MCP URL = Dataverse org URL + /api/mcp` |
+| Package wiring | `MCP URL = Dataverse org URL + /api/mcp_preview` |
 | Skill | `Schema-aware Business Skill = better lookup handling` |
 | Test | `Same Dataverse permissions. New conversational front door.` |
 | Hardening | `After validation: restrict OAuth to the deployed Teams App ID` |
@@ -214,7 +214,7 @@ Expected:
 
 4. Keep the pointer on the three critical values:
    - Entra Client ID.
-   - Dataverse org URL + `/api/mcp`.
+   - Dataverse org URL + `/api/mcp_preview`.
    - Teams OAuth Registration ID.
 
 5. Reconnect Cowork after every package version change.
@@ -226,7 +226,7 @@ Expected:
 | Symptom | Likely cause | Fix before next take |
 |---|---|---|
 | OAuth opens but token exchange fails | Wrong scope or wrong token endpoint | Use `{DataverseOrgUrl}/.default offline_access`; verify tenant endpoints |
-| Plugin says MCP server unavailable | URL missing `/api/mcp` or stale package | Fix package, increment version, re-upload, reconnect |
+| Plugin says MCP server unavailable | URL missing `/api/mcp_preview` or stale package | Fix package, increment version, re-upload, reconnect |
 | Consent succeeds but no data returns | User lacks Dataverse permissions | Test as a user with Launch Control read access |
 | Action never appears in Cowork | M365 Admin Center deployment not published to user | Publish to test audience, wait, re-add plugin |
 | Cowork asks for table names | Missing or weak Business Skill | Add schema-aware skill with logical names and relationships |
@@ -243,3 +243,14 @@ Episode 6: Cowork Plugin for Dataverse
 A Teams custom plugin connects Microsoft 365 Cowork to the Dataverse MCP server.
 The Business Skill makes the answers Launch Control-aware.
 ```
+
+---
+
+## TODO \u2014 LinkedIn post credits
+
+When writing the LinkedIn post for this episode, **call out**:
+
+- **Robert H. (Robert Hogner)** \u2014 his recent post tested the same custom Cowork \u2194 Dataverse MCP plugin against a destructive operation and showed the plugin strictly respects the signed-in user's Dataverse security roles (delete-on-PROD refused, no privilege escalation, no custom API layer needed). Mirrors our Part 4 governance beat and the "same Dataverse permissions, new conversational front door" punchline \u2014 worth quoting / linking.
+- **Josh Cook** \u2014 author of the setup guide that made the eight-step recipe in Part 1 straightforward; the lookup-handling finding that shapes Part 3 (schema-aware Business Skill) is his. Robert's post already shouts him out; mirror it.
+
+Suggested line: *"Credit to Josh Cook for the setup guide that turned all this plumbing into a repeatable recipe, and to Robert Hogner for stress-testing the security model on the same pattern."*
