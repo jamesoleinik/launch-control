@@ -1,5 +1,5 @@
 {
-  "_comment": "Seeded snapshot for offline demo mode. Mirrors the Episode 8 smoke-test: row counts reflect row-level security depth, and the secured columns (lc_blockerreason, lc_risksummary) are null for personas outside the 'lc Sensitive Readers' field security profile, which the app renders as a masked block.",
+  "_comment": "Seeded snapshot for offline demo mode. Mirrors the Episode 8 smoke-test: row counts reflect row-level security depth, and the secured columns (lc_blockerreason, lc_risksummary) are masked for personas outside the 'lc Sensitive Readers' field security profile (rendered as a block). lc_risksummary additionally carries a custom masking rule (lc_RiskSummaryMask) that redacts everything after the leading severity even for profile members.",
   "personas": [
     { "id": "me",     "label": "You (no impersonation)",            "userid": "00000000-0000-0000-0000-000000000001" },
     { "id": "owner",  "label": "Priya Owner (lc Owners)",          "userid": "00000000-0000-0000-0000-000000000002" },
@@ -14,16 +14,16 @@
   },
   "tasks": {
     "me": [
-      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
+      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": "High:############################################################" }
     ],
     "owner": [
-      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": "Telemetry pipeline blocked on a missing service principal grant.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": "Embargoed until pricing is locked; comms cannot draft yet.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
+      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": "Telemetry pipeline blocked on a missing service principal grant.", "lc_risksummary": "High:############################################################" },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": "Embargoed until pricing is locked; comms cannot draft yet.", "lc_risksummary": "High:############################################################" }
     ],
     "member": [
       { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": null },
@@ -39,7 +39,7 @@
     ]
   },
   "policies": {
-    "_comment": "Seeded to mirror the live Product Launch 2.0 security model: three lc roles spanning the User / Business Unit / Organization depth levels, bound 1:1 to owner-teams (lc Admin is omitted as redundant with System Administrator), and the 'Custom Column security' field security profile over lc_teammember.lc_email (Email_HideName) with no members assigned, so only System Administrators read it today.",
+    "_comment": "Seeded to mirror the live Product Launch 2.0 security model: three lc roles spanning the User / Business Unit / Organization depth levels, bound 1:1 to owner-teams (lc Admin is omitted as redundant with System Administrator), and the 'lc Sensitive Readers' field security profile over lc_task.lc_blockerreason + lc_launch.lc_risksummary, the latter carrying a custom masking rule (lc_RiskSummaryMask).",
     "roles": [
       { "name": "lc Member", "read_depth": "User",          "privileges": "Create, Read, Write, Append, AppendTo",                     "table_count": 5, "team": "lc Members", "members": ["Sam Member"] },
       { "name": "lc Owner",  "read_depth": "Business Unit",  "privileges": "Create, Read, Write, Delete, Append, AppendTo, Assign, Share", "table_count": 5, "team": "lc Owners",  "members": ["Priya Owner"] },
@@ -47,19 +47,11 @@
     ],
     "profiles": [
       {
-        "name": "Custom Column security",
-        "description": "Secures the team-member email column behind a hide-name mask.",
-        "columns": [
-          { "column": "lc_teammember.lc_email", "rule": "Email_HideName", "read": "Allowed", "readunmasked": "One record", "create": "Allowed", "update": "Not allowed" }
-        ],
-        "members": []
-      },
-      {
         "name": "lc Sensitive Readers",
-        "description": "Demo profile: who may read the secured launch-reasoning columns. Members read cleartext; everyone else gets the column withheld.",
+        "description": "Demo profile: who may read the secured launch-reasoning columns. Members read lc_blockerreason in cleartext; lc_risksummary carries a custom masking rule so even members see only the leading severity. Everyone else gets the column withheld.",
         "columns": [
           { "column": "lc_task.lc_blockerreason", "rule": "(none)", "read": "Allowed", "readunmasked": "Not allowed", "create": "Allowed", "update": "Allowed" },
-          { "column": "lc_launch.lc_risksummary", "rule": "(none)", "read": "Allowed", "readunmasked": "Not allowed", "create": "Allowed", "update": "Allowed" }
+          { "column": "lc_launch.lc_risksummary", "rule": "lc_RiskSummaryMask", "read": "Allowed", "readunmasked": "Not allowed", "create": "Allowed", "update": "Allowed" }
         ],
         "members": ["Priya Owner", "James Oleinik"]
       }
