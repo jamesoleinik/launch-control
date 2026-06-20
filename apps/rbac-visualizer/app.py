@@ -175,6 +175,9 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
 # Depth labels returned by RetrieveRolePrivilegesRole -> friendly RBAC scope.
 _DEPTH = {"Basic": "User", "Local": "Business Unit",
           "Deep": "Parent: Child BU", "Global": "Organization"}
+# Privilege actions, in the order we like to read them (prv<Action>lc_<table>).
+_ACTION_ORDER = ["Create", "Read", "Write", "Delete",
+                 "Append", "AppendTo", "Assign", "Share"]
 # Field-permission option set values -> labels.
 _RWUC = {0: "Not allowed", 4: "Allowed"}
 _UNMASK = {0: "Not allowed", 1: "One record", 3: "All records"}
@@ -226,12 +229,16 @@ def live_policies() -> dict:
     roles = []
     for r in _vals(requests, api, headers,
                    "/roles?$select=roleid,name&$filter=startswith(name,'lc ')"):
-        depth, tables = "-", set()
+        depth, tables, actions = "-", set(), set()
         rp = requests.get(f"{api}/RetrieveRolePrivilegesRole(RoleId={r['roleid']})",
                           headers=headers)
         if rp.status_code == 200:
             for p in rp.json().get("RolePrivileges", []):
                 name = p.get("PrivilegeName", "")
+                idx = name.find("lc_")
+                if not name.startswith("prv") or idx == -1:
+                    continue  # only summarize privileges over the lc_* tables
+                actions.add(name[3:idx])  # e.g. prvCreatelc_task -> "Create"
                 if name.startswith("prvReadlc_"):
                     tables.add(name[len("prvRead"):])
                     if name == "prvReadlc_task" or depth == "-":
@@ -240,6 +247,7 @@ def live_policies() -> dict:
         roles.append({
             "name": r["name"],
             "read_depth": depth,
+            "privileges": ", ".join([a for a in _ACTION_ORDER if a in actions]) or "-",
             "table_count": len(tables),
             "team": bound.get("team", "(no team)"),
             "members": bound.get("members", []),
@@ -404,17 +412,18 @@ PAGE = """
       assigned to each.</div>
 
     <h3 style="font-size:13px;color:#8b949e;margin:6px 0 8px;">Row-level security
-      &middot; roles &rarr; depth &rarr; team &amp; members</h3>
+      &middot; roles &rarr; privileges &rarr; team &amp; members</h3>
     {% if policies.roles %}
     <table>
       <thead><tr>
-        <th>Role</th><th>Read depth (lc_task)</th><th>lc_* tables</th>
-        <th>Owner team</th><th>Members assigned</th>
+        <th>Role</th><th>Privileges (lc_* tables)</th><th>Read depth (lc_task)</th>
+        <th>lc_* tables</th><th>Owner team</th><th>Members assigned</th>
       </tr></thead>
       <tbody>
       {% for r in policies.roles %}
         <tr>
           <td><b>{{ r.name }}</b></td>
+          <td>{{ r.privileges }}</td>
           <td><span class="pill">{{ r.read_depth }}</span></td>
           <td>{{ r.table_count }}</td>
           <td>{{ r.team }}</td>
@@ -428,32 +437,32 @@ PAGE = """
     {% endif %}
 
     <h3 style="font-size:13px;color:#8b949e;margin:18px 0 8px;">Column-level security
-      &middot; profiles &rarr; secured columns &amp; masking &rarr; members</h3>
+      &middot; secured column &rarr; profile &amp; masking &rarr; members</h3>
     {% if policies.profiles %}
-    {% for pr in policies.profiles %}
-    <div style="border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
-      <div style="margin-bottom:8px;"><b>{{ pr.name }}</b>
-        {% if pr.description %}<span class="note">&mdash; {{ pr.description }}</span>{% endif %}</div>
-      <table>
-        <thead><tr class="secured">
-          <th>Secured column &#128274;</th><th>Masking rule</th>
-          <th>Read</th><th>Read unmasked</th><th>Create</th><th>Update</th>
-        </tr></thead>
-        <tbody>
+    <table>
+      <thead><tr class="secured">
+        <th>Secured column &#128274;</th><th>Profile</th><th>Masking rule</th>
+        <th>Read</th><th>Read unmasked</th><th>Create</th><th>Update</th>
+        <th>Assigned to</th>
+      </tr></thead>
+      <tbody>
+      {% for pr in policies.profiles %}
         {% for c in pr.columns %}
-          <tr>
-            <td><code>{{ c.column }}</code></td>
-            <td>{{ c.rule }}</td>
-            <td>{{ c.read }}</td><td>{{ c.readunmasked }}</td>
-            <td>{{ c.create }}</td><td>{{ c.update }}</td>
-          </tr>
+        <tr>
+          <td><code>{{ c.column }}</code></td>
+          <td>{{ pr.name }}</td>
+          <td>{{ c.rule }}</td>
+          <td>{{ c.read }}</td><td>{{ c.readunmasked }}</td>
+          <td>{{ c.create }}</td><td>{{ c.update }}</td>
+          <td>{% if pr.members %}{{ pr.members|join(", ") }}{% else %}<span class="masked-soft">sysadmin only</span>{% endif %}</td>
+        </tr>
         {% endfor %}
-        </tbody>
-      </table>
-      <div class="note">Assigned to:
-        {% if pr.members %}<b>{{ pr.members|join(", ") }}</b>{% else %}<span class="masked-soft">no users or teams - only System Administrators can read these columns today</span>{% endif %}</div>
-    </div>
-    {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="note">&#128274; = field-secured. "Assigned to" lists the users and
+      teams in the profile; <span class="masked-soft">sysadmin only</span> means no
+      one is assigned, so only System Administrators can read the column today.</div>
     {% else %}
     <div class="note">No field security profiles secure an lc_* column.</div>
     {% endif %}

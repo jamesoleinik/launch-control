@@ -44,10 +44,10 @@
   "policies": {
     "_comment": "Seeded to mirror the live Product Launch 2.0 security model: four lc roles bound 1:1 to owner-teams, and the 'Custom Column security' field security profile over lc_teammember.lc_email (Email_HideName) with no members assigned, so only System Administrators read it today.",
     "roles": [
-      { "name": "lc Admin",  "read_depth": "Organization",  "table_count": 5, "team": "lc Admins",  "members": ["Avery Admin"] },
-      { "name": "lc Member", "read_depth": "User",          "table_count": 5, "team": "lc Members", "members": ["Sam Member"] },
-      { "name": "lc Owner",  "read_depth": "Business Unit",  "table_count": 5, "team": "lc Owners",  "members": ["Priya Owner"] },
-      { "name": "lc Viewer", "read_depth": "Organization",  "table_count": 5, "team": "lc Viewers", "members": ["Lee Viewer"] }
+      { "name": "lc Admin",  "read_depth": "Organization",  "privileges": "Create, Read, Write, Delete, Append, AppendTo, Assign, Share", "table_count": 5, "team": "lc Admins",  "members": ["Avery Admin"] },
+      { "name": "lc Member", "read_depth": "User",          "privileges": "Create, Read, Write, Append, AppendTo",                     "table_count": 5, "team": "lc Members", "members": ["Sam Member"] },
+      { "name": "lc Owner",  "read_depth": "Business Unit",  "privileges": "Create, Read, Write, Delete, Append, AppendTo, Assign, Share", "table_count": 5, "team": "lc Owners",  "members": ["Priya Owner"] },
+      { "name": "lc Viewer", "read_depth": "Organization",  "privileges": "Read",                                                       "table_count": 5, "team": "lc Viewers", "members": ["Lee Viewer"] }
     ],
     "profiles": [
       {
