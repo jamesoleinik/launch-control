@@ -301,6 +301,21 @@ def render_cell(task: dict, col: str) -> str:
     return f'<span class="clear">{val}</span>'
 
 
+def _perm_summary(col: dict) -> str:
+    """Collapse a column's field permissions into one phrase, like role privileges."""
+    parts = []
+    if col.get("read") not in (None, "Not allowed"):
+        parts.append("Read")
+    ru = col.get("readunmasked")
+    if ru not in (None, "Not allowed"):
+        parts.append(f"Read unmasked: {ru}")
+    if col.get("create") not in (None, "Not allowed"):
+        parts.append("Create")
+    if col.get("update") not in (None, "Not allowed"):
+        parts.append("Update")
+    return ", ".join(parts) or "-"
+
+
 PAGE = """
 <!doctype html>
 <html lang="en">
@@ -437,13 +452,12 @@ PAGE = """
     {% endif %}
 
     <h3 style="font-size:13px;color:#8b949e;margin:18px 0 8px;">Column-level security
-      &middot; secured column &rarr; profile &amp; masking &rarr; members</h3>
+      &middot; secured column &rarr; profile &amp; masking &rarr; profile members</h3>
     {% if policies.profiles %}
     <table>
       <thead><tr class="secured">
         <th>Secured column &#128274;</th><th>Profile</th><th>Masking rule</th>
-        <th>Read</th><th>Read unmasked</th><th>Create</th><th>Update</th>
-        <th>Assigned to</th>
+        <th>Permissions (this column)</th><th>Assigned to (profile members)</th>
       </tr></thead>
       <tbody>
       {% for pr in policies.profiles %}
@@ -452,17 +466,18 @@ PAGE = """
           <td><code>{{ c.column }}</code></td>
           <td>{{ pr.name }}</td>
           <td>{{ c.rule }}</td>
-          <td>{{ c.read }}</td><td>{{ c.readunmasked }}</td>
-          <td>{{ c.create }}</td><td>{{ c.update }}</td>
+          <td>{{ c.permissions }}</td>
           <td>{% if pr.members %}{{ pr.members|join(", ") }}{% else %}<span class="masked-soft">sysadmin only</span>{% endif %}</td>
         </tr>
         {% endfor %}
       {% endfor %}
       </tbody>
     </table>
-    <div class="note">&#128274; = field-secured. "Assigned to" lists the users and
-      teams in the profile; <span class="masked-soft">sysadmin only</span> means no
-      one is assigned, so only System Administrators can read the column today.</div>
+    <div class="note">&#128274; = field-secured. Column access is <b>not</b> granted
+      through roles: it comes from membership in the field security <b>profile</b>,
+      assigned directly to users and teams. "Assigned to" lists those profile members;
+      <span class="masked-soft">sysadmin only</span> means none are assigned, so only
+      System Administrators can read the column today.</div>
     {% else %}
     <div class="note">No field security profiles secure an lc_* column.</div>
     {% endif %}
@@ -484,6 +499,9 @@ def index():
     selected = request.args.get("persona") or (personas[0]["id"] if personas else "me")
     lenses = mock_lenses(selected) if mock else live_lenses(personas, selected)
     policies = mock_policies() if mock else live_policies()
+    for pr in policies.get("profiles", []):
+        for col in pr.get("columns", []):
+            col["permissions"] = _perm_summary(col)
 
     return render_template_string(
         PAGE,
