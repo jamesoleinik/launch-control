@@ -160,8 +160,8 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
     tasks = []
     r = requests.get(
         f"{api}/lc_tasks?$select=lc_name,lc_taskstatus,lc_blockerreason"
-        f"&$expand=lc_LaunchId($select=lc_name,lc_risksummary)&$top=20",
-        headers=h,
+        f"&$expand=lc_LaunchId($select=lc_name,lc_risksummary)&$top=200",
+        headers={**h, "Prefer": "odata.maxpagesize=200"},
     )
     if r.status_code == 200:
         for row in r.json().get("value", []):
