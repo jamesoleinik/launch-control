@@ -43,12 +43,16 @@ SNAPSHOT = HERE / "samples" / "snapshot.json"
 SECURED_COLUMNS = ("lc_blockerreason", "lc_risksummary")
 MASK = "\u2588" * 8  # ████████
 
+# We surface three roles spanning the three depth levels (User / Business Unit /
+# Organization). The redundant lc Admin role (Org depth like Viewer, plus write)
+# is omitted; full control already lives with the System Administrator role.
+ROLE_NAMES = {"lc Owner", "lc Member", "lc Viewer"}
+
 # The lc teams created in Part 2; each maps a persona to its owner-team.
 TEAM_BY_PERSONA = {
     "member": "lc Members",
     "owner": "lc Owners",
     "viewer": "lc Viewers",
-    "admin": "lc Admins",
 }
 
 app = Flask(__name__)
@@ -229,6 +233,8 @@ def live_policies() -> dict:
     roles = []
     for r in _vals(requests, api, headers,
                    "/roles?$select=roleid,name&$filter=startswith(name,'lc ')"):
+        if r["name"] not in ROLE_NAMES:
+            continue  # show the three depth-distinct roles; omit lc Admin
         depth, tables, actions = "-", set(), set()
         rp = requests.get(f"{api}/RetrieveRolePrivilegesRole(RoleId={r['roleid']})",
                           headers=headers)
@@ -369,62 +375,10 @@ PAGE = """
     the <b>secured columns</b> show data masking.</div>
 </header>
 <main>
-  <form method="get">
-    <label for="persona">Impersonate</label>
-    <select id="persona" name="persona" onchange="this.form.submit()">
-      {% for p in personas %}
-        <option value="{{ p.id }}" {{ "selected" if p.id == selected else "" }}>{{ p.label }}</option>
-      {% endfor %}
-    </select>
-    <noscript><button type="submit">Go</button></noscript>
-  </form>
-
-  <div class="lens">
-    <h2>Axis 1 - Row-level security: rows this persona can read</h2>
-    <div class="counts">
-      {% for k, v in counts.items() %}
-        <div class="chip"><b>{{ v }}</b><span>{{ k }}</span></div>
-      {% endfor %}
-    </div>
-    <div class="note">A persona with User-level depth on lc_task sees only the
-      rows it owns; Business-Unit depth sees them all. A blank means no read at all.</div>
-  </div>
-
-  <div class="lens">
-    <h2>Axis 2 - Data masking: secured columns
-      <span class="pill">lc_blockerreason</span>
-      <span class="pill">lc_risksummary</span></h2>
-    {% if tasks %}
-    <table>
-      <thead><tr class="secured">
-        <th>lc_name</th><th>status</th>
-        <th>lc_blockerreason &#128274;</th><th>lc_risksummary &#128274;</th>
-      </tr></thead>
-      <tbody>
-      {% for t in tasks %}
-        <tr>
-          <td>{{ t.lc_name }}</td>
-          <td>{{ t.lc_taskstatus }}</td>
-          <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
-          <td>{{ render_cell(t, "lc_risksummary")|safe }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <div class="note">&#128274; = field-secured. A red
-      <span class="masked">{{ mask }}</span> means the caller is outside the
-      <code>lc Sensitive Readers</code> profile, so Dataverse withheld the value -
-      even though the row itself is readable.</div>
-    {% else %}
-    <div class="note">This persona can't read any lc_task rows, so there's
-      nothing to mask.</div>
-    {% endif %}
-  </div>
-
   <div class="lens">
     <h2>The policies behind the curtain - who's assigned to what</h2>
     <div class="note" style="margin-top:0;margin-bottom:14px;">This panel is the
-      configuration itself, independent of the persona above: the row-level roles
+      configuration itself, independent of the impersonation below: the row-level roles
       and column-level profiles enforced by the platform, and the users or teams
       assigned to each.</div>
 
@@ -490,6 +444,58 @@ PAGE = """
       System Administrators can read the column today.</div>
     {% else %}
     <div class="note">No field security profiles secure an lc_* column.</div>
+    {% endif %}
+  </div>
+
+  <form method="get">
+    <label for="persona">Impersonate</label>
+    <select id="persona" name="persona" onchange="this.form.submit()">
+      {% for p in personas %}
+        <option value="{{ p.id }}" {{ "selected" if p.id == selected else "" }}>{{ p.label }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit">Go</button></noscript>
+  </form>
+
+  <div class="lens">
+    <h2>Axis 1 - Row-level security: rows this persona can read</h2>
+    <div class="counts">
+      {% for k, v in counts.items() %}
+        <div class="chip"><b>{{ v }}</b><span>{{ k }}</span></div>
+      {% endfor %}
+    </div>
+    <div class="note">A persona with User-level depth on lc_task sees only the
+      rows it owns; Business-Unit depth sees them all. A blank means no read at all.</div>
+  </div>
+
+  <div class="lens">
+    <h2>Axis 2 - Data masking: secured columns
+      <span class="pill">lc_blockerreason</span>
+      <span class="pill">lc_risksummary</span></h2>
+    {% if tasks %}
+    <table>
+      <thead><tr class="secured">
+        <th>lc_name</th><th>status</th>
+        <th>lc_blockerreason &#128274;</th><th>lc_risksummary &#128274;</th>
+      </tr></thead>
+      <tbody>
+      {% for t in tasks %}
+        <tr>
+          <td>{{ t.lc_name }}</td>
+          <td>{{ t.lc_taskstatus }}</td>
+          <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
+          <td>{{ render_cell(t, "lc_risksummary")|safe }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="note">&#128274; = field-secured. A red
+      <span class="masked">{{ mask }}</span> means the caller is outside the
+      <code>lc Sensitive Readers</code> profile, so Dataverse withheld the value -
+      even though the row itself is readable.</div>
+    {% else %}
+    <div class="note">This persona can't read any lc_task rows, so there's
+      nothing to mask.</div>
     {% endif %}
   </div>
 </main>
