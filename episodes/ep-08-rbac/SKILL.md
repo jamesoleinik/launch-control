@@ -130,6 +130,12 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
 - **Secure the calculated twin too.** If a calculated or composite column reads a
   secured column, secure that calculated/composite column as well, or the value
   leaks through it.
+- **Agents are users; secure them per agent.** A connection authenticates as a real
+  `systemuser`, a human or an **application user** (e.g. the Cowork app user
+  `LaunchControl-Cowork-MCP`, which has `applicationid` set). Field security binds to
+  the agent's identity too, so assign profiles to application users for least
+  privilege. Effective column access is the **intersection** of the human's profile
+  and the agent's profile: the value returns only when both clear it.
 
 ## This environment
 

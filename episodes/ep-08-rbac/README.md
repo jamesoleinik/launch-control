@@ -1,7 +1,7 @@
 # Episode 8 — Roles & Reach: security in a headless world
 
 **Status:** ✅ Four roles + four teams live in the environment · ✅ Caller self-joined to all four · ✅ RBAC visualizer app built (`apps/rbac-visualizer/`, mock mode verified) · ✅ Column masking live + verified end to end (role, masking rule, column security profile tested via impersonation) · 🚧 smoke-test script not yet built · 🎬 Not yet recorded
-**Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
+**Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ **Per-agent control:** the agent is its own application user, so field security binds to the Cowork connection independently of the human, and Dataverse enforces the intersection · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
 **Layer:** 🛡 Dataverse's security model as the control plane for agents (roles + owner-teams + field security; root BU only for now)
 **Coding agent:** Claude Code / Cursor / any MCP client · **Runtime:** Web API + Python SDK; idempotent on names
 
@@ -32,6 +32,11 @@ Together they are the toolset an agent developer needs over sensitive data: an
 agent can be broadly useful and still never surface what it shouldn't. And every
 bit of it is authored from a coding agent (now Cursor included) against a
 one-line spec.
+
+And there is a move most platforms can't make: because every agent connects as
+its own **application user**, the same field security binds to the *agent's*
+identity, not just the human's. You set the right access for every user **and**
+every agent, and Dataverse enforces the **intersection**. That is Part 4.
 
 > ### The hook
 >
@@ -385,6 +390,80 @@ owner + profile           ✓        "Customs paperwork rejected; legal hold on 
 
 ---
 
+## Part 4 · Per-agent security: the agent is its own user
+
+Everything so far secured *people*. But in a headless world the thing actually
+holding the connection is an **agent**, and on most platforms an agent is a
+shared API key with one blunt scope: it sees whatever the integration was wired
+to see. There is no "this agent, specifically" to govern.
+
+Dataverse models it differently. The Cowork connection from Part 1 isn't a key;
+it's a real **application user** in the same `systemuser` table as every human,
+with its own roles and its own field security. It's already in this environment:
+
+```
+# the Cowork agent's identity, created in Part 1 (Entra app -> Dataverse app user)
+fullname:   LaunchControl-Cowork-MCP
+type:       application user (applicationid set, S2S auth)
+```
+
+Because the agent is a first-class user, **field security binds to the agent**,
+not just to the person. So you get two independent dials over every sensitive
+column:
+
+- the **human's** field security profile (what *Priya* may read), and
+- the **agent's** field security profile (what *Cowork* may read),
+
+and the value only returns when **both** clear it. Effective column access is the
+**intersection** of the two. Lock a column down on the agent and it stays masked
+through Cowork even for a human who could read it directly in a model-driven app,
+because the request also carries the agent's identity.
+
+### Prompt to Cursor: secure the agent, not just the user
+
+```text
+Load the dv-security skill. The Cowork application user
+(LaunchControl-Cowork-MCP) currently inherits System Administrator. Author a
+field security profile "Agent - Cowork (least privilege)" that grants Read on
+the lc_* columns Cowork legitimately needs and withholds Read on
+lc_blockerreason and lc_risksummary. Assign the application user to that profile
+(and remove its blanket access to those columns). Then prove the intersection:
+run the same lc_task read as the Cowork app user vs. as me, and show that the
+secured columns come back masked for the agent even where the human is cleared.
+```
+
+### The intersection, made concrete
+
+Same launch, same secured `lc_blockerreason` column, two identities on the call:
+
+| Human's profile | Agent's (Cowork) profile | What Cowork returns |
+| --- | --- | --- |
+| in profile (cleared) | in profile (cleared) | cleartext |
+| in profile (cleared) | **not** in profile | `████████` (agent blocks it) |
+| not in profile | in profile (cleared) | `████████` (human blocks it) |
+| not in profile | not in profile | `████████` |
+
+The human can read it in the app, but the agent cannot read it *for* them. That
+is per-agent least privilege: you scope each agent to exactly the columns its job
+needs, independent of how privileged its operators are.
+
+### Show it in the Cowork demo
+
+This lands live in the Episode 6 Cowork plugin. Ask Cowork the readiness question
+it always answers (it reads `lc_risksummary` and the blocked `lc_task` rows). With
+the agent inside the sensitive-readers profile, the summary comes back whole. Pull
+the Cowork application user out of that profile and ask again: same prompt, same
+human, but the blocker reasoning now reads `████████` and Cowork answers from only
+what it's cleared to see. Nothing changed about the user or the question, only the
+*agent's* clearance, and the platform enforced it.
+
+> **Good luck doing this on another platform.** Per-user *and* per-agent field
+> security, enforced as an intersection on every read, falls out of one fact:
+> agents and people share the same identity model. There's no second
+> authorization system to wire up, and no shared key to over-scope.
+
+---
+
 ## The doctrine: rules every Dataverse security design lives by
 
 Rules from the official docs that the scripts make first-class:
@@ -403,6 +482,11 @@ Rules from the official docs that the scripts make first-class:
    governed by its profile regardless of how powerful the caller's role is, and a
    masking rule masks even a System Administrator's plain read (cleartext needs
    `?UnMaskedData=true`). Row access and column access are evaluated independently.
+5. **The agent is a user, so secure it like one.** Every connection authenticates
+   as a real `systemuser` (a human or an application user). Field security binds to
+   the agent's identity too, so effective column access is the intersection of the
+   human's profile and the agent's profile. Scope each agent to least privilege;
+   don't lean on a shared key.
 
 ---
 

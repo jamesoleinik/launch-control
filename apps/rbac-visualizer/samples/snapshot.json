@@ -40,5 +40,33 @@
       { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": null }
     ],
     "admin": []
+  },
+  "policies": {
+    "_comment": "Seeded to mirror the live Product Launch 2.0 security model: four lc roles bound 1:1 to owner-teams, and the 'Custom Column security' field security profile over lc_teammember.lc_email (Email_HideName) with no members assigned, so only System Administrators read it today.",
+    "roles": [
+      { "name": "lc Admin",  "read_depth": "Organization",  "table_count": 5, "team": "lc Admins",  "members": ["Avery Admin"] },
+      { "name": "lc Member", "read_depth": "User",          "table_count": 5, "team": "lc Members", "members": ["Sam Member"] },
+      { "name": "lc Owner",  "read_depth": "Business Unit",  "table_count": 5, "team": "lc Owners",  "members": ["Priya Owner"] },
+      { "name": "lc Viewer", "read_depth": "Organization",  "table_count": 5, "team": "lc Viewers", "members": ["Lee Viewer"] }
+    ],
+    "profiles": [
+      {
+        "name": "Custom Column security",
+        "description": "Secures the team-member email column behind a hide-name mask.",
+        "columns": [
+          { "column": "lc_teammember.lc_email", "rule": "Email_HideName", "read": "Allowed", "readunmasked": "One record", "create": "Allowed", "update": "Not allowed" }
+        ],
+        "members": []
+      },
+      {
+        "name": "lc Sensitive Readers",
+        "description": "Demo profile: who may read the sensitive launch reasoning columns.",
+        "columns": [
+          { "column": "lc_launch.lc_description", "rule": "lc_SSNcustomrule", "read": "Allowed", "readunmasked": "Not allowed", "create": "Not allowed", "update": "Not allowed" },
+          { "column": "lc_launch.lc_risksummary", "rule": "(none)", "read": "Allowed", "readunmasked": "All records", "create": "Not allowed", "update": "Not allowed" }
+        ],
+        "members": ["lc Owners (team)"]
+      }
+    ]
   }
 }

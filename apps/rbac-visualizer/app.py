@@ -75,6 +75,10 @@ def mock_lenses(persona_id: str) -> dict:
     }
 
 
+def mock_policies() -> dict:
+    return _load_snapshot().get("policies", {"roles": [], "profiles": []})
+
+
 # ---------------------------------------------------------------------------
 # Live backend - real impersonated Web API calls.
 # ---------------------------------------------------------------------------
@@ -168,6 +172,117 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
     return {"counts": counts, "tasks": tasks}
 
 
+# Depth labels returned by RetrieveRolePrivilegesRole -> friendly RBAC scope.
+_DEPTH = {"Basic": "User", "Local": "Business Unit",
+          "Deep": "Parent: Child BU", "Global": "Organization"}
+# Field-permission option set values -> labels.
+_RWUC = {0: "Not allowed", 4: "Allowed"}
+_UNMASK = {0: "Not allowed", 1: "One record", 3: "All records"}
+
+
+def _vals(requests, api, headers, path: str) -> list[dict]:
+    """GET a collection, returning its `value` array or [] on any non-200."""
+    r = requests.get(api + path, headers=headers)
+    return r.json().get("value", []) if r.status_code == 200 else []
+
+
+def live_policies() -> dict:
+    """Read the actual security policies and who is assigned to each.
+
+    Row-level: every `lc *` security role, its read depth on the lc_* tables,
+    the owner-team bound to it, and that team's members.
+    Column-level: every field security profile that secures an lc_* column, the
+    per-column permissions (decoded to labels) plus the masking rule on the
+    column, and the users/teams assigned to the profile.
+    """
+    requests, api, headers = _live()
+
+    # --- Column masking rules: (entity, attribute) -> rule display name -------
+    rules = {r["maskingruleid"]: r.get("name")
+             for r in _vals(requests, api, headers, "/maskingrules?$select=maskingruleid,name")}
+    col_rule = {
+        (a["entityname"], a["attributelogicalname"]): rules.get(a.get("_maskingruleid_value"))
+        for a in _vals(
+            requests, api, headers,
+            "/attributemaskingrules?$select=entityname,attributelogicalname,_maskingruleid_value",
+        )
+    }
+
+    # --- Row-level: lc roles, their depth, bound team and members -------------
+    teams = _vals(
+        requests, api, headers,
+        "/teams?$select=teamid,name&$filter=startswith(name,'lc ')",
+    )
+    role_to_team: dict[str, dict] = {}
+    for t in teams:
+        tid = t["teamid"]
+        members = [m.get("fullname") or m.get("systemuserid")
+                   for m in _vals(requests, api, headers,
+                                  f"/teams({tid})/teammembership_association?$select=systemuserid,fullname")]
+        for r in _vals(requests, api, headers,
+                       f"/teams({tid})/teamroles_association?$select=roleid,name"):
+            role_to_team[r["roleid"]] = {"team": t["name"], "members": members}
+
+    roles = []
+    for r in _vals(requests, api, headers,
+                   "/roles?$select=roleid,name&$filter=startswith(name,'lc ')"):
+        depth, tables = "-", set()
+        rp = requests.get(f"{api}/RetrieveRolePrivilegesRole(RoleId={r['roleid']})",
+                          headers=headers)
+        if rp.status_code == 200:
+            for p in rp.json().get("RolePrivileges", []):
+                name = p.get("PrivilegeName", "")
+                if name.startswith("prvReadlc_"):
+                    tables.add(name[len("prvRead"):])
+                    if name == "prvReadlc_task" or depth == "-":
+                        depth = _DEPTH.get(p.get("Depth"), p.get("Depth"))
+        bound = role_to_team.get(r["roleid"], {})
+        roles.append({
+            "name": r["name"],
+            "read_depth": depth,
+            "table_count": len(tables),
+            "team": bound.get("team", "(no team)"),
+            "members": bound.get("members", []),
+        })
+    roles.sort(key=lambda x: x["name"])
+
+    # --- Column-level: field security profiles, permissions, members ----------
+    profiles = []
+    for p in _vals(requests, api, headers,
+                   "/fieldsecurityprofiles?$select=fieldsecurityprofileid,name,description"):
+        pid = p["fieldsecurityprofileid"]
+        perms = [fp for fp in _vals(
+            requests, api, headers,
+            f"/fieldpermissions?$filter=_fieldsecurityprofileid_value eq {pid}"
+            "&$select=entityname,attributelogicalname,canread,cancreate,canupdate,canreadunmasked",
+        ) if fp.get("entityname", "").startswith("lc_")]
+        if not perms:
+            continue  # skip system/empty profiles that touch no lc_* column
+        columns = [{
+            "column": f"{fp['entityname']}.{fp['attributelogicalname']}",
+            "rule": col_rule.get((fp["entityname"], fp["attributelogicalname"])) or "(none)",
+            "read": _RWUC.get(fp.get("canread"), fp.get("canread")),
+            "readunmasked": _UNMASK.get(fp.get("canreadunmasked"), fp.get("canreadunmasked")),
+            "create": _RWUC.get(fp.get("cancreate"), fp.get("cancreate")),
+            "update": _RWUC.get(fp.get("canupdate"), fp.get("canupdate")),
+        } for fp in perms]
+        members = [m.get("fullname") or m.get("systemuserid")
+                   for m in _vals(requests, api, headers,
+                                  f"/fieldsecurityprofiles({pid})/systemuserprofiles_association?$select=systemuserid,fullname")]
+        members += [f"{tm.get('name')} (team)"
+                    for tm in _vals(requests, api, headers,
+                                    f"/fieldsecurityprofiles({pid})/teamprofiles_association?$select=name")]
+        profiles.append({
+            "name": p["name"],
+            "description": p.get("description") or "",
+            "columns": columns,
+            "members": members,
+        })
+    profiles.sort(key=lambda x: x["name"])
+
+    return {"roles": roles, "profiles": profiles}
+
+
 # ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
@@ -213,6 +328,7 @@ PAGE = """
   .secured th { color: #d29922; }
   .masked { font-family: ui-monospace, monospace; color: #f85149;
             letter-spacing: 1px; }
+  .masked-soft { color: #8b949e; font-style: italic; }
   .clear { color: #e6edf3; }
   .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px;
           border: 1px solid #30363d; color: #8b949e; }
@@ -279,6 +395,69 @@ PAGE = """
       nothing to mask.</div>
     {% endif %}
   </div>
+
+  <div class="lens">
+    <h2>The policies behind the curtain - who's assigned to what</h2>
+    <div class="note" style="margin-top:0;margin-bottom:14px;">This panel is the
+      configuration itself, independent of the persona above: the row-level roles
+      and column-level profiles enforced by the platform, and the users or teams
+      assigned to each.</div>
+
+    <h3 style="font-size:13px;color:#8b949e;margin:6px 0 8px;">Row-level security
+      &middot; roles &rarr; depth &rarr; team &amp; members</h3>
+    {% if policies.roles %}
+    <table>
+      <thead><tr>
+        <th>Role</th><th>Read depth (lc_task)</th><th>lc_* tables</th>
+        <th>Owner team</th><th>Members assigned</th>
+      </tr></thead>
+      <tbody>
+      {% for r in policies.roles %}
+        <tr>
+          <td><b>{{ r.name }}</b></td>
+          <td><span class="pill">{{ r.read_depth }}</span></td>
+          <td>{{ r.table_count }}</td>
+          <td>{{ r.team }}</td>
+          <td>{% if r.members %}{{ r.members|join(", ") }}{% else %}<span class="masked-soft">none</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="note">No <code>lc *</code> roles found.</div>
+    {% endif %}
+
+    <h3 style="font-size:13px;color:#8b949e;margin:18px 0 8px;">Column-level security
+      &middot; profiles &rarr; secured columns &amp; masking &rarr; members</h3>
+    {% if policies.profiles %}
+    {% for pr in policies.profiles %}
+    <div style="border:1px solid #30363d;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+      <div style="margin-bottom:8px;"><b>{{ pr.name }}</b>
+        {% if pr.description %}<span class="note">&mdash; {{ pr.description }}</span>{% endif %}</div>
+      <table>
+        <thead><tr class="secured">
+          <th>Secured column &#128274;</th><th>Masking rule</th>
+          <th>Read</th><th>Read unmasked</th><th>Create</th><th>Update</th>
+        </tr></thead>
+        <tbody>
+        {% for c in pr.columns %}
+          <tr>
+            <td><code>{{ c.column }}</code></td>
+            <td>{{ c.rule }}</td>
+            <td>{{ c.read }}</td><td>{{ c.readunmasked }}</td>
+            <td>{{ c.create }}</td><td>{{ c.update }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <div class="note">Assigned to:
+        {% if pr.members %}<b>{{ pr.members|join(", ") }}</b>{% else %}<span class="masked-soft">no users or teams - only System Administrators can read these columns today</span>{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="note">No field security profiles secure an lc_* column.</div>
+    {% endif %}
+  </div>
 </main>
 </body>
 </html>
@@ -295,6 +474,7 @@ def index():
 
     selected = request.args.get("persona") or (personas[0]["id"] if personas else "me")
     lenses = mock_lenses(selected) if mock else live_lenses(personas, selected)
+    policies = mock_policies() if mock else live_policies()
 
     return render_template_string(
         PAGE,
@@ -302,6 +482,7 @@ def index():
         selected=selected,
         counts=lenses["counts"],
         tasks=lenses["tasks"],
+        policies=policies,
         render_cell=render_cell,
         mock=mock,
         mask=MASK,
