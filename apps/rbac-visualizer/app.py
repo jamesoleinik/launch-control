@@ -345,6 +345,8 @@ PAGE = """
   .chip b { font-size: 20px; display: block; }
   .chip span { font-size: 12px; color: #8b949e; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .policy-table { table-layout: fixed; }
+  .policy-table th, .policy-table td { word-break: break-word; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #21262d;
            vertical-align: top; }
   th { color: #8b949e; font-weight: 600; }
@@ -429,7 +431,11 @@ PAGE = """
     <h3 style="font-size:13px;color:#8b949e;margin:6px 0 8px;">Row-level security
       &middot; roles &rarr; privileges &rarr; team &amp; members</h3>
     {% if policies.roles %}
-    <table>
+    <table class="policy-table">
+      <colgroup>
+        <col style="width:17%"><col style="width:19%"><col style="width:18%">
+        <col style="width:16%"><col style="width:14%"><col style="width:16%">
+      </colgroup>
       <thead><tr>
         <th>Role</th><th>Privileges (lc_* tables)</th><th>Read depth (lc_task)</th>
         <th>lc_* tables</th><th>Owner team</th><th>Members assigned</th>
@@ -452,22 +458,26 @@ PAGE = """
     {% endif %}
 
     <h3 style="font-size:13px;color:#8b949e;margin:18px 0 8px;">Column-level security
-      &middot; secured column &rarr; profile &amp; masking &rarr; profile members</h3>
+      &middot; profile &rarr; masking &rarr; permissions &rarr; secured column &amp; members</h3>
     {% if policies.profiles %}
-    <table>
+    <table class="policy-table">
+      <colgroup>
+        <col style="width:17%"><col style="width:19%"><col style="width:18%">
+        <col style="width:16%"><col style="width:14%"><col style="width:16%">
+      </colgroup>
       <thead><tr class="secured">
-        <th>Secured column &#128274;</th><th>Profile</th><th>Masking rule</th>
-        <th>Permissions (this column)</th><th>Assigned to (profile members)</th>
+        <th>Profile</th><th>Masking rule</th><th>Permissions (this column)</th>
+        <th>Secured column &#128274;</th><th colspan="2">Assigned to (profile members)</th>
       </tr></thead>
       <tbody>
       {% for pr in policies.profiles %}
         {% for c in pr.columns %}
         <tr>
-          <td><code>{{ c.column }}</code></td>
           <td>{{ pr.name }}</td>
           <td>{{ c.rule }}</td>
           <td>{{ c.permissions }}</td>
-          <td>{% if pr.members %}{{ pr.members|join(", ") }}{% else %}<span class="masked-soft">sysadmin only</span>{% endif %}</td>
+          <td><code>{{ c.column }}</code></td>
+          <td colspan="2">{% if pr.members %}{{ pr.members|join(", ") }}{% else %}<span class="masked-soft">sysadmin only</span>{% endif %}</td>
         </tr>
         {% endfor %}
       {% endfor %}
