@@ -1,6 +1,6 @@
 # Episode 8 — Roles & Reach: security in a headless world
 
-**Status:** ✅ Four roles + four teams live in the environment · ✅ Caller self-joined to all four · ✅ RBAC visualizer app built (`apps/rbac-visualizer/`, mock mode verified) · 🚧 Field-security masking + smoke-test script not yet built · 🎬 Not yet recorded
+**Status:** ✅ Four roles + four teams live in the environment · ✅ Caller self-joined to all four · ✅ RBAC visualizer app built (`apps/rbac-visualizer/`, mock mode verified) · ✅ Column masking live + verified end to end (role, masking rule, column security profile tested via impersonation) · 🚧 smoke-test script not yet built · 🎬 Not yet recorded
 **Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
 **Layer:** 🛡 Dataverse's security model as the control plane for agents (roles + owner-teams + field security; root BU only for now)
 **Coding agent:** Claude Code / Cursor / any MCP client · **Runtime:** Web API + Python SDK; idempotent on names
@@ -24,9 +24,9 @@ two axes, not one:
 1. **Row-level security:** who sees *which rows*, and who can *do what*. Four
    flat roles, four owner-teams, one root BU.
 2. **Data masking (column-level security):** which *sensitive fields* stay
-   hidden even on rows a caller is allowed to read. A field security profile over
-   `lc_blockerreason` and `lc_risksummary` so an unprivileged agent gets
-   `********`, not the reasoning.
+   hidden even on rows a caller is allowed to read. A column security profile plus
+   masking rules over `lc_teammember.lc_email` and `lc_launch.lc_description`, so an
+   unprivileged agent gets the column omitted and a cleared one gets a partial mask.
 
 Together they are the toolset an agent developer needs over sensitive data: an
 agent can be broadly useful and still never surface what it shouldn't. And every
@@ -66,8 +66,8 @@ the agent drives the governed Dataverse APIs (`dv-security`, `dv-metadata`) to
 author:
 
 - two roles + their owner-teams to test row-level security (Part 2),
-- the secured columns and the `lc Sensitive Readers` field security profile to
-  test data masking (Part 3),
+- the secured columns and the `Custom Column security` profile (plus masking
+  rules) to test data masking (Part 3),
 - and a small **impersonation visualizer app**
   ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/)) so the whole model is
   something you can *see*, not just read about.
@@ -287,9 +287,9 @@ python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
 **Axis two: which sensitive fields stay hidden, even on rows you can read.**
 
 Row-level security answers *which rows*. It does nothing about *which columns*.
-An `lc Owner` who can read all 61 tasks still reads every `lc_blockerreason`,
-and every `lc_risksummary` on `lc_launch`, the internal "why this launch is at
-risk" reasoning that Episodes 3 and 4 wrote into the model. In a headless world
+An `lc Owner` who can read all 61 tasks also reads every sensitive column on those
+rows: a team member's `lc_email`, or the internal notes in `lc_launch.lc_description`
+that Episodes 3 and 4 wrote into the model. In a headless world
 that matters more, not less: the agent you just connected from Cursor inherits
 exactly what its caller can see. Broad read access plus sensitive columns equals
 a leak waiting to happen.
@@ -297,22 +297,28 @@ a leak waiting to happen.
 Dataverse's answer is **column-level security** (the API still calls it field
 security). You flag a column as secured, then a **column security profile**
 grants `Read` / `Read unmasked` / `Update` / `Create` on that column to specific
-users or teams. Anyone outside the profile gets the column back **masked**
-(`********`) even on a row they are fully allowed to read. With a **masking rule**
-you can reveal a *portion* of the value instead of hiding it entirely. It's
-[organization-wide and needs the System Administrator role to configure](https://learn.microsoft.com/en-us/power-platform/admin/field-level-security).
+users or teams. A principal *outside* the profile gets the column back **omitted
+(null)** over the Web API, even on a row they are fully allowed to read. A
+principal *inside* the profile with `Read` sees the value, and a **masking rule**
+(a regex plus a mask character) turns that into a *partial* reveal like
+`###-##-6789`. It's [organization-wide and needs the System Administrator role to
+configure](https://learn.microsoft.com/en-us/power-platform/admin/field-level-security).
 
-> **One catch worth knowing on camera: a System Administrator is never masked.**
-> Column security doesn't apply to sysadmins; data is never hidden from them. So
-> the test has to run as a non-admin. That's exactly why the visualizer
-> impersonates `lc Member` (and not the admin caller) to show the mask.
+> **One catch worth knowing on camera, and verified live: a masking rule masks a
+> plain read for *everyone*, System Administrators included.** A sysadmin reading a
+> masked column with a normal query still gets `###-##-6789`; the cleartext comes
+> back only when the request adds `?UnMaskedData=true` (which the platform honors
+> for a sysadmin, and for a non-admin only if their profile grants `Read unmasked`).
+> What sysadmins *do* bypass is classic column *access*: on a secured column with no
+> masking rule they always read cleartext. So the demo runs two reads side by side,
+> not "admin equals no security."
 
-We secure two columns and pair the profile with the `lc Owner` role from Part 2:
+The live environment now ships exactly this, in the `LaunchControl` solution:
 
-| Secured column | Table | Who gets the cleartext | Who gets `********` |
-|---|---|---|---|
-| `lc_blockerreason` | `lc_task` | `lc Owner` (+ profile) | `lc Member` |
-| `lc_risksummary` | `lc_launch` | `lc Owner` (+ profile) | `lc Member` |
+| Secured column | Table | Masking rule | In the profile sees | Outside the profile sees |
+|---|---|---|---|---|
+| `lc_email` | `lc_teammember` | `Email_HideName` (built-in) | masked address; cleartext one record at a time | column omitted |
+| `lc_description` | `lc_launch` | `lc_SSNcustomrule` (mask `#`, last-4 reveal) | `###-##-6789`-style; cleartext with `Read unmasked` | column omitted |
 
 ### Prompt to Cursor: build the data masking
 
@@ -321,25 +327,20 @@ Skill loaded, the ask is again one line:
 > _"Using the security skill, add the data masking role to test column-level
 > security."_
 
-The skill knows which columns to secure (`lc_blockerreason`, `lc_risksummary`),
-the profile name (`lc Sensitive Readers`), which team to bind, and to keep it
-idempotent. The result is [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py),
-which does three things, idempotently:
-
-1. Sets `IsSecured = true` on `lc_blockerreason` and `lc_risksummary` via the
-   column metadata.
-2. Creates a `fieldsecurityprofile` row (`lc Sensitive Readers`) and binds the
-   `lc Owners` team to it.
-3. Grants `CanRead = Allowed` on both secured columns for the profile, leaving
-   everyone else at the masked default.
+The skill carries the verified recipe: secure the column (`IsSecured = true` at
+create), create a `fieldsecurityprofile` (here `Custom Column security`), attach a
+masking rule via `attributemaskingrules` (PascalCase `MaskingRuleId@odata.bind`),
+and grant `canread` + `canreadunmasked` *in the same payload* (patching the unmask
+flag alone fails `0x80040203`). Every one of those steps was run live against a
+throwaway `lc_task` column and confirmed end to end before this episode shipped.
 
 ### Test it locally
 
 Re-run the visualizer and flip between the `lc Owner` and `lc Member` personas.
-The Owner sees the cleartext blocker reasons and risk summaries; the Member sees
-`████████` on the very same rows. Row access didn't change; column access did.
-(Test as the non-admin personas, not "me": a System Administrator is never
-masked.)
+The cleared persona sees the value; an uncleared, non-admin persona sees the mask
+on the very same rows. Row access didn't change; column access did. (Compare a
+plain read against an `?UnMaskedData=true` read rather than assuming "admin sees
+cleartext" means no security: a masking rule masks the admin's plain read too.)
 
 ```powershell
 python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
@@ -372,15 +373,15 @@ owner + profile           ✓        "Customs paperwork rejected; legal hold on 
 > That is the whole thesis in one table: the agent stays useful (it still finds
 > the right task), and the platform still refuses to leak the sensitive field.
 
-> **Going further: masking rules for a partial reveal.** Securing a column with
-> no profile access hides it entirely (`********`). If you'd rather show *part* of
-> a value, Dataverse [masking rules](https://learn.microsoft.com/en-us/power-platform/admin/create-manage-masking-rules)
-> apply a regular expression so, say, a number reads `###-##-6789`. They work on
-> Text and Number columns, the `Read unmasked` permission lets a cleared user pull
-> the full value one record at a time, and they require a Managed Environment. For
-> the free-text reasoning in `lc_blockerreason` / `lc_risksummary` the full hide is
-> the right call; masking rules shine on patterned data like card or account
-> numbers.
+> **Masking rules for a partial reveal (now live in this environment).** Securing a
+> column with no profile access hides it entirely (the column is omitted). To show
+> *part* of a value instead, Dataverse [masking rules](https://learn.microsoft.com/en-us/power-platform/admin/create-manage-masking-rules)
+> apply a regular expression plus a mask character, so a value reads `###-##-6789`.
+> They work on Text and Number columns and require a Managed Environment. The
+> cleartext behind the mask comes back only on a request that adds
+> `?UnMaskedData=true` *and* whose profile grants `Read unmasked` (`One record` or
+> `All records`). This is how `lc_SSNcustomrule` masks `lc_launch.lc_description` and
+> the built-in `Email_HideName` rule masks `lc_teammember.lc_email` today.
 
 ---
 
@@ -398,9 +399,10 @@ Rules from the official docs that the scripts make first-class:
 3. **Roles in the root BU inherit to every child BU.** That's why one role
    row works whether you nest BUs later or stay flat. We stay flat in this
    episode.
-4. **Field security is a second axis, not a stronger role.** A secured column
-   is masked for *everyone* outside its profile, regardless of how powerful
-   their role is. Row access and column access are evaluated independently.
+4. **Field security is a second axis, not a stronger role.** A secured column is
+   governed by its profile regardless of how powerful the caller's role is, and a
+   masking rule masks even a System Administrator's plain read (cleartext needs
+   `?UnMaskedData=true`). Row access and column access are evaluated independently.
 
 ---
 
@@ -451,11 +453,11 @@ someday.
    tasks, Owner and Viewer show 61, Admin shows blanks. Same query, four lenses,
    one screen, real `MSCRMCallerID` impersonation underneath.
 9. **Axis two, masking.** Third ask: _"add the data masking role."_ The agent
-   secures `lc_blockerreason` and `lc_risksummary` and binds the `lc Sensitive
-   Readers` profile to `lc Owners`. Back in the visualizer, the Member persona's
-   task table shows `████████` where the blocker reason and risk summary should
-   be; the Owner persona shows the cleartext. The row was readable; the column
-   still wasn't.
+   secures the sensitive columns, creates the `Custom Column security` profile, and
+   attaches the masking rules. Back in the visualizer, an uncleared persona's task
+   table shows the column omitted or masked where the sensitive value should be; a
+   cleared persona shows it (and the cleartext only on an `?UnMaskedData=true` read).
+   The row was readable; the column still wasn't.
 10. **The Episode 7 callback.** Re-run Ep 7's `search_data` for the Q3 export
     blocker as a Viewer-only caller and as an Owner-in-profile. Same agent, same
     query: the Viewer gets `████████`, the Owner gets the sentence, even though
@@ -474,12 +476,12 @@ someday.
 |---|---|
 | [`SKILL.md`](SKILL.md) | The `ep-08-dataverse-security` skill: teaches the two-axis Dataverse security model and drives the two simple asks (two roles to test row-level security; one data masking role to test column-level security). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
-| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | _(planned)_ Secures `lc_blockerreason` + `lc_risksummary`, creates the `lc Sensitive Readers` field security profile, and grants the `lc Owners` team read on both. Idempotent. |
+| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | _(planned)_ Secures the sensitive columns, creates the `Custom Column security` profile, attaches the masking rules, and grants `canread` (+ `canreadunmasked`) on the profile. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | _(planned)_ Runs the Part 1 four-lens query (and the Part 2 masking check) and prints the row-count + masked-field tables. |
 | [`apps/rbac-visualizer/`](../../apps/rbac-visualizer/) | The persona impersonation visualizer Cursor builds in Part 1. Flask app, `--mock` (seeded snapshot) and live modes; real `MSCRMCallerID` impersonation; renders row counts (axis one) and masked secured columns (axis two) side by side. |
 | [`datamodel/security/role-matrix.md`](../../datamodel/security/role-matrix.md) | _(planned)_ Human-readable rendering of the privilege matrix and the secured-column profile, kept in sync with the scripts as documentation. |
-| [`episodes/ep-08-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, are `lc_blockerreason` + `lc_risksummary` secured with the profile bound, is the caller a member of any team, are the `lc_*` tables resolved. |
+| [`episodes/ep-08-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, are the sensitive columns secured with the profile bound, is the caller a member of any team, are the `lc_*` tables resolved. |
 
 ---
 
