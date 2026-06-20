@@ -73,6 +73,26 @@ lenses render side by side: a row-count panel (Part 2's row-level security) and 
 task table whose secured columns show either cleartext or a red `████████`
 (Part 3's masking). One screen, both axes, any persona.
 
+### Prompt to Cursor: build the local test app
+
+> _"You have the Microsoft Dataverse plugin connected to my Product Launch
+> environment. Build a local Flask app at `apps/rbac-visualizer/` that lets me
+> test the security model by impersonating users. It should:_
+> - _list personas in a dropdown: 'me', plus the first member of each lc team
+>   (`lc Members`, `lc Owners`, `lc Viewers`, `lc Admins`);_
+> - _for the selected persona, run the SAME `lc_task` query while impersonating
+>   that user via the `MSCRMCallerID` header, and show two panels: row counts per
+>   `lc_*` table, and a task table including `lc_blockerreason` and
+>   `lc_risksummary`;_
+> - _render any secured column that comes back null or absent as a masked block,
+>   so masking is visible at a glance;_
+> - _support a `--mock` flag that reads a seeded snapshot so it runs with no env._
+>
+> _Reuse `scripts/auth.py` for the token. Keep it to one file plus a samples
+> snapshot, and add a short README."_
+
+Cursor writes the app once; you run it after each part to *see* the change.
+
 ```powershell
 # The agent builds it; you run it. Offline demo first (seeded snapshot, no env):
 python apps/rbac-visualizer/app.py --mock
@@ -113,7 +133,23 @@ Dataverse a new client is not a new attack surface.
 **Axis one: who sees which rows.** This is the role + owner-team model, authored
 by the coding agent from a one-line spec.
 
-[`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) (~250 lines) does five things:
+### Prompt to Cursor: build the row-level security
+
+> _"Using the Dataverse plugin on my Product Launch environment, write
+> `scripts/python/setup_simple_rbac.py` that authors four flat roles in the root
+> business unit: `lc Member` (Create/Read/Write at User depth), `lc Owner`
+> (Create/Read/Write at Business Unit depth), `lc Viewer` (Read at Business Unit
+> depth) over the `lc_*` tables plus the virtual entities and the
+> `CalculateLaunchReadiness` Custom API, and `lc Admin` (manage
+> `systemuser`/`team`/`role`, no data privileges). Create four owner-teams
+> (`lc Members`, `lc Owners`, `lc Viewers`, `lc Admins`) and bind each role to
+> its team. Resolve privilege names via `/privileges` (note the `systemuser`
+> table uses the legacy `User` stem, e.g. `prvReadUser`), batch the lookups so
+> the OData URL doesn't blow the length cap, and apply them with
+> `AddPrivilegesRole`. Make it idempotent, with `--dry-run`, `--add-self`, and
+> `--remove-self` flags."_
+
+The result is [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) (~250 lines), which does five things:
 
 1. Resolves the **root business unit** for the env.
 2. Looks up every privilege name we need via `/privileges?$filter=name eq '…'`,
@@ -240,6 +276,18 @@ The Admin row is blank for the data columns because `lc Admin` has zero data
 privileges by design: Admin is the user-management role, not a data role.
 Admin alongside Owner gives you full data + team management.
 
+### Test it locally
+
+The visualizer renders exactly this table, live. Run it and switch personas: the
+row-count panel jumps from 4 (Member) to 61 (Owner/Viewer) to blank (Admin), the
+same numbers the smoke-test prints, but in a UI you can flip in front of an
+audience.
+
+```powershell
+python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
+# open http://127.0.0.1:5000
+```
+
 ---
 
 ## Part 3 · Data masking: column-level security over sensitive fields
@@ -276,6 +324,26 @@ does three things, idempotently:
    `lc Owners` team to it.
 3. Grants `CanRead = Allowed` on both secured columns for the profile, leaving
    everyone else at the masked default.
+
+### Prompt to Cursor: build the data masking
+
+> _"Using the Dataverse plugin, write `scripts/python/setup_field_security.py`
+> that secures the two sensitive columns `lc_task.lc_blockerreason` and
+> `lc_launch.lc_risksummary` (set `IsSecured = true`), creates a field security
+> profile named `lc Sensitive Readers`, binds the `lc Owners` team to it, and
+> grants `CanRead = Allowed` on both columns for that profile so every other
+> role gets the masked default. Make it idempotent so re-runs are no-ops."_
+
+### Test it locally
+
+Re-run the visualizer and flip between the `lc Owner` and `lc Viewer` personas.
+The Owner sees the cleartext blocker reasons and risk summaries; the Viewer sees
+`████████` on the very same rows. Row access didn't change; column access did.
+
+```powershell
+python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
+# open http://127.0.0.1:5000
+```
 
 ### The Episode 7 callback: masking holds even through `search_data`
 
