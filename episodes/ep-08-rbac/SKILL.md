@@ -17,7 +17,7 @@ description: |
 license: MIT
 metadata:
   author: Launch Control
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Skill: Dataverse security model (row-level + data masking)
@@ -59,35 +59,47 @@ Dataverse enforces access on two independent axes. A request has to clear both.
    **column security profile** (`fieldsecurityprofile`) grants permissions on
    that column to specific users or teams. The profile exposes four permissions:
 
-   | Permission | Effect |
-   |---|---|
-   | **Read** | Can view the column. With a masking rule applied, a masked value is shown. |
-   | **Read unmasked** | Can request the unmasked value (only meaningful when a masking rule is set). Default: not allowed. |
-   | **Update** | Can change the column value. |
-   | **Create** | Can set the column value on insert. |
+   | Permission | Stored column | Effect |
+   |---|---|---|
+   | **Read** | `canread` | Can view the column. With a masking rule applied, a plain read returns the *masked* value. |
+   | **Read unmasked** | `canreadunmasked` | Can pull the cleartext behind a masking rule, and only when the request opts in (see below). Values: `0` Not allowed, `1` One record, `3` All records. |
+   | **Update** | `canupdate` | Can change the column value. |
+   | **Create** | `cancreate` | Can set the column value on insert. |
 
-   Anyone outside the profile gets the column **masked** even on a row they are
-   fully allowed to read. With no masking rule the value is withheld entirely and
-   the UI shows a lock + `********`; with a **masking rule** (a regular expression
-   plus a mask character) you can instead show a *portion* of the value, e.g.
-   `###-##-6789`. Masking rules work on Text and Number columns and require a
-   **Managed Environment**; the **Read unmasked** permission lets a cleared user
-   pull the full value one record at a time. Over the Web API the secured field
-   comes back **null or omitted** for principals outside the profile (the
-   `********` is a UI affordance), so treat absent as masked in code.
+   Over the Web API the states are distinct, and were verified live against
+   `lc_task`:
+
+   - **Outside the profile** (no Read): the column comes back **null / omitted**.
+     It is withheld, not masked. Treat absent as no-access in code.
+   - **In the profile with Read, no masking rule:** cleartext.
+   - **In the profile with Read + a masking rule:** a plain `GET` returns the
+     *masked* value (e.g. `###-##-6789`). The cleartext comes back **only** when the
+     caller adds the **`?UnMaskedData=true`** query parameter *and* holds **Read
+     unmasked**. Without the parameter the value is never unmasked, whatever the
+     permission.
+
+   A masking rule is a regular expression plus a mask character on a **Text or
+   Number** column and requires a **Managed Environment**. With no masking rule a
+   secured column is all-or-nothing (full value for the profile, omitted for
+   everyone else); a masking rule adds the partial-reveal middle state.
 
    Column security is **organization-wide** and applies to every data access
    request. Configuring it requires the **System Administrator** role.
 
 These axes are evaluated **independently**. Field security is not a stronger
-role; a secured column is masked for everyone outside its profile no matter how
-powerful their role is.
+role; a secured column is governed by its profile no matter how powerful the
+caller's role is.
 
-> **Critical for testing: System Administrator is never masked.** Column security
-> does not apply to users with the System Administrator role; data is never
-> hidden from them. So you must verify masking with a **non-admin** account. In
-> the visualizer, impersonate the `lc Member` (non-admin) persona, not "me"
-> (the admin caller), or the mask will never appear.
+> **Critical for testing, verified live: a masking rule masks a plain read for
+> *everyone*, System Administrators included.** A sysadmin reading a masked column
+> with a plain `GET` still gets `###-##-6789`; the cleartext returns only when the
+> request adds `?UnMaskedData=true` (the platform always honors that for a sysadmin,
+> and for a non-admin only if their profile grants Read unmasked). What sysadmins
+> *do* bypass is classic column **access**: on a secured column with **no** masking
+> rule a sysadmin always reads cleartext, while a principal outside the profile gets
+> the column omitted. So test the two cases differently: prove full-hide with a
+> **non-admin** (they get null), and prove partial masking by comparing a plain `GET`
+> (masked) against `?UnMaskedData=true` (cleartext only for the unmasked-cleared).
 
 References: [Column-level security](https://learn.microsoft.com/en-us/power-platform/admin/field-level-security)
 · [Masking rules](https://learn.microsoft.com/en-us/power-platform/admin/create-manage-masking-rules).
@@ -199,11 +211,65 @@ the profile name.
 uncleared, non-admin persona shows the masked value on the very same row (a hidden
 local-part for the `Email_HideName` rule on `lc_email`, a `#####6789`-style reveal
 for `lc_SSNcustomrule` on `lc_description`). Row access did not change; column access
-did. **Test as a non-admin:** masking never applies to a System Administrator, so
-impersonate `lc Member`, not the "me" / admin caller, or nothing will look masked.
-(This also holds through Episode 7's `search_data`: the platform enforces masking on
-the read, not the tool, so a secured value never leaves Dataverse for an uncleared
-caller, even out of an attached file.)
+did. **Mind the masking nuance:** a plain read returns the mask to *everyone*,
+sysadmins included, so do not "test as admin and assume cleartext means no security."
+Compare a plain `GET` (masked) against `?UnMaskedData=true` (cleartext, only for a
+caller with Read unmasked). (This also holds through Episode 7's `search_data`: the
+platform enforces masking on the read, not the tool, so a secured value never leaves
+Dataverse for an uncleared caller, even out of an attached file.)
+
+---
+
+## Building it programmatically (verified against this environment)
+
+Every step below was run live against `lc_task` and confirmed end to end.
+
+**Custom role + privilege**
+- `POST /roles` with `name` + `businessunitid@odata.bind` (root BU); a fresh role
+  starts empty.
+- Resolve privilege ids (`/privileges?$filter=name eq 'prvReadlc_task'`), then
+  `POST /roles({id})/Microsoft.Dynamics.CRM.AddPrivilegesRole` with
+  `{"Privileges":[{"PrivilegeId":"…","Depth":"Local"}]}` (Depth `Basic` / `Local` /
+  `Deep` / `Global`). Verify the landed depth with
+  `GET /RetrieveRolePrivilegesRole(RoleId={id})`.
+
+**Custom masking rule**
+- `POST /maskingrules` with `name`, `displayname`, `maskedcharacter` (e.g. `#`),
+  `regularexpression`, and `testdata`. The platform computes `maskedtestdata`
+  server-side as a built-in self-test (`PASSWORD42` + regex `.(?=.{2})` + `*`
+  returned `********42`), so a 201 with the expected `maskedtestdata` proves the
+  regex before you ever attach it.
+
+**Secure a column + attach the rule**
+- Set **`IsSecured: true`** directly in the `POST …/Attributes` create (no separate
+  PATCH needed), then `POST /PublishXml` for the entity.
+- Bind the rule: `POST /attributemaskingrules` with `uniquename`,
+  `attributelogicalname`, `entityname`, and **`MaskingRuleId@odata.bind`**
+  (PascalCase nav; the lowercase `maskingruleid@odata.bind` 400s).
+
+**Column security profile + permission**
+- `POST /fieldsecurityprofiles` (`name`), then `POST /fieldpermissions` with
+  `fieldsecurityprofileid@odata.bind`, `entityname`, `attributelogicalname`, and the
+  permission columns. Option values: read/create/update `0` Not allowed, `4` Allowed;
+  `canreadunmasked` `0` / `1` / `3`.
+- **Send `canread` and `canreadunmasked` in the *same* payload.** Patching
+  `canreadunmasked` alone fails `0x80040203` ("CanReadUnMasked=3, but CanRead=null"):
+  the validator reads the companion value from the request body, not the stored row.
+- Assign principals with `…/systemuserprofiles_association/$ref` (users) or the team
+  association.
+
+**Testing each one (impersonation)**
+- Impersonate any user by adding the **`MSCRMCallerID: {systemuserid}`** header
+  (needs `prvActOnBehalfOfAnotherUser`; sysadmin has it). Give the impersonated user
+  a role that grants row read first, or they see zero rows.
+- Then read the secured column twice. Verified matrix on `lc_task`:
+
+  | Caller | Profile / Read unmasked | Plain `GET` | `?UnMaskedData=true` |
+  |---|---|---|---|
+  | non-admin, role only | not in profile | `null` (omitted) | n/a |
+  | non-admin | Read, unmasked = Not allowed | `********42` | `********42` |
+  | non-admin | Read, unmasked = All records | `********42` | `PASSWORD42` |
+  | System Administrator | not in profile (bypass) | `********42` | `PASSWORD42` |
 
 ---
 
@@ -222,9 +288,13 @@ caller, even out of an attached file.)
 | 400 on the privilege lookup | OData URL too long | Batch names ~30 per `$filter` request |
 | 401 adding a user to a team | Missing one side of the M:M append | Grant both `prvAppendToTeam` and `prvAppendUser` |
 | Secured column still readable | Profile bound to the reader's team | Bind only the cleared team to the profile |
-| Secured column never looks masked | Testing as a System Administrator | Masking never applies to sysadmins; impersonate a non-admin persona |
+| Secured column omitted for a member | Profile not assigned, or reads a stale cache | Add the user/team to the profile; allow a few seconds for the security cache |
+| Masked value won't reveal as cleartext | Plain `GET`, or missing Read unmasked | Add `?UnMaskedData=true` *and* grant `canreadunmasked` (1 or 3); a plain `GET` never unmasks |
+| Sysadmin still sees the mask | Masking applies to every plain read | Expected; request `?UnMaskedData=true` (sysadmins are always unmask-cleared) |
+| `0x80040203` "CanReadUnMasked=N, but CanRead=null" | PATCHed `canreadunmasked` alone | Send `canread` and `canreadunmasked` together in one payload |
+| `400` on `maskingruleid@odata.bind` | Wrong nav casing | Use PascalCase `MaskingRuleId@odata.bind` on `attributemaskingrules` |
 | `Enable column security` greyed out | Column isn't securable | Virtual / lookup / formula / primary-name / system columns can't be secured |
-| Masked field looks empty in code | `********` is UI-only | Treat null/absent over the Web API as masked |
+| Masked field looks empty in code | Outside-profile reads are omitted | Treat null/absent over the Web API as no-access; a masking rule returns the mask string, not null |
 
 ## Tone
 
