@@ -123,8 +123,14 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
 
 - Tables: the `lc_*` model (`lc_launch`, `lc_milestone`, `lc_task`,
   `lc_statusupdate`, `lc_teammember`, plus the `lc_githubissue` virtual entity).
-- Sensitive columns to mask: **`lc_task.lc_blockerreason`** and
-  **`lc_launch.lc_risksummary`** (the internal "why this is at risk" reasoning).
+- Secured columns are live in this environment now, shipped in the `LaunchControl`
+  solution:
+  - **`lc_teammember.lc_email`** (`IsSecured = true`), masked by the built-in
+    **`Email_HideName`** rule and governed by the **`Custom Column security`**
+    column security profile.
+  - **`lc_launch.lc_description`** (`IsSecured = true`), masked by the custom
+    **`lc_SSNcustomrule`** rule: mask character `#` plus a regex that reveals only
+    the last four characters (the SSN `###-##-6789` shape from the masking-rules doc).
 - Auth + base URL come from `.env` (`DATAVERSE_URL`); reuse `scripts/auth.py` for
   the token. API base is `${DATAVERSE_URL}/api/data/v9.2`.
 
@@ -163,27 +169,41 @@ owns. Same query, two lenses.
 ## Task 2: A data masking role to test column-level security
 
 Goal: a profile that makes the column-level axis visible by returning the *same
-row* with the sensitive fields readable for one role and masked for the other.
+row* with a sensitive field readable for one role and masked for the other.
 
-- Secure `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`
-  (`IsSecured = true`). Both are plain text columns, so they are eligible.
-- Create a **column security profile** (`fieldsecurityprofile`)
-  **`lc Sensitive Readers`** and bind the **`lc Owners`** team to it.
-- Grant `Read = Allowed` on both columns for the profile, leaving everyone else
-  at the masked default. Idempotent on the profile name. (Optionally attach a
-  **masking rule** for a *partial* reveal instead of a full hide: a regex + mask
-  character on a Text/Number column, gated by the **Read unmasked** permission and
-  requiring a Managed Environment. For free-text reasoning the full hide is
-  usually the right call.)
+This environment already ships the worked example, in the `LaunchControl` solution:
 
-**Test:** in the visualizer, the `lc Owner` persona shows the cleartext blocker
-reasons and risk summaries; the `lc Member` persona shows `████████` on the very
-same rows. Row access did not change; column access did. **Test as a non-admin:**
-masking never applies to a System Administrator, so impersonate `lc Member`, not
-the "me" / admin caller, or nothing will look masked. (This also holds through
-Episode 7's `search_data`: the platform enforces masking on the read, not the
-tool, so a secured value never leaves Dataverse for an uncleared caller, even out
-of an attached file.)
+- **`lc_teammember.lc_email`** is secured (`IsSecured = true`) and carries the
+  built-in **`Email_HideName`** masking rule. The **`Custom Column security`**
+  profile grants `Read = Allowed`, `Create = Allowed`, `Update = Not allowed`, and
+  `Read unmasked = One record` on it.
+- **`lc_launch.lc_description`** is secured and carries the custom
+  **`lc_SSNcustomrule`** rule (mask character `#`, a regex that reveals only the
+  last four characters).
+
+To build a slice from scratch the moves are the same: secure the column
+(`IsSecured = true`), create a **column security profile** (`fieldsecurityprofile`),
+grant the profile `Read = Allowed` on the column, and bind the cleared team to it.
+Attach a **masking rule** (a regex + mask character on a Text/Number column, gated by
+the **Read unmasked** permission and a Managed Environment) when you want a *partial*
+reveal like `###-##-6789` instead of a full hide. Make the whole thing idempotent on
+the profile name.
+
+> **Gotcha, live in this environment: a secured column with no profile members is
+> readable only by System Administrators.** The `Custom Column security` profile
+> currently has no users or teams assigned, so today only sysadmins can read
+> `lc_email` at all. Assign the cleared team to the profile before you expect a
+> non-admin persona to see the column.
+
+**Test:** in the visualizer, a cleared persona shows the cleartext value; an
+uncleared, non-admin persona shows the masked value on the very same row (a hidden
+local-part for the `Email_HideName` rule on `lc_email`, a `#####6789`-style reveal
+for `lc_SSNcustomrule` on `lc_description`). Row access did not change; column access
+did. **Test as a non-admin:** masking never applies to a System Administrator, so
+impersonate `lc Member`, not the "me" / admin caller, or nothing will look masked.
+(This also holds through Episode 7's `search_data`: the platform enforces masking on
+the read, not the tool, so a secured value never leaves Dataverse for an uncleared
+caller, even out of an attached file.)
 
 ---
 
