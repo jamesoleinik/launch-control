@@ -449,7 +449,7 @@ PAGE = """
 
   <form method="get">
     <label for="persona">Impersonate</label>
-    <select id="persona" name="persona" onchange="this.form.submit()">
+    <select id="persona" name="persona" onchange="lcSubmit(this)">
       {% for p in personas %}
         <option value="{{ p.id }}" {{ "selected" if p.id == selected else "" }}>{{ p.label }}</option>
       {% endfor %}
@@ -499,6 +499,22 @@ PAGE = """
     {% endif %}
   </div>
 </main>
+<script>
+  // Preserve scroll position across the persona reload so the page doesn't jump
+  // back to the top each time you switch the impersonation account.
+  function lcSubmit(sel) {
+    try { sessionStorage.setItem('lc_scroll', window.scrollY); } catch (e) {}
+    sel.form.submit();
+  }
+  (function () {
+    var y = null;
+    try { y = sessionStorage.getItem('lc_scroll'); } catch (e) {}
+    if (y !== null) {
+      window.scrollTo(0, parseInt(y, 10));
+      try { sessionStorage.removeItem('lc_scroll'); } catch (e) {}
+    }
+  })();
+</script>
 </body>
 </html>
 """
