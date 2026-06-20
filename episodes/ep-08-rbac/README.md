@@ -57,41 +57,36 @@ connecting an agent. As of this episode the Microsoft Dataverse plugin
 the same `dv-*` skillset already in Copilot, Claude, and any MCP client. Install
 it, point it at the environment, and Cursor can reach Dataverse in seconds.
 
-Then the agent does the building. None of what follows is click-ops. From one-line
-specs, the coding agent drives the governed Dataverse APIs (`dv-security`,
-`dv-metadata`, `dv-admin`) to author:
+Then the agent does the building, and it doesn't need a wall of instructions to
+do it. We load one skill, [`ep-08-dataverse-security`](SKILL.md), which teaches
+the agent the whole Dataverse security model: the two axes, depth levels, the
+privilege-naming gotchas, field security, and how to keep every change
+idempotent. With that skill loaded, each ask is one line. From those one-liners
+the agent drives the governed Dataverse APIs (`dv-security`, `dv-metadata`) to
+author:
 
-- the four flat roles and four owner-teams (Part 2),
-- the secured columns and the `lc Sensitive Readers` field security profile (Part 3),
-- and a small **impersonation visualizer app** ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/))
-  so the whole model is something you can *see*, not just read about.
+- two roles + their owner-teams to test row-level security (Part 2),
+- the secured columns and the `lc Sensitive Readers` field security profile to
+  test data masking (Part 3),
+- and a small **impersonation visualizer app**
+  ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/)) so the whole model is
+  something you can *see*, not just read about.
 
-That last one is the demo vehicle. We ask Cursor to build a tiny Flask app that
-lets you pick a persona from a dropdown and runs the *same* launch query as that
-user, with the real `MSCRMCallerID` impersonation header set under the hood. Two
-lenses render side by side: a row-count panel (Part 2's row-level security) and a
-task table whose secured columns show either cleartext or a red `████████`
-(Part 3's masking). One screen, both axes, any persona.
+That last one is the demo vehicle. The skill describes a tiny Flask app that lets
+you pick a persona from a dropdown and runs the *same* launch query as that user,
+with the real `MSCRMCallerID` impersonation header set under the hood. Two lenses
+render side by side: a row-count panel (Part 2's row-level security) and a task
+table whose secured columns show either cleartext or a red `████████` (Part 3's
+masking). One screen, both axes, any persona.
 
-### Prompt to Cursor: build the local test app
+### Prompt to Cursor: load the skill and build the test app
 
-> _"You have the Microsoft Dataverse plugin connected to my Product Launch
-> environment. Build a local Flask app at `apps/rbac-visualizer/` that lets me
-> test the security model by impersonating users. It should:_
-> - _list personas in a dropdown: 'me', plus the first member of each lc team
->   (`lc Members`, `lc Owners`, `lc Viewers`, `lc Admins`);_
-> - _for the selected persona, run the SAME `lc_task` query while impersonating
->   that user via the `MSCRMCallerID` header, and show two panels: row counts per
->   `lc_*` table, and a task table including `lc_blockerreason` and
->   `lc_risksummary`;_
-> - _render any secured column that comes back null or absent as a masked block,
->   so masking is visible at a glance;_
-> - _support a `--mock` flag that reads a seeded snapshot so it runs with no env._
->
-> _Reuse `scripts/auth.py` for the token. Keep it to one file plus a samples
-> snapshot, and add a short README."_
+> _"Use the `ep-08-dataverse-security` skill. Build the impersonation test app it
+> describes at `apps/rbac-visualizer/`, then confirm the env from `.env` so we're
+> ready to author the model."_
 
-Cursor writes the app once; you run it after each part to *see* the change.
+The skill carries the spec, so the ask stays short. Cursor writes the app once;
+you run it after each part to *see* the change.
 
 ```powershell
 # The agent builds it; you run it. Offline demo first (seeded snapshot, no env):
@@ -135,21 +130,18 @@ by the coding agent from a one-line spec.
 
 ### Prompt to Cursor: build the row-level security
 
-> _"Using the Dataverse plugin on my Product Launch environment, write
-> `scripts/python/setup_simple_rbac.py` that authors four flat roles in the root
-> business unit: `lc Member` (Create/Read/Write at User depth), `lc Owner`
-> (Create/Read/Write at Business Unit depth), `lc Viewer` (Read at Business Unit
-> depth) over the `lc_*` tables plus the virtual entities and the
-> `CalculateLaunchReadiness` Custom API, and `lc Admin` (manage
-> `systemuser`/`team`/`role`, no data privileges). Create four owner-teams
-> (`lc Members`, `lc Owners`, `lc Viewers`, `lc Admins`) and bind each role to
-> its team. Resolve privilege names via `/privileges` (note the `systemuser`
-> table uses the legacy `User` stem, e.g. `prvReadUser`), batch the lookups so
-> the OData URL doesn't blow the length cap, and apply them with
-> `AddPrivilegesRole`. Make it idempotent, with `--dry-run`, `--add-self`, and
-> `--remove-self` flags."_
+With the `ep-08-dataverse-security` skill loaded, the ask is one line:
 
-The result is [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) (~250 lines), which does five things:
+> _"Using the security skill, create the two roles to test row-level security."_
+
+The skill knows the rest: `lc Owner` reads every row at Business Unit depth,
+`lc Member` reads only its own at User depth, each bound to its own owner-team,
+privilege names resolved and batched, idempotent with `--dry-run` / `--add-self`
+/ `--remove-self`. Two roles are all you need to *see* the row-level contrast.
+
+The shipped [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py)
+generalizes that same pattern to the full four-role matrix below (adding a
+read-only `lc Viewer` and a user-management `lc Admin`), and does five things:
 
 1. Resolves the **root business unit** for the env.
 2. Looks up every privilege name we need via `/privileges?$filter=name eq '…'`,
@@ -302,21 +294,37 @@ that matters more, not less: the agent you just connected from Cursor inherits
 exactly what its caller can see. Broad read access plus sensitive columns equals
 a leak waiting to happen.
 
-Dataverse's answer is **column-level (field) security**. You flag a column as
-secured, then a **field security profile** grants `Read` / `Update` / `Create`
-on that column to specific users or teams. Anyone outside the profile gets the
-column back **masked** (`********`) even on a row they are fully allowed to
-read.
+Dataverse's answer is **column-level security** (the API still calls it field
+security). You flag a column as secured, then a **column security profile**
+grants `Read` / `Read unmasked` / `Update` / `Create` on that column to specific
+users or teams. Anyone outside the profile gets the column back **masked**
+(`********`) even on a row they are fully allowed to read. With a **masking rule**
+you can reveal a *portion* of the value instead of hiding it entirely. It's
+[organization-wide and needs the System Administrator role to configure](https://learn.microsoft.com/en-us/power-platform/admin/field-level-security).
 
-We secure two columns and pair each profile with the role from Part 2:
+> **One catch worth knowing on camera: a System Administrator is never masked.**
+> Column security doesn't apply to sysadmins; data is never hidden from them. So
+> the test has to run as a non-admin. That's exactly why the visualizer
+> impersonates `lc Member` (and not the admin caller) to show the mask.
+
+We secure two columns and pair the profile with the `lc Owner` role from Part 2:
 
 | Secured column | Table | Who gets the cleartext | Who gets `********` |
 |---|---|---|---|
-| `lc_blockerreason` | `lc_task` | `lc Owner` (+ profile) | `lc Member`, `lc Viewer` |
-| `lc_risksummary` | `lc_launch` | `lc Owner` (+ profile) | `lc Member`, `lc Viewer` |
+| `lc_blockerreason` | `lc_task` | `lc Owner` (+ profile) | `lc Member` |
+| `lc_risksummary` | `lc_launch` | `lc Owner` (+ profile) | `lc Member` |
 
-The planned [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py)
-does three things, idempotently:
+### Prompt to Cursor: build the data masking
+
+Skill loaded, the ask is again one line:
+
+> _"Using the security skill, add the data masking role to test column-level
+> security."_
+
+The skill knows which columns to secure (`lc_blockerreason`, `lc_risksummary`),
+the profile name (`lc Sensitive Readers`), which team to bind, and to keep it
+idempotent. The result is [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py),
+which does three things, idempotently:
 
 1. Sets `IsSecured = true` on `lc_blockerreason` and `lc_risksummary` via the
    column metadata.
@@ -325,20 +333,13 @@ does three things, idempotently:
 3. Grants `CanRead = Allowed` on both secured columns for the profile, leaving
    everyone else at the masked default.
 
-### Prompt to Cursor: build the data masking
-
-> _"Using the Dataverse plugin, write `scripts/python/setup_field_security.py`
-> that secures the two sensitive columns `lc_task.lc_blockerreason` and
-> `lc_launch.lc_risksummary` (set `IsSecured = true`), creates a field security
-> profile named `lc Sensitive Readers`, binds the `lc Owners` team to it, and
-> grants `CanRead = Allowed` on both columns for that profile so every other
-> role gets the masked default. Make it idempotent so re-runs are no-ops."_
-
 ### Test it locally
 
-Re-run the visualizer and flip between the `lc Owner` and `lc Viewer` personas.
-The Owner sees the cleartext blocker reasons and risk summaries; the Viewer sees
+Re-run the visualizer and flip between the `lc Owner` and `lc Member` personas.
+The Owner sees the cleartext blocker reasons and risk summaries; the Member sees
 `████████` on the very same rows. Row access didn't change; column access did.
+(Test as the non-admin personas, not "me": a System Administrator is never
+masked.)
 
 ```powershell
 python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
@@ -353,7 +354,7 @@ does an agentic search tool route around column security and hand the agent the
 secured value anyway, or surface it out of an attached PDF?
 
 It doesn't. Field security is enforced by the platform on the *read*, not by
-each tool. Run the same `lc_task` search as a `lc Viewer`-only caller and the
+each tool. Run the same `lc_task` search as a `lc Member`-only caller and the
 `lc_blockerreason` field comes back `********`; run it as an `lc Owner` in the
 profile and the cleartext returns. Same query, same agent, same client: the
 column the caller isn't cleared for never leaves Dataverse, no matter which
@@ -364,20 +365,22 @@ tool asked for it.
 
 Caller            lc_task match   lc_blockerreason returned
 --------------    -------------   -------------------------
-viewer-only               ✓        ********
+member-only               ✓        ********
 owner + profile           ✓        "Customs paperwork rejected; legal hold on EU SKU"
 ```
 
 > That is the whole thesis in one table: the agent stays useful (it still finds
 > the right task), and the platform still refuses to leak the sensitive field.
 
-> **Adjacent, not the same thing:** Dynamics 365 Customer Service also offers
-> [conversation **data-masking rules**](https://learn.microsoft.com/en-us/dynamics365/customer-service/administer/data-masking-settings)
-> regex masking of things like credit-card and SSN values inside chat
-> messages and transcripts. That's a channel-level control for live
-> conversations; column-level field security is the row-and-record control we
-> use here. Different layers, same instinct: don't show sensitive data to a
-> principal that isn't cleared for it.
+> **Going further: masking rules for a partial reveal.** Securing a column with
+> no profile access hides it entirely (`********`). If you'd rather show *part* of
+> a value, Dataverse [masking rules](https://learn.microsoft.com/en-us/power-platform/admin/create-manage-masking-rules)
+> apply a regular expression so, say, a number reads `###-##-6789`. They work on
+> Text and Number columns, the `Read unmasked` permission lets a cleared user pull
+> the full value one record at a time, and they require a Managed Environment. For
+> the free-text reasoning in `lc_blockerreason` / `lc_risksummary` the full hide is
+> the right call; masking rules shine on patterned data like card or account
+> numbers.
 
 ---
 
@@ -431,13 +434,13 @@ someday.
    Dataverse plugin (`microsoft/Dataverse-skills`). Install it, point it at the
    env, and the agent reaches Dataverse in seconds. Great. Now: what can it see?
 2. PPAC → Security → Roles **before**: zero `lc *` roles. Wide-open env.
-3. The coding agent in Cursor (or Claude Code, any MCP client): _"author four
-   flat roles for the lc_* tables (Member, Owner, Viewer, Admin) covering the
-   unified core plus the virtual entities and Custom API from Eps 4–5, then build
-   me a small app to visualize who sees what."_ The agent writes
-   `setup_simple_rbac.py` and the `apps/rbac-visualizer/` Flask app from the spec.
-4. `--dry-run` prints the plan: 22 privileges resolved, 15 + 15 + 5 + 7
-   privilege counts, four roles, four teams, four bindings.
+3. **Load one skill.** In Cursor (or Claude Code, any MCP client) load the
+   `ep-08-dataverse-security` skill. From here every ask is one line, because the
+   skill carries the model. First ask: _"build the test app it describes."_ The
+   agent writes the `apps/rbac-visualizer/` Flask app.
+4. **Two roles to test.** _"Create the two roles to test row-level security."_ The
+   agent writes `setup_simple_rbac.py`. `--dry-run` prints the plan; the real run
+   prints `created`, `applied N privileges`, `team created, role bound`.
 5. Real run: `created`, `applied N privileges`, `team created, role bound`
    for every role. Self-add: four `✅` lines.
 6. PPAC → Security → Roles **after**: four new roles. Click `lc Viewer`:
@@ -447,11 +450,12 @@ someday.
    flip the persona dropdown. The row-count panel rewrites live: Member shows 4
    tasks, Owner and Viewer show 61, Admin shows blanks. Same query, four lenses,
    one screen, real `MSCRMCallerID` impersonation underneath.
-9. **Axis two, masking.** The agent secures `lc_blockerreason` and
-   `lc_risksummary` and binds the `lc Sensitive Readers` profile to `lc Owners`.
-   Back in the visualizer, the Viewer persona's task table shows `████████` where
-   the blocker reason and risk summary should be; the Owner persona shows the
-   cleartext. The row was readable; the column still wasn't.
+9. **Axis two, masking.** Third ask: _"add the data masking role."_ The agent
+   secures `lc_blockerreason` and `lc_risksummary` and binds the `lc Sensitive
+   Readers` profile to `lc Owners`. Back in the visualizer, the Member persona's
+   task table shows `████████` where the blocker reason and risk summary should
+   be; the Owner persona shows the cleartext. The row was readable; the column
+   still wasn't.
 10. **The Episode 7 callback.** Re-run Ep 7's `search_data` for the Q3 export
     blocker as a Viewer-only caller and as an Owner-in-profile. Same agent, same
     query: the Viewer gets `████████`, the Owner gets the sentence, even though
@@ -468,6 +472,7 @@ someday.
 
 | File | Role |
 |---|---|
+| [`SKILL.md`](SKILL.md) | The `ep-08-dataverse-security` skill: teaches the two-axis Dataverse security model and drives the two simple asks (two roles to test row-level security; one data masking role to test column-level security). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
 | [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | _(planned)_ Secures `lc_blockerreason` + `lc_risksummary`, creates the `lc Sensitive Readers` field security profile, and grants the `lc Owners` team read on both. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
