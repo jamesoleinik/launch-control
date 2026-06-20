@@ -58,6 +58,11 @@ TEAM_BY_PERSONA = {
 app = Flask(__name__)
 app.config["MOCK"] = False
 
+# Per-process caches for the persona list and policy lens (both persona-independent).
+# Populated on first live request; reused on subsequent persona switches.
+_PERSONAS_CACHE: list[dict] | None = None
+_POLICIES_CACHE: dict | None = None
+
 
 # ---------------------------------------------------------------------------
 # Mock backend - reads a seeded snapshot so the app runs with zero setup.
@@ -86,16 +91,32 @@ def mock_policies() -> dict:
 # ---------------------------------------------------------------------------
 # Live backend - real impersonated Web API calls.
 # ---------------------------------------------------------------------------
+# Cache the bearer token so we don't re-shell out to `az` on every Web API call
+# (each acquisition can cost several seconds; a page load makes dozens of calls).
+_TOKEN_CACHE: dict[str, float | str] = {"value": "", "exp": 0.0}
+
+
+def _cached_token() -> str:
+    import time
+    if _TOKEN_CACHE["value"] and time.time() < float(_TOKEN_CACHE["exp"]):
+        return str(_TOKEN_CACHE["value"])
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from auth import get_token  # noqa: E402
+    tok = get_token()
+    _TOKEN_CACHE["value"] = tok
+    _TOKEN_CACHE["exp"] = time.time() + 50 * 60  # tokens last ~60 min; refresh early
+    return tok
+
+
 def _live():
     """Lazy-import the live dependencies so --mock has no hard requirements."""
     sys.path.insert(0, str(ROOT / "scripts"))
     import requests  # noqa: E402
-    from auth import get_token  # noqa: E402
 
     url = os.environ["DATAVERSE_URL"].rstrip("/")
     api = url + "/api/data/v9.2"
     headers = {
-        "Authorization": f"Bearer {get_token()}",
+        "Authorization": f"Bearer {_cached_token()}",
         "Accept": "application/json",
         "OData-MaxVersion": "4.0",
         "OData-Version": "4.0",
@@ -151,7 +172,7 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
     h = _imp(headers, None if persona_id == "me" else userid)
 
     counts = {
-        "lc_launch": _count(requests, api, h, "lc_launches"),
+        "lc_launch": _count(requests, api, h, "lc_launchs"),
         "lc_milestone": _count(requests, api, h, "lc_milestones"),
         "lc_task": _count(requests, api, h, "lc_tasks"),
         "lc_githubissue": _count(requests, api, h, "lc_githubissues"),
@@ -159,16 +180,20 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
 
     tasks = []
     r = requests.get(
-        f"{api}/lc_tasks?$select=lc_name,lc_taskstatus,lc_blockerreason"
-        f"&$expand=lc_LaunchId($select=lc_name,lc_risksummary)&$top=200",
-        headers={**h, "Prefer": "odata.maxpagesize=200"},
+        f"{api}/lc_tasks?$select=lc_title,lc_taskstatus,lc_blockerreason"
+        f"&$expand=lc_launchid($select=lc_name,lc_risksummary)&$top=200",
+        headers={**h, "Prefer": 'odata.maxpagesize=200,'
+                 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'},
     )
     if r.status_code == 200:
+        fv = "@OData.Community.Display.V1.FormattedValue"
         for row in r.json().get("value", []):
-            launch = row.get("lc_LaunchId") or {}
+            launch = row.get("lc_launchid") or {}
             tasks.append({
-                "lc_name": row.get("lc_name"),
-                "lc_taskstatus": row.get("lc_taskstatus"),
+                # lc_task's primary name is lc_title; status is a choice, so use
+                # its formatted label rather than the raw option value.
+                "lc_name": row.get("lc_title"),
+                "lc_taskstatus": row.get("lc_taskstatus" + fv) or row.get("lc_taskstatus"),
                 # Absent/null secured field => caller outside the profile => masked.
                 "lc_blockerreason": row.get("lc_blockerreason"),
                 "lc_risksummary": launch.get("lc_risksummary"),
@@ -280,9 +305,14 @@ def live_policies() -> dict:
             "create": _RWUC.get(fp.get("cancreate"), fp.get("cancreate")),
             "update": _RWUC.get(fp.get("canupdate"), fp.get("canupdate")),
         } for fp in perms]
+        # Only list human members: application users (Cowork, DataSync*, and other
+        # service principals) all carry the System Administrator profile, which
+        # otherwise floods this column with dozens of non-human identities.
         members = [m.get("fullname") or m.get("systemuserid")
                    for m in _vals(requests, api, headers,
-                                  f"/fieldsecurityprofiles({pid})/systemuserprofiles_association?$select=systemuserid,fullname")]
+                                  f"/fieldsecurityprofiles({pid})/systemuserprofiles_association"
+                                  "?$select=systemuserid,fullname,applicationid")
+                   if not m.get("applicationid")]
         members += [f"{tm.get('name')} (team)"
                     for tm in _vals(requests, api, headers,
                                     f"/fieldsecurityprofiles({pid})/teamprofiles_association?$select=name")]
@@ -525,12 +555,20 @@ def index():
     mock = app.config["MOCK"]
     if mock:
         personas = mock_personas()
+        policies = mock_policies()
     else:
-        personas = live_personas()
+        # Personas and policies don't change when you switch the impersonated user,
+        # so compute them once and reuse - only the lens query below is per-persona.
+        global _PERSONAS_CACHE, _POLICIES_CACHE
+        if _PERSONAS_CACHE is None:
+            _PERSONAS_CACHE = live_personas()
+        if _POLICIES_CACHE is None:
+            _POLICIES_CACHE = live_policies()
+        personas = _PERSONAS_CACHE
+        policies = _POLICIES_CACHE
 
     selected = request.args.get("persona") or (personas[0]["id"] if personas else "me")
     lenses = mock_lenses(selected) if mock else live_lenses(personas, selected)
-    policies = mock_policies() if mock else live_policies()
     for pr in policies.get("profiles", []):
         for col in pr.get("columns", []):
             col["permissions"] = _perm_summary(col)
@@ -556,10 +594,21 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
 
+    # Load .env so DATAVERSE_URL is available for live mode without exporting it
+    # by hand. Best-effort: --mock never needs it.
+    if not args.mock:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(ROOT / ".env")
+        except Exception:
+            pass
+
     # Default to mock when there's no env configured, so first-run never errors.
     app.config["MOCK"] = args.mock or not os.environ.get("DATAVERSE_URL")
     if app.config["MOCK"] and not args.mock:
         print("No DATAVERSE_URL found; starting in DEMO mode. Pass --mock to silence.")
+    if not app.config["MOCK"]:
+        print(f"LIVE mode against {os.environ.get('DATAVERSE_URL')}")
 
     app.run(host="127.0.0.1", port=args.port, debug=False)
 
