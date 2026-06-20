@@ -1,0 +1,44 @@
+{
+  "_comment": "Seeded snapshot for offline demo mode. Mirrors the Episode 8 smoke-test: row counts reflect row-level security depth, and the secured columns (lc_blockerreason, lc_risksummary) are null for personas outside the 'lc Sensitive Readers' field security profile, which the app renders as a masked block.",
+  "personas": [
+    { "id": "me",     "label": "You (no impersonation)",            "userid": "00000000-0000-0000-0000-000000000001" },
+    { "id": "owner",  "label": "Priya Owner (lc Owners)",          "userid": "00000000-0000-0000-0000-000000000002" },
+    { "id": "member", "label": "Sam Member (lc Members)",          "userid": "00000000-0000-0000-0000-000000000003" },
+    { "id": "viewer", "label": "Lee Viewer (lc Viewers)",          "userid": "00000000-0000-0000-0000-000000000004" },
+    { "id": "admin",  "label": "Avery Admin (lc Admins)",          "userid": "00000000-0000-0000-0000-000000000005" }
+  ],
+  "counts": {
+    "me":     { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 },
+    "owner":  { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 },
+    "member": { "lc_launch": 1, "lc_milestone": 4,  "lc_task": 4,  "lc_githubissue": 6 },
+    "viewer": { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 },
+    "admin":  { "lc_launch": "-", "lc_milestone": "-", "lc_task": "-", "lc_githubissue": "-" }
+  },
+  "tasks": {
+    "me": [
+      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
+    ],
+    "owner": [
+      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
+    ],
+    "member": [
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Confirm support staffing", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Schedule launch readiness review", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": null }
+    ],
+    "viewer": [
+      { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": null },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": null }
+    ],
+    "admin": []
+  }
+}
