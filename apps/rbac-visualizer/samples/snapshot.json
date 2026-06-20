@@ -22,8 +22,8 @@
     "owner": [
       { "lc_name": "Lock final pricing tiers", "lc_taskstatus": "Blocked", "lc_blockerreason": "Finance needs signoff on the EU VAT model before tiers can publish.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
       { "lc_name": "Ship localized release notes", "lc_taskstatus": "Blocked", "lc_blockerreason": "Awaiting legal review of the German and Japanese strings.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
-      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": null, "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
+      { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": "Telemetry pipeline blocked on a missing service principal grant.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." },
+      { "lc_name": "Draft GA blog post", "lc_taskstatus": "Not Started", "lc_blockerreason": "Embargoed until pricing is locked; comms cannot draft yet.", "lc_risksummary": "High: pricing unresolved 9 days before GA; two downstream tasks blocked." }
     ],
     "member": [
       { "lc_name": "Wire up telemetry dashboard", "lc_taskstatus": "In Progress", "lc_blockerreason": null, "lc_risksummary": null },
@@ -56,12 +56,12 @@
       },
       {
         "name": "lc Sensitive Readers",
-        "description": "Demo profile: who may read the sensitive launch reasoning columns.",
+        "description": "Demo profile: who may read the secured launch-reasoning columns. Members read cleartext; everyone else gets the column withheld.",
         "columns": [
-          { "column": "lc_launch.lc_description", "rule": "lc_SSNcustomrule", "read": "Allowed", "readunmasked": "Not allowed", "create": "Not allowed", "update": "Not allowed" },
-          { "column": "lc_launch.lc_risksummary", "rule": "(none)", "read": "Allowed", "readunmasked": "All records", "create": "Not allowed", "update": "Not allowed" }
+          { "column": "lc_task.lc_blockerreason", "rule": "(none)", "read": "Allowed", "readunmasked": "Not allowed", "create": "Allowed", "update": "Allowed" },
+          { "column": "lc_launch.lc_risksummary", "rule": "(none)", "read": "Allowed", "readunmasked": "Not allowed", "create": "Allowed", "update": "Allowed" }
         ],
-        "members": ["lc Owners (team)"]
+        "members": ["Priya Owner", "James Oleinik"]
       }
     ]
   }
