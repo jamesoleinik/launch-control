@@ -395,6 +395,20 @@ PAGE = """
           border: 1px solid #30363d; color: #8b949e; }
   .note { color: #8b949e; font-size: 12px; margin-top: 6px; }
   .mode { float: right; font-size: 12px; color: #8b949e; }
+  /* Loading overlay shown over the lens panels while a new persona is queried. */
+  .lc-lenses { position: relative; }
+  .lc-overlay { display: none; position: absolute; inset: 0; z-index: 5;
+                border-radius: 10px; background: rgba(13, 17, 23, .72);
+                backdrop-filter: blur(1.5px);
+                align-items: center; justify-content: center; flex-direction: column;
+                gap: 14px; }
+  .lc-lenses.loading .lc-overlay { display: flex; }
+  .lc-spinner { width: 34px; height: 34px; border-radius: 50%;
+                border: 3px solid #30363d; border-top-color: #58a6ff;
+                animation: lc-spin .8s linear infinite; }
+  .lc-overlay span { font-size: 13px; color: #8b949e; }
+  @keyframes lc-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .lc-spinner { animation-duration: 2.4s; } }
 </style>
 </head>
 <body>
@@ -487,6 +501,8 @@ PAGE = """
     <noscript><button type="submit">Go</button></noscript>
   </form>
 
+  <div id="lc-lenses" class="lc-lenses">
+  <div class="lc-overlay"><div class="lc-spinner"></div><span>Querying Dataverse&hellip;</span></div>
   <div class="lens">
     <h2>Axis 1 - Row-level security: rows this persona can read</h2>
     <div class="counts">
@@ -528,12 +544,17 @@ PAGE = """
       nothing to mask.</div>
     {% endif %}
   </div>
+  </div>
 </main>
 <script>
   // Preserve scroll position across the persona reload so the page doesn't jump
   // back to the top each time you switch the impersonation account.
   function lcSubmit(sel) {
     try { sessionStorage.setItem('lc_scroll', window.scrollY); } catch (e) {}
+    // Show the loading overlay over the lenses. (Don't disable the select -
+    // a disabled control isn't submitted, which would drop the persona param.)
+    var box = document.getElementById('lc-lenses');
+    if (box) { box.classList.add('loading'); }
     sel.form.submit();
   }
   (function () {
