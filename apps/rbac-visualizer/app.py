@@ -622,9 +622,6 @@ PAGE = """
       {% endfor %}
     </select>
     <noscript><button type="submit">Go</button></noscript>
-    <label class="names-toggle" style="margin-left:16px;">
-      <input type="checkbox" id="hide-names" onchange="lcToggleNames(this)"> Hide name column
-    </label>
   </form>
 
   <div id="lc-lenses" class="lc-lenses">
@@ -647,13 +644,13 @@ PAGE = """
     {% if tasks %}
     <table>
       <thead><tr class="secured">
-        <th class="col-name">lc_name</th><th>status</th>
+        <th>lc_name</th><th>status</th>
         <th>lc_blockerreason &#128274;</th><th>lc_risksummary &#128274;</th>
       </tr></thead>
       <tbody>
       {% for t in tasks %}
         <tr>
-          <td class="col-name">{{ t.lc_name }}</td>
+          <td>{{ t.lc_name }}</td>
           <td>{{ t.lc_taskstatus }}</td>
           <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
           <td>{{ render_cell(t, "lc_risksummary")|safe }}</td>
@@ -684,6 +681,9 @@ PAGE = """
       <span class="note" style="margin:0">Flips the <code>lc_EmailMask</code> rule live.
         Cowork, reading the same env, honors whichever state is set.</span>
     </form>
+    <label class="names-toggle" style="margin:0 0 10px;">
+      <input type="checkbox" id="hide-names" onchange="lcToggleNames(this)"> Hide name column
+    </label>
     {% if emails %}
     <table>
       <thead><tr class="secured"><th class="col-name">lc_name</th><th>lc_email &#128274;</th></tr></thead>
