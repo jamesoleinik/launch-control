@@ -1,35 +1,41 @@
 ---
-name: ep-08-dataverse-security
+name: dataverse-security
 description: |
-  Teaches the Dataverse security model (the two axes: row-level security via
-  roles + owner-teams + business-unit depth, and column-level security via
-  field security profiles) and drives an agent to build a small, testable
-  slice of it against a Dataverse environment. Use when the user asks to
-  "explain the Dataverse security model", "do Episode 8", "create two roles
-  to test row-level security", "add a data masking role", "secure a column",
-  or "set up a field security profile".
+  Teaches the Dataverse security model and drives an agent to implement and test
+  a specific slice of it against any Dataverse environment. The model has two
+  independent axes plus a per-agent variant, and the calling prompt names which
+  one to build and its targets.
 
-  Two tasks, run in order:
-  (1) Row-level: create two roles (one broad reader, one narrow owner) bound
-      to teams, so the same query returns different row counts per persona.
-  (2) Column-level: secure the sensitive columns and a field security profile
-      so the same row returns cleartext for one role and a mask for the other.
+  Use whenever the user asks to "explain the Dataverse security model" or to
+  implement a named slice of it ("set up row-level security", "secure a column",
+  "add data masking", "scope an application user / agent"). The prompt passes in
+  the security TYPE to build and its TARGETS (tables, columns, role/profile
+  names, personas or the application user). Supported types:
+    - row-level     : security roles + owner-teams + business-unit depth, so the
+                      same query returns different row counts per persona.
+    - column-level  : secure columns + a field security profile (+ optional
+      (data masking)  masking rule), so the same row returns cleartext for one
+                      principal and a mask/omission for another.
+    - per-agent     : assign a field security profile to an application user, so
+                      effective column access is the intersection of the human's
+                      profile and the agent's.
 license: MIT
 metadata:
   author: Launch Control
-  version: "1.1"
+  version: "2.0"
 ---
 
-# Skill: Dataverse security model (row-level + data masking)
+# Skill: Dataverse security model (row-level, column-level, per-agent)
 
-This skill explains how security works in Dataverse and then asks the agent to
-build a small, testable slice of it. It is the knowledge layer behind Episode 8,
-so the prompts that use it can stay one line long: the *how* lives here, the
-*ask* lives in the README.
+This skill explains how security works in Dataverse and then implements the
+**specific slice** the calling prompt names. It is the knowledge layer, so the
+prompts that use it can stay short: the *how* lives here, the *what* (the
+security type plus its targets) comes in the prompt.
 
 The whole point: connect any agent you like (Copilot, Claude, Cursor) to a
 Dataverse environment, and what it can read is decided by the platform, not the
-client. This skill makes that boundary something you can author and test.
+client. This skill makes that boundary something you can author and test, on
+either axis, for a human or for an agent.
 
 ## The model in one screen
 
@@ -50,7 +56,7 @@ Dataverse enforces access on two independent axes. A request has to clear both.
    | **Organization** | every row, every BU | `Global` |
 
    The same `Read` privilege at User depth versus BU depth is the entire
-   difference between "I see my 4 tasks" and "I see all 61".
+   difference between "I see only the rows I own" and "I see every row in the BU."
 
 2. **Column-level security (data masking): which fields come back.**
    Row access says nothing about sensitive *columns*. Microsoft calls this
@@ -66,8 +72,8 @@ Dataverse enforces access on two independent axes. A request has to clear both.
    | **Update** | `canupdate` | Can change the column value. |
    | **Create** | `cancreate` | Can set the column value on insert. |
 
-   Over the Web API the states are distinct, and were verified live against
-   `lc_task`:
+   Over the Web API the states are distinct, and were verified live (example
+   secured column):
 
    - **Outside the profile** (no Read): the column comes back **null / omitted**.
      It is withheld, not masked. Treat absent as no-access in code.
@@ -124,34 +130,35 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
 - **Not every column can be secured.** Securable columns exclude virtual-table
   columns, lookup columns, formula/calculated columns, primary-name columns, and
   system columns (`createdon`, `modifiedon`, `statecode`, `statuscode`). The
-  eligibility flags are `CanBeSecuredForRead/Update/Create`. (So `lc_githubissue`,
-  a virtual entity, cannot be secured at the column level: govern it at the row
-  level instead.)
+  eligibility flags are `CanBeSecuredForRead/Update/Create`. (So a virtual entity,
+  for example, cannot be secured at the column level: govern it at the row level
+  instead.)
 - **Secure the calculated twin too.** If a calculated or composite column reads a
   secured column, secure that calculated/composite column as well, or the value
   leaks through it.
 - **Agents are users; secure them per agent.** A connection authenticates as a real
-  `systemuser`, a human or an **application user** (e.g. the Cowork app user
-  `LaunchControl-Cowork-MCP-agent365`, which has `applicationid` set). Field security binds to
-  the agent's identity too, so assign profiles to application users for least
-  privilege. Effective column access is the **intersection** of the human's profile
-  and the agent's profile: the value returns only when both clear it.
+  `systemuser`, a human or an **application user** (one with `applicationid` set,
+  e.g. an MCP / Cowork connection). Field security binds to the agent's identity
+  too, so assign profiles to application users for least privilege. Effective
+  column access is the **intersection** of the human's profile and the agent's
+  profile: the value returns only when both clear it. (A **delegated** OAuth
+  connection runs *as the signed-in human*, so the human's clearance is what is
+  enforced at runtime; the intersection applies when the agent reads under its own
+  application-user identity, e.g. an S2S / client-credentials token.)
 
-## This environment
+## Inputs: what the calling prompt must specify
 
-- Tables: the `lc_*` model (`lc_launch`, `lc_milestone`, `lc_task`,
-  `lc_statusupdate`, `lc_teammember`, plus the `lc_githubissue` virtual entity).
-- Secured columns are live in this environment now, shipped in the `LaunchControl`
-  solution:
-  - **`lc_task.lc_blockerreason`** (`IsSecured = true`), no masking rule, governed
-    by the **`lc Sensitive Readers`** column security profile: in-profile principals
-    read cleartext, everyone else gets the column omitted.
-  - **`lc_launch.lc_risksummary`** (`IsSecured = true`), masked by the custom
-    **`lc_RiskSummaryMask`** rule: mask character `#` plus the regex `(?<=:.*).`,
-    which collapses everything after the first colon so only the leading severity
-    word (e.g. `High:`) survives a plain read.
-- Auth + base URL come from `.env` (`DATAVERSE_URL`); reuse `scripts/auth.py` for
-  the token. API base is `${DATAVERSE_URL}/api/data/v9.2`.
+This skill is environment-agnostic. The prompt that invokes it passes:
+
+- **Security type**: `row-level`, `column-level` (data masking), or `per-agent`.
+- **Targets**: the tables and columns to govern, the role / team / profile names
+  to create, and the personas (or the application user) to assign.
+- **Environment**: read the base URL from `.env` (`DATAVERSE_URL`) and reuse
+  `scripts/auth.py` for the token. API base is `${DATAVERSE_URL}/api/data/v9.2`.
+
+If the prompt names a security type but not the targets, ask for the missing
+targets before writing. If it only asks to *explain* the model, answer from the
+sections above and write nothing.
 
 ## Hard rules
 
@@ -160,83 +167,94 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
    teams, secured columns, profiles).
 2. **Idempotent by name.** Re-runs must be no-ops on creation and safely re-sync
    privileges. Never create a duplicate role/team/profile on a second run.
-3. **One task at a time.** Run Task 1, test it in the local app, then Task 2.
+3. **One slice at a time.** Implement the requested security type, test it
+   (impersonation or the local visualizer), then stop. If the prompt asks for
+   several, do them in order and test each before the next.
 4. **Python only**, consistent with the other episodes; reuse `scripts/auth.py`.
 
 ---
 
-## Task 1: Two roles to test row-level security
+## Recipe: row-level security
 
-Goal: two roles that make the row-level axis visible by returning *different*
-row counts for the same query.
+Goal: make the row axis visible by returning *different* row counts for the same
+query depending on the caller.
 
-- **`lc Owner`**: `Read` (plus Create/Write) on every `lc_*` table at
-  **Business Unit** depth. Sees every row in the BU.
-- **`lc Member`**: `Read` (plus Create/Write) on every `lc_*` table at **User**
-  depth. Sees only the rows it owns.
+- Create the roles the prompt names, each granting `Read` (plus `Create`/`Write`
+  as asked) on the target tables at the depth the prompt specifies. The classic
+  contrast is one role at **Business Unit** depth (sees every row in the BU) and
+  one at **User** depth (sees only the rows it owns).
+- Create one **owner team** per role and bind the role via `teamroles_association`.
+- Resolve privilege names first, apply with `AddPrivilegesRole`, and keep it
+  idempotent with `--dry-run`, `--add-self`, `--remove-self` so the author can
+  join a team and impersonate it.
 
-Create an owner team per role (`lc Owners`, `lc Members`) and bind the matching
-role to each via `teamroles_association`. Resolve the privilege names first,
-apply with `AddPrivilegesRole`, and make the whole thing idempotent with
-`--dry-run`, `--add-self`, and `--remove-self` so the author can join either
-team and impersonate it.
+**Test:** run the same table query as each persona (the `MSCRMCallerID` header or
+the visualizer). The BU-depth role returns every row; the User-depth role returns
+only the rows it owns. Same query, different lenses.
 
-**Test:** run the visualizer (`apps/rbac-visualizer/`) and flip between the two
-personas. `lc Owner` returns all 12 tasks; `lc Member` returns only the 4 it
-owns. Same query, two lenses.
+## Recipe: column-level security (data masking)
 
-## Task 2: A data masking role to test column-level security
+Goal: make the column axis visible by returning the *same row* with a sensitive
+field readable for one principal and masked or omitted for another.
 
-Goal: a profile that makes the column-level axis visible by returning the *same
-row* with a sensitive field readable for one role and masked for the other.
+- **Secure** each target column (`IsSecured = true` at create, then `PublishXml`).
+- Create a **column security profile** (`fieldsecurityprofile`), grant it
+  `Read = Allowed` on the secured column(s), and bind the cleared team or users.
+- A principal **outside** the profile gets the column **omitted (null)**, a full
+  hide. A principal **inside** with `Read` sees cleartext.
+- For a **partial** reveal (`###-##-6789`-style), attach a **masking rule** (regex
+  + mask character, Text/Number columns, Managed Environment required) and grant
+  `Read unmasked` (`1`/`3`). Then a plain `GET` returns the mask and
+  `?UnMaskedData=true` returns cleartext for the unmasked-cleared.
 
-This environment already ships the worked example, in the `LaunchControl` solution:
-
-- **`lc_task.lc_blockerreason`** is secured (`IsSecured = true`) with no masking
-  rule. The **`lc Sensitive Readers`** profile grants `Read = Allowed` on it, so
-  in-profile principals read the cleartext blocker and everyone else (non-admin,
-  out of profile) gets the column omitted.
-- **`lc_launch.lc_risksummary`** is secured and carries the custom
-  **`lc_RiskSummaryMask`** rule (mask character `#`, regex `(?<=:.*).`, revealing
-  only the leading severity word before the first colon). The profile grants
-  `Read = Allowed` + `Read unmasked = All records`, so members see the mask on a
-  plain read and cleartext on an `?UnMaskedData=true` read.
-
-To build a slice from scratch the moves are the same: secure the column
-(`IsSecured = true`), create a **column security profile** (`fieldsecurityprofile`),
-grant the profile `Read = Allowed` on the column, and bind the cleared team to it.
-Attach a **masking rule** (a regex + mask character on a Text/Number column, gated by
-the **Read unmasked** permission and a Managed Environment) when you want a *partial*
-reveal like `###-##-6789` instead of a full hide. Make the whole thing idempotent on
-the profile name.
-
-> **Gotcha, live in this environment: a secured column with no profile members is
-> readable only by System Administrators.** When the `lc Sensitive Readers` profile
-> has no users or teams assigned, only sysadmins can read `lc_blockerreason` at all.
-> Assign the cleared persona (here the `lc Owner`, Vivian Sun) to the profile before
-> you expect a non-admin to see the column.
-
-**Test:** in the visualizer, a cleared persona shows the cleartext value; an
-uncleared, non-admin persona shows the masked value on the very same row (the
-column omitted for `lc_blockerreason`, a `High:#`-style reveal for
-`lc_RiskSummaryMask` on `lc_risksummary`). Row access did not change; column access
-did. **Mind the masking nuance:** a plain read returns the mask to *everyone*,
-sysadmins included, so do not "test as admin and assume cleartext means no security."
-Compare a plain `GET` (masked) against `?UnMaskedData=true` (cleartext, only for a
-caller with Read unmasked). (This also holds through Episode 7's `search_data`: the
-platform enforces masking on the read, not the tool, so a secured value never leaves
+**Test:** read the same row as a cleared vs. an uncleared (non-admin) principal.
+Cleared sees the value; uncleared sees the column omitted (no rule) or the mask
+(with a rule). Row access did not change; column access did. **Mind the nuance:** a
+masking rule masks a plain read for *everyone*, sysadmins included, so compare a
+plain `GET` (masked) against `?UnMaskedData=true` (cleartext, only for a caller
+with Read unmasked) rather than testing as admin and assuming cleartext means no
+security. (This holds through tools like semantic `search_data` too: the platform
+enforces masking on the read, not the tool, so a secured value never leaves
 Dataverse for an uncleared caller, even out of an attached file.)
+
+> **Gotcha: a secured column with no profile members is readable only by System
+> Administrators.** Until you assign a user or team to the profile, only sysadmins
+> can read the secured column at all. Assign the cleared persona to the profile
+> before you expect a non-admin to see it.
+
+## Recipe: per-agent security
+
+Goal: govern what the *agent* can read independently of the human, and prove the
+intersection.
+
+- The agent is an **application user** (a `systemuser` with `applicationid` set).
+  Scope it like any user: remove over-broad roles (e.g. System Administrator),
+  grant exactly the roles it needs, and place it **in or out** of the relevant
+  column security profile.
+- Read back **as the agent** with a client-credentials (S2S) token to prove the
+  effective access. The secured column returns omitted/masked unless the agent's
+  own identity is in the profile, even where the human is cleared. Effective
+  column access is the **intersection** of the two profiles.
+- Caveat: a **delegated** connection (OAuth, the user signs in as themselves) runs
+  as the human, so at runtime it is the *human's* clearance that is enforced. The
+  per-agent intersection applies when the agent reads under its own identity.
+
+**Test:** run the same read as the agent vs. as the human; show the secured column
+omitted for the agent even where the human can read it. Toggle the agent's profile
+membership and re-read to show the intersection move (allow a few seconds for the
+security cache).
 
 ---
 
-## Building it programmatically (verified against this environment)
+## Building it programmatically (verified API patterns)
 
-Every step below was run live against `lc_task` and confirmed end to end.
+Every step below was run live and confirmed end to end; substitute your own
+`<table>` / `<column>` / role / profile names for the placeholders.
 
 **Custom role + privilege**
 - `POST /roles` with `name` + `businessunitid@odata.bind` (root BU); a fresh role
   starts empty.
-- Resolve privilege ids (`/privileges?$filter=name eq 'prvReadlc_task'`), then
+- Resolve privilege ids (`/privileges?$filter=name eq 'prvRead<table>'`), then
   `POST /roles({id})/Microsoft.Dynamics.CRM.AddPrivilegesRole` with
   `{"Privileges":[{"PrivilegeId":"…","Depth":"Local"}]}` (Depth `Basic` / `Local` /
   `Deep` / `Global`). Verify the landed depth with
@@ -271,7 +289,7 @@ Every step below was run live against `lc_task` and confirmed end to end.
 - Impersonate any user by adding the **`MSCRMCallerID: {systemuserid}`** header
   (needs `prvActOnBehalfOfAnotherUser`; sysadmin has it). Give the impersonated user
   a role that grants row read first, or they see zero rows.
-- Then read the secured column twice. Verified matrix on `lc_task`:
+- Then read the secured column twice. Verified matrix (example column):
 
   | Caller | Profile / Read unmasked | Plain `GET` | `?UnMaskedData=true` |
   |---|---|---|---|
@@ -284,10 +302,10 @@ Every step below was run live against `lc_task` and confirmed end to end.
 
 ## Confirmation gates
 
-- Both tasks write. Confirm `DATAVERSE_URL` before each run.
+- Both recipes write. Confirm `DATAVERSE_URL` before each run.
 - Configuring column security requires the **System Administrator** role.
 - Securing a column affects every reader immediately and org-wide; call that out
-  before Task 2. Model-driven app users may need a browser refresh to see it.
+  before column-level work. Model-driven app users may need a browser refresh.
 
 ## Errors
 

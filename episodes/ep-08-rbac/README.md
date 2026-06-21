@@ -63,12 +63,14 @@ the same `dv-*` skillset already in Copilot, Claude, and any MCP client. Install
 it, point it at the environment, and Cursor can reach Dataverse in seconds.
 
 Then the agent does the building, and it doesn't need a wall of instructions to
-do it. We load one skill, [`ep-08-dataverse-security`](SKILL.md), which teaches
-the agent the whole Dataverse security model: the two axes, depth levels, the
-privilege-naming gotchas, field security, and how to keep every change
-idempotent. With that skill loaded, each ask is one line. From those one-liners
-the agent drives the governed Dataverse APIs (`dv-security`, `dv-metadata`) to
-author:
+do it. We load one skill, [`dataverse-security`](SKILL.md), a generic skill that
+teaches the agent the whole Dataverse security model: the two axes, depth levels,
+the privilege-naming gotchas, field security, and how to keep every change
+idempotent. The skill is environment- and episode-agnostic: each prompt passes in
+the **security type** to build (`row-level`, `column-level`, or `per-agent`) plus
+its targets, and the skill supplies the *how*. With that skill loaded, each ask is
+one line. From those one-liners the agent drives the governed Dataverse APIs
+(`dv-security`, `dv-metadata`) to author:
 
 - two roles + their owner-teams to test row-level security (Part 2),
 - the secured columns and the `lc Sensitive Readers` profile (plus the
@@ -84,9 +86,19 @@ render side by side: a row-count panel (Part 2's row-level security) and a task
 table whose secured columns show either cleartext or a red `████████` (Part 3's
 masking). One screen, both axes, any persona.
 
-### Prompt to Cursor: load the skill and build the test app
+### Prompt to Cursor: load the skill into the session, then build the test app
 
-> _"Use the `ep-08-dataverse-security` skill. Build the impersonation test app it
+First, have Cursor pull the generic security skill into the session so the model
+is resident before any building. This is a concrete Cursor action: reference the
+skill by name and let Cursor load `SKILL.md` into context.
+
+> _"Load the `dataverse-security` skill into this session. Confirm you have the
+> Dataverse security model (row-level, column-level, per-agent) in context."_
+
+With the skill resident, ask it to stand up the demo vehicle. Because the skill
+carries the spec, the ask stays one line:
+
+> _"Use the `dataverse-security` skill. Build the impersonation test app it
 > describes at `apps/rbac-visualizer/`, then confirm the env from `.env` so we're
 > ready to author the model."_
 
@@ -135,9 +147,12 @@ by the coding agent from a one-line spec.
 
 ### Prompt to Cursor: build the row-level security
 
-With the `ep-08-dataverse-security` skill loaded, the ask is one line:
+With the `dataverse-security` skill loaded, the ask names the security type and
+its targets in one line:
 
-> _"Using the security skill, create the two roles to test row-level security."_
+> _"Use the `dataverse-security` skill. Implement **row-level security**: create
+> two roles to test it, `lc Owner` (Business Unit depth) and `lc Member` (User
+> depth), on the `lc_*` tables, each bound to its own owner-team."_
 
 The skill knows the rest: `lc Owner` reads every row at Business Unit depth,
 `lc Member` reads only its own at User depth, each bound to its own owner-team,
@@ -338,8 +353,10 @@ shows the column withheld for outsiders.
 
 Skill loaded, the ask is again one line:
 
-> _"Using the security skill, add the data masking role to test column-level
-> security."_
+> _"Use the `dataverse-security` skill. Implement **column-level security (data
+> masking)**: secure `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`,
+> create the `lc Sensitive Readers` profile, and add the `lc_RiskSummaryMask` rule
+> on the risk summary."_
 
 The skill carries the verified recipe: secure the column (`IsSecured = true` at
 create, then `PublishAllXml`), create a `fieldsecurityprofile` (here
@@ -451,14 +468,14 @@ because the request also carries the agent's identity.
 ### Prompt to Cursor: secure the agent, not just the user
 
 ```text
-Load the dv-security skill. The Cowork application user
-(LaunchControl-Cowork-MCP-agent365) currently inherits System Administrator. Author a
-field security posture that grants Read on the lc_* columns Cowork legitimately
-needs and withholds Read on lc_blockerreason and lc_risksummary. Scope the
-application user down (remove System Administrator, leave it out of the
-lc Sensitive Readers profile). Then prove the intersection: run the same lc_task
-read as the Cowork app user vs. as me, and show that the secured columns come back
-omitted for the agent even where the human is cleared.
+Use the dataverse-security skill. Implement per-agent security: the Cowork
+application user (LaunchControl-Cowork-MCP-agent365) currently inherits System
+Administrator. Scope the application user down (remove System Administrator, leave
+it out of the lc Sensitive Readers profile) so it has Read only on the lc_*
+columns Cowork legitimately needs and is withheld Read on lc_blockerreason and
+lc_risksummary. Then prove the intersection: run the same lc_task read as the
+Cowork app user vs. as me, and show that the secured columns come back omitted for
+the agent even where the human is cleared.
 ```
 
 ### The intersection, made concrete
@@ -594,7 +611,7 @@ someday.
    env, and the agent reaches Dataverse in seconds. Great. Now: what can it see?
 2. PPAC → Security → Roles **before**: zero `lc *` roles. Wide-open env.
 3. **Load one skill.** In Cursor (or Claude Code, any MCP client) load the
-   `ep-08-dataverse-security` skill. From here every ask is one line, because the
+   `dataverse-security` skill. From here every ask is one line, because the
    skill carries the model. First ask: _"build the test app it describes."_ The
    agent writes the `apps/rbac-visualizer/` Flask app.
 4. **Two roles to test.** _"Create the two roles to test row-level security."_ The
@@ -639,7 +656,7 @@ someday.
 
 | File | Role |
 |---|---|
-| [`SKILL.md`](SKILL.md) | The `ep-08-dataverse-security` skill: teaches the two-axis Dataverse security model and drives the two simple asks (two roles to test row-level security; one data masking role to test column-level security). The knowledge layer behind every prompt below. |
+| [`SKILL.md`](SKILL.md) | The generic `dataverse-security` skill: teaches the two-axis Dataverse security model (plus the per-agent variant) and drives a named slice passed in by each prompt (security type + targets). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
 | [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns three demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset to the Member, and seeds the sensitive columns (`lc_blockerreason`, `lc_risksummary`). Idempotent. |
 | [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures `lc_task.lc_blockerreason` + `lc_launch.lc_risksummary`, creates the `lc Sensitive Readers` profile, creates + binds the `lc_RiskSummaryMask` masking rule, and grants `canread` (+ `canreadunmasked`) on the profile. Idempotent. |
