@@ -1,0 +1,23 @@
+version: v1.11
+
+environmentFolderPath: ./env
+
+provision:
+  - uses: oauth/register
+    with:
+      name: Cowork-EPPCDemo1FnO-OAuth
+      flow: authorizationCode
+      appId: ${{TEAMS_APP_ID}}
+      clientId: ${{AAD_APP_CLIENT_ID}}
+      clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}
+      baseUrl: ${{DATAVERSE_BASE_URL}}
+      authorizationUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      refreshUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      scope: ${{DATAVERSE_OAUTH_SCOPE}}
+      identityProvider: Custom
+      applicableToApps: AnyApp
+      targetAudience: HomeTenant
+    writeToEnvironmentFile:
+      configurationId: OAUTH_CONFIG_ID
+projectId: 6b2afec6-b3f7-4af1-9ee7-673f891c3528

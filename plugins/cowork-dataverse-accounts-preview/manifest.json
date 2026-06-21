@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "5ed1525b-48f5-49a4-9431-6333dcd4983d",
+  "packageName": "com.jamesoleinik.cowork.dataverse.accounts.preview",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/privacy",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/terms"
+  },
+  "name": {
+    "short": "Dataverse Accounts (Preview)",
+    "full": "Dataverse Accounts (Cowork sample, preview MCP)"
+  },
+  "description": {
+    "short": "List and look up accounts via the preview Dataverse MCP endpoint.",
+    "full": "A minimal Microsoft 365 Cowork custom plugin that connects to the preview Dataverse MCP server for a single environment (https://org77c9659c.crm.dynamics.com/api/mcp_preview) and answers questions about the standard account table. The preview endpoint exposes a consolidated 3-tool surface (search / describe / execute), including unbound Custom API invocation; this sample uses only read-style operations. Users can list their accounts, look up an account by name, and filter accounts by simple attributes in natural language. Authentication uses OAuthPluginVault so each user signs in with their own Dataverse identity, and Dataverse security roles enforce which rows are returned. This plugin is scoped to a single environment; install a separate instance per environment."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0F6CBD",
+  "agentConnectors": [
+    {
+      "id": "dataverse-accounts-preview",
+      "displayName": "Dataverse Accounts (Preview)",
+      "description": "Read access to the account table via the preview Dataverse MCP endpoint.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://org77c9659c.crm.dynamics.com/api/mcp_preview",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "__OAUTH_REFERENCE_ID__"
+          }
+        }
+      }
+    }
+  ],
+  "agentSkills": [
+    { "folder": "./skills/list-my-accounts" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "tenant_id": "01eed126-9f96-4d2d-a127-dc2e786a898b",
+  "dataverse_url": "https://eppcdemo1fno.crm.dynamics.com",
+  "environment_id": "6551ba8c-5cc3-efc7-88a9-28b77011a319",
+  "organization_id": "8c3f2a44-3b68-f111-9bb3-6045bd003924",
+  "app_display_name": "Cowork-EPPCDemo1FnO-MCP",
+  "mcp_client_uniquename": "coworkdemo1fnomcp",
+  "mcp_url_suffix": "/api/mcp_preview",
+  "oauth_name": "Cowork-EPPCDemo1FnO-OAuth",
+  "deploy_tag": "cowork-eppcdemo1fno",
+  "oauth_config_var": "OAUTH_CONFIG_ID",
+  "project_id": "6b2afec6-b3f7-4af1-9ee7-673f891c3528"
+}

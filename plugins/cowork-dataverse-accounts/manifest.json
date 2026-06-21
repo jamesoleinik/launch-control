@@ -1,0 +1,45 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "d8fb9683-1383-4f69-8c27-f56094fe41d5",
+  "packageName": "com.jamesoleinik.cowork.dataverse.accounts",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/privacy",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/terms"
+  },
+  "name": {
+    "short": "Dataverse Accounts",
+    "full": "Dataverse Accounts (Cowork sample)"
+  },
+  "description": {
+    "short": "List and look up accounts in your Dataverse environment from Cowork.",
+    "full": "A minimal Microsoft 365 Cowork custom plugin that connects to the Dataverse MCP server for a single environment (https://org77c9659c.crm.dynamics.com/api/mcp) and answers questions about the standard account table. Users can list their accounts, look up an account by name, and filter accounts by simple attributes (city, recently created) in natural language. Authentication uses OAuthPluginVault so each user signs in with their own Dataverse identity, and Dataverse security roles enforce which rows are returned. This plugin is scoped to a single environment; install a separate instance per environment."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0F6CBD",
+  "agentConnectors": [
+    {
+      "id": "dataverse-accounts",
+      "displayName": "Dataverse Accounts",
+      "description": "Read access to the account table in the target Dataverse environment.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://org77c9659c.crm.dynamics.com/api/mcp",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "__OAUTH_REFERENCE_ID__"
+          }
+        }
+      }
+    }
+  ],
+  "agentSkills": [
+    { "folder": "./skills/list-my-accounts" }
+  ]
+}

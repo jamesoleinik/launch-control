@@ -1,0 +1,47 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.0.0",
+  "id": "b76558fa-f8b3-4987-a5f5-827f87d3f59f",
+  "packageName": "com.jamesoleinik.cowork.dataverse.eppcdemo1fno",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/privacy",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/terms"
+  },
+  "name": {
+    "short": "Dataverse EPPCDemo1FnO",
+    "full": "Dataverse MCP for EPPCDemo1FnO"
+  },
+  "description": {
+    "short": "Query and reason over Dataverse in EPPCDemo1FnO from Cowork.",
+    "full": "Connects Microsoft 365 Copilot Cowork to the EPPCDemo1FnO Dataverse environment via the preview Dataverse MCP endpoint (https://eppcdemo1fno.crm.dynamics.com/api/mcp_preview), which exposes a consolidated search / describe / execute surface including unbound Custom API invocation. Ships three bundled skills: a schema explorer (resolve display names to logical names), a data skill (read, search, create, update rows), and a business-skills loader (discover and follow policy rows stored in the Dataverse skill table). Authentication uses OAuthPluginVault so each user signs in with their own Dataverse identity and Dataverse security roles enforce data access. This plugin is scoped to a single environment; install a separate instance per environment."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#0F6CBD",
+  "agentConnectors": [
+    {
+      "id": "dataverse-eppcdemo1fno",
+      "displayName": "Dataverse EPPCDemo1FnO",
+      "description": "Access Dataverse tables in the EPPCDemo1FnO environment via the preview MCP endpoint.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://eppcdemo1fno.crm.dynamics.com/api/mcp_preview",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "__OAUTH_REFERENCE_ID__"
+          }
+        }
+      }
+    }
+  ],
+  "agentSkills": [
+    { "folder": "./skills/dataverse-eppcdemo1fno-schema" },
+    { "folder": "./skills/dataverse-eppcdemo1fno-mcp" },
+    { "folder": "./skills/dataverse-eppcdemo1fno-business-skills" }
+  ]
+}

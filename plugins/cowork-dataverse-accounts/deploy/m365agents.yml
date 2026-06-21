@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.11/yaml.schema.json
+#
+# Teams Developer Portal OAuth client registration for the "Dataverse
+# Accounts" Cowork plugin. Invoked by deploy/deploy.py Phase E:
+#   cd plugins/cowork-dataverse-accounts/deploy
+#   atk auth login m365 -i false
+#   atk provision --env dev -i false
+#
+# After provision, env/.env.dev contains ACCOUNTS_OAUTH_CONFIG_ID as a base64
+# blob that decodes to <tenantId>###<oAuthConfigId>. The base64 value is what
+# goes verbatim into OAuthPluginVault.referenceId in the plugin manifest
+# (build.ps1 -OAuthReferenceId).
+#
+# Gotchas (carried from episode 6):
+#   1. clientSecret is REQUIRED on first register; an empty secret crashes the
+#      Dev Portal list page (Zod schema).
+#   2. To rotate the secret later, change another field (e.g. name) so atk's
+#      diff routine fires the PATCH. deploy.py does this automatically.
+#   3. Schema version must be v1.11 for atk CLI 1.1.x.
+#   4. identityProvider is valid on oauth/register but not on oauth/update.
+
+version: v1.11
+
+environmentFolderPath: ./env
+
+provision:
+  - uses: oauth/register
+    with:
+      name: Cowork-Accounts-OAuth
+      flow: authorizationCode
+      appId: ${{TEAMS_APP_ID}}
+      clientId: ${{AAD_APP_CLIENT_ID}}
+      clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}
+      baseUrl: ${{DATAVERSE_BASE_URL}}
+      authorizationUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      refreshUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      scope: ${{DATAVERSE_OAUTH_SCOPE}}
+      identityProvider: Custom
+      applicableToApps: AnyApp
+      targetAudience: HomeTenant
+    writeToEnvironmentFile:
+      configurationId: ACCOUNTS_OAUTH_CONFIG_ID
+
+projectId: 7b2c1d3e-4f5a-6b7c-8d9e-0a1b2c3d4e5f
