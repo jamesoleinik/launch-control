@@ -67,47 +67,25 @@ its targets, and the skill supplies the *how*. With that skill loaded, each ask 
 one line. From those one-liners the agent drives the governed Dataverse APIs
 (`dv-security`, `dv-metadata`) to author:
 
-- two roles + their owner-teams to test row-level security (Part 2),
-- the secured columns and the `lc Sensitive Readers` profile (plus the
-  `lc_RiskSummaryMask` rule) to test data masking (Part 3),
+- the four **business roles** + their owner-teams for row-level security (Part 2),
+- masking rules over the PII columns for column-level security (Part 3),
 - and a small **impersonation visualizer app**
-  ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/)) so the whole model is
-  something you can *see*, not just read about.
+  ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/)), built in Part 3, so the
+  model is something you can *see* (and toggle) on screen, not just read about.
 
-That last one is the demo vehicle. The skill describes a tiny Flask app that lets
-you pick a persona from a dropdown and runs the *same* launch query as that user,
-with the real `MSCRMCallerID` impersonation header set under the hood. Two lenses
-render side by side: a row-count panel (Part 2's row-level security) and a task
-table whose secured columns show either cleartext or a red `████████` (Part 3's
-masking). One screen, both axes, any persona.
+### Prompt to Cursor: load the skill into the session
 
-### Prompt to Cursor: load the skill into the session, then build the test app
-
-First, have Cursor pull the generic security skill into the session so the model
-is resident before any building. This is a concrete Cursor action: reference the
-skill by name and let Cursor load `SKILL.md` into context.
+The only move in Part 1 is to pull the generic security skill into the session so
+the model is resident before any building. This is a concrete Cursor action:
+reference the skill by name and let Cursor load `SKILL.md` into context.
 
 > _"Load the `dataverse-security` skill into this session. Confirm you have the
-> Dataverse security model (row-level, column-level, per-agent) in context."_
+> Dataverse security model (row-level, column-level, per-agent) in context, then
+> confirm the env from `.env` so we're ready to author the model."_
 
-With the skill resident, ask it to stand up the demo vehicle. Because the skill
-carries the spec, the ask stays one line:
-
-> _"Use the `dataverse-security` skill. Build the impersonation test app it
-> describes at `apps/rbac-visualizer/`, then confirm the env from `.env` so we're
-> ready to author the model."_
-
-The skill carries the spec, so the ask stays short. Cursor writes the app once;
-you run it after each part to *see* the change.
-
-```powershell
-# The agent builds it; you run it. Offline demo first (seeded snapshot, no env):
-python apps/rbac-visualizer/app.py --mock
-
-# Then live against the environment, personas discovered from the lc teams:
-python apps/rbac-visualizer/app.py
-# open http://127.0.0.1:5000 and switch personas
-```
+From here every ask is one line, because the skill carries the *how*. We author the
+row-level model in Part 2, the PII masking in Part 3, and build the visualizer app
+in Part 3 to demo it.
 
 The point of doing this from Cursor: **one model, every client.** Whatever the
 agent authors here is enforced no matter which client connects next: Scout,
@@ -118,20 +96,23 @@ Dataverse a new client is not a new attack surface.
 
 ---
 
-## The four roles
+## The four business roles
 
-| Role | Coverage | Privileges | Depth (per [MS docs](https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges)) |
-|---|---|---|---|
-| **lc Member** | `lc_*` tables | Create / Read / Write | **User** (only records the user owns) |
-| **lc Owner** | `lc_*` tables, virtual entities, Custom API exec | Create / Read / Write | **Business Unit** |
-| **lc Viewer** | `lc_*` tables, virtual entities, Custom API exec (read-shape) | Read | **Business Unit** |
-| **lc Admin** | `systemuser`, `team`, `role` (system tables) | Read all; Write team; Append + AppendTo on team and user | **Business Unit** |
+These are the four roles every custom business app tends to need. We give them
+plain business names and map each to a Dataverse `role` record:
+
+| Business role | Role record | Coverage | Privileges | Depth (per [MS docs](https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges)) |
+|---|---|---|---|---|
+| **Business User** | `lc Member` | `lc_*` tables | Create / Read / Write | **User** (only records the user owns) |
+| **Business Owner** | `lc Owner` | `lc_*` tables, virtual entities, Custom API exec | Create / Read / Write | **Business Unit** |
+| **Business Reader** | `lc Viewer` | `lc_*` tables, virtual entities, Custom API exec (read-shape) | Read | **Business Unit** |
+| **Business Admin** | `lc Admin` | `systemuser`, `team`, `role` (system tables) | Read all; Write team; Append + AppendTo on team and user | **Business Unit** |
 
 > These roles are designed to **layer on top of OOB `Basic User`**, Dataverse's
 > canonical minimum baseline. The MS doc says it plainly: _"Use Basic User role
 > for the minimum privileges."_ A user without Basic User can't even call
-> `WhoAmI`. The recommended assignment is **`Basic User` + one of `{lc Member,
-> lc Owner, lc Viewer}` + optionally `lc Admin`**.
+> `WhoAmI`. The recommended assignment is **`Basic User` + one of {Business User,
+> Business Owner, Business Reader} + optionally Business Admin**.
 
 ---
 
@@ -146,8 +127,10 @@ With the `dataverse-security` skill loaded, the ask names the security type and
 its targets in one line:
 
 > _"Use the `dataverse-security` skill. Implement **row-level security**: create
-> two roles to test it, `lc Owner` (Business Unit depth) and `lc Member` (User
-> depth), on the `lc_*` tables, each bound to its own owner-team."_
+> the four business roles, `lc Owner` (Business Owner, Business Unit depth),
+> `lc Member` (Business User, User depth), `lc Viewer` (Business Reader, read-only
+> at BU depth) and `lc Admin` (Business Admin), on the `lc_*` tables, each bound to
+> its own owner-team."_
 
 The skill knows the rest: `lc Owner` reads every row at Business Unit depth,
 `lc Member` reads only its own at User depth, each bound to its own owner-team,
@@ -288,17 +271,12 @@ difference between them is write access, not reach. (`lc Admin` is a
 user-management role with zero data privileges by design, so it's blank for the
 data columns — Admin alongside Owner gives full data + team management.)
 
-### Test it locally
+### The app comes in Part 3
 
-The visualizer renders exactly this table, live. Run it and switch personas: the
-row-count panel jumps from 4 (Member) to 12 (Owner/Viewer) to blank (Admin), the
-same numbers the smoke-test prints, but in a UI you can flip in front of an
-audience.
-
-```powershell
-python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
-# open http://127.0.0.1:5000
-```
+That smoke-test already proves the row-level contrast in numbers. The **visual**
+version, a side-by-side app that renders exactly these per-persona counts in a UI
+you can flip in front of an audience, gets built in Part 3 so it can also carry the
+column-masking toggle.
 
 ---
 
@@ -341,27 +319,34 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 | `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
 | `lc_risksummary` | `lc_launch` | `lc_RiskSummaryMask` (mask `#`, severity-prefix reveal) | `High:#`-style mask; cleartext with `Read unmasked` | column omitted |
 
-The `lc Sensitive Readers` profile is assigned to the `lc Owner` persona (Vivian
-Sun); the `lc Member` persona (Walt Perry) is left out, so the impersonation test
-shows the column withheld for outsiders.
+The **`lc_email`** row is the PII the discovery prompt targets: with its masking
+rule on, *every* non-admin read, Business User, Owner, Reader, and any connected
+agent, comes back redacted (`a#########@example.test`); only the Business Admin (or
+an explicit `?UnMaskedData=true`) pulls cleartext. The other two columns
+(`lc_blockerreason`, `lc_risksummary`) layer the older profile model on top, the
+`lc Sensitive Readers` profile is assigned to the `lc Owner` persona (Vivian Sun)
+and withheld from the `lc Member` persona (Walt Perry), so the impersonation test
+shows those columns omitted entirely for outsiders.
 
-### Prompt to Cursor: build the data masking
+### Prompt to Cursor: discover the PII and mask it from everyone but the admin
 
-Skill loaded, the ask is again one line:
+Rather than naming columns, let the agent find the PII. Skill loaded, the ask is:
 
 > _"Use the `dataverse-security` skill. Implement **column-level security (data
-> masking)**: secure `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`,
-> create the `lc Sensitive Readers` profile, and add the `lc_RiskSummaryMask` rule
-> on the risk summary."_
+> masking)**: identify any columns that store personally identifiable information
+> in the launch tables, such as an email address, and establish masking rules that
+> hide that PII from all roles except the admin."_
 
-The skill carries the verified recipe: secure the column (`IsSecured = true` at
-create, then `PublishAllXml`), create a `fieldsecurityprofile` (here
-`lc Sensitive Readers`), attach a masking rule via `attributemaskingrules`
-(PascalCase `MaskingRuleId@odata.bind`, requires a Managed Environment and a
-`uniquename`), and grant `canread` (`4` = Allowed) plus `canreadunmasked`
+The skill does the rest: it scans the `lc_*` tables for PII-shaped columns (the
+team-member `lc_email` is the obvious one), secures each, attaches a masking rule,
+and grants the cleartext (`Read unmasked`) only to the Business Admin so every
+other role, Business User / Owner / Reader, and any connected agent reads the
+redacted value. The verified recipe underneath: secure the column
+(`IsSecured = true`), create a `fieldsecurityprofile`, attach a masking rule via
+`attributemaskingrules` (PascalCase `MaskingRuleId@odata.bind`, requires a Managed
+Environment and a `uniquename`), and grant `canread` (`4`) plus `canreadunmasked`
 (`0`/`1`/`3`, **not** `4`) *in the same payload* (patching the unmask flag alone
-fails `0x80040203`). Every one of those steps was run live against the secured
-`lc_task` / `lc_launch` columns and confirmed end to end before this episode shipped.
+fails `0x80040203`).
 
 The shipped script is
 [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py),
@@ -380,18 +365,42 @@ Viewer (Rick)      <omitted>       <omitted>             <omitted>
 (The Member sees no launch row at all at User depth; the Viewer reads the rows but
 is outside the profile, so both secured columns are omitted.)
 
-### Test it locally
+### Build the app, then run the side-by-side masking demo
 
-Re-run the visualizer and flip between the `lc Owner` and `lc Member` personas.
-The cleared persona sees the value; an uncleared, non-admin persona sees the mask
-on the very same rows. Row access didn't change; column access did. (Compare a
-plain read against an `?UnMaskedData=true` read rather than assuming "admin sees
-cleartext" means no security: a masking rule masks the admin's plain read too.)
+Now build the visualizer, the demo vehicle we deferred from Part 1. One prompt:
+
+> _"Use the `dataverse-security` skill. Build the impersonation visualizer app at
+> `apps/rbac-visualizer/`: a persona dropdown that runs the same launch query under
+> each persona's `MSCRMCallerID`, a row-count panel for the row-level axis, a task
+> /team table that shows secured columns as cleartext or redacted, and a **masking
+> on/off toggle** that attaches or detaches the PII masking rule live."_
+
+That toggle is the show. Put the app on one side of the screen and Cowork on the
+other, both reading the *same* environment, and flip the masking rule on and off:
+
+- **App side.** Flip the toggle off and the team table shows the real emails; flip
+  it on and the very same rows redact to `a#########@example.test`. You are
+  changing one masking rule, and the app re-reads live.
+- **Cowork side.** Ask Cowork the same question (_"Who is on the Q3 Widget Launch
+  team? List each member with their email address."_). With masking on it returns
+  the redacted addresses; toggle off in the app and re-ask, and Cowork returns the
+  real ones. Same rule, honored by a second client you never told about it.
+
+That's the whole thesis on one screen: you author the control once, and **every**
+client, your own app and Cowork alike, is bound by it because the platform, not the
+client, enforces the read.
 
 ```powershell
-python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
-# open http://127.0.0.1:5000
+# the app exposes the toggle in the UI; the same flip from the CLI:
+python scripts/python/toggle_email_mask.py --on     # redacted (a#########@example.test)
+python scripts/python/toggle_email_mask.py --off    # cleartext
+python apps/rbac-visualizer/app.py                  # open http://127.0.0.1:5000
 ```
+
+> Compare a plain read against an `?UnMaskedData=true` read rather than assuming
+> "admin sees cleartext" means no security: a masking rule masks the admin's plain
+> read too, only the Business Admin's unmasked grant (or `?UnMaskedData=true`) pulls
+> the cleartext.
 
 ### The Episode 7 callback: masking holds even through `search_data`
 
