@@ -59,18 +59,16 @@ def admin_headers():
 
 
 def load_secret():
-    p = os.path.join(ROOT, "episodes", "ep-08-security", "atk", "env", ".env.dev.user")
-    if os.path.exists(p):
-        for line in open(p, encoding="utf-8"):
-            if line.startswith("SECRET_AAD_APP_CLIENT_SECRET="):
-                return line.split("=", 1)[1].strip()
-    # fall back to the most recent deploy artifact
+    # Prefer an env var, then the most recent deploy artifact.
+    env_secret = os.environ.get("MCP_CLIENT_SECRET")
+    if env_secret:
+        return env_secret.strip()
     dd = os.path.join(ROOT, ".deploy", "ep-08")
     if os.path.isdir(dd):
         for f in sorted(os.listdir(dd), reverse=True):
             if f.endswith(".json"):
                 return json.load(open(os.path.join(dd, f)))["entra"]["clientSecret"]
-    raise SystemExit("Could not find the app client secret (.env.dev.user / .deploy/ep-08).")
+    raise SystemExit("Could not find the app client secret (MCP_CLIENT_SECRET / .deploy/ep-08).")
 
 
 def agent_token():
