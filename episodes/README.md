@@ -15,7 +15,7 @@ The "Launch Control" LinkedIn series — fifteen short episodes building one pro
 | [5](ep-05-custom-tools/) | Custom Tools | Custom API + two BYO MCP custom connectors registered with `paconn` |
 | [6](ep-06-cowork-plugin/) | Cowork Plugin for Dataverse | Build & publish a Dataverse-aware Cowork (Teams) plugin — Entra registration → Power Platform MCP allowlist → Teams Developer Portal → schema-aware Business Skill |
 | [7](ep-07-scout-autopilot/) | Microsoft Scout 🟡 | _(placeholder — blocked on Frontier preview access)_ Hand the Ep-5 substrate to an Autopilot agent and post launch briefings into Teams |
-| [8](ep-08-rbac/) | Roles & Reach | Security for a headless world: row-level roles **and** column-level data masking over the Eps 1–7 substrate, authored from any coding agent (now Cursor) |
+| [8](ep-08-security/) | Roles & Reach | Security for a headless world: row-level roles **and** column-level data masking over the Eps 1–7 substrate, authored from any coding agent (now Cursor) |
 | [9](ep-09-the-agent/) | The Agent | Declarative Launch Coordinator + knowledge substrate |
 | [10](ep-10-autonomous-agents/) | Autonomous Agents | Launch Sentinel — event-triggered autonomous agent |
 | [11](ep-11-code-first-agent/) | The Code-First Agent | Same skills, different runtime — Python agent that pulls skills from Dataverse |

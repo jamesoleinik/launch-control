@@ -232,16 +232,50 @@ def mock_emails() -> list[dict]:
     return _load_snapshot().get("emails", [])
 
 
-def live_emails(personas: list[dict], persona_id: str) -> list[dict]:
-    """Read the team-member emails as the selected persona.
+def _pii_reader_id() -> str | None:
+    """A non-admin member of the Sensitive Readers profile to read the PII lens as.
 
-    When masking is ON the value comes back redacted (a#########@example.test);
-    OFF returns cleartext. A persona outside the field security profile gets the
-    column omitted entirely (rendered as the mask block).
+    A System Administrator bypasses column-level security, so reading lc_fullname
+    as the signed-in admin always returns cleartext and the hide toggle would have
+    no visible effect. Reading the PII lens as a non-admin profile member lets the
+    live policy decide: the grant present shows the name, the grant revoked hides
+    it, and the masking rule still redacts the email for everyone. Cached per run.
+    """
+    cached = app.config.get("_PII_READER")
+    if cached is not None:
+        return cached or None
+    requests, api, headers = _live()
+    reader = ""
+    pids = _vals(requests, api, headers,
+                 f"/fieldsecurityprofiles?$select=fieldsecurityprofileid"
+                 f"&$filter=name eq '{PROFILE_NAME}'")
+    if pids:
+        pid = pids[0]["fieldsecurityprofileid"]
+        members = _vals(
+            requests, api, headers,
+            f"/fieldsecurityprofiles({pid})/systemuserprofiles_association"
+            f"?$select=systemuserid,isdisabled")
+        for m in members:
+            if not m.get("isdisabled"):
+                reader = m["systemuserid"]
+                break
+    app.config["_PII_READER"] = reader
+    return reader or None
+
+
+def live_emails(personas: list[dict], persona_id: str) -> list[dict]:
+    """Read the team-member PII lens as a non-admin profile member.
+
+    This lens reads as a member of the Sensitive Readers profile rather than the
+    selected persona, because a System Administrator bypasses column-level
+    security and would always see lc_fullname. Reading as a non-admin member makes
+    the live policy visible: masking ON redacts the email (a#########@example.test),
+    the lc_fullname grant revoked hides the name entirely, and with both granted
+    the member sees cleartext. Falls back to the caller's own context if no member
+    is resolved.
     """
     requests, api, headers = _live()
-    userid = next((p["userid"] for p in personas if p["id"] == persona_id), None)
-    h = _imp(headers, None if persona_id == "me" else userid)
+    h = _imp(headers, _pii_reader_id())
     rows = []
     r = requests.get(
         f"{api}/{EMAIL_SET}?$select=lc_name,{NAME_ATTR},{EMAIL_ATTR}&$top=50", headers=h)
@@ -789,9 +823,9 @@ PAGE = """
       but the column is still returned. <b>Full name</b> uses pure <i>column-level
       security</i> - revoking the grant hides the field entirely (the value comes
       back blank, shown here as <span class="masked">{{ mask }}</span>). The primary
-      <code>lc_name</code> column is now a non-PII ID. A non-admin persona (or Cowork,
-      reading as a profile member) honors both flips live; the signed-in admin always
-      sees cleartext.</div>
+      <code>lc_name</code> column is now a non-PII ID. This table is read as a
+      non-admin profile member, so both flips are honored live; the signed-in admin
+      (and the raw plain read) would bypass column security and see cleartext.</div>
     {% else %}
     <div class="note">This persona can't read any lc_teammember rows.</div>
     {% endif %}

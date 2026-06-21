@@ -59,7 +59,7 @@ def admin_headers():
 
 
 def load_secret():
-    p = os.path.join(ROOT, "episodes", "ep-08-rbac", "atk", "env", ".env.dev.user")
+    p = os.path.join(ROOT, "episodes", "ep-08-security", "atk", "env", ".env.dev.user")
     if os.path.exists(p):
         for line in open(p, encoding="utf-8"):
             if line.startswith("SECRET_AAD_APP_CLIENT_SECRET="):

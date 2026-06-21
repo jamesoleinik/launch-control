@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.11/yaml.schema.json
+#
+# Episode 6 — programmatic Teams Dev Portal OAuth client registration.
+# Run with:
+#   cd episodes/ep-06-cowork-plugin
+#   atk auth login m365 -i false
+#   atk provision --env dev -i false
+#
+# After provision, env/.env.dev contains LC_OAUTH_CONFIG_ID as
+#   <tenantId>###<oAuthConfigId>
+# Use the inner <oAuthConfigId> as OAuthPluginVault.referenceId in
+# plugins/cowork-dataverse-mcp-v2/manifest.json.
+#
+# Gotchas (proved out 2026-06-05; see README Part 1):
+#   1. clientSecret is REQUIRED on first register — the API accepts an
+#      empty secret but the Dev Portal list page (Zod schema) crashes.
+#   2. To rotate clientSecret later, change another field (e.g. `name`)
+#      in the same oauth/update call — the diff routine ignores
+#      clientSecret on its own.
+#   3. Schema version must be v1.11 for atk CLI 1.1.x; v1.12 errors.
+#   4. `identityProvider` is valid on oauth/register but not on
+#      oauth/update — the bundled schema is strict.
+
+version: v1.11
+
+environmentFolderPath: ./env
+
+provision:
+  - uses: oauth/update
+    with:
+      name: LaunchControl-Cowork-OAuth-v3-anyapp-mcp-v3
+      configurationId: ${{LC_OAUTH_CONFIG_ID}}
+      appId: ${{TEAMS_APP_ID}}
+      clientId: ${{AAD_APP_CLIENT_ID}}
+      clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}
+      baseUrl: https://org40ae6a46.crm.dynamics.com
+      authorizationUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      refreshUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+      scope: ${{DATAVERSE_OAUTH_SCOPE}}
+      applicableToApps: AnyApp
+      targetAudience: HomeTenant
+projectId: ed6148e3-861d-4a75-859c-6819966a841e
+
+# To rotate the clientSecret later, swap the provision step above for the
+# block below and bump `name` so the diff routine fires the PATCH:
+#
+#   - uses: oauth/update
+#     with:
+#       name: LaunchControl-Cowork-OAuth-v2
+#       configurationId: ${{LC_OAUTH_CONFIG_ID}}
+#       appId: ${{TEAMS_APP_ID}}
+#       clientId: ${{AAD_APP_CLIENT_ID}}
+#       clientSecret: ${{SECRET_AAD_APP_CLIENT_SECRET}}
+#       baseUrl: https://org40ae6a46.crm.dynamics.com
+#       authorizationUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/authorize
+#       tokenUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+#       refreshUrl: https://login.microsoftonline.com/${{TENANT_ID}}/oauth2/v2.0/token
+#       scope: ${{DATAVERSE_OAUTH_SCOPE}}
+#       applicableToApps: SpecificApp
+#       targetAudience: HomeTenant

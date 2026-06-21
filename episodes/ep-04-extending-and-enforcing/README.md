@@ -331,7 +331,7 @@ That's the closing beat of Episode 4 — the coding agent extending the platform
   the source systems is a meaningful next step but it's a write-path concern
   with its own auth story; out of scope for the "connecting" beat.
 - **Security roles + business units.** RBAC over this now-federated model
-  is the entire subject of [Episode 8 — Roles & Reach](../ep-08-rbac/). We
+  is the entire subject of [Episode 8 — Roles & Reach](../ep-08-security/). We
   finish Ep 4 with three rules visible to everyone; Ep 8 is where _who can
   see what_ gets answered.
 - **Multi-action / multi-condition rules.** The three enforcement steps we

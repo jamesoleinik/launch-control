@@ -1,0 +1,3 @@
+# atk-managed env files. Secrets stay local.
+.env.*.user
+.env.dev

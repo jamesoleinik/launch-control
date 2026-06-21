@@ -41,7 +41,7 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [5](episodes/ep-05-custom-tools/)         | Custom Tools                  | Custom API + two BYO MCP custom connectors registered with `paconn` |
 | [6](episodes/ep-06-cowork-plugin/)        | Cowork Plugin for Dataverse   | Build & publish a Dataverse-aware Cowork (Teams) plugin |
 | [7](episodes/ep-07-scout-autopilot/)      | Microsoft Scout 🟡            | _(placeholder — blocked on Frontier preview access)_ |
-| [8](episodes/ep-08-rbac/)                 | Roles & Reach                 | Four flat roles (Member / Owner / Viewer / Admin) over Eps 1–5 data + tools — same query, four lenses |
+| [8](episodes/ep-08-security/)             | Roles & Reach                 | Four flat roles (Member / Owner / Viewer / Admin) over Eps 1–5 data + tools — same query, four lenses |
 | [9](episodes/ep-09-the-agent/)            | The Agent                     | Declarative Launch Coordinator + knowledge substrate |
 | [10](episodes/ep-10-autonomous-agents/)   | Autonomous Agents             | Launch Sentinel — event-triggered autonomous agent |
 | [11](episodes/ep-11-code-first-agent/)    | The Code-First Agent          | Same skills, different runtime — Python agent that pulls skills from Dataverse |
