@@ -5,18 +5,20 @@ pre-record / between-takes resets. The README is the "how do I reproduce this"
 doc, [`REBUILD.md`](REBUILD.md) is the ordered build runbook, and this file is
 the "what do I do on camera" doc.
 
-Target length: **~2:15**. One framing beat (Part 0), three build parts, one
-runtime payoff in Cowork, plus a 10s intro and a 5s outro. Recorded
-beats: 10s intro · 20s P0 · 25s P1 · 30s P2 · 25s P3 · 22s payoff · 5s outro. Same
-screen-recording-with-voiceover format as Episodes 1 to 7.
+Target length: **~2:10** (matches the recorded video). One framing beat (Part 0),
+three build parts, one runtime payoff in Cowork, plus an 11s intro and an 8s
+outro. Recorded beats: 11s intro · 18s P0 · 19s P1 · 26s P2 · 23s P3 · 25s payoff
+· 8s outro. Spoken VO is ~300 words at roughly 2.3 words per second, the same
+cadence as Episodes 6 and 7.
 
 ---
 
-## Intro (0:00–0:10)
+## Intro (0:00–0:11)
 
 **Shape:** Value-first, live in Cursor. One 8-second beat. We open inside Cursor,
-connected to our Dataverse environment over MCP: the `dataverse-security` skill
-referenced in the composer and `DATAVERSE_URL` printed in the terminal. A stacked
+live on our Dataverse environment through the Dataverse skills plugin: the
+`dataverse-security` skill referenced in the composer and `DATAVERSE_URL` printed
+in the terminal. A stacked
 preview on the right is the two consumers we are about to govern with one model:
 on top the RBAC visualizer app (`apps/rbac-visualizer/`) with the row-count panel
 and the PII team table; below it a Cowork chat answer listing the launch team
@@ -26,11 +28,11 @@ Launch` visible. A small `EPISODE 08` badge in the top-left corner from frame 1.
 **Intro VO (written form, also opens the LinkedIn post; the beat table has the tighter on-camera cut):**
 
 > *"If you are building AI around sensitive business data and business-critical
-> processes, this one is for you. We are live in Cursor, connected to Dataverse
-> over MCP, and I am going to use that integration to build one security model for
-> enterprise scale: the same rules govern the application and the AI agents beside
-> it, so the platform, not each client, decides which rows and which columns every
-> one of them can see."*
+> processes, this one is for you. We are live in Cursor, using the Dataverse
+> skills plugin, and I am going to use that integration to build one security
+> model for enterprise scale: the same rules govern the application and the AI
+> agents beside it, so the platform, not each client, decides which rows, which
+> columns, and which values come back masked for every one of them."*
 
 ---
 
@@ -38,13 +40,13 @@ Launch` visible. A small `EPISODE 08` badge in the top-left corner from frame 1.
 
 | Time | What's on screen | VO line | On-screen overlays (self-contained, readable without audio) |
 |---|---|---|---|
-| **0:00–0:10** ⭐ **Intro · Live in Cursor · 10s** | Cursor open and connected to Dataverse over MCP (the `dataverse-security` skill in the composer, `DATAVERSE_URL` in the terminal). A stacked preview on the right shows the two consumers we govern with one model: the RBAC visualizer app and a Cowork answer with emails redacted. `EPISODE 08` badge top-left from frame 1. | "Building AI on sensitive business data? Live in Cursor, I build one Dataverse security model that governs the enterprise app and the agents beside it the same way." | ⬇ 0:00 **Live in Cursor, connected to Dataverse over MCP** → 0:05 **One security model for an enterprise app and its AI agents** |
-| **0:10–0:30** ⭐ **Part 0 · One skill, the whole model (20s)** | Cursor open. `@`-mention the `dataverse-security` skill and `REBUILD.md`. Cursor confirms it has the model (row-level, column-level, per-agent) and prints `DATAVERSE_URL` from `.env`. Hold on the confirmation. | "Security in Dataverse runs on two independent axes: which rows come back, and which columns come back. I taught Cursor that model once as a skill. Now Cursor builds the whole thing from the runbook, against a clean environment." | ⬇ **Dataverse limits data two ways: which rows, and which columns** |
-| **0:30–0:55** ⭐ **Part 1 · Row-level: same query, different lens (25s)** | Cursor authors and runs `setup_simple_rbac.py`: four roles, four owner teams. Hard cut to the visualizer. Flip the persona dropdown: Member shows **4 tasks**, Owner and Viewer **12**, Admin **blank**. Same query each time. | "Part one, row-level. Four roles, each bound to an owner team at a different depth. One launch query, four personas. The Member sees only the four tasks they own; the Owner and Viewer see all twelve. Identical query, different lens, enforced by the role." | ⬇ **Row-level security: a Member sees 4 tasks, an Owner sees all 12** |
-| **0:55–1:25** ⭐ **Part 2 · Column-level: mask the email, hide the name (30s)** | Cursor authors and runs `setup_field_security.py`. Cut to the visualizer PII table reading as a non-admin profile member. Flip the email toggle: `lc_email` goes from clear to `a#########@example.test`. Flip the name toggle: `lc_fullname` disappears. `lc_name` stays as `TM-001`. | "Part two, column-level, on the team's personal data. Two different levers. The email gets a masking rule, so it comes back redacted on every read. The full name gets pure column security, so it is omitted entirely for anyone outside the profile. The primary key is just a non-personal ID, so the table is still useful with zero PII exposed." | ⬇ **Column-level security: the email comes back masked, the full name hidden** |
-| **1:25–1:50** ⭐ **Part 3 · Per-agent: scope the agent itself (25s)** | Cursor runs `setup_agent_security.py`. Output shows `removed role: System Administrator`, `ensured role: Basic User`, `ensured role: lc Owner`. Then the read-back: `teammembers=4  fullname=<omitted>`. | "Part three, the agent is a user too. The Cowork connection is a real application user, and until now it inherited System Administrator, which bypasses column security. So I scope it down. Now the agent reads every row it needs but the secured name comes back omitted, on the agent's own identity. Effective access is the intersection of the human and the agent." | ⬇ **The agent is a Dataverse user too, so the same column limits apply to it** |
-| **1:50–2:12** ⭐ **Payoff · Runtime enforcement in Cowork (22s)** | Cowork chat fullscreen, signed in as the launch-owner demo account. Paste the team prompt. Answer lists four members, emails **redacted**. Cut to a terminal: run `toggle_email_mask.py --off`. Re-ask the **same** prompt. The four real addresses come back in cleartext. | "Now the payoff, and notice I am not building anything here. I am watching Dataverse enforce it at runtime through Cowork. I ask for the team's emails. Masking on, they come back redacted. I turn the masking off and ask the exact same question. Same agent, same human, same prompt. Cleartext. The platform enforced it on the read, not the agent." | ⬇ **Turn the masking rule off and the same agent's answer flips to cleartext** |
-| **2:12–2:17** | End card. *"Next: Episode 9: The Agent."* `github.com/jamesoleinik/launch-control` | "Connect any agent you like. What it can read is the platform's call, not the client's. Next, we point a purpose-built agent at all of it." | ⬇ **Define the security model once in Dataverse; every connected agent inherits it** |
+| **0:00–0:11** ⭐ **Intro · Live in Cursor · 11s** | Cursor open and live on Dataverse through the Dataverse skills plugin (the `dataverse-security` skill in the composer, `DATAVERSE_URL` in the terminal). A stacked preview on the right shows the two consumers we govern with one model: the RBAC visualizer app and a Cowork answer with emails redacted. `EPISODE 08` badge top-left from frame 1. | "Building AI on sensitive business data? Live in Cursor, I build one Dataverse security model that governs the enterprise app and the agents beside it." | ⬇ 0:00 **Live in Cursor, using the Dataverse skills plugin** → 0:05 **One security model for an enterprise app and its AI agents** |
+| **0:11–0:29** ⭐ **Part 0 · One skill, the whole model (18s)** | Cursor open. `@`-mention the `dataverse-security` skill and `REBUILD.md`. Cursor confirms it has the model (row-level, column-level, masking, and per-agent) and prints `DATAVERSE_URL` from `.env`. Hold on the confirmation. | "Security in Dataverse works three ways: which rows come back, which columns come back, and whether a value comes back masked. I taught Cursor that model once as a skill. Now it builds the whole thing from the runbook, against a clean environment." | ⬇ **Dataverse can implement any security model: securing rows, columns, and masking values** |
+| **0:29–0:48** ⭐ **Part 1 · Row-level: same query, different lens (19s)** | Cursor authors and runs `setup_simple_rbac.py`: four roles, four owner teams. Hard cut to the visualizer. Flip the persona dropdown: Member shows **4 tasks**, Owner and Viewer **12**, Admin **blank**. Same query each time. | "Part one, row-level. Four roles, each bound to an owner team at a different depth. One launch query, four personas. The Member sees only the four tasks they own; the Owner and Viewer see all twelve. Identical query, different lens, enforced by the role." | ⬇ **Row-level security: a Member sees 4 tasks, an Owner sees all 12** |
+| **0:48–1:14** ⭐ **Part 2 · Column-level: mask the email, hide the name (26s)** | Cursor authors and runs `setup_field_security.py`. Cut to the visualizer PII table reading as a non-admin profile member. Flip the email toggle: `lc_email` goes from clear to `a#########@example.test`. Flip the name toggle: `lc_fullname` disappears. `lc_name` stays as `TM-001`. | "Part two, column-level, on the team's personal data. Two different levers. The email gets a masking rule, so it comes back redacted on every read. The full name gets pure column security, so it is omitted entirely for anyone outside the profile. The primary key is just a non-personal ID, so the table is still useful with zero PII exposed." | ⬇ **Column-level security: the email comes back masked, the full name hidden** |
+| **1:14–1:37** ⭐ **Part 3 · Per-agent: scope the agent itself (23s)** | Cursor runs `setup_agent_security.py`. Output shows `removed role: System Administrator`, `ensured role: Basic User`, `ensured role: lc Owner`. Then the read-back: `teammembers=4  fullname=<omitted>`. | "Part three, the agent is a user too. The Cowork connection is a real application user that until now inherited System Administrator, which bypasses column security. So I scope it down. Now it reads every row it needs, but the secured name comes back omitted. Effective access is the intersection of the human and the agent." | ⬇ **Define the security model once in Dataverse; every connected agent inherits it (even Cowork)** _(this single overlay holds through the Payoff and end card)_ |
+| **1:37–2:02** ⭐ **Payoff · Runtime enforcement in Cowork (25s)** | Cowork chat fullscreen, signed in as the launch-owner demo account. Paste the team prompt. Answer lists four members, emails **redacted**. Cut to a terminal: run `toggle_email_mask.py --off`. Re-ask the **same** prompt. The four real addresses come back in cleartext. | "Now the payoff. Notice I am not building anything; I am watching Dataverse enforce it at runtime through Cowork. I ask for the team's emails. Masking on, they come back redacted. I turn masking off and ask the exact same question. Same agent, same human, same prompt. Cleartext. The platform enforced it on the read, not the agent." | ⬇ _(same overlay holds: **Define the security model once in Dataverse; every connected agent inherits it (even Cowork)**)_ |
+| **2:02–2:10** | End card. *"Next: Episode 9: The Agent."* `github.com/jamesoleinik/launch-control` | "Connect any agent you like; what it reads is the platform's call. Security model complete, now we start building the agent fleet." | ⬇ _(same overlay holds: **Define the security model once in Dataverse; every connected agent inherits it (even Cowork)**)_ |
 
 ---
 
@@ -56,12 +58,13 @@ Launch` visible. A small `EPISODE 08` badge in the top-left corner from frame 1.
   access control. Personal data is the sharpest version: the agent often has no
   notion of "this column is off-limits to this caller."
 - **What this episode unlocks:** Security is a property of the data platform, not
-  the agent. Dataverse enforces two independent axes on every request: row-level
-  (roles, teams, depth) and column-level (secured columns, profiles, masking
-  rules). Because agents and people share one identity model, the same controls
-  bind to an application user. Effective access is the intersection of the human's
-  clearance and the agent's. You author it once and every MCP-aware client
-  (Cowork, Copilot, Claude, the CLI) inherits it.
+  the agent. Dataverse enforces three independent controls on every request:
+  row-level (roles, teams, depth), column-level (secured columns and profiles),
+  and data masking (masking rules that redact values in place). Because agents
+  and people share one identity model, the same controls bind to an application
+  user. Effective access is the intersection of the human's clearance and the
+  agent's. You author it once and every MCP-aware client (Cowork, Copilot,
+  Claude, the CLI) inherits it.
 - **Why now / why this matters:** The interactive Cowork connection is delegated,
   so it reads as the signed-in human and you watch the human's clearance enforced
   live. The headless per-agent intersection is the same idea one layer deeper. No
@@ -150,7 +153,7 @@ python scripts/python/toggle_email_mask.py --status
 | Moment | Caption |
 |---|---|
 | Cold open | `One agent, one question, and Dataverse decides what data comes back` |
-| Part 0 | `Dataverse security limits both the rows and the columns a user can read` |
+| Part 0 | `Dataverse security works three ways: the rows, the columns, and masking the values` |
 | Part 1 | `Row-level security: one launch query returns 4 tasks for a Member, 12 for an Owner` |
 | Part 2 | `Column-level security: the email is returned masked and the full name is hidden` |
 | Part 3 | `The agent is its own user, so removing its admin role applies the same column limits` |
