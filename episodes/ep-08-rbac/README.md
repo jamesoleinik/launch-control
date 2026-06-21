@@ -342,6 +342,7 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 
 | Secured column | Table | Masking rule | In the profile sees | Outside the profile sees |
 |---|---|---|---|---|
+| `lc_email` | `lc_teammember` | (none) | cleartext email (PII) | column omitted |
 | `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
 | `lc_risksummary` | `lc_launch` | `lc_RiskSummaryMask` (mask `#`, severity-prefix reveal) | `High:#`-style mask; cleartext with `Read unmasked` | column omitted |
 
@@ -531,14 +532,34 @@ For the demo we sign in as a purpose-built launch-owner account:
 > removed** so the security model actually applies to it. It owns 8 of the 12
 > tasks and reads the other 4 at BU depth, so it sees the whole launch.
 
-Ask Cowork the readiness question it always answers (it reads `lc_risksummary` and
-the blocked `lc_task` rows). Signed in as `eppc2026demo2`, in the profile, the
-blocker reasons come back in cleartext and the risk summary returns masked
-(`High:#`) on the agent's read. Now remove `eppc2026demo2` from the
-`lc Sensitive Readers` profile and ask the *same* question again: the blocker
-reasoning comes back omitted and Cowork can only answer from what it is cleared to
-see. Same agent, same prompt, same human, only the runtime clearance changed, and
-the platform enforced it on the live read.
+The sharpest version of this beat is PII. Ask Cowork for the launch team's contact
+details, a question whose answer is plain personal data:
+
+> _"Who is on the Q3 Widget Launch team? List each member with their email address."_
+
+Run it twice, starting **out** of the profile. **Out** of `lc Sensitive Readers`,
+Cowork comes back blind: it can name the four team members but every email is
+**omitted**, so it has to tell you it can't see them. That is the platform hiding
+the column on the live read, not the agent choosing to be coy. Now swap the flag,
+add `eppc2026demo2` to the profile, and ask the *same* question: the four real
+addresses come back in cleartext. Same agent, same prompt, same human, only the
+runtime clearance changed.
+
+The toggle is one command (the same one Cursor runs in the demo):
+
+```powershell
+python scripts/python/toggle_sensitive_readers.py --in    # reveal (cleartext)
+python scripts/python/toggle_sensitive_readers.py --out   # hide (omitted)
+python scripts/python/toggle_sensitive_readers.py --status
+```
+
+The readiness question works the same way over `lc_task.lc_blockerreason` and the
+masked `lc_launch.lc_risksummary`: _"Is the Q3 Widget Launch ready to ship? List
+every blocked task with its blocker reason, and give me the risk summary."_ In the
+profile the blocker reasons are cleartext and the risk summary returns masked
+(`High:#`); out of it the blocker reasoning is omitted and Cowork can only answer
+from what it is cleared to see. Same agent, same prompt, same human, only the
+runtime clearance changed, and the platform enforced it on the live read.
 
 > **Which identity is enforced.** Interactive Cowork runs **delegated**, so what
 > you see on screen is Dataverse enforcing the *signed-in user's* clearance

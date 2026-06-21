@@ -10,6 +10,7 @@ Builds the live column-security model the episode demonstrates:
   lc_task.lc_blockerreason  lc_task        (none)             cleartext; outsiders: omitted
   lc_launch.lc_risksummary  lc_launch      lc_RiskSummaryMask masked (severity prefix only);
                                                               cleartext with ?UnMaskedData=true
+  lc_teammember.lc_email    lc_teammember  (none)             cleartext PII; outsiders: omitted
 
 Steps
 -----
@@ -56,6 +57,7 @@ MASK_CHAR = "#"
 SECURED = [
     ("lc_task", "lc_blockerreason", False),
     ("lc_launch", "lc_risksummary", True),
+    ("lc_teammember", "lc_email", False),
 ]
 PROFILE_MEMBER = "vivsun@agent365003.onmicrosoft.com"  # Owner persona is cleared
 
