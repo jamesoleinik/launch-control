@@ -337,7 +337,7 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 
 | Secured column | Table | Masking rule | In the profile sees | Outside the profile sees |
 |---|---|---|---|---|
-| `lc_email` | `lc_teammember` | (none) | cleartext email (PII) | column omitted |
+| `lc_email` | `lc_teammember` | `lc_EmailMask` (mask `#`, reveals first char + domain) | cleartext email when masking is off | `a#########@example.test` when masking is on |
 | `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
 | `lc_risksummary` | `lc_launch` | `lc_RiskSummaryMask` (mask `#`, severity-prefix reveal) | `High:#`-style mask; cleartext with `Read unmasked` | column omitted |
 
@@ -532,42 +532,36 @@ details, a question whose answer is plain personal data:
 
 > _"Who is on the Q3 Widget Launch team? List each member with their email address."_
 
-Run it twice, starting **out** of the profile. **Out** of `lc Sensitive Readers`,
-Cowork comes back blind: it can name the four team members but every email is
-**omitted**, so it renders each one as _"Not on file."_ That is the platform
-hiding the column on the live read, not the agent choosing to be coy. (Cowork
-receives `null` for a withheld column and can't tell "secured" from "empty," so
-narrate "Not on file" as *the platform withheld it*.) Now swap the flag, add
-`eppc2026demo2` to the profile, and ask the *same* question: the four real
-addresses come back in cleartext. Same agent, same prompt, same human, only the
-runtime clearance changed.
+Run it twice, starting with masking **on**. With the mask on, Cowork lists the four
+team members and returns each email **redacted**, e.g. `a#########@example.test`:
+the shape of an email is there, but the identity is gone. That is the platform
+masking the column on the live read, not the agent choosing to be coy. Now turn
+masking **off** and ask the *same* question: the four real addresses come back in
+cleartext. Same agent, same prompt, same human, only the column's masking changed,
+and the platform enforced it on the read.
 
 The toggle is one command (the same one Cursor runs in the demo):
 
 ```powershell
-python scripts/python/toggle_sensitive_readers.py --in    # reveal (cleartext)
-python scripts/python/toggle_sensitive_readers.py --out   # hide (omitted)
-python scripts/python/toggle_sensitive_readers.py --status
+python scripts/python/toggle_email_mask.py --on      # redacted (a#########@example.test)
+python scripts/python/toggle_email_mask.py --off     # cleartext
+python scripts/python/toggle_email_mask.py --status
 ```
 
-> **Why email uses full field security, not a masking rule.** Cowork's MCP read is
-> a plain `GET` with no `?UnMaskedData=true`, and a masking-rule column **always**
-> returns the mask on a plain read, even to an unmasked-cleared caller. So a masked
-> column reads the *same* in Cowork whether or not the human is cleared (this is
-> exactly why `lc_risksummary` shows `High:#` in Cowork even for a profile member).
-> The only model that flips to genuine **cleartext** through Cowork is full field
-> security (`canread` in/out): in the profile the value returns, out of it the
-> column is omitted. That is why the email reveal uses `canread` membership, not a
-> mask. Reserve masking rules for the impersonation/visualizer path that *can* send
-> `?UnMaskedData=true`.
+`eppc2026demo2` stays **in** the `lc Sensitive Readers` profile the whole time, so
+the email column always returns; the toggle attaches or detaches the
+`lc_EmailMask` masking rule on `lc_teammember.lc_email`. Binding a masking rule
+takes effect without a publish, so the flip is fast enough to do live.
 
-The readiness question works the same way over `lc_task.lc_blockerreason` and the
-masked `lc_launch.lc_risksummary`: _"Is the Q3 Widget Launch ready to ship? List
-every blocked task with its blocker reason, and give me the risk summary."_ In the
-profile the blocker reasons are cleartext and the risk summary returns masked
-(`High:#`); out of it the blocker reasoning is omitted and Cowork can only answer
-from what it is cleared to see. Same agent, same prompt, same human, only the
-runtime clearance changed, and the platform enforced it on the live read.
+> **Why the toggle moves the rule, not a permission.** Cowork's MCP read is a plain
+> `GET` with no `?UnMaskedData=true`, and a masking-rule column **always** returns
+> the mask on a plain read, even to an unmasked-cleared caller. So you can't reveal
+> cleartext through Cowork by granting an unmask permission (that is exactly why
+> `lc_risksummary` stays `High:#` in Cowork for a cleared user). To flip an agent's
+> read between **masked** and **cleartext**, attach or detach the masking rule
+> itself, which is what this toggle does. (Removing the user from the profile is a
+> different lever: it omits the column entirely, so the agent gets `null`. Use the
+> mask toggle for the redacted-vs-cleartext story.)
 
 > **Which identity is enforced.** Interactive Cowork runs **delegated**, so what
 > you see on screen is Dataverse enforcing the *signed-in user's* clearance
