@@ -204,7 +204,7 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
 
     tasks = []
     r = requests.get(
-        f"{api}/lc_tasks?$select=lc_title,lc_taskstatus"
+        f"{api}/lc_tasks?$select=lc_title,lc_taskstatus,_ownerid_value"
         f"&$expand=lc_launchid($select=lc_name)&$top=200",
         headers={**h, "Prefer": 'odata.maxpagesize=200,'
                  'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'},
@@ -219,6 +219,8 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
                 "lc_name": row.get("lc_title"),
                 "lc_taskstatus": row.get("lc_taskstatus" + fv) or row.get("lc_taskstatus"),
                 "lc_launch": launch.get("lc_name"),
+                # owner is why a User-depth persona sees only its own rows.
+                "owner": row.get("_ownerid_value" + fv),
             })
     return {"counts": counts, "tasks": tasks}
 
@@ -717,20 +719,22 @@ PAGE = """
     </div>
     {% if tasks %}
     <table>
-      <thead><tr><th>lc_title</th><th>status</th><th>lc_launch</th></tr></thead>
+      <thead><tr><th>lc_title</th><th>status</th><th>lc_launch</th><th>owner</th></tr></thead>
       <tbody>
       {% for t in tasks %}
         <tr>
           <td>{{ t.lc_name }}</td>
           <td>{{ t.lc_taskstatus }}</td>
           <td>{{ t.lc_launch }}</td>
+          <td>{{ t.owner }}</td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
     {% endif %}
     <div class="note">A persona with User-level depth on lc_task sees only the
-      rows it owns; Business-Unit depth sees them all. A blank means no read at all.</div>
+      rows it <b>owns</b> (note the owner column); Business-Unit depth sees them
+      all. A blank means no read at all.</div>
   </div>
 
   <div class="lens">
