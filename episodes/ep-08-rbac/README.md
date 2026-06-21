@@ -19,9 +19,10 @@ two axes, not one:
 1. **Row-level security:** who sees *which rows*, and who can *do what*. Four
    flat roles, four owner-teams, one root BU.
 2. **Data masking (column-level security):** which *sensitive fields* stay
-   hidden even on rows a caller is allowed to read. A column security profile plus
-   a masking rule over `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`, so an
-   unprivileged agent gets the column omitted and a cleared one gets a partial mask.
+   hidden even on rows a caller is allowed to read. A column security profile over
+   the team-member PII, with two techniques: a masking rule on `lc_teammember.lc_email`
+   (the value is obscured but still returned) and a pure column hide on
+   `lc_teammember.lc_fullname` (revoke the grant and the field is omitted entirely).
 
 Together they are the toolset an agent developer needs over sensitive data: an
 agent can be broadly useful and still never surface what it shouldn't. And every
@@ -170,7 +171,6 @@ re-apply privileges (Dataverse de-dupes the inserts).
 | `lc_task` | CRU @ User | CRU @ BU | R @ BU | – |
 | `lc_statusupdate` | CRU @ User | CRU @ BU | R @ BU | – |
 | `lc_teammember` | CRU @ User | CRU @ BU | R @ BU | – |
-| `lc_githubissue` (VE) | R via lc_task | R via lc_task | R via lc_task | – |
 | SharePoint task VE | R via lc_task | R via lc_task | R via lc_task | – |
 | `CalculateLaunchReadiness` Custom API | execute | execute | execute (read shape) | – |
 | BYO MCP connectors | – | execute | execute | – |
@@ -316,17 +316,20 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 | Secured column | Table | Masking rule | In the profile sees | Outside the profile sees |
 |---|---|---|---|---|
 | `lc_email` | `lc_teammember` | `lc_EmailMask` (mask `#`, reveals first char + domain) | cleartext email when masking is off | `a#########@example.test` when masking is on |
+| `lc_fullname` | `lc_teammember` | (none) - pure column hide | cleartext name while the grant is in place | column omitted when the grant is revoked |
 | `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
-| `lc_risksummary` | `lc_launch` | `lc_RiskSummaryMask` (mask `#`, severity-prefix reveal) | `High:#`-style mask; cleartext with `Read unmasked` | column omitted |
+| `lc_risksummary` | `lc_launch` | (none) | cleartext risk summary | column omitted |
 
-The **`lc_email`** row is the PII the discovery prompt targets: with its masking
-rule on, *every* non-admin read, Business User, Owner, Reader, and any connected
-agent, comes back redacted (`a#########@example.test`); only the Business Admin (or
-an explicit `?UnMaskedData=true`) pulls cleartext. The other two columns
-(`lc_blockerreason`, `lc_risksummary`) layer the older profile model on top, the
-`lc Sensitive Readers` profile is assigned to the `lc Owner` persona (Vivian Sun)
-and withheld from the `lc Member` persona (Walt Perry), so the impersonation test
-shows those columns omitted entirely for outsiders.
+The two **`lc_teammember`** rows are the PII the discovery prompt targets, each a
+different lever. `lc_email` uses a **masking rule**: with it on, every non-admin
+read (Business User, Owner, Reader, and any connected agent) comes back redacted
+(`a#########@example.test`); only the Business Admin (or an explicit
+`?UnMaskedData=true`) pulls cleartext. `lc_fullname` uses **pure column-level
+security**: the real name lives here (the primary `lc_name` column is now a non-PII
+ID), so revoking the profile's read grant hides the field entirely. The
+`lc_blockerreason` / `lc_risksummary` columns stay field-secured (no masking), so the
+impersonation test still shows them omitted for outsiders. The `lc Sensitive Readers`
+profile is assigned to the Owner-lens persona and withheld from the Member.
 
 ### Prompt to Cursor: discover the PII and mask it from everyone but the admin
 
@@ -355,15 +358,17 @@ and the impersonation result it produces:
 ```
 === Column-level: secured fields per persona ===
 
-Persona            blockerreason   risksummary (plain)   risksummary (unmasked)
------------------  --------------  --------------------  ----------------------
-Member (Walt)      <omitted>       <no row>              <no row>
-Owner (Vivian)     cleartext       High:#                High: 4 blocked tasks...
-Viewer (Rick)      <omitted>       <omitted>             <omitted>
+Persona               email                      fullname     blockerreason
+--------------------  -------------------------  -----------  -------------
+Member (outside)      <omitted>                  <omitted>    <omitted>
+Owner (in profile)    a#########@example.test     Avery Chen   cleartext
+Admin (bypass)        avery@example.test          Avery Chen   cleartext
 ```
 
-(The Member sees no launch row at all at User depth; the Viewer reads the rows but
-is outside the profile, so both secured columns are omitted.)
+(The Member is outside the profile, so every secured column is omitted. The Owner is
+in-profile, so reads the columns, with `lc_email` still redacted by the masking rule
+and `lc_fullname` shown in clear. The Admin bypasses both and reads cleartext; the
+cleartext email also returns on an `?UnMaskedData=true` read.)
 
 ### Build the app, then run the side-by-side masking demo
 
@@ -435,8 +440,8 @@ owner + profile           ✓        "Customs paperwork rejected; legal hold on 
 > They work on Text and Number columns and require a Managed Environment. The
 > cleartext behind the mask comes back only on a request that adds
 > `?UnMaskedData=true` *and* whose profile grants `Read unmasked` (`One record` or
-> `All records`). This is how `lc_RiskSummaryMask` masks `lc_launch.lc_risksummary`
-> today: a plain read returns `High:#` and the cleartext returns only with
+> `All records`). This is how `lc_EmailMask` masks `lc_teammember.lc_email`
+> today: a plain read returns `a#########@example.test` and the cleartext returns only with
 > `?UnMaskedData=true`.
 
 ---
@@ -566,7 +571,7 @@ takes effect without a publish, so the flip is fast enough to do live.
 > `GET` with no `?UnMaskedData=true`, and a masking-rule column **always** returns
 > the mask on a plain read, even to an unmasked-cleared caller. So you can't reveal
 > cleartext through Cowork by granting an unmask permission (that is exactly why
-> `lc_risksummary` stays `High:#` in Cowork for a cleared user). To flip an agent's
+> `lc_email` stays redacted as `a#########@example.test` in Cowork for a cleared user). To flip an agent's
 > read between **masked** and **cleartext**, attach or detach the masking rule
 > itself, which is what this toggle does. (Removing the user from the profile is a
 > different lever: it omits the column entirely, so the agent gets `null`. Use the
@@ -659,11 +664,11 @@ someday.
    tasks, Owner and Viewer show 12, Admin shows blanks. Same query, three lenses,
    one screen, real `MSCRMCallerID` impersonation underneath.
 9. **Axis two, masking.** Third ask: _"add the data masking role."_ The agent
-   secures the sensitive columns, creates the `lc Sensitive Readers` profile, and
-   attaches the `lc_RiskSummaryMask` rule. Back in the visualizer, an uncleared persona's task
-   table shows the column omitted or masked where the sensitive value should be; a
-   cleared persona shows it (and the cleartext only on an `?UnMaskedData=true` read).
-   The row was readable; the column still wasn't.
+   secures the team-member PII, creates the `lc Sensitive Readers` profile, and
+   binds the `lc_EmailMask` rule to `lc_email`. Back in the visualizer, toggling the
+   email-mask rule redacts `lc_email` for every non-admin (and the connected agent),
+   while toggling the `lc_fullname` column grant hides that field entirely outside
+   the profile. The row was readable; the column still wasn't.
 10. **The Episode 7 callback.** Re-run Ep 7's `search_data` for the Q3 export
     blocker as a Viewer-only caller and as an Owner-in-profile. Same agent, same
     query: the Viewer gets `████████`, the Owner gets the sentence, even though
@@ -691,7 +696,7 @@ someday.
 | [`SKILL.md`](SKILL.md) | The generic `dataverse-security` skill: teaches the two-axis Dataverse security model (plus the per-agent variant) and drives a named slice passed in by each prompt (security type + targets). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
 | [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns three demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset to the Member, and seeds the sensitive columns (`lc_blockerreason`, `lc_risksummary`). Idempotent. |
-| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures `lc_task.lc_blockerreason` + `lc_launch.lc_risksummary`, creates the `lc Sensitive Readers` profile, creates + binds the `lc_RiskSummaryMask` masking rule, and grants `canread` (+ `canreadunmasked`) on the profile. Idempotent. |
+| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures `lc_task.lc_blockerreason` + `lc_launch.lc_risksummary` + the `lc_teammember` PII columns (`lc_email`, `lc_fullname`), creates the `lc Sensitive Readers` profile, creates + binds the `lc_EmailMask` masking rule on `lc_email`, and grants `canread` (+ `canreadunmasked`) on the profile. The `lc_fullname` column is hidden via its read grant rather than masked. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | Runs the row-level count and the column-level visibility checks across the three personas by switching `MSCRMCallerID`, and prints both tables. |
 | [`scripts/python/setup_agent_security.py`](../../scripts/python/setup_agent_security.py) | Part 4: scopes the Cowork application user down from System Administrator, reads back as the agent via client-credentials, and proves the per-agent intersection (`--demo-grant` toggles the profile). Idempotent. |

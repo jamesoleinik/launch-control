@@ -49,15 +49,23 @@ H = {"Authorization": f"Bearer {TOK}", "Accept": "application/json",
 HW = {**H, "Content-Type": "application/json", "Prefer": "return=representation"}
 
 PROFILE_NAME = "lc Sensitive Readers"
-MASK_NAME = "lc_RiskSummaryMask"
-# Mask every character that follows the first ":" — reveals the leading severity word.
-MASK_REGEX = r"(?<=:.*)."
+MASK_NAME = "lc_EmailMask"
+# Reveal the first character of the local part, mask the rest, keep @domain.
+MASK_REGEX = r"(?<=.).(?=[^@]*@)"
 MASK_CHAR = "#"
 # Columns to secure: (entity, attribute, has_masking_rule)
+# Two column-level techniques on lc_teammember PII:
+#   - lc_email     : masked (lc_EmailMask) - value obscured but still returned.
+#   - lc_fullname  : hidden - secured + granted, but the demo revokes the grant
+#                    to hide the column entirely (no masking rule).
+# lc_risksummary / lc_blockerreason stay field-secured but are no longer masked.
+# (The lc_fullname column + lc_name->ID reshape is a one-time data migration; this
+# script only (re)secures and grants the column.)
 SECURED = [
     ("lc_task", "lc_blockerreason", False),
-    ("lc_launch", "lc_risksummary", True),
-    ("lc_teammember", "lc_email", False),
+    ("lc_launch", "lc_risksummary", False),
+    ("lc_teammember", "lc_email", True),
+    ("lc_teammember", "lc_fullname", False),
 ]
 PROFILE_MEMBER = "vivsun@agent365003.onmicrosoft.com"  # Owner persona is cleared
 
@@ -110,8 +118,8 @@ def ensure_masking_rule():
         return rid
     body = {
         "name": MASK_NAME,
-        "displayname": "LaunchControl risk-summary mask",
-        "description": "Masks everything after the first colon; reveals the leading severity word.",
+        "displayname": "LaunchControl email mask",
+        "description": "Masks the email local part; reveals the first character and the domain.",
         "regularexpression": MASK_REGEX,
         "maskedcharacter": MASK_CHAR,
     }
@@ -193,7 +201,7 @@ def main() -> int:
 
     print("\n[2] Masking rule + binding")
     rule_id = ensure_masking_rule()
-    bind_masking_rule("lc_launch", "lc_risksummary", rule_id)
+    bind_masking_rule("lc_teammember", "lc_email", rule_id)
 
     print("\n[3] Field security profile")
     pid = ensure_profile()

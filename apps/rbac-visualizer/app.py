@@ -60,6 +60,15 @@ EMAIL_BIND_UNIQUENAME = "lc_teammember_lc_email_mask"
 EMAIL_RULE_REGEX = r"(?<=.).(?=[^@]*@)"
 EMAIL_RULE_CHAR = "#"
 
+# Second PII column on the same table: the team member's real name. lc_name is
+# the primary-name field (Dataverse refuses to field-secure it), so the real
+# name lives in lc_fullname (securable) and lc_name now holds a non-PII ID.
+# Unlike the email (which is masked/obscured), the full name uses pure
+# column-level security: when the profile grant is revoked the column is hidden
+# entirely (the value comes back null for everyone outside the profile).
+NAME_ATTR = "lc_fullname"
+PROFILE_NAME = "lc Sensitive Readers"
+
 # We surface three roles spanning the three depth levels (User / Business Unit /
 # Organization). The redundant lc Admin role (Org depth like Viewer, plus write)
 # is omitted; full control already lives with the System Administrator role.
@@ -192,7 +201,6 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
         "lc_launch": _count(requests, api, h, "lc_launchs"),
         "lc_milestone": _count(requests, api, h, "lc_milestones"),
         "lc_task": _count(requests, api, h, "lc_tasks"),
-        "lc_githubissue": _count(requests, api, h, "lc_githubissues"),
     }
 
     tasks = []
@@ -236,42 +244,38 @@ def live_emails(personas: list[dict], persona_id: str) -> list[dict]:
     userid = next((p["userid"] for p in personas if p["id"] == persona_id), None)
     h = _imp(headers, None if persona_id == "me" else userid)
     rows = []
-    r = requests.get(f"{api}/{EMAIL_SET}?$select=lc_name,{EMAIL_ATTR}&$top=50", headers=h)
+    r = requests.get(
+        f"{api}/{EMAIL_SET}?$select=lc_name,{NAME_ATTR},{EMAIL_ATTR}&$top=50", headers=h)
     if r.status_code == 200:
         for m in r.json().get("value", []):
-            rows.append({"name": m.get("lc_name"), "email": m.get(EMAIL_ATTR)})
+            rows.append({"id": m.get("lc_name"),
+                         "fullname": m.get(NAME_ATTR),
+                         "email": m.get(EMAIL_ATTR)})
     return rows
 
 
-def _email_mask_binding(requests, api, headers) -> str | None:
+def _mask_binding(requests, api, headers, attr) -> str | None:
+    """Return the attributemaskingrule binding id for a column, or None if unmasked."""
     rows = _vals(
         requests, api, headers,
         f"/attributemaskingrules?$select=attributemaskingruleid"
-        f"&$filter=entityname eq '{EMAIL_ENTITY}' and attributelogicalname eq '{EMAIL_ATTR}'",
+        f"&$filter=entityname eq '{EMAIL_ENTITY}' and attributelogicalname eq '{attr}'",
     )
     return rows[0]["attributemaskingruleid"] if rows else None
 
 
-def email_mask_state() -> bool:
-    """True when the lc_email masking rule is attached (redacted)."""
-    if app.config["MOCK"]:
-        return bool(app.config.get("MOCK_EMAIL_MASK", True))
-    requests, api, headers = _live()
-    return _email_mask_binding(requests, api, headers) is not None
-
-
-def _ensure_email_rule(requests, api, headers) -> str:
+def _ensure_rule(requests, api, headers, name, displayname, desc, regex, char, testdata) -> str:
     rows = _vals(requests, api, headers,
-                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{EMAIL_RULE_NAME}'")
+                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{name}'")
     if rows:
         return rows[0]["maskingruleid"]
     body = {
-        "name": EMAIL_RULE_NAME,
-        "displayname": "LaunchControl email mask",
-        "description": "Masks the email local part; reveals the first character and the domain.",
-        "regularexpression": EMAIL_RULE_REGEX,
-        "maskedcharacter": EMAIL_RULE_CHAR,
-        "testdata": "avery.chen@example.test",
+        "name": name,
+        "displayname": displayname,
+        "description": desc,
+        "regularexpression": regex,
+        "maskedcharacter": char,
+        "testdata": testdata,
     }
     r = requests.post(api + "/maskingrules",
                       headers={**headers, "Content-Type": "application/json",
@@ -281,25 +285,25 @@ def _ensure_email_rule(requests, api, headers) -> str:
     if r.text:
         return r.json()["maskingruleid"]
     return _vals(requests, api, headers,
-                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{EMAIL_RULE_NAME}'")[0]["maskingruleid"]
+                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{name}'")[0]["maskingruleid"]
 
 
-def email_mask_set(on: bool) -> None:
-    """Attach (on) or detach (off) the lc_email masking rule. Idempotent."""
+def _mask_set(attr, bind_uniquename, ensure_rule, mock_key, on: bool) -> None:
+    """Attach (on) or detach (off) a column's masking rule. Idempotent."""
     if app.config["MOCK"]:
-        app.config["MOCK_EMAIL_MASK"] = on
+        app.config[mock_key] = on
         return
     requests, api, headers = _live()
     hw = {**headers, "Content-Type": "application/json"}
-    bid = _email_mask_binding(requests, api, headers)
+    bid = _mask_binding(requests, api, headers, attr)
     if on:
         if bid:
             return
-        rid = _ensure_email_rule(requests, api, headers)
+        rid = ensure_rule(requests, api, headers)
         body = {
-            "uniquename": EMAIL_BIND_UNIQUENAME,
+            "uniquename": bind_uniquename,
             "entityname": EMAIL_ENTITY,
-            "attributelogicalname": EMAIL_ATTR,
+            "attributelogicalname": attr,
             "MaskingRuleId@odata.bind": f"/maskingrules({rid})",
         }
         r = requests.post(api + "/attributemaskingrules", headers=hw, json=body)
@@ -311,6 +315,89 @@ def email_mask_set(on: bool) -> None:
         r = requests.delete(api + f"/attributemaskingrules({bid})", headers=hw)
         if r.status_code not in (200, 204):
             raise RuntimeError(f"unbind -> {r.status_code}: {r.text[:300]}")
+
+
+def _ensure_email_rule(requests, api, headers) -> str:
+    return _ensure_rule(
+        requests, api, headers, EMAIL_RULE_NAME, "LaunchControl email mask",
+        "Masks the email local part; reveals the first character and the domain.",
+        EMAIL_RULE_REGEX, EMAIL_RULE_CHAR, "avery.chen@example.test")
+
+
+def email_mask_state() -> bool:
+    """True when the lc_email masking rule is attached (redacted)."""
+    if app.config["MOCK"]:
+        return bool(app.config.get("MOCK_EMAIL_MASK", True))
+    requests, api, headers = _live()
+    return _mask_binding(requests, api, headers, EMAIL_ATTR) is not None
+
+
+def email_mask_set(on: bool) -> None:
+    _mask_set(EMAIL_ATTR, EMAIL_BIND_UNIQUENAME, _ensure_email_rule, "MOCK_EMAIL_MASK", on)
+
+
+def _name_fieldperm(requests, api, headers) -> dict | None:
+    """The lc_fullname field permission on the Sensitive Readers profile, or None."""
+    pids = _vals(requests, api, headers,
+                 f"/fieldsecurityprofiles?$select=fieldsecurityprofileid"
+                 f"&$filter=name eq '{PROFILE_NAME}'")
+    if not pids:
+        return None
+    pid = pids[0]["fieldsecurityprofileid"]
+    rows = _vals(
+        requests, api, headers,
+        f"/fieldpermissions?$select=fieldpermissionid,canread"
+        f"&$filter=_fieldsecurityprofileid_value eq {pid}"
+        f" and entityname eq '{EMAIL_ENTITY}' and attributelogicalname eq '{NAME_ATTR}'")
+    out = dict(rows[0]) if rows else None
+    if out is not None:
+        out["_profileid"] = pid
+    return out
+
+
+def name_hidden_state() -> bool:
+    """True when lc_fullname read is revoked on the profile (column hidden)."""
+    if app.config["MOCK"]:
+        return bool(app.config.get("MOCK_NAME_HIDDEN", False))
+    requests, api, headers = _live()
+    fp = _name_fieldperm(requests, api, headers)
+    return fp is None or fp.get("canread") != 4
+
+
+def name_security_set(hide: bool) -> None:
+    """Revoke (hide) or grant (show) lc_fullname column read on the profile.
+
+    This is pure column-level security: with the grant revoked the value comes
+    back null for every profile member (and any connected agent), so the field
+    is hidden entirely rather than obscured. Idempotent.
+    """
+    if app.config["MOCK"]:
+        app.config["MOCK_NAME_HIDDEN"] = hide
+        return
+    requests, api, headers = _live()
+    hw = {**headers, "Content-Type": "application/json"}
+    target = 0 if hide else 4
+    fp = _name_fieldperm(requests, api, headers)
+    if fp is None:
+        pids = _vals(requests, api, headers,
+                     f"/fieldsecurityprofiles?$select=fieldsecurityprofileid"
+                     f"&$filter=name eq '{PROFILE_NAME}'")
+        if not pids:
+            raise RuntimeError(f"field security profile '{PROFILE_NAME}' not found")
+        body = {"entityname": EMAIL_ENTITY, "attributelogicalname": NAME_ATTR,
+                "canread": target,
+                "fieldsecurityprofileid@odata.bind":
+                f"/fieldsecurityprofiles({pids[0]['fieldsecurityprofileid']})"}
+        r = requests.post(api + "/fieldpermissions", headers=hw, json=body)
+        if r.status_code not in (200, 201, 204):
+            raise RuntimeError(f"grant -> {r.status_code}: {r.text[:300]}")
+        return
+    if fp.get("canread") == target:
+        return
+    r = requests.patch(api + f"/fieldpermissions({fp['fieldpermissionid']})",
+                       headers=hw, json={"canread": target})
+    if r.status_code not in (200, 204):
+        raise RuntimeError(f"set canread -> {r.status_code}: {r.text[:300]}")
 _DEPTH = {"Basic": "User", "Local": "Business Unit",
           "Deep": "Parent: Child BU", "Global": "Organization"}
 # Privilege actions, in the order we like to read them (prv<Action>lc_<table>).
@@ -516,6 +603,9 @@ PAGE = """
   .mask-state.off { color: #3fb950; border: 1px solid #2c6b32; }
   .toggle-form { display: flex; align-items: center; gap: 12px;
                  flex-wrap: wrap; margin: 4px 0 10px; }
+  .mask-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+              padding: 8px 0; border-top: 1px solid #21262d; }
+  .mask-row .toggle-form { margin: 0; }
   .toggle-btn { cursor: pointer; font-size: 13px; font-weight: 600;
                 padding: 7px 14px; border-radius: 8px; border: 1px solid #30363d;
                 color: #e6edf3; background: #21262d; }
@@ -673,34 +763,60 @@ PAGE = """
   </div>
 
   <div class="lens">
-    <h2>Axis 2 (PII) - Data masking: <span class="pill">lc_teammember.lc_email</span>
+    <h2>Axis 2 (PII) - Data masking
+      <span class="pill">lc_teammember</span></h2>
+    <div class="sub" style="margin:-4px 0 12px">Two PII columns, two independent
+      masking rules. Each toggle flips a Dataverse masking rule live; Cowork,
+      reading the same env, honors whichever state is set.</div>
+
+    <div class="mask-row">
       <span class="mask-state {{ 'on' if email_masked else 'off' }}">
-        masking {{ "ON - redacted" if email_masked else "OFF - cleartext" }}</span></h2>
-    <form method="post" action="/toggle-mask" class="toggle-form" onsubmit="lcToggle(this)">
-      <input type="hidden" name="persona" value="{{ selected }}">
-      <input type="hidden" name="to" value="{{ 'off' if email_masked else 'on' }}">
-      <button type="submit" class="toggle-btn {{ 'on' if email_masked else 'off' }}">
-        {{ "Turn masking OFF (reveal cleartext)" if email_masked else "Turn masking ON (redact PII)" }}
-      </button>
-      <span class="note" style="margin:0">Flips the <code>lc_EmailMask</code> rule live.
-        Cowork, reading the same env, honors whichever state is set.</span>
-    </form>
+        <code>lc_email</code> masking {{ "ON - redacted" if email_masked else "OFF - cleartext" }}</span>
+      <form method="post" action="/toggle-mask" class="toggle-form" onsubmit="lcToggle(this)">
+        <input type="hidden" name="persona" value="{{ selected }}">
+        <input type="hidden" name="to" value="{{ 'off' if email_masked else 'on' }}">
+        <button type="submit" class="toggle-btn {{ 'on' if email_masked else 'off' }}">
+          {{ "Turn email masking OFF (reveal)" if email_masked else "Turn email masking ON (redact)" }}
+        </button>
+        <span class="note" style="margin:0">Flips the <code>lc_EmailMask</code> rule.</span>
+      </form>
+    </div>
+
+    <div class="mask-row">
+      <span class="mask-state {{ 'on' if name_hidden else 'off' }}">
+        <code>lc_fullname</code> {{ "HIDDEN - column secured" if name_hidden else "VISIBLE - granted" }}</span>
+      <form method="post" action="/toggle-name-security" class="toggle-form" onsubmit="lcToggle(this)">
+        <input type="hidden" name="persona" value="{{ selected }}">
+        <input type="hidden" name="to" value="{{ 'off' if name_hidden else 'on' }}">
+        <button type="submit" class="toggle-btn {{ 'on' if name_hidden else 'off' }}">
+          {{ "Grant full-name column (show)" if name_hidden else "Revoke full-name column (hide)" }}
+        </button>
+        <span class="note" style="margin:0">Column-level security: flips the
+          <code>lc_fullname</code> read grant on the profile.</span>
+      </form>
+    </div>
+
     {% if emails %}
     <table>
-      <thead><tr class="secured"><th>lc_name</th><th>lc_email &#128274;</th></tr></thead>
+      <thead><tr class="secured"><th>lc_name (ID)</th><th>lc_fullname &#128274;</th><th>lc_email &#128274;</th></tr></thead>
       <tbody>
       {% for e in emails %}
         <tr>
-          <td>{{ e.name }}</td>
+          <td>{{ e.id }}</td>
+          <td>{% if e.fullname %}<span class="clear">{{ e.fullname }}</span>{% else %}<span class="masked">{{ mask }}</span>{% endif %}</td>
           <td>{% if e.email %}<span class="clear">{{ e.email }}</span>{% else %}<span class="masked">{{ mask }}</span>{% endif %}</td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
-    <div class="note">With masking <b>ON</b> every non-admin read (and any connected
-      agent) gets the redacted form <code>a#########@example.test</code>; <b>OFF</b>
-      returns the real address. The platform enforces it on the read, so the same
-      flip is honored in Cowork.</div>
+    <div class="note">Two different techniques on one table. <b>Email</b> uses a
+      <i>masking rule</i> - the value is obscured (<code>a#########@example.test</code>)
+      but the column is still returned. <b>Full name</b> uses pure <i>column-level
+      security</i> - revoking the grant hides the field entirely (the value comes
+      back blank, shown here as <span class="masked">{{ mask }}</span>). The primary
+      <code>lc_name</code> column is now a non-PII ID. A non-admin persona (or Cowork,
+      reading as a profile member) honors both flips live; the signed-in admin always
+      sees cleartext.</div>
     {% else %}
     <div class="note">This persona can't read any lc_teammember rows.</div>
     {% endif %}
@@ -773,6 +889,7 @@ def index():
         tasks=lenses["tasks"],
         emails=emails,
         email_masked=email_mask_state(),
+        name_hidden=name_hidden_state(),
         policies=policies,
         render_cell=render_cell,
         mock=mock,
@@ -794,6 +911,19 @@ def toggle_mask():
         time.sleep(5)
     except Exception as exc:  # surface the failure but keep the app up
         print(f"toggle-mask failed: {exc}")
+    return redirect(url_for("index", persona=persona) if persona else url_for("index"))
+
+
+@app.route("/toggle-name-security", methods=["POST"])
+def toggle_name_security():
+    """Revoke/grant the lc_fullname column read on the profile, then return."""
+    to_hide = request.form.get("to", "on") == "on"
+    persona = request.form.get("persona", "")
+    try:
+        name_security_set(to_hide)
+        time.sleep(5)  # let the security cache settle before the redirect re-reads
+    except Exception as exc:  # surface the failure but keep the app up
+        print(f"toggle-name-security failed: {exc}")
     return redirect(url_for("index", persona=persona) if persona else url_for("index"))
 
 

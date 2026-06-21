@@ -1,10 +1,10 @@
 {
   "_comment": "Seeded snapshot for offline demo mode. Mirrors the Episode 8 smoke-test: row counts reflect row-level security depth, and the secured columns (lc_blockerreason, lc_risksummary) are masked for personas outside the 'lc Sensitive Readers' field security profile (rendered as a block). lc_risksummary additionally carries a custom masking rule (lc_RiskSummaryMask) that redacts everything after the leading severity even for profile members.",
   "emails": [
-    { "name": "Avery Chen",      "email": "a#########@example.test" },
-    { "name": "Devon Okafor",    "email": "d###########@example.test" },
-    { "name": "Priya Ramaswamy", "email": "p######@example.test" },
-    { "name": "Jules Martinez",  "email": "j#############@example.test" }
+    { "id": "TM-001", "fullname": "Avery Chen",      "email": "a#########@example.test" },
+    { "id": "TM-002", "fullname": "Devon Okafor",    "email": "d###########@example.test" },
+    { "id": "TM-004", "fullname": "Priya Ramaswamy", "email": "p######@example.test" },
+    { "id": "TM-003", "fullname": "Jules Martinez",  "email": "j#############@example.test" }
   ],
   "personas": [
     { "id": "me",     "label": "You (no impersonation)",            "userid": "00000000-0000-0000-0000-000000000001" },
@@ -13,10 +13,10 @@
     { "id": "viewer", "label": "Lee Viewer (lc Viewers)",          "userid": "00000000-0000-0000-0000-000000000004" }
   ],
   "counts": {
-    "me":     { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 },
-    "owner":  { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 },
-    "member": { "lc_launch": 1, "lc_milestone": 4,  "lc_task": 4,  "lc_githubissue": 6 },
-    "viewer": { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61, "lc_githubissue": 6 }
+    "me":     { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61 },
+    "owner":  { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61 },
+    "member": { "lc_launch": 1, "lc_milestone": 4,  "lc_task": 4 },
+    "viewer": { "lc_launch": 1, "lc_milestone": 16, "lc_task": 61 }
   },
   "tasks": {
     "me": [
