@@ -487,11 +487,11 @@ PAGE = """
           padding: 8px 14px; }
   .chip b { font-size: 20px; display: block; }
   .chip span { font-size: 12px; color: #8b949e; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
   .policy-table { table-layout: fixed; }
   .policy-table th, .policy-table td { word-break: break-word; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #21262d;
-           vertical-align: top; }
+           vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
   th { color: #8b949e; font-weight: 600; }
   .secured th { color: #d29922; }
   .masked { font-family: ui-monospace, monospace; color: #f85149;
@@ -514,6 +514,10 @@ PAGE = """
   .toggle-btn.on { border-color: #2c6b32; }   /* currently masked -> offer reveal */
   .toggle-btn.off { border-color: #bb6c2b; }  /* currently clear -> offer redact */
   .toggle-btn:hover { background: #30363d; }
+  /* "Hide name column" toggle: instant client-side column hide. */
+  .names-toggle { font-size: 12px; color: #8b949e; display: inline-flex;
+                  align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  body.hide-names .col-name { display: none; }
   /* Loading overlay shown over the lens panels while a new persona is queried. */
   .lc-lenses { position: relative; }
   .lc-overlay { display: none; position: absolute; inset: 0; z-index: 5;
@@ -618,6 +622,9 @@ PAGE = """
       {% endfor %}
     </select>
     <noscript><button type="submit">Go</button></noscript>
+    <label class="names-toggle" style="margin-left:16px;">
+      <input type="checkbox" id="hide-names" onchange="lcToggleNames(this)"> Hide name column
+    </label>
   </form>
 
   <div id="lc-lenses" class="lc-lenses">
@@ -640,13 +647,13 @@ PAGE = """
     {% if tasks %}
     <table>
       <thead><tr class="secured">
-        <th>lc_name</th><th>status</th>
+        <th class="col-name">lc_name</th><th>status</th>
         <th>lc_blockerreason &#128274;</th><th>lc_risksummary &#128274;</th>
       </tr></thead>
       <tbody>
       {% for t in tasks %}
         <tr>
-          <td>{{ t.lc_name }}</td>
+          <td class="col-name">{{ t.lc_name }}</td>
           <td>{{ t.lc_taskstatus }}</td>
           <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
           <td>{{ render_cell(t, "lc_risksummary")|safe }}</td>
@@ -679,11 +686,11 @@ PAGE = """
     </form>
     {% if emails %}
     <table>
-      <thead><tr class="secured"><th>lc_name</th><th>lc_email &#128274;</th></tr></thead>
+      <thead><tr class="secured"><th class="col-name">lc_name</th><th>lc_email &#128274;</th></tr></thead>
       <tbody>
       {% for e in emails %}
         <tr>
-          <td>{{ e.name }}</td>
+          <td class="col-name">{{ e.name }}</td>
           <td>{% if e.email %}<span class="clear">{{ e.email }}</span>{% else %}<span class="masked">{{ mask }}</span>{% endif %}</td>
         </tr>
       {% endfor %}
@@ -719,6 +726,22 @@ PAGE = """
     if (btn) { btn.disabled = true; btn.textContent = 'Applying\u2026'; }
     return true;
   }
+  // "Hide name column" toggle: pure client-side, persisted so it survives the
+  // persona reload. Toggles a body class the CSS uses to hide .col-name cells.
+  function lcApplyNames(hide) {
+    document.body.classList.toggle('hide-names', !!hide);
+    var cb = document.getElementById('hide-names');
+    if (cb) { cb.checked = !!hide; }
+  }
+  function lcToggleNames(cb) {
+    try { sessionStorage.setItem('lc_hide_names', cb.checked ? '1' : '0'); } catch (e) {}
+    lcApplyNames(cb.checked);
+  }
+  (function () {
+    var v = null;
+    try { v = sessionStorage.getItem('lc_hide_names'); } catch (e) {}
+    if (v === '1') { lcApplyNames(true); }
+  })();
   (function () {
     var y = null;
     try { y = sessionStorage.getItem('lc_scroll'); } catch (e) {}
