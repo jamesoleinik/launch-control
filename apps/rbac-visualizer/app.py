@@ -105,6 +105,7 @@ def mock_lenses(persona_id: str) -> dict:
     snap = _load_snapshot()
     return {
         "counts": snap["counts"].get(persona_id, {}),
+        "tasks": snap["tasks"].get(persona_id, []),
     }
 
 
@@ -200,7 +201,26 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
         "lc_milestone": _count(requests, api, h, "lc_milestones"),
         "lc_task": _count(requests, api, h, "lc_tasks"),
     }
-    return {"counts": counts}
+
+    tasks = []
+    r = requests.get(
+        f"{api}/lc_tasks?$select=lc_title,lc_taskstatus"
+        f"&$expand=lc_launchid($select=lc_name)&$top=200",
+        headers={**h, "Prefer": 'odata.maxpagesize=200,'
+                 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'},
+    )
+    if r.status_code == 200:
+        fv = "@OData.Community.Display.V1.FormattedValue"
+        for row in r.json().get("value", []):
+            launch = row.get("lc_launchid") or {}
+            tasks.append({
+                # lc_task's primary name is lc_title; status is a choice, so use
+                # its formatted label rather than the raw option value.
+                "lc_name": row.get("lc_title"),
+                "lc_taskstatus": row.get("lc_taskstatus" + fv) or row.get("lc_taskstatus"),
+                "lc_launch": launch.get("lc_name"),
+            })
+    return {"counts": counts, "tasks": tasks}
 
 
 # ---------------------------------------------------------------------------
@@ -695,6 +715,20 @@ PAGE = """
         <div class="chip"><b>{{ v }}</b><span>{{ k }}</span></div>
       {% endfor %}
     </div>
+    {% if tasks %}
+    <table>
+      <thead><tr><th>lc_title</th><th>status</th><th>lc_launch</th></tr></thead>
+      <tbody>
+      {% for t in tasks %}
+        <tr>
+          <td>{{ t.lc_name }}</td>
+          <td>{{ t.lc_taskstatus }}</td>
+          <td>{{ t.lc_launch }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
     <div class="note">A persona with User-level depth on lc_task sees only the
       rows it owns; Business-Unit depth sees them all. A blank means no read at all.</div>
   </div>
@@ -823,6 +857,7 @@ def index():
         personas=personas,
         selected=selected,
         counts=lenses["counts"],
+        tasks=lenses["tasks"],
         emails=emails,
         email_masked=email_mask_state(),
         name_hidden=name_hidden_state(),
