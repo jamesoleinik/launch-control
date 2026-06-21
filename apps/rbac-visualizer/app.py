@@ -30,6 +30,7 @@ treats "present" as cleartext and "absent/null" as masked (********).
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import sys
@@ -441,7 +442,9 @@ def render_cell(task: dict, col: str) -> str:
     val = task.get(col)
     if val in (None, ""):
         return f'<span class="masked">{MASK}</span>'
-    return f'<span class="clear">{val}</span>'
+    safe = html.escape(str(val))
+    # title carries the full value so a truncated cell still reveals it on hover.
+    return f'<span class="clear" title="{safe}">{safe}</span>'
 
 
 def _perm_summary(col: dict) -> str:
@@ -492,6 +495,10 @@ PAGE = """
   .policy-table th, .policy-table td { word-break: break-word; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #21262d;
            vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
+  /* Truncate noisy single-token values (e.g. the long masked risksummary) to one
+     line with an ellipsis; the full value stays available via the cell tooltip. */
+  td.col-trunc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                 max-width: 0; }
   th { color: #8b949e; font-weight: 600; }
   .secured th { color: #d29922; }
   .masked { font-family: ui-monospace, monospace; color: #f85149;
@@ -653,7 +660,7 @@ PAGE = """
           <td>{{ t.lc_name }}</td>
           <td>{{ t.lc_taskstatus }}</td>
           <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
-          <td>{{ render_cell(t, "lc_risksummary")|safe }}</td>
+          <td class="col-trunc">{{ render_cell(t, "lc_risksummary")|safe }}</td>
         </tr>
       {% endfor %}
       </tbody>
