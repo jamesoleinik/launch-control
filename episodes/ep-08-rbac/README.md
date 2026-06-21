@@ -1,6 +1,6 @@
 # Episode 8 — Roles & Reach: security in a headless world
 
-**Status:** ✅ Re-platformed to a new tenant/env (`org1077ae7c`, `agent365003`) · ✅ Cowork plugin rebuilt for the new env (`dataverse-launchcontrol-agent365`, v1.6.0) · ✅ Four roles + four teams live · ✅ Three demo personas assigned (Member / Owner / Viewer) · ✅ Column masking live + verified end to end (`lc_RiskSummaryMask` + `lc Sensitive Readers` profile, tested via impersonation) · ✅ Row + column smoke-test verified · ✅ Per-agent security verified (Cowork app user scoped down, intersection proven via client-credentials) · 🎬 Not yet recorded
+**Status:** ✅ Re-platformed to a new tenant/env (`org1077ae7c`, `agent365003`) · ✅ Cowork plugin rebuilt for the new env (`dataverse-launchcontrol-agent365`, v1.6.0) · ✅ Four roles + four teams live · ✅ Three demo personas assigned (Member / Owner / Viewer) · ✅ Column masking live + verified end to end (`lc_RiskSummaryMask` + `lc Sensitive Readers` profile, tested via impersonation) · ✅ Row + column smoke-test verified · ✅ Per-agent security verified (Cowork app user scoped down, intersection proven via client-credentials) · ✅ Cowork runtime sign-in identity ready (`eppc2026demo2`, Owner lens, in `lc Sensitive Readers`) · 🎬 Not yet recorded
 **Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ **Per-agent control:** the agent is its own application user, so field security binds to the Cowork connection independently of the human, and Dataverse enforces the intersection · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
 **Layer:** 🛡 Dataverse's security model as the control plane for agents (roles + owner-teams + field security; root BU only for now)
 **Coding agent:** Claude Code / Cursor / any MCP client · **Runtime:** Web API + Python SDK; idempotent on names
@@ -499,15 +499,36 @@ the intersection, enforced on the agent identity. (Field-security membership
 changes propagate with a short cache delay, so allow a few seconds between a
 profile toggle and the read.)
 
-### Show it in the Cowork demo
+### Showcase it live in Cowork: runtime enforcement, not building
 
-This lands live in the Episode 6 Cowork plugin. Ask Cowork the readiness question
-it always answers (it reads `lc_risksummary` and the blocked `lc_task` rows). With
-the agent inside the sensitive-readers profile, the summary comes back whole. Pull
-the Cowork application user out of that profile and ask again: same prompt, same
-human, but the blocker reasoning now reads `████████` and Cowork answers from only
-what it's cleared to see. Nothing changed about the user or the question, only the
-*agent's* clearance, and the platform enforced it.
+This is the payoff beat, and it isn't about authoring anything. It's watching
+Dataverse enforce the model you already built, **at runtime**, through Cowork.
+
+The plugin authenticates with `OAuthPluginVault`, so **each person signs in with
+their own Dataverse identity** and every read Cowork makes runs *as that user*.
+For the demo we sign in as a purpose-built launch-owner account:
+
+> **Cowork sign-in identity: `eppc2026demo2@agent365003.onmicrosoft.com`**
+> Scoped to the **Owner lens**: `Basic User` + `lc Owner` + the `lc Owners` team,
+> placed **in** the `lc Sensitive Readers` profile, with **System Administrator
+> removed** so the security model actually applies to it. It owns 8 of the 12
+> tasks and reads the other 4 at BU depth, so it sees the whole launch.
+
+Ask Cowork the readiness question it always answers (it reads `lc_risksummary` and
+the blocked `lc_task` rows). Signed in as `eppc2026demo2`, in the profile, the
+blocker reasons come back in cleartext and the risk summary returns masked
+(`High:#`) on the agent's read. Now remove `eppc2026demo2` from the
+`lc Sensitive Readers` profile and ask the *same* question again: the blocker
+reasoning comes back omitted and Cowork can only answer from what it is cleared to
+see. Same agent, same prompt, same human, only the runtime clearance changed, and
+the platform enforced it on the live read.
+
+> **Which identity is enforced.** Interactive Cowork runs **delegated**, so what
+> you see on screen is Dataverse enforcing the *signed-in user's* clearance
+> (`eppc2026demo2`) at runtime. The per-agent **intersection** above (the agent's
+> own application-user profile, independent of the human) is the same idea one
+> layer deeper, proven headlessly by `setup_agent_security.py` reading as the
+> Cowork app user over a client-credentials (S2S) token.
 
 > **Good luck doing this on another platform.** Per-user *and* per-agent field
 > security, enforced as an intersection on every read, falls out of one fact:
@@ -598,7 +619,15 @@ someday.
     blocker as a Viewer-only caller and as an Owner-in-profile. Same agent, same
     query: the Viewer gets `████████`, the Owner gets the sentence, even though
     the match came from inside an attached PDF.
-11. **The punchline:**
+11. **Runtime enforcement in Cowork (the showcase).** Sign into Cowork as
+    `eppc2026demo2` (the Owner-lens identity, in the `lc Sensitive Readers`
+    profile) and ask the readiness question. Cowork returns the whole launch with
+    the blocker reasons cleared and the risk summary masked, all enforced live on
+    the delegated read. Pull `eppc2026demo2` out of the profile and ask again: the
+    blocker reasoning is gone. Same agent, same prompt, same human, only the
+    runtime clearance changed. Nothing was built on screen; the platform enforced
+    what it already knew.
+12. **The punchline:**
     > _"Two axes, one platform. Row security decides which rows come back; field
     > security decides which columns. The data didn't change; the platform's
     > willingness to return it did. Connect any agent you like, from any client,
@@ -654,6 +683,12 @@ python scripts/python/rbac_smoketest.py
 
 # 7. Part 4: scope the Cowork agent down + prove the per-agent intersection
 python scripts/python/setup_agent_security.py --demo-grant
+
+# 7b. Cowork runtime showcase: the demo signs into Cowork as
+#     eppc2026demo2@agent365003.onmicrosoft.com, scoped to the Owner lens
+#     (Basic User + lc Owner + lc Owners team, IN the lc Sensitive Readers
+#     profile, System Administrator removed) — same shape as the Vivian persona.
+#     Mid-demo, remove it from the profile to show the masked read change live.
 
 # 8. See it: the impersonation visualizer (offline demo, then live)
 python apps/rbac-visualizer/app.py --mock   # http://127.0.0.1:5000
