@@ -12,12 +12,21 @@ This script proves it end to end against the live env:
      `Basic User + lc Owner` (it can still read/write the lc_* model at BU
      depth) and leave it OUT of the `lc Sensitive Readers` field-security
      profile.
-  2. Acquire a client-credentials token AS THE AGENT and read the same rows /
-     secured columns. Because the agent is no longer a sysadmin and is outside
-     the profile, the secured columns come back omitted/masked even though a
-     privileged human reads them fine.
+  2. Read the same rows / secured columns AS THE AGENT and contrast with a
+     privileged human read. Because the agent is no longer a sysadmin and is
+     outside the profile, the secured columns come back omitted even though the
+     human (cleared, or a System Administrator who bypasses column security)
+     reads them fine.
   3. (--demo-grant) Temporarily add the agent to the profile, re-read to show
      cleartext returns, then revoke — restoring the least-privilege end state.
+
+Reading "as the agent": if a client-credentials secret is configured
+(`MCP_CLIENT_SECRET` or a `.deploy/ep-08/*.json` artifact) the agent read uses a
+real S2S app-only token. Otherwise it falls back to admin impersonation of the
+agent's `systemuserid` (the `MSCRMCallerID` header). Dataverse evaluates field
+security against the impersonated principal, so the agent's effective column
+access is identical either way; the S2S path just proves it under the agent's
+own credentials.
 
 Usage:
     python scripts/python/setup_agent_security.py            # restrict + show
@@ -49,6 +58,13 @@ CLIENT_ID = os.environ["MCP_CLIENT_ID"]
 PROFILE_NAME = "lc Sensitive Readers"
 AGENT_ROLES = ["Basic User", "lc Owner"]   # what the agent keeps
 REMOVE_ROLES = ["System Administrator"]    # what the agent loses
+
+# Read privileges the Dataverse MCP needs to enumerate the environment on
+# connect. System Administrator carried these implicitly; once the agent is
+# scoped down they must live on a role it keeps, or Cowork fails to call.
+# These are metadata reads only, so they do not weaken the PII column security.
+MCP_ENABLEMENT_PRIVS = ["prvReadSolution", "prvReadPublisher"]
+MCP_PRIV_HOST_ROLE = "lc Owner"
 
 
 def admin_headers():
@@ -112,20 +128,74 @@ def disassoc(h, coll_single):
     return r.status_code in (200, 204)
 
 
-def report(tok, label):
-    h = H(tok)
-    members = requests.get(
-        API + "/lc_teammembers?$select=lc_teammemberid", headers=h).json()
-    if "value" not in members:
-        print(f"  [{label}] cannot read lc_teammember ({members})")
+def ensure_role_privileges(h, role_id, priv_names):
+    """Idempotently add read privileges (Global depth) to a role so the agent,
+    once scoped off System Administrator, can still enumerate solutions and
+    publishers for the Dataverse MCP. Metadata reads only; no PII exposure."""
+    priv_ids = []
+    for name in priv_names:
+        v = requests.get(
+            API + f"/privileges?$select=privilegeid&$filter=name eq '{name}'",
+            headers=h).json().get("value", [])
+        if v:
+            priv_ids.append(v[0]["privilegeid"])
+    if not priv_ids:
         return
-    rows = members["value"]
-    # lc_fullname is field-secured (pure column hide): outside the profile the
-    # column is omitted from the payload, even though the row itself is readable.
-    fn = requests.get(
-        API + "/lc_teammembers?$select=lc_fullname&$top=1", headers=h).json().get("value", [])
-    full = fn[0].get("lc_fullname", "<omitted>") if fn else "<no row>"
-    print(f"  [{label}] teammembers={len(rows)}  fullname={str(full)[:40]!r}")
+    body = {"Privileges": [{"PrivilegeId": p, "Depth": "Global"} for p in priv_ids]}
+    r = requests.post(
+        API + f"/roles({role_id})/Microsoft.Dynamics.CRM.AddPrivilegesRole",
+        headers=h, json=body)
+    if r.status_code in (200, 204):
+        print(f"  ensured MCP read privileges on role: {', '.join(priv_names)}")
+    else:
+        print(f"  WARN: could not add MCP privileges ({r.status_code}): {r.text[:120]}")
+
+
+def read_teammember(headers, label):
+    """Print the lc_teammember row count and the secured columns on one row.
+
+    A secured column outside the reader's field-security profile is omitted from
+    the payload (rendered <omitted>), even when the row itself is readable.
+    lc_email also carries the lc_EmailMask rule, so a plain read shows the mask.
+    """
+    coll = requests.get(
+        API + "/lc_teammembers?$select=lc_teammemberid", headers=headers).json()
+    if "value" not in coll:
+        print(f"  [{label}] cannot read lc_teammember ({str(coll)[:160]})")
+        return
+    n = len(coll["value"])
+    one = requests.get(
+        API + "/lc_teammembers?$select=lc_name,lc_fullname,lc_email"
+              "&$top=1&$orderby=lc_name", headers=headers).json().get("value", [])
+    if not one:
+        print(f"  [{label}] rows={n} (no row to sample)")
+        return
+    r = one[0]
+    print(f"  [{label}] rows={n}  "
+          f"lc_name={r.get('lc_name', '<omitted>')!r}  "
+          f"lc_fullname={r.get('lc_fullname', '<omitted>')!r}  "
+          f"lc_email={r.get('lc_email', '<omitted>')!r}")
+
+
+def agent_context(admin_h, agent_uid):
+    """Return (headers, mode) that read AS the agent.
+
+    Prefers a real client-credentials (S2S) token when a secret is configured;
+    otherwise falls back to admin impersonation of the agent's systemuserid via
+    MSCRMCallerID. Dataverse evaluates field security against the impersonated
+    principal, so the agent's effective column access is identical either way.
+    """
+    try:
+        tok = agent_token()
+    except SystemExit:
+        tok = None
+    except Exception as exc:  # network / token errors -> impersonation fallback
+        print(f"    (S2S token unavailable: {str(exc)[:120]}; using impersonation)")
+        tok = None
+    if tok:
+        return H(tok), "S2S app-only token"
+    base = {k: v for k, v in admin_h.items() if k not in ("Content-Type", "Prefer")}
+    return {**base, "MSCRMCallerID": agent_uid}, "admin impersonation (no S2S secret)"
 
 
 def main() -> int:
@@ -162,24 +232,36 @@ def main() -> int:
                              f"/roles({rid})"):
                 print(f"  ensured role: {rn}")
 
+        host = role_id.get(MCP_PRIV_HOST_ROLE)
+        if host:
+            ensure_role_privileges(h, host, MCP_ENABLEMENT_PRIVS)
+
     # Profile id
     prof = requests.get(
         API + f"/fieldsecurityprofiles?$select=fieldsecurityprofileid&$filter=name eq '{PROFILE_NAME}'",
         headers=h).json()["value"]
     pid = prof[0]["fieldsecurityprofileid"] if prof else None
 
-    print("\n[2] Read AS the agent (client-credentials token)")
-    print("    The agent is outside the '%s' profile and no longer sysadmin:" % PROFILE_NAME)
-    report(agent_token(), "agent / least-privilege")
+    print("\n[2] Read the same lc_teammember: human vs. agent")
+    print(f"    The agent is outside the '{PROFILE_NAME}' profile and no longer sysadmin.")
+    read_teammember(h, "human / me (System Administrator, bypasses column security)")
+    ah, mode = agent_context(h, uid)
+    print(f"    agent read via: {mode}")
+    read_teammember(ah, "agent / least-privilege (outside profile)")
 
     if args.demo_grant and pid:
+        import time
         print("\n[3] Intersection demo: temporarily add the agent to the profile")
         assoc(h, f"/fieldsecurityprofiles({pid})/systemuserprofiles_association/$ref",
               f"/systemusers({uid})")
-        report(agent_token(), "agent / IN profile")
+        time.sleep(5)  # let the security cache settle
+        ah, _ = agent_context(h, uid)
+        read_teammember(ah, "agent / IN profile")
         disassoc(h, f"/fieldsecurityprofiles({pid})/systemuserprofiles_association/{uid}/$ref")
+        time.sleep(5)
         print("  (agent removed from profile again — least-privilege restored)")
-        report(agent_token(), "agent / least-privilege")
+        ah, _ = agent_context(h, uid)
+        read_teammember(ah, "agent / least-privilege")
 
     print("\nDone. The agent carries its own field security, enforced as the")
     print("intersection with the human's profile on every read.")

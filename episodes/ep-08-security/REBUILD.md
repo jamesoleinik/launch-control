@@ -182,6 +182,17 @@ The Cowork connection is a real application user. Field security binds to the ag
 so effective column access is the **intersection** of the human's profile and the
 agent's profile.
 
+> **Delegated auth, two prerequisites.** Cowork reads run as the **signed-in human**,
+> so that human (your Cowork account) must (1) hold an `lc` role that grants Read on
+> the launch model, or Cowork sees nothing at all (every `lc_*` query returns 403,
+> not just the PII columns), and (2) be in `lc Sensitive Readers` if you want PII to
+> show. Add the account to the `lc Owners` team for full-launch Read:
+> `toggle_sensitive_readers.py` handles the profile half; team membership handles the
+> table half. Separately, scoping the **agent** off System Administrator strips the
+> `prvReadSolution` / `prvReadPublisher` reads the Dataverse MCP needs to enumerate
+> the environment on connect, so `setup_agent_security.py` re-grants those two
+> metadata reads on the `lc Owner` role (they expose no record data).
+
 **Prompt to Cursor:**
 
 > _"Use the `dataverse-security` skill. Implement per-agent security: the Cowork
