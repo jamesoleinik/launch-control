@@ -1,0 +1,81 @@
+---
+description: Conventions for rebuilding the Episode 8 Dataverse security model (row-level, column-level, per-agent) from a coding agent.
+globs:
+  - apps/rbac-visualizer/**
+  - scripts/python/setup_simple_rbac.py
+  - scripts/python/setup_field_security.py
+  - scripts/python/setup_agent_security.py
+  - scripts/python/teardown_security.py
+  - scripts/python/seed_ep08_demo.py
+  - scripts/python/toggle_*.py
+  - episodes/ep-08-security/**
+alwaysApply: true
+---
+
+# Dataverse security model conventions (Episode 8)
+
+When authoring or changing the security model, follow the ordered runbook in
+`episodes/ep-08-security/REBUILD.md` and load the `dataverse-security` skill
+(`episodes/ep-08-security/SKILL.md`) first. The runbook is the source of truth for
+the sequence and the exact prompts; this rule pins the conventions every script and
+the visualizer must honor.
+
+## Environment and identifiers
+
+- Resolve the target environment from `.env` at the repo root via `scripts/auth.py`.
+  Never hardcode an environment URL, tenant id, application id, user id, or UPN in
+  committed code or docs. Use placeholders (`<ENV_URL>`, `<cowork-app-user>`,
+  `<demo-user>`) in prose and resolve real values at runtime by query.
+- `seed_ep08_demo.py` is gitignored because it carries real persona UPNs. It is
+  local-only; do not commit it or move its contents into a tracked file.
+
+## Naming (must match exactly)
+
+- Roles: `lc Member` (Business User, User depth), `lc Owner` (Business Owner, BU
+  depth), `lc Viewer` (Business Reader, read-only at BU depth), `lc Admin`
+  (Business Admin). Created in the root business unit.
+- Owner-teams: `lc Members`, `lc Owners`, `lc Viewers`, `lc Admins`, each bound to
+  the matching role.
+- Column security profile: `lc Sensitive Readers`. Masking rule: `lc_EmailMask`
+  (mask character `#`, reveals the first character and the domain).
+- Layer roles on top of `Basic User`; never strip a principal below `Basic User`.
+
+## What is secured, and what is deliberately not
+
+- Column security applies to **only** the two `lc_teammember` PII columns:
+  - `lc_email`: secured **and** masked by `lc_EmailMask` (partial reveal).
+  - `lc_fullname`: secured with **pure column-level security** (no masking rule); the
+    profile read grant is revoked to hide it entirely.
+- Do **not** secure the task or launch columns (no `lc_task.lc_blockerreason`, no
+  `lc_launch.lc_risksummary`). That scope was removed; keep it out.
+- Do **not** field-secure the primary `lc_name` column (Dataverse rejects it,
+  `0x8004f501`). Real names live in the securable `lc_fullname` column; `lc_name` is a
+  non-PII ID (`TM-001` ...).
+
+## Mechanics that bite
+
+- A **System Administrator bypasses column-level security** (always reads cleartext),
+  but a **masking rule masks even a sysadmin's plain read**. Cleartext behind a mask
+  returns only with `?UnMaskedData=true` plus a `Read unmasked` grant. Because of the
+  sysadmin bypass, the visualizer reads the PII table as a non-admin member of the
+  `lc Sensitive Readers` profile, so the live policy is visible.
+- Grant `canread` (`4`) and `canreadunmasked` (`0`/`1`/`3`, never `4`) in the **same**
+  payload; patching the unmask flag alone fails `0x80040203`.
+- Un-securing a column is a **PUT** on the attribute with the concrete `@odata.type`
+  plus `MSCRM.MergeLabels: true` and `Consistency: Strong`, then `PublishAllXml`. A
+  PATCH returns 405. Setting `IsSecured=false` does not delete field permissions;
+  delete them explicitly.
+- Column masking rules require a **Managed Environment**.
+
+## Script conventions
+
+- Every setup and teardown script is **idempotent** and supports `--dry-run` (or
+  defaults to dry-run, like `teardown_security.py`, which needs `--confirm` to apply).
+  Always preview before applying.
+- Set `$env:PYTHONIOENCODING="utf-8"` before running.
+- Reset to a clean slate with `teardown_security.py --confirm`.
+
+## Prose
+
+- Do not use em-dashes (the `—` character) in committed prose or comments. Use a
+  period, comma, colon, semicolon, or parentheses instead.

@@ -98,9 +98,13 @@ land on screen. One prompt:
 > _"Use the `dataverse-security` skill. Build the impersonation visualizer app at
 > `apps/rbac-visualizer/`: a persona dropdown that runs the same launch query under
 > each persona's `MSCRMCallerID`, a row-count panel plus a per-row table (with an
-> owner column) for the row-level axis, a team table that shows secured columns as
-> cleartext or redacted, and a **masking on/off toggle** that attaches or detaches
-> the PII masking rule live."_
+> owner column) for the row-level axis, and a team-member (PII) table read as a
+> non-admin profile member (a System Administrator bypasses column security, so
+> reading as a member is what makes the policy visible) with two independent live
+> toggles: one that attaches or detaches the `lc_email` masking rule, and one that
+> revokes or grants the `lc_fullname` column read on the profile, so the table shows
+> `lc_name` as a non-PII ID, `lc_email` masked or clear, and `lc_fullname` hidden or
+> clear."_
 
 ```powershell
 python apps/rbac-visualizer/app.py --mock   # offline demo (seeded snapshot)
@@ -352,20 +356,25 @@ ID), so revoking the profile's read grant hides the field entirely. The
 `lc Sensitive Readers` profile is assigned to the Owner-lens persona and withheld
 from the Member.
 
-### Prompt to Cursor: discover the PII and mask it from everyone but the admin
+### Prompt to Cursor: discover the PII, mask the email and hide the name
 
-Rather than naming columns, let the agent find the PII. Skill loaded, the ask is:
+Rather than naming every column, let the agent find the PII and apply the right
+lever to each. Skill loaded, the ask is:
 
-> _"Use the `dataverse-security` skill. Implement **column-level security (data
-> masking)**: identify any columns that store personally identifiable information
-> in the launch tables, such as an email address, and establish masking rules that
-> hide that PII from all roles except the admin."_
+> _"Use the `dataverse-security` skill. Implement **column-level security** over the
+> team-member PII. Mask the `lc_email` address with a masking rule so every role but
+> the admin reads it redacted. Hide the full name with pure column-level security:
+> move the real name into a new securable `lc_fullname` column (the primary
+> `lc_name` becomes a non-PII ID), secure it, and revoke the read grant so it is
+> omitted outside the `lc Sensitive Readers` profile."_
 
-The skill does the rest: it scans the `lc_*` tables for PII-shaped columns (the
-team-member `lc_email` is the obvious one), secures each, attaches a masking rule,
-and grants the cleartext (`Read unmasked`) only to the Business Admin so every
-other role, Business User / Owner / Reader, and any connected agent reads the
-redacted value. The verified recipe underneath: secure the column
+The skill does the rest: it secures the two team-member PII columns, attaches the
+`lc_EmailMask` masking rule to `lc_email` and grants the cleartext (`Read unmasked`)
+only to the Business Admin so every other role, Business User / Owner / Reader, and
+any connected agent reads the redacted value, while `lc_fullname` (the real name,
+moved off the now non-PII `lc_name` ID) is hidden by **pure column-level security**:
+its profile read grant is revoked, so the column comes back omitted for anyone
+outside the profile. The verified recipe underneath: secure the column
 (`IsSecured = true`), create a `fieldsecurityprofile`, attach a masking rule via
 `attributemaskingrules` (PascalCase `MaskingRuleId@odata.bind`, requires a Managed
 Environment and a `uniquename`), and grant `canread` (`4`) plus `canreadunmasked`
@@ -683,18 +692,19 @@ someday.
    email-mask rule redacts `lc_email` for every non-admin (and the connected agent),
    while toggling the `lc_fullname` column grant hides that field entirely outside
    the profile. The row was readable; the column still wasn't.
-10. **The Episode 7 callback.** Re-run Ep 7's `search_data` for the Q3 export
-    blocker as a Viewer-only caller and as an Owner-in-profile. Same agent, same
-    query: the Viewer gets `████████`, the Owner gets the sentence, even though
-    the match came from inside an attached PDF.
+10. **The Episode 7 callback.** Re-run Ep 7's `search_data` over the team-member
+    directory as a Member-only caller and as an Owner-in-profile. Same agent, same
+    query: the Member gets `lc_fullname` as `████████`, the Owner gets the cleartext
+    name, even when the match came from inside an attached PDF. Field security holds
+    on the read, no matter which tool asked.
 11. **Runtime enforcement in Cowork (the showcase).** Sign into Cowork as
     `<demo-user>` (the Owner-lens identity, in the `lc Sensitive Readers`
-    profile) and ask the readiness question. Cowork returns the whole launch with
-    the blocker reasons cleared and the risk summary masked, all enforced live on
-    the delegated read. Pull `<demo-user>` out of the profile and ask again: the
-    blocker reasoning is gone. Same agent, same prompt, same human, only the
-    runtime clearance changed. Nothing was built on screen; the platform enforced
-    what it already knew.
+    profile) and ask for the launch team with their email addresses. Cowork returns
+    each member's full name with the email redacted to `a#########@example.test`,
+    all enforced live on the delegated read. Pull `<demo-user>` out of the profile
+    and ask again: the `lc_fullname` and `lc_email` columns come back omitted. Same
+    agent, same prompt, same human, only the runtime clearance changed. Nothing was
+    built on screen; the platform enforced what it already knew.
 12. **The punchline:**
     > _"Two axes, one platform. Row security decides which rows come back; field
     > security decides which columns. The data didn't change; the platform's
@@ -709,7 +719,7 @@ someday.
 |---|---|
 | [`SKILL.md`](SKILL.md) | The generic `dataverse-security` skill: teaches the two-axis Dataverse security model (plus the per-agent variant) and drives a named slice passed in by each prompt (security type + targets). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
-| [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns three demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset to the Member, and seeds the sensitive columns (`lc_blockerreason`, `lc_risksummary`). Idempotent. |
+| [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns the demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset across owners for the row-level lens, and adds the Owner persona to the `lc Sensitive Readers` profile. Idempotent. |
 | [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures the `lc_teammember` PII columns (`lc_email`, `lc_fullname`), creates the `lc Sensitive Readers` profile, creates + binds the `lc_EmailMask` masking rule on `lc_email`, and grants `canread` (+ `canreadunmasked`) on the profile. The `lc_fullname` column is hidden via its read grant rather than masked. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | Runs the row-level count and the column-level visibility checks across the three personas by switching `MSCRMCallerID`, and prints both tables. |
