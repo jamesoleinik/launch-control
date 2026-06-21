@@ -34,6 +34,7 @@ import html
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 from flask import Flask, redirect, render_template_string, request, url_for
@@ -521,8 +522,6 @@ PAGE = """
   .toggle-btn.on { border-color: #2c6b32; }   /* currently masked -> offer reveal */
   .toggle-btn.off { border-color: #bb6c2b; }  /* currently clear -> offer redact */
   .toggle-btn:hover { background: #30363d; }
-  /* "Hide name column" toggle: instant client-side column hide. */
-  body.hide-names .col-name { display: none; }
   /* Loading overlay shown over the lens panels while a new persona is queried. */
   .lc-lenses { position: relative; }
   .lc-overlay { display: none; position: absolute; inset: 0; z-index: 5;
@@ -686,21 +685,13 @@ PAGE = """
       <span class="note" style="margin:0">Flips the <code>lc_EmailMask</code> rule live.
         Cowork, reading the same env, honors whichever state is set.</span>
     </form>
-    <div class="toggle-form">
-      <button type="button" id="hide-names-btn" class="toggle-btn off" onclick="lcToggleNames()">
-        Enable column-level security (hide name column)
-      </button>
-      <span id="hide-names-state" class="mask-state off">name VISIBLE - cleartext</span>
-      <span class="note" style="margin:0">Hides the <code>lc_name</code> column -
-        column-level security applied to a whole field.</span>
-    </div>
     {% if emails %}
     <table>
-      <thead><tr class="secured"><th class="col-name">lc_name</th><th>lc_email &#128274;</th></tr></thead>
+      <thead><tr class="secured"><th>lc_name</th><th>lc_email &#128274;</th></tr></thead>
       <tbody>
       {% for e in emails %}
         <tr>
-          <td class="col-name">{{ e.name }}</td>
+          <td>{{ e.name }}</td>
           <td>{% if e.email %}<span class="clear">{{ e.email }}</span>{% else %}<span class="masked">{{ mask }}</span>{% endif %}</td>
         </tr>
       {% endfor %}
@@ -736,38 +727,6 @@ PAGE = """
     if (btn) { btn.disabled = true; btn.textContent = 'Applying\u2026'; }
     return true;
   }
-  // "Hide name column" control: styled like the masking toggle (button + state
-  // pill), pure client-side, persisted so it survives the persona reload.
-  function lcSetNamesUI(hide) {
-    var btn = document.getElementById('hide-names-btn');
-    var st = document.getElementById('hide-names-state');
-    if (btn) {
-      btn.classList.toggle('on', hide);
-      btn.classList.toggle('off', !hide);
-      btn.textContent = hide
-        ? 'Disable column-level security (show name column)'
-        : 'Enable column-level security (hide name column)';
-    }
-    if (st) {
-      st.classList.toggle('on', hide);
-      st.classList.toggle('off', !hide);
-      st.textContent = hide ? 'name HIDDEN - secured' : 'name VISIBLE - cleartext';
-    }
-  }
-  function lcApplyNames(hide) {
-    document.body.classList.toggle('hide-names', !!hide);
-    lcSetNamesUI(!!hide);
-  }
-  function lcToggleNames() {
-    var hide = !document.body.classList.contains('hide-names');
-    try { sessionStorage.setItem('lc_hide_names', hide ? '1' : '0'); } catch (e) {}
-    lcApplyNames(hide);
-  }
-  (function () {
-    var v = null;
-    try { v = sessionStorage.getItem('lc_hide_names'); } catch (e) {}
-    lcApplyNames(v === '1');
-  })();
   (function () {
     var y = null;
     try { y = sessionStorage.getItem('lc_scroll'); } catch (e) {}
@@ -829,6 +788,10 @@ def toggle_mask():
     persona = request.form.get("persona", "")
     try:
         email_mask_set(to_on)
+        # The masking-rule binding lands immediately, but the security cache can
+        # take a few seconds to settle. Without this pause the redirect re-reads
+        # within that window and would render cleartext under an "ON" pill.
+        time.sleep(5)
     except Exception as exc:  # surface the failure but keep the app up
         print(f"toggle-mask failed: {exc}")
     return redirect(url_for("index", persona=persona) if persona else url_for("index"))
