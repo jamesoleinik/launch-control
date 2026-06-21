@@ -4,11 +4,11 @@ A tiny Flask app that makes Episode 8 visible: pick a persona, and the page runs
 *the same* launch query as that user and shows two things side by side:
 
   1. Row-level security  - how many lc_* rows each persona can read.
-  2. Data masking        - whether the sensitive columns (lc_blockerreason,
-                            lc_risksummary) come back as cleartext or ████████,
-                            plus the PII column lc_teammember.lc_email with a live
-                            on/off masking toggle (the Part 3 side-by-side demo:
-                            flip the rule here, Cowork honors it on the same env).
+  2. Data masking        - the PII columns on lc_teammember: lc_email with a live
+                            on/off masking rule, and lc_fullname with a live
+                            column-level-security grant toggle (the Part 3
+                            side-by-side demo: flip the state here, Cowork honors
+                            it on the same env).
 
 Impersonation is real: in live mode every call carries the `MSCRMCallerID`
 header set to the selected user's systemuserid, exactly like the smoke-test.
@@ -30,7 +30,6 @@ treats "present" as cleartext and "absent/null" as masked (********).
 from __future__ import annotations
 
 import argparse
-import html
 import json
 import os
 import sys
@@ -43,9 +42,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 SNAPSHOT = HERE / "samples" / "snapshot.json"
 
-# Columns protected by the Episode 8 field security profile. Absent/null on a
-# readable row means the caller is outside the profile -> render as masked.
-SECURED_COLUMNS = ("lc_blockerreason", "lc_risksummary")
+# The lc_teammember PII columns (lc_email, lc_fullname) are protected by the
+# Episode 8 field security profile. Absent/null on a readable row means the caller
+# is outside the profile -> render as masked.
 MASK = "\u2588" * 8  # ████████
 
 # --- PII / email masking (Part 3 side-by-side demo) -------------------------
@@ -106,7 +105,6 @@ def mock_lenses(persona_id: str) -> dict:
     snap = _load_snapshot()
     return {
         "counts": snap["counts"].get(persona_id, {}),
-        "tasks": snap["tasks"].get(persona_id, []),
     }
 
 
@@ -202,28 +200,7 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
         "lc_milestone": _count(requests, api, h, "lc_milestones"),
         "lc_task": _count(requests, api, h, "lc_tasks"),
     }
-
-    tasks = []
-    r = requests.get(
-        f"{api}/lc_tasks?$select=lc_title,lc_taskstatus,lc_blockerreason"
-        f"&$expand=lc_launchid($select=lc_name,lc_risksummary)&$top=200",
-        headers={**h, "Prefer": 'odata.maxpagesize=200,'
-                 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'},
-    )
-    if r.status_code == 200:
-        fv = "@OData.Community.Display.V1.FormattedValue"
-        for row in r.json().get("value", []):
-            launch = row.get("lc_launchid") or {}
-            tasks.append({
-                # lc_task's primary name is lc_title; status is a choice, so use
-                # its formatted label rather than the raw option value.
-                "lc_name": row.get("lc_title"),
-                "lc_taskstatus": row.get("lc_taskstatus" + fv) or row.get("lc_taskstatus"),
-                # Absent/null secured field => caller outside the profile => masked.
-                "lc_blockerreason": row.get("lc_blockerreason"),
-                "lc_risksummary": launch.get("lc_risksummary"),
-            })
-    return {"counts": counts, "tasks": tasks}
+    return {"counts": counts}
 
 
 # ---------------------------------------------------------------------------
@@ -526,15 +503,6 @@ def live_policies() -> dict:
 # ---------------------------------------------------------------------------
 # Rendering
 # ---------------------------------------------------------------------------
-def render_cell(task: dict, col: str) -> str:
-    val = task.get(col)
-    if val in (None, ""):
-        return f'<span class="masked">{MASK}</span>'
-    safe = html.escape(str(val))
-    # title carries the full value so a truncated cell still reveals it on hover.
-    return f'<span class="clear" title="{safe}">{safe}</span>'
-
-
 def _perm_summary(col: dict) -> str:
     """Collapse a column's field permissions into one phrase, like role privileges."""
     parts = []
@@ -732,38 +700,7 @@ PAGE = """
   </div>
 
   <div class="lens">
-    <h2>Axis 2 - Data masking: secured columns
-      <span class="pill">lc_blockerreason</span>
-      <span class="pill">lc_risksummary</span></h2>
-    {% if tasks %}
-    <table>
-      <thead><tr class="secured">
-        <th>lc_name</th><th>status</th>
-        <th>lc_blockerreason &#128274;</th><th>lc_risksummary &#128274;</th>
-      </tr></thead>
-      <tbody>
-      {% for t in tasks %}
-        <tr>
-          <td>{{ t.lc_name }}</td>
-          <td>{{ t.lc_taskstatus }}</td>
-          <td>{{ render_cell(t, "lc_blockerreason")|safe }}</td>
-          <td class="col-trunc">{{ render_cell(t, "lc_risksummary")|safe }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    <div class="note">&#128274; = field-secured. A red
-      <span class="masked">{{ mask }}</span> means the caller is outside the
-      <code>lc Sensitive Readers</code> profile, so Dataverse withheld the value -
-      even though the row itself is readable.</div>
-    {% else %}
-    <div class="note">This persona can't read any lc_task rows, so there's
-      nothing to mask.</div>
-    {% endif %}
-  </div>
-
-  <div class="lens">
-    <h2>Axis 2 (PII) - Data masking
+    <h2>Axis 2 - Data masking
       <span class="pill">lc_teammember</span></h2>
     <div class="sub" style="margin:-4px 0 12px">Two PII columns, two independent
       masking rules. Each toggle flips a Dataverse masking rule live; Cowork,
@@ -886,12 +823,10 @@ def index():
         personas=personas,
         selected=selected,
         counts=lenses["counts"],
-        tasks=lenses["tasks"],
         emails=emails,
         email_masked=email_mask_state(),
         name_hidden=name_hidden_state(),
         policies=policies,
-        render_cell=render_cell,
         mock=mock,
         mask=MASK,
         dv_host=("" if mock else os.environ.get("DATAVERSE_URL", "")),

@@ -285,9 +285,9 @@ column-masking toggle.
 **Axis two: which sensitive fields stay hidden, even on rows you can read.**
 
 Row-level security answers *which rows*. It does nothing about *which columns*.
-An `lc Owner` who can read all 12 tasks also reads every sensitive column on those
-rows: the `lc_task.lc_blockerreason` explaining why a task is stuck, or the
-`lc_launch.lc_risksummary` the readiness prompt writes. In a headless world
+An `lc Owner` who can read every team-member row also reads each sensitive column
+on those rows: the `lc_teammember.lc_email` address and the
+`lc_teammember.lc_fullname` behind a launch contact. In a headless world
 that matters more, not less: the agent you just connected from Cursor inherits
 exactly what its caller can see. Broad read access plus sensitive columns equals
 a leak waiting to happen.
@@ -317,8 +317,6 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 |---|---|---|---|---|
 | `lc_email` | `lc_teammember` | `lc_EmailMask` (mask `#`, reveals first char + domain) | cleartext email when masking is off | `a#########@example.test` when masking is on |
 | `lc_fullname` | `lc_teammember` | (none) - pure column hide | cleartext name while the grant is in place | column omitted when the grant is revoked |
-| `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
-| `lc_risksummary` | `lc_launch` | (none) | cleartext risk summary | column omitted |
 
 The two **`lc_teammember`** rows are the PII the discovery prompt targets, each a
 different lever. `lc_email` uses a **masking rule**: with it on, every non-admin
@@ -327,9 +325,8 @@ read (Business User, Owner, Reader, and any connected agent) comes back redacted
 `?UnMaskedData=true`) pulls cleartext. `lc_fullname` uses **pure column-level
 security**: the real name lives here (the primary `lc_name` column is now a non-PII
 ID), so revoking the profile's read grant hides the field entirely. The
-`lc_blockerreason` / `lc_risksummary` columns stay field-secured (no masking), so the
-impersonation test still shows them omitted for outsiders. The `lc Sensitive Readers`
-profile is assigned to the Owner-lens persona and withheld from the Member.
+`lc Sensitive Readers` profile is assigned to the Owner-lens persona and withheld
+from the Member.
 
 ### Prompt to Cursor: discover the PII and mask it from everyone but the admin
 
@@ -358,11 +355,11 @@ and the impersonation result it produces:
 ```
 === Column-level: secured fields per persona ===
 
-Persona               email                      fullname     blockerreason
---------------------  -------------------------  -----------  -------------
-Member (outside)      <omitted>                  <omitted>    <omitted>
-Owner (in profile)    a#########@example.test     Avery Chen   cleartext
-Admin (bypass)        avery@example.test          Avery Chen   cleartext
+Persona               email                      fullname
+--------------------  -------------------------  -----------
+Member (outside)      <omitted>                  <omitted>
+Owner (in profile)    a#########@example.test     Avery Chen
+Admin (bypass)        avery@example.test          Avery Chen
 ```
 
 (The Member is outside the profile, so every secured column is omitted. The Owner is
@@ -407,7 +404,7 @@ python apps/rbac-visualizer/app.py                  # open http://127.0.0.1:5000
 > read too, only the Business Admin's unmasked grant (or `?UnMaskedData=true`) pulls
 > the cleartext.
 
-### The Episode 7 callback: masking holds even through `search_data`
+### The Episode 7 callback: field security holds even through `search_data`
 
 This is the beat that makes the point. Episode 7's `search_data` does semantic
 search across rows **and the content inside attached files**. The obvious worry:
@@ -415,19 +412,19 @@ does an agentic search tool route around column security and hand the agent the
 secured value anyway, or surface it out of an attached PDF?
 
 It doesn't. Field security is enforced by the platform on the *read*, not by
-each tool. Run the same `lc_task` search as a `lc Member`-only caller and the
-`lc_blockerreason` field comes back `********`; run it as an `lc Owner` in the
-profile and the cleartext returns. Same query, same agent, same client: the
+each tool. Read the team-member directory as a `lc Member`-only caller and the
+`lc_fullname` field comes back omitted; read it as an `lc Owner` in the
+profile and the cleartext name returns. Same query, same agent, same client: the
 column the caller isn't cleared for never leaves Dataverse, no matter which
 tool asked for it.
 
 ```
-=== search_data: 'export blocker on Q3', two lenses ===
+=== read lc_teammember, two lenses ===
 
-Caller            lc_task match   lc_blockerreason returned
---------------    -------------   -------------------------
-member-only               ✓        ********
-owner + profile           ✓        "Customs paperwork rejected; legal hold on EU SKU"
+Caller            lc_teammember rows   lc_fullname returned
+--------------    ------------------   --------------------
+member-only               4            <omitted>
+owner + profile           4            "Avery Chen"
 ```
 
 > That is the whole thesis in one table: the agent stays useful (it still finds
@@ -482,15 +479,15 @@ Use the dataverse-security skill. Implement per-agent security: the Cowork
 application user (<cowork-app-user>) currently inherits System
 Administrator. Scope the application user down (remove System Administrator, leave
 it out of the lc Sensitive Readers profile) so it has Read only on the lc_*
-columns Cowork legitimately needs and is withheld Read on lc_blockerreason and
-lc_risksummary. Then prove the intersection: run the same lc_task read as the
-Cowork app user vs. as me, and show that the secured columns come back omitted for
-the agent even where the human is cleared.
+columns Cowork legitimately needs and is withheld Read on the lc_teammember PII
+columns (lc_email, lc_fullname). Then prove the intersection: run the same
+lc_teammember read as the Cowork app user vs. as me, and show that the secured
+columns come back omitted for the agent even where the human is cleared.
 ```
 
 ### The intersection, made concrete
 
-Same launch, same secured `lc_blockerreason` column, two identities on the call:
+Same directory, same secured `lc_fullname` column, two identities on the call:
 
 | Human's profile | Agent's (Cowork) profile | What Cowork returns |
 | --- | --- | --- |
@@ -516,15 +513,15 @@ agent** with a client-credentials token. The live result:
   ensured role: lc Owner
 
 [2] Read AS the agent (client-credentials token)
-  [agent / least-privilege] tasks=12  blockerreason=<omitted>  risk(plain)=<omitted>  risk(unmasked)=<omitted>
-  [agent / IN profile]       tasks=12  blockerreason='Pen-test escalation...'  risk(unmasked)='High: 4 blocked tasks...'
+  [agent / least-privilege] teammembers=4  fullname=<omitted>
+  [agent / IN profile]       teammembers=4  fullname='Avery Chen'
 ```
 
-The agent still reads all 12 task rows (it stays useful), but the two secured
-columns come back omitted until the agent itself is placed in the profile. That is
-the intersection, enforced on the agent identity. (Field-security membership
-changes propagate with a short cache delay, so allow a few seconds between a
-profile toggle and the read.)
+The agent still reads all four team-member rows (it stays useful), but the secured
+`lc_fullname` column comes back omitted until the agent itself is placed in the
+profile. That is the intersection, enforced on the agent identity. (Field-security
+membership changes propagate with a short cache delay, so allow a few seconds
+between a profile toggle and the read.)
 
 ### Showcase it live in Cowork: runtime enforcement, not building
 
@@ -696,7 +693,7 @@ someday.
 | [`SKILL.md`](SKILL.md) | The generic `dataverse-security` skill: teaches the two-axis Dataverse security model (plus the per-agent variant) and drives a named slice passed in by each prompt (security type + targets). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
 | [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns three demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset to the Member, and seeds the sensitive columns (`lc_blockerreason`, `lc_risksummary`). Idempotent. |
-| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures `lc_task.lc_blockerreason` + `lc_launch.lc_risksummary` + the `lc_teammember` PII columns (`lc_email`, `lc_fullname`), creates the `lc Sensitive Readers` profile, creates + binds the `lc_EmailMask` masking rule on `lc_email`, and grants `canread` (+ `canreadunmasked`) on the profile. The `lc_fullname` column is hidden via its read grant rather than masked. Idempotent. |
+| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures the `lc_teammember` PII columns (`lc_email`, `lc_fullname`), creates the `lc Sensitive Readers` profile, creates + binds the `lc_EmailMask` masking rule on `lc_email`, and grants `canread` (+ `canreadunmasked`) on the profile. The `lc_fullname` column is hidden via its read grant rather than masked. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | Runs the row-level count and the column-level visibility checks across the three personas by switching `MSCRMCallerID`, and prints both tables. |
 | [`scripts/python/setup_agent_security.py`](../../scripts/python/setup_agent_security.py) | Part 4: scopes the Cowork application user down from System Administrator, reads back as the agent via client-credentials, and proves the per-agent intersection (`--demo-grant` toggles the profile). Idempotent. |

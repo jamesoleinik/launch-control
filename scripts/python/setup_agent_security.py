@@ -116,22 +116,18 @@ def disassoc(h, coll_single):
 
 def report(tok, label):
     h = H(tok)
-    launch = requests.get(API + "/lc_launchs?$select=lc_launchid,lc_name", headers=h).json()
-    if "value" not in launch or not launch["value"]:
-        print(f"  [{label}] cannot read lc_launch ({launch})")
+    members = requests.get(
+        API + "/lc_teammembers?$select=lc_teammemberid", headers=h).json()
+    if "value" not in members:
+        print(f"  [{label}] cannot read lc_teammember ({members})")
         return
-    lid = launch["value"][0]["lc_launchid"]
-    tasks = requests.get(API + "/lc_tasks?$select=lc_taskid", headers=h).json().get("value", [])
-    blocked = requests.get(
-        API + "/lc_tasks?$select=lc_taskid,lc_blockerreason&$filter=lc_isblocked eq true&$top=1",
-        headers=h).json().get("value", [])
-    br = blocked[0].get("lc_blockerreason", "<omitted>") if blocked else "<no task>"
-    rsp = requests.get(API + f"/lc_launchs({lid})?$select=lc_risksummary", headers=h).json()
-    rs = rsp.get("lc_risksummary", "<omitted>")
-    rsu = requests.get(API + f"/lc_launchs({lid})?$select=lc_risksummary&UnMaskedData=true",
-                       headers=h).json().get("lc_risksummary", "<omitted>")
-    print(f"  [{label}] tasks={len(tasks)}  blockerreason={str(br)[:40]!r}  "
-          f"risk(plain)={str(rs)[:24]!r}  risk(unmasked)={str(rsu)[:30]!r}")
+    rows = members["value"]
+    # lc_fullname is field-secured (pure column hide): outside the profile the
+    # column is omitted from the payload, even though the row itself is readable.
+    fn = requests.get(
+        API + "/lc_teammembers?$select=lc_fullname&$top=1", headers=h).json().get("value", [])
+    full = fn[0].get("lc_fullname", "<omitted>") if fn else "<no row>"
+    print(f"  [{label}] teammembers={len(rows)}  fullname={str(full)[:40]!r}")
 
 
 def main() -> int:

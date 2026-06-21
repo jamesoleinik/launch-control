@@ -54,16 +54,13 @@ MASK_NAME = "lc_EmailMask"
 MASK_REGEX = r"(?<=.).(?=[^@]*@)"
 MASK_CHAR = "#"
 # Columns to secure: (entity, attribute, has_masking_rule)
-# Two column-level techniques on lc_teammember PII:
+# Two column-level techniques on lc_teammember PII only:
 #   - lc_email     : masked (lc_EmailMask) - value obscured but still returned.
 #   - lc_fullname  : hidden - secured + granted, but the demo revokes the grant
 #                    to hide the column entirely (no masking rule).
-# lc_risksummary / lc_blockerreason stay field-secured but are no longer masked.
 # (The lc_fullname column + lc_name->ID reshape is a one-time data migration; this
 # script only (re)secures and grants the column.)
 SECURED = [
-    ("lc_task", "lc_blockerreason", False),
-    ("lc_launch", "lc_risksummary", False),
     ("lc_teammember", "lc_email", True),
     ("lc_teammember", "lc_fullname", False),
 ]
