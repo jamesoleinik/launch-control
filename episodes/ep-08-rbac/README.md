@@ -1,10 +1,5 @@
 # Episode 8 — Roles & Reach: security in a headless world
 
-**Status:** ✅ Re-platformed to a new tenant/env (`org1077ae7c`, `agent365003`) · ✅ Cowork plugin rebuilt for the new env (`dataverse-launchcontrol-agent365`, v1.6.0) · ✅ Four roles + four teams live · ✅ Three demo personas assigned (Member / Owner / Viewer) · ✅ Column masking live + verified end to end (`lc_RiskSummaryMask` + `lc Sensitive Readers` profile, tested via impersonation) · ✅ Row + column smoke-test verified · ✅ Per-agent security verified (Cowork app user scoped down, intersection proven via client-credentials) · ✅ Cowork runtime sign-in identity ready (`eppc2026demo2`, Owner lens, in `lc Sensitive Readers`) · 🎬 Not yet recorded
-**Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ **Per-agent control:** the agent is its own application user, so field security binds to the Cowork connection independently of the human, and Dataverse enforces the intersection · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
-**Layer:** 🛡 Dataverse's security model as the control plane for agents (roles + owner-teams + field security; root BU only for now)
-**Coding agent:** Claude Code / Cursor / any MCP client · **Runtime:** Web API + Python SDK; idempotent on names
-
 ---
 
 ## The news (cold open)
