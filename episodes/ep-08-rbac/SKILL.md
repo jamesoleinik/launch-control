@@ -222,6 +222,16 @@ Dataverse for an uncleared caller, even out of an attached file.)
 > can read the secured column at all. Assign the cleared persona to the profile
 > before you expect a non-admin to see it.
 
+> **Gotcha: most agent/MCP reads can never unmask.** Unmasking requires the caller
+> to send `?UnMaskedData=true`, and a plain `GET` *always* returns the mask even to
+> an unmasked-cleared principal. Agent connectors (e.g. a Dataverse MCP plugin) do a
+> plain read, so a masking-rule column reads the *same* to an agent whether or not
+> its user is unmasked-cleared. If you need an agent's read to flip between hidden
+> and **cleartext** (not hidden vs. masked), use **full field security** (`Read`
+> in/out: cleartext vs. column omitted), not a masking rule. Reserve masking rules
+> for callers that can opt into `?UnMaskedData=true` (impersonation tests, custom
+> apps).
+
 ## Recipe: per-agent security
 
 Goal: govern what the *agent* can read independently of the human, and prove the

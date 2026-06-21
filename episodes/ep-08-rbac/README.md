@@ -539,9 +539,11 @@ details, a question whose answer is plain personal data:
 
 Run it twice, starting **out** of the profile. **Out** of `lc Sensitive Readers`,
 Cowork comes back blind: it can name the four team members but every email is
-**omitted**, so it has to tell you it can't see them. That is the platform hiding
-the column on the live read, not the agent choosing to be coy. Now swap the flag,
-add `eppc2026demo2` to the profile, and ask the *same* question: the four real
+**omitted**, so it renders each one as _"Not on file."_ That is the platform
+hiding the column on the live read, not the agent choosing to be coy. (Cowork
+receives `null` for a withheld column and can't tell "secured" from "empty," so
+narrate "Not on file" as *the platform withheld it*.) Now swap the flag, add
+`eppc2026demo2` to the profile, and ask the *same* question: the four real
 addresses come back in cleartext. Same agent, same prompt, same human, only the
 runtime clearance changed.
 
@@ -552,6 +554,17 @@ python scripts/python/toggle_sensitive_readers.py --in    # reveal (cleartext)
 python scripts/python/toggle_sensitive_readers.py --out   # hide (omitted)
 python scripts/python/toggle_sensitive_readers.py --status
 ```
+
+> **Why email uses full field security, not a masking rule.** Cowork's MCP read is
+> a plain `GET` with no `?UnMaskedData=true`, and a masking-rule column **always**
+> returns the mask on a plain read, even to an unmasked-cleared caller. So a masked
+> column reads the *same* in Cowork whether or not the human is cleared (this is
+> exactly why `lc_risksummary` shows `High:#` in Cowork even for a profile member).
+> The only model that flips to genuine **cleartext** through Cowork is full field
+> security (`canread` in/out): in the profile the value returns, out of it the
+> column is omitted. That is why the email reveal uses `canread` membership, not a
+> mask. Reserve masking rules for the impersonation/visualizer path that *can* send
+> `?UnMaskedData=true`.
 
 The readiness question works the same way over `lc_task.lc_blockerreason` and the
 masked `lc_launch.lc_risksummary`: _"Is the Q3 Widget Launch ready to ship? List
