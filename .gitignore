@@ -1,5 +1,8 @@
 # Environment & secrets
 .env
+.env.bak_*
+# atk-managed OAuth client secrets (per-env user files)
+**/.env.*.user
 *.local
 a365.config.json
 # Ingest temp payloads

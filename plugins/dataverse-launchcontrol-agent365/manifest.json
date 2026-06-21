@@ -1,0 +1,53 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.6.0",
+  "id": "3d5c2928-e93b-4ec0-af88-576762ce3df3",
+  "packageName": "com.jamesoleinik.cowork.launchcontrol.agent365",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/privacy",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/terms"
+  },
+  "name": {
+    "short": "LaunchControl v1.6.0",
+    "full": "Dataverse MCP for LaunchControl v1.6.0"
+  },
+  "description": {
+    "short": "Query and update Dataverse records in the LaunchControl environment.",
+    "full": "Connects Microsoft 365 Copilot Cowork to the LaunchControl Dataverse environment (https://org1077ae7c.crm.dynamics.com/api/mcp_preview) via the native Dataverse MCP endpoint. Users can read, search, create, and update rows in standard and custom Dataverse tables from natural-language prompts, and discover table / column logical names for any solution in the env. Authentication uses OAuthPluginVault so each user signs in with their own Dataverse identity and Dataverse security roles enforce data access. This plugin is scoped to a single environment; install a separate plugin instance per environment."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#5C2D91",
+  "agentConnectors": [
+    {
+      "id": "dataverse-launchcontrol",
+      "displayName": "Dataverse LaunchControl",
+      "description": "Access Dataverse tables in the LaunchControl environment.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://org1077ae7c.crm.dynamics.com/api/mcp_preview",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "__OAUTH_REFERENCE_ID__"
+          }
+        }
+      }
+    }
+  ],
+  "agentSkills": [
+    {
+      "folder": "./skills/dataverse-launchcontrol-business-skills"
+    },
+    {
+      "folder": "./skills/dataverse-launchcontrol-mcp"
+    },
+    {
+      "folder": "./skills/dataverse-launchcontrol-schema"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Episode 8 — Roles & Reach: security in a headless world
 
-**Status:** ✅ Four roles + four teams live in the environment · ✅ Caller self-joined to all four · ✅ RBAC visualizer app built (`apps/rbac-visualizer/`, mock mode verified) · ✅ Column masking live + verified end to end (role, masking rule, column security profile tested via impersonation) · 🚧 smoke-test script not yet built · 🎬 Not yet recorded
+**Status:** ✅ Re-platformed to a new tenant/env (`org1077ae7c`, `agent365003`) · ✅ Cowork plugin rebuilt for the new env (`dataverse-launchcontrol-agent365`, v1.6.0) · ✅ Four roles + four teams live · ✅ Three demo personas assigned (Member / Owner / Viewer) · ✅ Column masking live + verified end to end (`lc_RiskSummaryMask` + `lc Sensitive Readers` profile, tested via impersonation) · ✅ Row + column smoke-test verified · ✅ Per-agent security verified (Cowork app user scoped down, intersection proven via client-credentials) · 🎬 Not yet recorded
 **Features:** ⭐ **Two axes of security for agents:** row-level (four flat roles: Member / Owner / Viewer / Admin) **and** data masking (column-level / field security over sensitive `lc_*` columns) · ⭐ **Per-agent control:** the agent is its own application user, so field security binds to the Cowork connection independently of the human, and Dataverse enforces the intersection · ⭐ Coverage over Eps 1–7: `lc_*` tables, the `lc_githubissue` virtual entity, the `lc_CalculateLaunchReadiness` Custom API, the MCP connectors, and Ep 7's `search_data` over attached files · ⭐ Authored (and enforced) from any coding agent, now including **Cursor**
 **Layer:** 🛡 Dataverse's security model as the control plane for agents (roles + owner-teams + field security; root BU only for now)
 **Coding agent:** Claude Code / Cursor / any MCP client · **Runtime:** Web API + Python SDK; idempotent on names
@@ -25,7 +25,7 @@ two axes, not one:
    flat roles, four owner-teams, one root BU.
 2. **Data masking (column-level security):** which *sensitive fields* stay
    hidden even on rows a caller is allowed to read. A column security profile plus
-   masking rules over `lc_teammember.lc_email` and `lc_launch.lc_description`, so an
+   a masking rule over `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`, so an
    unprivileged agent gets the column omitted and a cleared one gets a partial mask.
 
 Together they are the toolset an agent developer needs over sensitive data: an
@@ -71,8 +71,8 @@ the agent drives the governed Dataverse APIs (`dv-security`, `dv-metadata`) to
 author:
 
 - two roles + their owner-teams to test row-level security (Part 2),
-- the secured columns and the `Custom Column security` profile (plus masking
-  rules) to test data masking (Part 3),
+- the secured columns and the `lc Sensitive Readers` profile (plus the
+  `lc_RiskSummaryMask` rule) to test data masking (Part 3),
 - and a small **impersonation visualizer app**
   ([`apps/rbac-visualizer/`](../../apps/rbac-visualizer/)) so the whole model is
   something you can *see*, not just read about.
@@ -210,9 +210,9 @@ python scripts/python/setup_simple_rbac.py --remove-self
 The first real run created everything in one pass:
 
 ```
-Env: https://org40ae6a46.crm.dynamics.com
-Caller userid: d61702f4-024c-f111-bec6-7ced8d3d06d5
-Root BU:  org40ae6a46 (cd1002f4-024c-f111-bec6-7ced8d3d06d5)
+Env: https://org1077ae7c.crm.dynamics.com
+Caller userid: e10742fd-1e6b-f111-ab0c-70a8a59bcaf0
+Root BU:  Product Launch 2.0 (91634a81-6a55-f111-bec6-6045bd0a4d9d)
 Resolved 22 privilege ids.
 
 === Plan ===
@@ -233,11 +233,17 @@ Resolved 22 privilege ids.
   team 'lc Owners':  created, role bound
   team 'lc Viewers': created, role bound
   team 'lc Admins':  created, role bound
+```
 
-  ✅ add self ↔ 'lc Members'
-  ✅ add self ↔ 'lc Owners'
-  ✅ add self ↔ 'lc Viewers'
-  ✅ add self ↔ 'lc Admins'
+Then `scripts/python/seed_ep08_demo.py` assigns one demo persona per surface
+(`Basic User` + the matching `lc` role + team membership) and reassigns a subset
+of tasks so the Member's User-depth view is strictly smaller:
+
+```
+  lc Member  -> Walt Perry   [Basic User + lc Member + team lc Members]
+  lc Owner   -> Vivian Sun   [Basic User + lc Owner  + team lc Owners]
+  lc Viewer  -> Rick Brighenti [Basic User + lc Viewer + team lc Viewers]
+  reassigned 4 task(s) to the Member persona (Owner/Viewer still see all 12)
 ```
 
 That's the substrate Episode 8 demonstrates. Re-runs are no-ops on creation
@@ -245,38 +251,37 @@ and idempotently re-sync privileges.
 
 ---
 
-### Proof: smoke-test by impersonation (same query, four lenses)
+### Proof: smoke-test by impersonation (same query, three lenses)
 
 Same trick as the Episode 4 federation beat, except now we run **one** query
-as **four different roles** by switching the `MSCRMCallerID` header on the same
-HTTP client. The planned `scripts/python/rbac_smoketest.py` runs the
-`lc_task` `$expand` query through each test user (members of one of the four
-teams only) and prints a row-count table:
+as **three personas** by switching the `MSCRMCallerID` header on the same HTTP
+client. The shipped [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py)
+runs the `lc_task` query through each persona (a member of one of the `lc` teams)
+and prints a row-count table:
 
 ```
-=== Same query, four lenses ===
+=== Row-level: lc_task count per persona ===
 
-Test user      lc_launch  lc_milestone  lc_task  lc_githubissue  Custom API
------------    ---------  ------------  -------  --------------  ----------
-member-test            1            16        4               6  ✓
-owner-test             1            16       61               6  ✓
-viewer-test            1            16       61               6  ✓ (read)
-admin-test             —             —        —               —  —
+Persona            visible lc_task
+------------------------------------
+Member (Walt)                    4
+Owner (Vivian)                  12
+Viewer (Rick)                   12
 ```
 
-> `member-test` sees **4** tasks, not 61, because `User`-level depth on
-> `lc_task` returns only records the calling user owns, not the 57 owned by
-> other seeded test users. That's the bullseye demonstration of why depth
-> matters.
+> `Member (Walt)` sees **4** tasks, not 12, because `User`-level depth on
+> `lc_task` returns only records the calling user owns, not the 8 owned by
+> the seed user. That's the bullseye demonstration of why depth matters.
 
-The Admin row is blank for the data columns because `lc Admin` has zero data
-privileges by design: Admin is the user-management role, not a data role.
-Admin alongside Owner gives you full data + team management.
+The Owner and Viewer personas both see all 12 at Business-Unit depth; the
+difference between them is write access, not reach. (`lc Admin` is a
+user-management role with zero data privileges by design, so it's blank for the
+data columns — Admin alongside Owner gives full data + team management.)
 
 ### Test it locally
 
 The visualizer renders exactly this table, live. Run it and switch personas: the
-row-count panel jumps from 4 (Member) to 61 (Owner/Viewer) to blank (Admin), the
+row-count panel jumps from 4 (Member) to 12 (Owner/Viewer) to blank (Admin), the
 same numbers the smoke-test prints, but in a UI you can flip in front of an
 audience.
 
@@ -292,9 +297,9 @@ python apps/rbac-visualizer/app.py        # or --mock for the seeded demo
 **Axis two: which sensitive fields stay hidden, even on rows you can read.**
 
 Row-level security answers *which rows*. It does nothing about *which columns*.
-An `lc Owner` who can read all 61 tasks also reads every sensitive column on those
-rows: a team member's `lc_email`, or the internal notes in `lc_launch.lc_description`
-that Episodes 3 and 4 wrote into the model. In a headless world
+An `lc Owner` who can read all 12 tasks also reads every sensitive column on those
+rows: the `lc_task.lc_blockerreason` explaining why a task is stuck, or the
+`lc_launch.lc_risksummary` the readiness prompt writes. In a headless world
 that matters more, not less: the agent you just connected from Cursor inherits
 exactly what its caller can see. Broad read access plus sensitive columns equals
 a leak waiting to happen.
@@ -322,8 +327,12 @@ The live environment now ships exactly this, in the `LaunchControl` solution:
 
 | Secured column | Table | Masking rule | In the profile sees | Outside the profile sees |
 |---|---|---|---|---|
-| `lc_email` | `lc_teammember` | `Email_HideName` (built-in) | masked address; cleartext one record at a time | column omitted |
-| `lc_description` | `lc_launch` | `lc_SSNcustomrule` (mask `#`, last-4 reveal) | `###-##-6789`-style; cleartext with `Read unmasked` | column omitted |
+| `lc_blockerreason` | `lc_task` | (none) | cleartext blocker reason | column omitted |
+| `lc_risksummary` | `lc_launch` | `lc_RiskSummaryMask` (mask `#`, severity-prefix reveal) | `High:#`-style mask; cleartext with `Read unmasked` | column omitted |
+
+The `lc Sensitive Readers` profile is assigned to the `lc Owner` persona (Vivian
+Sun); the `lc Member` persona (Walt Perry) is left out, so the impersonation test
+shows the column withheld for outsiders.
 
 ### Prompt to Cursor: build the data masking
 
@@ -333,11 +342,30 @@ Skill loaded, the ask is again one line:
 > security."_
 
 The skill carries the verified recipe: secure the column (`IsSecured = true` at
-create), create a `fieldsecurityprofile` (here `Custom Column security`), attach a
-masking rule via `attributemaskingrules` (PascalCase `MaskingRuleId@odata.bind`),
-and grant `canread` + `canreadunmasked` *in the same payload* (patching the unmask
-flag alone fails `0x80040203`). Every one of those steps was run live against a
-throwaway `lc_task` column and confirmed end to end before this episode shipped.
+create, then `PublishAllXml`), create a `fieldsecurityprofile` (here
+`lc Sensitive Readers`), attach a masking rule via `attributemaskingrules`
+(PascalCase `MaskingRuleId@odata.bind`, requires a Managed Environment and a
+`uniquename`), and grant `canread` (`4` = Allowed) plus `canreadunmasked`
+(`0`/`1`/`3`, **not** `4`) *in the same payload* (patching the unmask flag alone
+fails `0x80040203`). Every one of those steps was run live against the secured
+`lc_task` / `lc_launch` columns and confirmed end to end before this episode shipped.
+
+The shipped script is
+[`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py),
+and the impersonation result it produces:
+
+```
+=== Column-level: secured fields per persona ===
+
+Persona            blockerreason   risksummary (plain)   risksummary (unmasked)
+-----------------  --------------  --------------------  ----------------------
+Member (Walt)      <omitted>       <no row>              <no row>
+Owner (Vivian)     cleartext       High:#                High: 4 blocked tasks...
+Viewer (Rick)      <omitted>       <omitted>             <omitted>
+```
+
+(The Member sees no launch row at all at User depth; the Viewer reads the rows but
+is outside the profile, so both secured columns are omitted.)
 
 ### Test it locally
 
@@ -385,8 +413,9 @@ owner + profile           ✓        "Customs paperwork rejected; legal hold on 
 > They work on Text and Number columns and require a Managed Environment. The
 > cleartext behind the mask comes back only on a request that adds
 > `?UnMaskedData=true` *and* whose profile grants `Read unmasked` (`One record` or
-> `All records`). This is how `lc_SSNcustomrule` masks `lc_launch.lc_description` and
-> the built-in `Email_HideName` rule masks `lc_teammember.lc_email` today.
+> `All records`). This is how `lc_RiskSummaryMask` masks `lc_launch.lc_risksummary`
+> today: a plain read returns `High:#` and the cleartext returns only with
+> `?UnMaskedData=true`.
 
 ---
 
@@ -403,7 +432,7 @@ with its own roles and its own field security. It's already in this environment:
 
 ```
 # the Cowork agent's identity, created in Part 1 (Entra app -> Dataverse app user)
-fullname:   LaunchControl-Cowork-MCP
+fullname:   LaunchControl-Cowork-MCP-agent365
 type:       application user (applicationid set, S2S auth)
 ```
 
@@ -423,13 +452,13 @@ because the request also carries the agent's identity.
 
 ```text
 Load the dv-security skill. The Cowork application user
-(LaunchControl-Cowork-MCP) currently inherits System Administrator. Author a
-field security profile "Agent - Cowork (least privilege)" that grants Read on
-the lc_* columns Cowork legitimately needs and withholds Read on
-lc_blockerreason and lc_risksummary. Assign the application user to that profile
-(and remove its blanket access to those columns). Then prove the intersection:
-run the same lc_task read as the Cowork app user vs. as me, and show that the
-secured columns come back masked for the agent even where the human is cleared.
+(LaunchControl-Cowork-MCP-agent365) currently inherits System Administrator. Author a
+field security posture that grants Read on the lc_* columns Cowork legitimately
+needs and withholds Read on lc_blockerreason and lc_risksummary. Scope the
+application user down (remove System Administrator, leave it out of the
+lc Sensitive Readers profile). Then prove the intersection: run the same lc_task
+read as the Cowork app user vs. as me, and show that the secured columns come back
+omitted for the agent even where the human is cleared.
 ```
 
 ### The intersection, made concrete
@@ -446,6 +475,29 @@ Same launch, same secured `lc_blockerreason` column, two identities on the call:
 The human can read it in the app, but the agent cannot read it *for* them. That
 is per-agent least privilege: you scope each agent to exactly the columns its job
 needs, independent of how privileged its operators are.
+
+The shipped
+[`scripts/python/setup_agent_security.py`](../../scripts/python/setup_agent_security.py)
+scopes the Cowork app user down (removes System Administrator, ensures
+`Basic User + lc Owner`, leaves it out of the profile) and reads back **as the
+agent** with a client-credentials token. The live result:
+
+```
+[1] Scope the agent down to least privilege
+  removed role: System Administrator
+  ensured role: Basic User
+  ensured role: lc Owner
+
+[2] Read AS the agent (client-credentials token)
+  [agent / least-privilege] tasks=12  blockerreason=<omitted>  risk(plain)=<omitted>  risk(unmasked)=<omitted>
+  [agent / IN profile]       tasks=12  blockerreason='Pen-test escalation...'  risk(unmasked)='High: 4 blocked tasks...'
+```
+
+The agent still reads all 12 task rows (it stays useful), but the two secured
+columns come back omitted until the agent itself is placed in the profile. That is
+the intersection, enforced on the agent identity. (Field-security membership
+changes propagate with a short cache delay, so allow a few seconds between a
+profile toggle and the read.)
 
 ### Show it in the Cowork demo
 
@@ -534,11 +586,11 @@ someday.
 7. PPAC → Security → Teams → `lc Owners` → Members tab: the caller appears.
 8. **The visualizer, axis one.** Open `apps/rbac-visualizer/` in the browser and
    flip the persona dropdown. The row-count panel rewrites live: Member shows 4
-   tasks, Owner and Viewer show 61, Admin shows blanks. Same query, four lenses,
+   tasks, Owner and Viewer show 12, Admin shows blanks. Same query, three lenses,
    one screen, real `MSCRMCallerID` impersonation underneath.
 9. **Axis two, masking.** Third ask: _"add the data masking role."_ The agent
-   secures the sensitive columns, creates the `Custom Column security` profile, and
-   attaches the masking rules. Back in the visualizer, an uncleared persona's task
+   secures the sensitive columns, creates the `lc Sensitive Readers` profile, and
+   attaches the `lc_RiskSummaryMask` rule. Back in the visualizer, an uncleared persona's task
    table shows the column omitted or masked where the sensitive value should be; a
    cleared persona shows it (and the cleartext only on an `?UnMaskedData=true` read).
    The row was readable; the column still wasn't.
@@ -560,9 +612,11 @@ someday.
 |---|---|
 | [`SKILL.md`](SKILL.md) | The `ep-08-dataverse-security` skill: teaches the two-axis Dataverse security model and drives the two simple asks (two roles to test row-level security; one data masking role to test column-level security). The knowledge layer behind every prompt below. |
 | [`scripts/python/setup_simple_rbac.py`](../../scripts/python/setup_simple_rbac.py) | Creates four roles + four owner-teams in the root BU; applies the privilege matrix; binds role↔team. Idempotent. `--dry-run`, `--add-self`, `--remove-self`. |
-| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | _(planned)_ Secures the sensitive columns, creates the `Custom Column security` profile, attaches the masking rules, and grants `canread` (+ `canreadunmasked`) on the profile. Idempotent. |
+| [`scripts/python/seed_ep08_demo.py`](../../scripts/python/seed_ep08_demo.py) | Assigns three demo personas (Member / Owner / Viewer) to the `lc` roles + teams, reassigns a task subset to the Member, and seeds the sensitive columns (`lc_blockerreason`, `lc_risksummary`). Idempotent. |
+| [`scripts/python/setup_field_security.py`](../../scripts/python/setup_field_security.py) | Secures `lc_task.lc_blockerreason` + `lc_launch.lc_risksummary`, creates the `lc Sensitive Readers` profile, creates + binds the `lc_RiskSummaryMask` masking rule, and grants `canread` (+ `canreadunmasked`) on the profile. Idempotent. |
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
-| [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | _(planned)_ Runs the Part 1 four-lens query (and the Part 2 masking check) and prints the row-count + masked-field tables. |
+| [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | Runs the row-level count and the column-level visibility checks across the three personas by switching `MSCRMCallerID`, and prints both tables. |
+| [`scripts/python/setup_agent_security.py`](../../scripts/python/setup_agent_security.py) | Part 4: scopes the Cowork application user down from System Administrator, reads back as the agent via client-credentials, and proves the per-agent intersection (`--demo-grant` toggles the profile). Idempotent. |
 | [`apps/rbac-visualizer/`](../../apps/rbac-visualizer/) | The persona impersonation visualizer Cursor builds in Part 1. Flask app, `--mock` (seeded snapshot) and live modes; real `MSCRMCallerID` impersonation; renders row counts (axis one) and masked secured columns (axis two) side by side. |
 | [`datamodel/security/role-matrix.md`](../../datamodel/security/role-matrix.md) | _(planned)_ Human-readable rendering of the privilege matrix and the secured-column profile, kept in sync with the scripts as documentation. |
 | [`episodes/ep-08-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, are the sensitive columns secured with the profile bound, is the caller a member of any team, are the `lc_*` tables resolved. |
@@ -575,8 +629,8 @@ someday.
 # from launch-control/
 $env:PYTHONIOENCODING='utf-8'
 
-# 0. Ensure the env is reachable (refresh MFA if needed)
-az login --tenant <your-tenant> --scope "https://<your-env>.crm.dynamics.com/.default"
+# 0. Ensure the env is reachable (this episode runs on the agent365003 tenant)
+az login --tenant 01eed126-9f96-4d2d-a127-dc2e786a898b --scope "https://org1077ae7c.crm.dynamics.com/.default"
 
 # 1. Preview the role + team plan
 python scripts/python/setup_simple_rbac.py --dry-run
@@ -584,19 +638,24 @@ python scripts/python/setup_simple_rbac.py --dry-run
 # 2. Create roles + privileges + teams + bindings
 python scripts/python/setup_simple_rbac.py
 
-# 3. Self-join all four teams so you can impersonate any of them
-python scripts/python/setup_simple_rbac.py --add-self
+# 3. Assign the three demo personas + seed the sensitive columns
+python scripts/python/seed_ep08_demo.py
 
-# 4. (Planned) Secure the sensitive columns + bind the field security profile
+# 4. Secure the sensitive columns + masking rule + field security profile
+#    (requires a Managed Environment — enable with:
+#     pac admin set-governance-config --environment <url> --protection-level Standard)
 python scripts/python/setup_field_security.py
 
 # 5. (Optional) End-to-end primitives validation, then cleanup
 python scripts/python/rbac_validate.py
 
-# 6. (Planned) Run the same query through each role + check masked fields
+# 6. Run the same query through each persona + check masked fields
 python scripts/python/rbac_smoketest.py
 
-# 7. See it: the impersonation visualizer (offline demo, then live)
+# 7. Part 4: scope the Cowork agent down + prove the per-agent intersection
+python scripts/python/setup_agent_security.py --demo-grant
+
+# 8. See it: the impersonation visualizer (offline demo, then live)
 python apps/rbac-visualizer/app.py --mock   # http://127.0.0.1:5000
 python apps/rbac-visualizer/app.py          # live, personas from the lc teams
 ```

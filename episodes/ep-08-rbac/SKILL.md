@@ -132,7 +132,7 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
   leaks through it.
 - **Agents are users; secure them per agent.** A connection authenticates as a real
   `systemuser`, a human or an **application user** (e.g. the Cowork app user
-  `LaunchControl-Cowork-MCP`, which has `applicationid` set). Field security binds to
+  `LaunchControl-Cowork-MCP-agent365`, which has `applicationid` set). Field security binds to
   the agent's identity too, so assign profiles to application users for least
   privilege. Effective column access is the **intersection** of the human's profile
   and the agent's profile: the value returns only when both clear it.
@@ -143,12 +143,13 @@ References: [Column-level security](https://learn.microsoft.com/en-us/power-plat
   `lc_statusupdate`, `lc_teammember`, plus the `lc_githubissue` virtual entity).
 - Secured columns are live in this environment now, shipped in the `LaunchControl`
   solution:
-  - **`lc_teammember.lc_email`** (`IsSecured = true`), masked by the built-in
-    **`Email_HideName`** rule and governed by the **`Custom Column security`**
-    column security profile.
-  - **`lc_launch.lc_description`** (`IsSecured = true`), masked by the custom
-    **`lc_SSNcustomrule`** rule: mask character `#` plus a regex that reveals only
-    the last four characters (the SSN `###-##-6789` shape from the masking-rules doc).
+  - **`lc_task.lc_blockerreason`** (`IsSecured = true`), no masking rule, governed
+    by the **`lc Sensitive Readers`** column security profile: in-profile principals
+    read cleartext, everyone else gets the column omitted.
+  - **`lc_launch.lc_risksummary`** (`IsSecured = true`), masked by the custom
+    **`lc_RiskSummaryMask`** rule: mask character `#` plus the regex `(?<=:.*).`,
+    which collapses everything after the first colon so only the leading severity
+    word (e.g. `High:`) survives a plain read.
 - Auth + base URL come from `.env` (`DATAVERSE_URL`); reuse `scripts/auth.py` for
   the token. API base is `${DATAVERSE_URL}/api/data/v9.2`.
 
@@ -181,7 +182,7 @@ apply with `AddPrivilegesRole`, and make the whole thing idempotent with
 team and impersonate it.
 
 **Test:** run the visualizer (`apps/rbac-visualizer/`) and flip between the two
-personas. `lc Owner` returns all 61 tasks; `lc Member` returns only the 4 it
+personas. `lc Owner` returns all 12 tasks; `lc Member` returns only the 4 it
 owns. Same query, two lenses.
 
 ## Task 2: A data masking role to test column-level security
@@ -191,13 +192,15 @@ row* with a sensitive field readable for one role and masked for the other.
 
 This environment already ships the worked example, in the `LaunchControl` solution:
 
-- **`lc_teammember.lc_email`** is secured (`IsSecured = true`) and carries the
-  built-in **`Email_HideName`** masking rule. The **`Custom Column security`**
-  profile grants `Read = Allowed`, `Create = Allowed`, `Update = Not allowed`, and
-  `Read unmasked = One record` on it.
-- **`lc_launch.lc_description`** is secured and carries the custom
-  **`lc_SSNcustomrule`** rule (mask character `#`, a regex that reveals only the
-  last four characters).
+- **`lc_task.lc_blockerreason`** is secured (`IsSecured = true`) with no masking
+  rule. The **`lc Sensitive Readers`** profile grants `Read = Allowed` on it, so
+  in-profile principals read the cleartext blocker and everyone else (non-admin,
+  out of profile) gets the column omitted.
+- **`lc_launch.lc_risksummary`** is secured and carries the custom
+  **`lc_RiskSummaryMask`** rule (mask character `#`, regex `(?<=:.*).`, revealing
+  only the leading severity word before the first colon). The profile grants
+  `Read = Allowed` + `Read unmasked = All records`, so members see the mask on a
+  plain read and cleartext on an `?UnMaskedData=true` read.
 
 To build a slice from scratch the moves are the same: secure the column
 (`IsSecured = true`), create a **column security profile** (`fieldsecurityprofile`),
@@ -208,15 +211,15 @@ reveal like `###-##-6789` instead of a full hide. Make the whole thing idempoten
 the profile name.
 
 > **Gotcha, live in this environment: a secured column with no profile members is
-> readable only by System Administrators.** The `Custom Column security` profile
-> currently has no users or teams assigned, so today only sysadmins can read
-> `lc_email` at all. Assign the cleared team to the profile before you expect a
-> non-admin persona to see the column.
+> readable only by System Administrators.** When the `lc Sensitive Readers` profile
+> has no users or teams assigned, only sysadmins can read `lc_blockerreason` at all.
+> Assign the cleared persona (here the `lc Owner`, Vivian Sun) to the profile before
+> you expect a non-admin to see the column.
 
 **Test:** in the visualizer, a cleared persona shows the cleartext value; an
-uncleared, non-admin persona shows the masked value on the very same row (a hidden
-local-part for the `Email_HideName` rule on `lc_email`, a `#####6789`-style reveal
-for `lc_SSNcustomrule` on `lc_description`). Row access did not change; column access
+uncleared, non-admin persona shows the masked value on the very same row (the
+column omitted for `lc_blockerreason`, a `High:#`-style reveal for
+`lc_RiskSummaryMask` on `lc_risksummary`). Row access did not change; column access
 did. **Mind the masking nuance:** a plain read returns the mask to *everyone*,
 sysadmins included, so do not "test as admin and assume cleartext means no security."
 Compare a plain `GET` (masked) against `?UnMaskedData=true` (cleartext, only for a
