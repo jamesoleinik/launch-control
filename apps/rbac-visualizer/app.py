@@ -5,7 +5,10 @@ A tiny Flask app that makes Episode 8 visible: pick a persona, and the page runs
 
   1. Row-level security  - how many lc_* rows each persona can read.
   2. Data masking        - whether the sensitive columns (lc_blockerreason,
-                            lc_risksummary) come back as cleartext or ********.
+                            lc_risksummary) come back as cleartext or ████████,
+                            plus the PII column lc_teammember.lc_email with a live
+                            on/off masking toggle (the Part 3 side-by-side demo:
+                            flip the rule here, Cowork honors it on the same env).
 
 Impersonation is real: in live mode every call carries the `MSCRMCallerID`
 header set to the selected user's systemuserid, exactly like the smoke-test.
@@ -32,7 +35,7 @@ import os
 import sys
 from pathlib import Path
 
-from flask import Flask, render_template_string, request
+from flask import Flask, redirect, render_template_string, request, url_for
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -42,6 +45,18 @@ SNAPSHOT = HERE / "samples" / "snapshot.json"
 # readable row means the caller is outside the profile -> render as masked.
 SECURED_COLUMNS = ("lc_blockerreason", "lc_risksummary")
 MASK = "\u2588" * 8  # ████████
+
+# --- PII / email masking (Part 3 side-by-side demo) -------------------------
+# The lc_teammember.lc_email column is the PII the masking rule protects. The app
+# can flip the masking rule on/off live (the same lever as toggle_email_mask.py),
+# and Cowork - reading the same environment - honors whichever state is set.
+EMAIL_ENTITY = "lc_teammember"
+EMAIL_SET = "lc_teammembers"
+EMAIL_ATTR = "lc_email"
+EMAIL_RULE_NAME = "lc_EmailMask"
+EMAIL_BIND_UNIQUENAME = "lc_teammember_lc_email_mask"
+EMAIL_RULE_REGEX = r"(?<=.).(?=[^@]*@)"
+EMAIL_RULE_CHAR = "#"
 
 # We surface three roles spanning the three depth levels (User / Business Unit /
 # Organization). The redundant lc Admin role (Org depth like Viewer, plus write)
@@ -201,7 +216,99 @@ def live_lenses(personas: list[dict], persona_id: str) -> dict:
     return {"counts": counts, "tasks": tasks}
 
 
-# Depth labels returned by RetrieveRolePrivilegesRole -> friendly RBAC scope.
+# ---------------------------------------------------------------------------
+# Email PII lens + live masking toggle (Part 3 side-by-side demo)
+# ---------------------------------------------------------------------------
+def mock_emails() -> list[dict]:
+    return _load_snapshot().get("emails", [])
+
+
+def live_emails(personas: list[dict], persona_id: str) -> list[dict]:
+    """Read the team-member emails as the selected persona.
+
+    When masking is ON the value comes back redacted (a#########@example.test);
+    OFF returns cleartext. A persona outside the field security profile gets the
+    column omitted entirely (rendered as the mask block).
+    """
+    requests, api, headers = _live()
+    userid = next((p["userid"] for p in personas if p["id"] == persona_id), None)
+    h = _imp(headers, None if persona_id == "me" else userid)
+    rows = []
+    r = requests.get(f"{api}/{EMAIL_SET}?$select=lc_name,{EMAIL_ATTR}&$top=50", headers=h)
+    if r.status_code == 200:
+        for m in r.json().get("value", []):
+            rows.append({"name": m.get("lc_name"), "email": m.get(EMAIL_ATTR)})
+    return rows
+
+
+def _email_mask_binding(requests, api, headers) -> str | None:
+    rows = _vals(
+        requests, api, headers,
+        f"/attributemaskingrules?$select=attributemaskingruleid"
+        f"&$filter=entityname eq '{EMAIL_ENTITY}' and attributelogicalname eq '{EMAIL_ATTR}'",
+    )
+    return rows[0]["attributemaskingruleid"] if rows else None
+
+
+def email_mask_state() -> bool:
+    """True when the lc_email masking rule is attached (redacted)."""
+    if app.config["MOCK"]:
+        return bool(app.config.get("MOCK_EMAIL_MASK", True))
+    requests, api, headers = _live()
+    return _email_mask_binding(requests, api, headers) is not None
+
+
+def _ensure_email_rule(requests, api, headers) -> str:
+    rows = _vals(requests, api, headers,
+                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{EMAIL_RULE_NAME}'")
+    if rows:
+        return rows[0]["maskingruleid"]
+    body = {
+        "name": EMAIL_RULE_NAME,
+        "displayname": "LaunchControl email mask",
+        "description": "Masks the email local part; reveals the first character and the domain.",
+        "regularexpression": EMAIL_RULE_REGEX,
+        "maskedcharacter": EMAIL_RULE_CHAR,
+        "testdata": "avery.chen@example.test",
+    }
+    r = requests.post(api + "/maskingrules",
+                      headers={**headers, "Content-Type": "application/json",
+                               "Prefer": "return=representation"}, json=body)
+    if r.status_code not in (200, 201, 204):
+        raise RuntimeError(f"create rule -> {r.status_code}: {r.text[:300]}")
+    if r.text:
+        return r.json()["maskingruleid"]
+    return _vals(requests, api, headers,
+                 f"/maskingrules?$select=maskingruleid&$filter=name eq '{EMAIL_RULE_NAME}'")[0]["maskingruleid"]
+
+
+def email_mask_set(on: bool) -> None:
+    """Attach (on) or detach (off) the lc_email masking rule. Idempotent."""
+    if app.config["MOCK"]:
+        app.config["MOCK_EMAIL_MASK"] = on
+        return
+    requests, api, headers = _live()
+    hw = {**headers, "Content-Type": "application/json"}
+    bid = _email_mask_binding(requests, api, headers)
+    if on:
+        if bid:
+            return
+        rid = _ensure_email_rule(requests, api, headers)
+        body = {
+            "uniquename": EMAIL_BIND_UNIQUENAME,
+            "entityname": EMAIL_ENTITY,
+            "attributelogicalname": EMAIL_ATTR,
+            "MaskingRuleId@odata.bind": f"/maskingrules({rid})",
+        }
+        r = requests.post(api + "/attributemaskingrules", headers=hw, json=body)
+        if r.status_code not in (200, 201, 204):
+            raise RuntimeError(f"bind -> {r.status_code}: {r.text[:300]}")
+    else:
+        if not bid:
+            return
+        r = requests.delete(api + f"/attributemaskingrules({bid})", headers=hw)
+        if r.status_code not in (200, 204):
+            raise RuntimeError(f"unbind -> {r.status_code}: {r.text[:300]}")
 _DEPTH = {"Basic": "User", "Local": "Business Unit",
           "Deep": "Parent: Child BU", "Global": "Organization"}
 # Privilege actions, in the order we like to read them (prv<Action>lc_<table>).
@@ -395,6 +502,18 @@ PAGE = """
           border: 1px solid #30363d; color: #8b949e; }
   .note { color: #8b949e; font-size: 12px; margin-top: 6px; }
   .mode { float: right; font-size: 12px; color: #8b949e; }
+  .mask-state { font-size: 12px; padding: 2px 8px; border-radius: 999px;
+                vertical-align: middle; }
+  .mask-state.on { color: #f0883e; border: 1px solid #bb6c2b; }
+  .mask-state.off { color: #3fb950; border: 1px solid #2c6b32; }
+  .toggle-form { display: flex; align-items: center; gap: 12px;
+                 flex-wrap: wrap; margin: 4px 0 10px; }
+  .toggle-btn { cursor: pointer; font-size: 13px; font-weight: 600;
+                padding: 7px 14px; border-radius: 8px; border: 1px solid #30363d;
+                color: #e6edf3; background: #21262d; }
+  .toggle-btn.on { border-color: #2c6b32; }   /* currently masked -> offer reveal */
+  .toggle-btn.off { border-color: #bb6c2b; }  /* currently clear -> offer redact */
+  .toggle-btn:hover { background: #30363d; }
   /* Loading overlay shown over the lens panels while a new persona is queried. */
   .lc-lenses { position: relative; }
   .lc-overlay { display: none; position: absolute; inset: 0; z-index: 5;
@@ -544,6 +663,40 @@ PAGE = """
       nothing to mask.</div>
     {% endif %}
   </div>
+
+  <div class="lens">
+    <h2>Axis 2 (PII) - Data masking: <span class="pill">lc_teammember.lc_email</span>
+      <span class="mask-state {{ 'on' if email_masked else 'off' }}">
+        masking {{ "ON - redacted" if email_masked else "OFF - cleartext" }}</span></h2>
+    <form method="post" action="/toggle-mask" class="toggle-form" onsubmit="lcToggle(this)">
+      <input type="hidden" name="persona" value="{{ selected }}">
+      <input type="hidden" name="to" value="{{ 'off' if email_masked else 'on' }}">
+      <button type="submit" class="toggle-btn {{ 'on' if email_masked else 'off' }}">
+        {{ "Turn masking OFF (reveal cleartext)" if email_masked else "Turn masking ON (redact PII)" }}
+      </button>
+      <span class="note" style="margin:0">Flips the <code>lc_EmailMask</code> rule live.
+        Cowork, reading the same env, honors whichever state is set.</span>
+    </form>
+    {% if emails %}
+    <table>
+      <thead><tr class="secured"><th>lc_name</th><th>lc_email &#128274;</th></tr></thead>
+      <tbody>
+      {% for e in emails %}
+        <tr>
+          <td>{{ e.name }}</td>
+          <td>{% if e.email %}<span class="clear">{{ e.email }}</span>{% else %}<span class="masked">{{ mask }}</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="note">With masking <b>ON</b> every non-admin read (and any connected
+      agent) gets the redacted form <code>a#########@example.test</code>; <b>OFF</b>
+      returns the real address. The platform enforces it on the read, so the same
+      flip is honored in Cowork.</div>
+    {% else %}
+    <div class="note">This persona can't read any lc_teammember rows.</div>
+    {% endif %}
+  </div>
   </div>
 </main>
 <script>
@@ -556,6 +709,15 @@ PAGE = """
     var box = document.getElementById('lc-lenses');
     if (box) { box.classList.add('loading'); }
     sel.form.submit();
+  }
+  // Same loading affordance when flipping the masking rule (a live Web API write).
+  function lcToggle(form) {
+    try { sessionStorage.setItem('lc_scroll', window.scrollY); } catch (e) {}
+    var box = document.getElementById('lc-lenses');
+    if (box) { box.classList.add('loading'); }
+    var btn = form.querySelector('button');
+    if (btn) { btn.disabled = true; btn.textContent = 'Applying\u2026'; }
+    return true;
   }
   (function () {
     var y = null;
@@ -590,6 +752,7 @@ def index():
 
     selected = request.args.get("persona") or (personas[0]["id"] if personas else "me")
     lenses = mock_lenses(selected) if mock else live_lenses(personas, selected)
+    emails = mock_emails() if mock else live_emails(personas, selected)
     for pr in policies.get("profiles", []):
         for col in pr.get("columns", []):
             col["permissions"] = _perm_summary(col)
@@ -600,12 +763,26 @@ def index():
         selected=selected,
         counts=lenses["counts"],
         tasks=lenses["tasks"],
+        emails=emails,
+        email_masked=email_mask_state(),
         policies=policies,
         render_cell=render_cell,
         mock=mock,
         mask=MASK,
         dv_host=("" if mock else os.environ.get("DATAVERSE_URL", "")),
     )
+
+
+@app.route("/toggle-mask", methods=["POST"])
+def toggle_mask():
+    """Attach/detach the lc_email masking rule live, then return to the page."""
+    to_on = request.form.get("to", "on") == "on"
+    persona = request.form.get("persona", "")
+    try:
+        email_mask_set(to_on)
+    except Exception as exc:  # surface the failure but keep the app up
+        print(f"toggle-mask failed: {exc}")
+    return redirect(url_for("index", persona=persona) if persona else url_for("index"))
 
 
 def main() -> None:

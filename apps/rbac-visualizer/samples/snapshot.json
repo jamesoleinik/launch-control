@@ -1,5 +1,11 @@
 {
   "_comment": "Seeded snapshot for offline demo mode. Mirrors the Episode 8 smoke-test: row counts reflect row-level security depth, and the secured columns (lc_blockerreason, lc_risksummary) are masked for personas outside the 'lc Sensitive Readers' field security profile (rendered as a block). lc_risksummary additionally carries a custom masking rule (lc_RiskSummaryMask) that redacts everything after the leading severity even for profile members.",
+  "emails": [
+    { "name": "Avery Chen",      "email": "a#########@example.test" },
+    { "name": "Devon Okafor",    "email": "d###########@example.test" },
+    { "name": "Priya Ramaswamy", "email": "p######@example.test" },
+    { "name": "Jules Martinez",  "email": "j#############@example.test" }
+  ],
   "personas": [
     { "id": "me",     "label": "You (no impersonation)",            "userid": "00000000-0000-0000-0000-000000000001" },
     { "id": "owner",  "label": "Priya Owner (lc Owners)",          "userid": "00000000-0000-0000-0000-000000000002" },
