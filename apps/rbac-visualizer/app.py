@@ -621,6 +621,11 @@ PAGE = """
           border: 1px solid #30363d; color: #8b949e; }
   .note { color: #8b949e; font-size: 12px; margin-top: 6px; }
   .mode { float: right; font-size: 12px; color: #8b949e; }
+  .refresh-form { float: right; clear: right; margin-top: 8px; }
+  .refresh-btn { cursor: pointer; font-size: 12px; font-weight: 600;
+                 padding: 5px 12px; border-radius: 8px; border: 1px solid #30363d;
+                 color: #e6edf3; background: #21262d; }
+  .refresh-btn:hover { background: #30363d; }
   .mask-state { font-size: 12px; padding: 2px 8px; border-radius: 999px;
                 vertical-align: middle; }
   .mask-state.on { color: #f0883e; border: 1px solid #bb6c2b; }
@@ -655,6 +660,12 @@ PAGE = """
 <body>
 <header>
   <span class="mode">{{ "DEMO (seeded snapshot)" if mock else "LIVE - " + dv_host }}</span>
+  {% if not mock %}
+  <form method="post" action="/refresh" class="refresh-form" onsubmit="lcToggle(this)">
+    <input type="hidden" name="persona" value="{{ selected }}">
+    <button type="submit" class="refresh-btn" title="Re-read roles and policies from Dataverse">&#x21bb; Refresh cache</button>
+  </form>
+  {% endif %}
   <h1>Launch Control - RBAC &amp; Data-Masking Visualizer</h1>
   <div class="sub">Same query, every persona. Row counts show row-level security;
     the <b>secured columns</b> show data masking.</div>
@@ -904,6 +915,19 @@ def index():
         mask=MASK,
         dv_host=("" if mock else os.environ.get("DATAVERSE_URL", "")),
     )
+
+
+@app.route("/refresh", methods=["POST"])
+def refresh():
+    """Drop the per-process caches so the next render re-reads roles and policies
+    live. Use after authoring a new security layer (roles, profile, masking) so the
+    persona dropdown and policies panel pick it up without restarting the app."""
+    global _PERSONAS_CACHE, _POLICIES_CACHE
+    _PERSONAS_CACHE = None
+    _POLICIES_CACHE = None
+    app.config.pop("_PII_READER", None)
+    persona = request.form.get("persona", "")
+    return redirect(url_for("index", persona=persona) if persona else url_for("index"))
 
 
 @app.route("/toggle-mask", methods=["POST"])
