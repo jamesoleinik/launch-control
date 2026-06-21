@@ -203,9 +203,9 @@ python scripts/python/setup_simple_rbac.py --remove-self
 The first real run created everything in one pass:
 
 ```
-Env: https://org1077ae7c.crm.dynamics.com
-Caller userid: e10742fd-1e6b-f111-ab0c-70a8a59bcaf0
-Root BU:  Product Launch 2.0 (91634a81-6a55-f111-bec6-6045bd0a4d9d)
+Env: https://<your-env>.crm.dynamics.com
+Caller userid: <caller-userid>
+Root BU:  <root-business-unit> (<bu-id>)
 Resolved 22 privilege ids.
 
 === Plan ===
@@ -454,7 +454,7 @@ with its own roles and its own field security. It's already in this environment:
 
 ```
 # the Cowork agent's identity, created in Part 1 (Entra app -> Dataverse app user)
-fullname:   LaunchControl-Cowork-MCP-agent365
+fullname:   <cowork-app-user>
 type:       application user (applicationid set, S2S auth)
 ```
 
@@ -474,7 +474,7 @@ because the request also carries the agent's identity.
 
 ```text
 Use the dataverse-security skill. Implement per-agent security: the Cowork
-application user (LaunchControl-Cowork-MCP-agent365) currently inherits System
+application user (<cowork-app-user>) currently inherits System
 Administrator. Scope the application user down (remove System Administrator, leave
 it out of the lc Sensitive Readers profile) so it has Read only on the lc_*
 columns Cowork legitimately needs and is withheld Read on lc_blockerreason and
@@ -530,7 +530,7 @@ The plugin authenticates with `OAuthPluginVault`, so **each person signs in with
 their own Dataverse identity** and every read Cowork makes runs *as that user*.
 For the demo we sign in as a purpose-built launch-owner account:
 
-> **Cowork sign-in identity: `eppc2026demo2@agent365003.onmicrosoft.com`**
+> **Cowork sign-in identity: `<demo-user>@<your-tenant>.onmicrosoft.com`**
 > Scoped to the **Owner lens**: `Basic User` + `lc Owner` + the `lc Owners` team,
 > placed **in** the `lc Sensitive Readers` profile, with **System Administrator
 > removed** so the security model actually applies to it. It owns 8 of the 12
@@ -557,7 +557,7 @@ python scripts/python/toggle_email_mask.py --off     # cleartext
 python scripts/python/toggle_email_mask.py --status
 ```
 
-`eppc2026demo2` stays **in** the `lc Sensitive Readers` profile the whole time, so
+`<demo-user>` stays **in** the `lc Sensitive Readers` profile the whole time, so
 the email column always returns; the toggle attaches or detaches the
 `lc_EmailMask` masking rule on `lc_teammember.lc_email`. Binding a masking rule
 takes effect without a publish, so the flip is fast enough to do live.
@@ -574,7 +574,7 @@ takes effect without a publish, so the flip is fast enough to do live.
 
 > **Which identity is enforced.** Interactive Cowork runs **delegated**, so what
 > you see on screen is Dataverse enforcing the *signed-in user's* clearance
-> (`eppc2026demo2`) at runtime. The per-agent **intersection** above (the agent's
+> (`<demo-user>`) at runtime. The per-agent **intersection** above (the agent's
 > own application-user profile, independent of the human) is the same idea one
 > layer deeper, proven headlessly by `setup_agent_security.py` reading as the
 > Cowork app user over a client-credentials (S2S) token.
@@ -669,10 +669,10 @@ someday.
     query: the Viewer gets `████████`, the Owner gets the sentence, even though
     the match came from inside an attached PDF.
 11. **Runtime enforcement in Cowork (the showcase).** Sign into Cowork as
-    `eppc2026demo2` (the Owner-lens identity, in the `lc Sensitive Readers`
+    `<demo-user>` (the Owner-lens identity, in the `lc Sensitive Readers`
     profile) and ask the readiness question. Cowork returns the whole launch with
     the blocker reasons cleared and the risk summary masked, all enforced live on
-    the delegated read. Pull `eppc2026demo2` out of the profile and ask again: the
+    the delegated read. Pull `<demo-user>` out of the profile and ask again: the
     blocker reasoning is gone. Same agent, same prompt, same human, only the
     runtime clearance changed. Nothing was built on screen; the platform enforced
     what it already knew.
@@ -695,7 +695,7 @@ someday.
 | [`scripts/python/rbac_validate.py`](../../scripts/python/rbac_validate.py) | End-to-end probe of every RBAC primitive used here: test BU, owner team, role clone via `CloneAsRole`, role bind, `MSCRMCallerID` impersonation, cleanup. Run once per env to confirm plumbing. |
 | [`scripts/python/rbac_smoketest.py`](../../scripts/python/rbac_smoketest.py) | Runs the row-level count and the column-level visibility checks across the three personas by switching `MSCRMCallerID`, and prints both tables. |
 | [`scripts/python/setup_agent_security.py`](../../scripts/python/setup_agent_security.py) | Part 4: scopes the Cowork application user down from System Administrator, reads back as the agent via client-credentials, and proves the per-agent intersection (`--demo-grant` toggles the profile). Idempotent. |
-| [`apps/rbac-visualizer/`](../../apps/rbac-visualizer/) | The persona impersonation visualizer Cursor builds in Part 1. Flask app, `--mock` (seeded snapshot) and live modes; real `MSCRMCallerID` impersonation; renders row counts (axis one) and masked secured columns (axis two) side by side. |
+| [`apps/rbac-visualizer/`](../../apps/rbac-visualizer/) | The persona impersonation visualizer Cursor builds in Part 3. Flask app, `--mock` (seeded snapshot) and live modes; real `MSCRMCallerID` impersonation; renders row counts (axis one) and masked secured columns (axis two) side by side. |
 | [`datamodel/security/role-matrix.md`](../../datamodel/security/role-matrix.md) | _(planned)_ Human-readable rendering of the privilege matrix and the secured-column profile, kept in sync with the scripts as documentation. |
 | [`episodes/ep-08-rbac/preflight.py`](preflight.py) | _(planned)_ Read-only check: are the four roles + four teams present, are the sensitive columns secured with the profile bound, is the caller a member of any team, are the `lc_*` tables resolved. |
 
@@ -707,8 +707,8 @@ someday.
 # from launch-control/
 $env:PYTHONIOENCODING='utf-8'
 
-# 0. Ensure the env is reachable (this episode runs on the agent365003 tenant)
-az login --tenant 01eed126-9f96-4d2d-a127-dc2e786a898b --scope "https://org1077ae7c.crm.dynamics.com/.default"
+# 0. Ensure the env is reachable
+az login --tenant <tenant-id> --scope "https://<your-env>.crm.dynamics.com/.default"
 
 # 1. Preview the role + team plan
 python scripts/python/setup_simple_rbac.py --dry-run
@@ -734,7 +734,7 @@ python scripts/python/rbac_smoketest.py
 python scripts/python/setup_agent_security.py --demo-grant
 
 # 7b. Cowork runtime showcase: the demo signs into Cowork as
-#     eppc2026demo2@agent365003.onmicrosoft.com, scoped to the Owner lens
+#     <demo-user>@<your-tenant>.onmicrosoft.com, scoped to the Owner lens
 #     (Basic User + lc Owner + lc Owners team, IN the lc Sensitive Readers
 #     profile, System Administrator removed) — same shape as the Vivian persona.
 #     Mid-demo, remove it from the profile to show the masked read change live.
