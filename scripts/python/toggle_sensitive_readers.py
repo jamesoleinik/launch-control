@@ -5,8 +5,8 @@ This is the live-demo lever. With the Cowork plugin authenticating delegated
 flipping that human's membership in the `lc Sensitive Readers` column-security
 profile changes what the *same* Cowork prompt can see, at runtime.
 
-  In  the profile : email PII + lc_blockerreason cleartext; lc_risksummary masked
-  Out the profile : email PII + lc_blockerreason omitted (null); agent is blind to it
+  In  the profile : lc_email clear (UnMaskedData) + lc_fullname visible
+  Out the profile : lc_email masked/omitted + lc_fullname omitted; agent is blind to it
 
 Idempotent. Targets the active `.env` environment. Requires System Administrator.
 
@@ -126,16 +126,16 @@ def main() -> None:
         else:
             add_member(prof, user)
             print(f"Added {args.user} to '{PROFILE_NAME}' "
-                  f"(secured columns now readable: email PII + blocker reasons "
-                  f"cleartext; risk summary masked).")
+                  f"(secured lc_teammember columns now readable: lc_email clear "
+                  f"with ?UnMaskedData=true, lc_fullname visible).")
     else:  # want_out
         if not member:
             print(f"No-op: {args.user} already OUT of '{PROFILE_NAME}'.")
         else:
             remove_member(prof, user)
             print(f"Removed {args.user} from '{PROFILE_NAME}' "
-                  f"(secured columns now omitted on the agent's read: email PII, "
-                  f"blocker reasons).")
+                  f"(secured lc_teammember columns now withheld: lc_email masked, "
+                  f"lc_fullname omitted).")
     print("Allow a few seconds for the security cache before re-asking Cowork.")
 
 

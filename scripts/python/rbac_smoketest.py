@@ -2,12 +2,13 @@
 the `MSCRMCallerID` impersonation header on one HTTP client.
 
 Proves both security axes at once:
-  * row-level  — `lc_task` count differs by role depth (Member User-depth sees
+  * row-level: `lc_task` count differs by role depth (Member User-depth sees
     only its own; Owner/Viewer see all at BU depth).
-  * column-level — `lc_task.lc_blockerreason` and `lc_launch.lc_risksummary`
-    are withheld (omitted) for principals outside the field-security profile,
-    cleartext for the blocker column inside it, and masked for the risk column
-    (cleartext only on an `?UnMaskedData=true` read backed by `canreadunmasked`).
+  * column-level: the `lc_teammember` PII columns. `lc_email` is masked by a
+    rule (redacted on a plain read; cleartext only on an `?UnMaskedData=true`
+    read backed by `canreadunmasked`). `lc_fullname` is hidden by pure column
+    security (omitted for principals outside the `lc Sensitive Readers` profile,
+    cleartext inside it). The task and launch columns are not secured.
 
 Read-only. Requires the calling identity to hold `prvActOnBehalfOfAnotherUser`
 (System Administrator does). Personas are resolved by domain name.
@@ -66,14 +67,11 @@ def main() -> int:
         headers=BASE).json()["value"]
     by_domain = {u["domainname"]: u for u in users}
 
-    launch = requests.get(API + "/lc_launchs?$select=lc_launchid,lc_name",
-                          headers=BASE).json()["value"][0]
-    lid = launch["lc_launchid"]
-    # Pick a blocked task to read the secured column from.
-    blocked = requests.get(
-        API + "/lc_tasks?$select=lc_taskid,lc_title&$filter=lc_isblocked eq true&$top=1",
+    # Pick a team-member row to read the secured PII columns from.
+    tm = requests.get(
+        API + "/lc_teammembers?$select=lc_teammemberid,lc_name&$top=1",
         headers=BASE).json()["value"]
-    tid = blocked[0]["lc_taskid"] if blocked else None
+    tmid = tm[0]["lc_teammemberid"] if tm else None
 
     print("=== Row-level: lc_task count per persona ===\n")
     print(f"{'Persona':18s} {'visible lc_task':>15s}")
@@ -84,23 +82,25 @@ def main() -> int:
         n = len(j.get("value", [])) if sc == 200 else f"HTTP {sc}"
         print(f"{label:18s} {str(n):>15s}")
 
-    print("\n=== Column-level: secured fields per persona ===\n")
-    print(f"{'Persona':18s} {'blockerreason':28s} {'risksummary (plain)':24s} {'risksummary (unmasked)':24s}")
-    print("-" * 98)
+    print("\n=== Column-level: lc_teammember PII per persona ===\n")
+    print(f"{'Persona':18s} {'email (plain)':24s} {'email (unmasked)':24s} {'fullname':24s}")
+    print("-" * 92)
     for label, domain in PERSONAS:
         uid = by_domain[domain]["systemuserid"]
-        br = "<no task>"
-        if tid:
-            sc, j = g(f"/lc_tasks({tid})?$select=lc_title,lc_blockerreason", caller=uid)
-            br = col(j if sc == 200 else None, "lc_blockerreason")
-        sc, j = g(f"/lc_launchs({lid})?$select=lc_name,lc_risksummary", caller=uid)
-        rs = col(j if sc == 200 else None, "lc_risksummary")
-        sc, j2 = g(f"/lc_launchs({lid})?$select=lc_name,lc_risksummary", caller=uid, unmask=True)
-        rsu = col(j2 if sc == 200 else None, "lc_risksummary")
-        print(f"{label:18s} {str(br)[:26]:28s} {str(rs)[:22]:24s} {str(rsu)[:22]:24s}")
+        email = unmasked = full = "<no row>"
+        if tmid:
+            sc, j = g(f"/lc_teammembers({tmid})?$select=lc_name,lc_email,lc_fullname", caller=uid)
+            row = j if sc == 200 else None
+            email = col(row, "lc_email")
+            full = col(row, "lc_fullname")
+            sc, j2 = g(f"/lc_teammembers({tmid})?$select=lc_name,lc_email", caller=uid, unmask=True)
+            unmasked = col(j2 if sc == 200 else None, "lc_email")
+        print(f"{label:18s} {str(email)[:22]:24s} {str(unmasked)[:22]:24s} {str(full)[:22]:24s}")
 
-    print("\nLegend: <omitted> = column withheld (caller outside the field-security profile).")
-    print("Member is outside 'lc Sensitive Readers'; Owner is inside it.")
+    print("\nLegend: <omitted> = column withheld (caller outside 'lc Sensitive Readers').")
+    print("Member is outside the profile; Owner is inside it. lc_email is masked on a")
+    print("plain read and clear under ?UnMaskedData=true; lc_fullname is omitted")
+    print("outside the profile and clear inside it.")
     return 0
 
 

@@ -3,24 +3,32 @@
 Idempotent. Targets the active `.env` environment. Requires System Administrator
 and a Managed Environment (masking rules need one).
 
-Builds the live column-security model the episode demonstrates:
+Builds the live column-security model the episode demonstrates. Only the two
+`lc_teammember` PII columns are secured; the task and launch columns are
+deliberately left out of column security.
 
-  Secured column            Table          Masking rule        Profile members read
-  ------------------------  -------------  ------------------  --------------------------
-  lc_task.lc_blockerreason  lc_task        (none)             cleartext; outsiders: omitted
-  lc_launch.lc_risksummary  lc_launch      lc_RiskSummaryMask masked (severity prefix only);
-                                                              cleartext with ?UnMaskedData=true
-  lc_teammember.lc_email    lc_teammember  (none)             cleartext PII; outsiders: omitted
+  Secured column            Table          Masking rule   Profile members read
+  ------------------------  -------------  -------------  ---------------------------
+  lc_teammember.lc_email    lc_teammember  lc_EmailMask   masked (first char + @domain);
+                                                          cleartext with ?UnMaskedData=true
+  lc_teammember.lc_fullname lc_teammember  (none)         cleartext; revoke the grant to
+                                                          hide it entirely (outsiders: omitted)
+
+The primary `lc_name` is a non-PII ID (TM-001 ...); the real name lives in the
+securable `lc_fullname` column. Dataverse refuses field security on the primary
+name (0x8004f501), which is why the name was moved into `lc_fullname`. This
+script assumes that one-time reshape (lc_fullname column + lc_name->ID) is done;
+it only (re)secures the columns and wires up the rule, profile, and grants.
 
 Steps
 -----
 1. Secure both columns (`IsSecured = true` on attribute metadata, then publish).
-2. Create masking rule `lc_RiskSummaryMask` (regex masks everything after the
-   first colon, so the leading severity word survives) and bind it to
-   `lc_launch.lc_risksummary` via `attributemaskingrule`.
+2. Create masking rule `lc_EmailMask` (regex reveals the first character of the
+   local part and the @domain, masks the rest) and bind it to
+   `lc_teammember.lc_email` via `attributemaskingrule`.
 3. Create field security profile `lc Sensitive Readers`.
 4. Grant the profile `canread` on both columns; add `canreadunmasked` on the
-   masked column so members can pull cleartext with `?UnMaskedData=true`.
+   masked email column so members can pull cleartext with `?UnMaskedData=true`.
    (canreadunmasked is omitted on the non-masked column — Dataverse 404s it.)
 5. Add the Owner persona to the profile; the Member persona is left out so the
    impersonation test shows the column withheld/masked for outsiders.

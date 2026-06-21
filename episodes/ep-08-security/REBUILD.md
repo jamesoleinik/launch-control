@@ -202,8 +202,8 @@ agent in and out of the profile).
 $env:PYTHONIOENCODING="utf-8"
 python scripts/python/setup_agent_security.py             # scope down + read back as the agent
 python scripts/python/setup_agent_security.py --demo-grant  # place the agent in the profile, re-read
-python scripts/python/toggle_sensitive_readers.py --add <demo-user>     # human in profile
-python scripts/python/toggle_sensitive_readers.py --remove <demo-user>  # human out of profile
+python scripts/python/toggle_sensitive_readers.py --user <demo-user> --in   # human in profile
+python scripts/python/toggle_sensitive_readers.py --user <demo-user> --out  # human out of profile
 ```
 
 The agent reads all four `lc_teammember` rows (it stays useful), but `lc_fullname`
