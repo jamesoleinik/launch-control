@@ -254,6 +254,21 @@ omitted for the agent even where the human can read it. Toggle the agent's profi
 membership and re-read to show the intersection move (allow a few seconds for the
 security cache).
 
+> **Gotcha: scoping an application user off System Administrator strips the metadata
+> reads an MCP client needs to connect.** A Dataverse MCP / Cowork connection reads
+> `solution` and `publisher` on connect to enumerate the environment. Those reads
+> rode in on System Administrator; once you remove it, the agent 403s on connect even
+> though its table reads are fine. Re-grant `prvReadSolution` and `prvReadPublisher`
+> (Global depth) on a role the agent keeps. They are metadata reads only and expose
+> no record data, so they do not weaken column security.
+
+> **Gotcha: a delegated agent sees *nothing* unless the signed-in human has a
+> row-level role.** With delegated OAuth the agent reads as the human, so the human
+> needs a role that grants Read on the target tables, or *every* query 403s, not just
+> the secured columns. Symptom: the agent reports it cannot access the table at all.
+> Fix: put the sign-in identity in a row-level role/team (e.g. the owner team) so it
+> can read the model, then layer the column profile on top for the PII story.
+
 ---
 
 ## Building it programmatically (verified API patterns)
@@ -332,6 +347,8 @@ Every step below was run live and confirmed end to end; substitute your own
 | `400` on `maskingruleid@odata.bind` | Wrong nav casing | Use PascalCase `MaskingRuleId@odata.bind` on `attributemaskingrules` |
 | `Enable column security` greyed out | Column isn't securable | Virtual / lookup / formula / primary-name / system columns can't be secured |
 | Masked field looks empty in code | Outside-profile reads are omitted | Treat null/absent over the Web API as no-access; a masking rule returns the mask string, not null |
+| Delegated agent 403s on every table read | Signed-in human has no row-level role | Add the human to a role/team granting Read on the tables; delegated reads run as the human |
+| Agent 403s on `solution`/`publisher` after scope-down | Removing System Administrator stripped the metadata reads the MCP needs on connect | Re-grant `prvReadSolution` + `prvReadPublisher` (Global) on a role the agent keeps |
 
 ## Tone
 

@@ -549,6 +549,13 @@ profile. That is the intersection, enforced on the agent identity. (Field-securi
 membership changes propagate with a short cache delay, so allow a few seconds
 between a profile toggle and the read.)
 
+> **One privilege the scope-down has to put back.** Removing System Administrator
+> also removes the `solution` and `publisher` reads the Dataverse MCP makes when
+> Cowork first connects, so the agent would 403 on connect even though its row reads
+> are fine. The script re-grants `prvReadSolution` and `prvReadPublisher` (Global
+> depth) on `lc Owner`; both are metadata reads only and expose no record data, so
+> column security is untouched.
+
 ### Showcase it live in Cowork: runtime enforcement, not building
 
 This is the payoff beat, and it isn't about authoring anything. It's watching
@@ -563,6 +570,14 @@ For the demo we sign in as a purpose-built launch-owner account:
 > placed **in** the `lc Sensitive Readers` profile, with **System Administrator
 > removed** so the security model actually applies to it. It owns 8 of the 12
 > tasks and reads the other 4 at BU depth, so it sees the whole launch.
+
+> **The row-level role is load-bearing, not optional.** Because the connection is
+> delegated, Cowork reads as this human. Give the sign-in account only `Basic User`
+> and Cowork can't see the launch at all: *every* `lc_*` query 403s and the agent
+> reports it has no access to the table, long before column security enters the
+> picture. The `lc Owner` role (via the `lc Owners` team) is what makes the launch
+> readable; the `lc Sensitive Readers` profile then governs which *columns* of it
+> come back. Row role first, column profile second.
 
 The sharpest version of this beat is PII. Ask Cowork for the launch team's contact
 details, a question whose answer is plain personal data:
