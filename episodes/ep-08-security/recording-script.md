@@ -14,19 +14,23 @@ screen-recording-with-voiceover format as Episodes 1 to 7.
 
 ## Intro (0:00–0:08)
 
-**Shape:** Value-first split-screen. One 8-second beat. Left half is the
-RBAC visualizer (`apps/rbac-visualizer/`) with the persona dropdown open and the
-row-count panel and the PII team table both visible. Right half is a Cowork chat
-window mid-answer listing the launch team with **emails redacted**
-(`a#########@example.test`). Launch name `Q3 Widget Launch` visible on both
-halves. A small `EPISODE 08` badge in the top-left corner from frame 1.
+**Shape:** Value-first, live in Cursor. One 8-second beat. We open inside Cursor,
+connected to our Dataverse environment over MCP: the `dataverse-security` skill
+referenced in the composer and `DATAVERSE_URL` printed in the terminal. A stacked
+preview on the right is the two consumers we are about to govern with one model:
+on top the RBAC visualizer app (`apps/rbac-visualizer/`) with the row-count panel
+and the PII team table; below it a Cowork chat answer listing the launch team
+with **emails redacted** (`a#########@example.test`). Launch name `Q3 Widget
+Launch` visible. A small `EPISODE 08` badge in the top-left corner from frame 1.
 
 **Intro VO line (verbatim, also opens the LinkedIn post):**
 
-> *"Connect an AI agent to your launch data and, by default, it can read
-> everything the connection can reach. This episode I hand that decision to
-> Dataverse: same agent, same question, but the platform decides which rows and
-> which columns it is allowed to see."*
+> *"If you are building AI around sensitive business data and business-critical
+> processes, this one is for you. We are live in Cursor, connected to Dataverse
+> over MCP, and I am going to use that integration to build one security model for
+> enterprise scale: the same rules govern the application and the AI agents beside
+> it, so the platform, not each client, decides which rows and which columns every
+> one of them can see."*
 
 ---
 
@@ -34,7 +38,7 @@ halves. A small `EPISODE 08` badge in the top-left corner from frame 1.
 
 | Time | What's on screen | VO line | On-screen overlays (self-contained, readable without audio) |
 |---|---|---|---|
-| **0:00–0:08** ⭐ **Intro · Split-screen · 8s** | Split-screen: left half the RBAC visualizer (persona dropdown, row counts, PII table); right half a Cowork answer with redacted emails. `EPISODE 08` badge top-left from frame 1. | "Connect an agent to your launch data and it can read everything. This episode, Dataverse decides which rows and which columns it sees." | ⬇ 0:00 **An AI agent reads my launch data through Dataverse** → 0:04 **Dataverse, not the agent, decides what it can see** |
+| **0:00–0:08** ⭐ **Intro · Live in Cursor · 8s** | Cursor open and connected to Dataverse over MCP (the `dataverse-security` skill in the composer, `DATAVERSE_URL` in the terminal). A stacked preview on the right shows the two consumers we govern with one model: the RBAC visualizer app and a Cowork answer with emails redacted. `EPISODE 08` badge top-left from frame 1. | "Building AI on sensitive business data and business-critical processes? We are live in Cursor, wired to Dataverse, building one security model that governs the enterprise app and the AI agents beside it the same way." | ⬇ 0:00 **Live in Cursor, connected to Dataverse over MCP** → 0:04 **One security model for an enterprise app and its AI agents** |
 | **0:08–0:30** ⭐ **Part 0 · One skill, the whole model (22s)** | Cursor open. `@`-mention the `dataverse-security` skill and `REBUILD.md`. Cursor confirms it has the model (row-level, column-level, per-agent) and prints `DATAVERSE_URL` from `.env`. Hold on the confirmation. | "Security in Dataverse runs on two independent axes: which rows come back, and which columns come back. I taught Cursor that model once as a skill. Now Cursor builds the whole thing from the runbook, against a clean environment." | ⬇ **Dataverse limits data two ways: which rows, and which columns** |
 | **0:08–0:33** ⭐ **Part 1 · Row-level: same query, different lens (25s)** | Cursor authors and runs `setup_simple_rbac.py`: four roles, four owner teams. Hard cut to the visualizer. Flip the persona dropdown: Member shows **4 tasks**, Owner and Viewer **12**, Admin **blank**. Same query each time. | "Part one, row-level. Four roles, each bound to an owner team at a different depth. One launch query, four personas. The Member sees only the four tasks they own; the Owner and Viewer see all twelve. Identical query, different lens, enforced by the role." | ⬇ **Row-level security: a Member sees 4 tasks, an Owner sees all 12** |
 | **0:33–1:03** ⭐ **Part 2 · Column-level: mask the email, hide the name (30s)** | Cursor authors and runs `setup_field_security.py`. Cut to the visualizer PII table reading as a non-admin profile member. Flip the email toggle: `lc_email` goes from clear to `a#########@example.test`. Flip the name toggle: `lc_fullname` disappears. `lc_name` stays as `TM-001`. | "Part two, column-level, on the team's personal data. Two different levers. The email gets a masking rule, so it comes back redacted on every read. The full name gets pure column security, so it is omitted entirely for anyone outside the profile. The primary key is just a non-personal ID, so the table is still useful with zero PII exposed." | ⬇ **Column-level security: the email comes back masked, the full name hidden** |
