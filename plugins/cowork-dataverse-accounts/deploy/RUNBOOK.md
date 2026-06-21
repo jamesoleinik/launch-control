@@ -16,7 +16,7 @@ hardening pass. Work top to bottom.
 | Dataverse app user (systemuserid) | `bf39fde0-ec6c-f111-ab0d-00224805aa76` |
 | Allowed MCP client row | `new_coworkaccountsmcp` (id `8297b1fb-ec6c-f111-ab0d-70a8a5b1e115`) |
 | Teams Dev Portal OAuth config ID | `8d95fc56-8524-4f41-9dde-cece82045517` |
-| OAuth referenceId (in manifest) | `__OAUTH_REFERENCE_ID__` |
+| OAuth referenceId (in manifest) | `<oauth-reference-id>` |
 | Teams App ID (manifest `id`) | `d8fb9683-1383-4f69-8c27-f56094fe41d5` |
 | Package zip | `plugins/cowork-dataverse-accounts/out/dataverse-accounts-cowork.zip` |
 
