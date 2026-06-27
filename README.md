@@ -42,15 +42,15 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [6](episodes/ep-06-cowork-plugin/)        | Cowork Plugin for Dataverse   | Build & publish a Dataverse-aware Cowork (Teams) plugin |
 | [7](episodes/ep-07-scout-autopilot/)      | Microsoft Scout 🟡            | _(placeholder — blocked on Frontier preview access)_ |
 | [8](episodes/ep-08-security/)             | Roles & Reach                 | Four flat roles (Member / Owner / Viewer / Admin) over Eps 1–5 data + tools — same query, four lenses |
-| [9](episodes/ep-09-the-agent/)            | The Agent                     | Declarative Launch Coordinator + knowledge substrate |
-| [10](episodes/ep-10-autonomous-agents/)   | Autonomous Agents             | Launch Sentinel — event-triggered autonomous agent |
-| [11](episodes/ep-11-code-first-agent/)    | The Code-First Agent          | Same skills, different runtime — Python agent that pulls skills from Dataverse |
-| [12](episodes/ep-12-the-dashboard/)       | The Dashboard                 | Generative Power Apps page deployed via `pac model genpage upload` |
-| [13](episodes/ep-13-copilot-just-knows/)  | Copilot Just Knows            | Native Copilot intelligence over Dataverse — no agent needed |
+| [9](episodes/ep-09-dataverse-fno/)        | Dataverse + F&O               | CRM and ERP on one platform; the launch record gains budget and supply signal |
+| [10](episodes/ep-10-dataverse-webiq/)     | Dataverse + Web IQ            | Outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
+| [11](episodes/ep-11-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
+| [12](episodes/ep-12-dataverse-foundryiq/) | Dataverse + Foundry IQ        | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
+| [13](episodes/ep-13-convergence/)         | Convergence                   | Native M365 Copilot (Dataverse intelligence / Work IQ) plus the three IQ agents, on one launch |
 | [14](episodes/ep-14-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven — capacity, audit, cleanup, blast-radius |
 | [15](episodes/ep-15-full-orchestra/)      | Full Orchestra + Your Turn    | Six surfaces in 60 seconds + open-source CTA |
 
-Each episode is also tagged in git: `git checkout ep-09` to see the repo as it was at that episode's ship.
+Each episode is also tagged in git: `git checkout ep-08` to see the repo as it was at that episode's ship. The original Season 1 agent builds (declarative agent, autonomous Sentinel, code-first Python agent, generative dashboard) moved to [`episodes/archive/`](episodes/archive/) and are absorbed as the Season 2 runtimes; see [`episodes/README.md`](episodes/README.md) for the full multi-season arc.
 
 ## Quick Start
 
@@ -72,24 +72,24 @@ pip install -r scripts/python/requirements.txt
 To verify any episode is set up correctly, run its preflight:
 
 ```bash
-python episodes/ep-12-the-dashboard/preflight.py
+python episodes/ep-05-custom-tools/preflight.py
 ```
 
 ## Repo Structure
 
 ```
 launch-control/
-├── episodes/                  # 13 per-episode folders (READMEs + preflights + scripts)
+├── episodes/                  # 15 per-episode folders + archive/ (READMEs + preflights + scripts)
 ├── datamodel/                 # Table definitions, mappings, sample data
 ├── solutions/LaunchControl/   # Exported managed solution
 ├── business-skills/           # Launch readiness, escalation, status rules
 ├── data/knowledge/            # Sanitized KB articles for RAG
 ├── agents/
-│   ├── launch-coordinator/    # Declarative Copilot Studio agent (Ep 9)
-│   ├── launch-sentinel/       # Autonomous agent (Ep 10)
-│   ├── launch-coordinator-py/ # Code-first agent (Ep 11)
+│   ├── launch-coordinator/    # Declarative Copilot Studio agent (archived; absorbed into Ep 10)
+│   ├── launch-sentinel/       # Autonomous agent runtime (Ep 11 Fabric IQ)
+│   ├── launch-coordinator-py/ # Code-first agent runtime (Ep 12 Foundry IQ)
 │   └── agent-flows/           # Agent flow configurations
-├── apps/launch-command-center/# Generative Power Apps page (Ep 12)
+├── apps/launch-command-center/# Generative Power Apps page (folds into Ep 13 convergence)
 ├── plugins/                   # Custom Dataverse plugins & actions
 └── scripts/                   # auth.py + shared Python utilities
 ```

@@ -2,17 +2,19 @@
 
 All notable changes to **Launch Control** are documented here, organized by episode. Each entry corresponds to a git tag (`ep-01` through `ep-13`) — `git checkout ep-NN` to see the repo as it was at the end of that episode.
 
-> **Tag history note (May 2026).** The series was originally a 13-episode arc, and the immutable git tags `ep-01..ep-13` reflect that numbering. One episode was later inserted: Cowork Plugin at position 7. That shifts the arc to 14 visible episodes. Existing tags are **not** renamed (that would rewrite published history); the table below maps each existing tag to its current episode slot. New tags (`ep-07-cowork`, then `ep-08-…ep-15-…` as the shifted episodes re-ship) will use the new numbering going forward.
+> **Tag history note (May 2026).** The series was originally a 13-episode arc, and the immutable git tags `ep-01..ep-13` reflect that numbering. One episode was later inserted: Cowork Plugin at position 7. That shifts the arc to 14 visible episodes. Existing tags are **not** renamed (that would rewrite published history); the table below maps each existing tag to the folder that held it.
 >
-> | Tag | Original # | Current # | Folder |
-> |---|---|---|---|
-> | `ep-07` | 7 | **8** | `episodes/ep-09-the-agent/` |
-> | `ep-08` | 8 | **9** | `episodes/ep-10-autonomous-agents/` |
-> | `ep-09` | 9 | **10** | `episodes/ep-11-code-first-agent/` |
-> | `ep-10` | 10 | **11** | `episodes/ep-12-the-dashboard/` |
-> | `ep-11` | 11 | **12** | `episodes/ep-13-copilot-just-knows/` |
-> | `ep-12` | 12 | **14** | `episodes/ep-14-agentic-admin/` |
-> | `ep-13` | 13 | **15** | `episodes/ep-15-full-orchestra/` |
+> | Tag | Original # | Held in folder (now) |
+> |---|---|---|
+> | `ep-07` | 7 | `episodes/archive/ep-09-the-agent/` |
+> | `ep-08` | 8 | `episodes/archive/ep-10-autonomous-agents/` |
+> | `ep-09` | 9 | `episodes/archive/ep-11-code-first-agent/` |
+> | `ep-10` | 10 | `episodes/archive/ep-12-the-dashboard/` |
+> | `ep-11` | 11 | `episodes/ep-13-convergence/` (was `ep-13-copilot-just-knows`) |
+> | `ep-12` | 12 | `episodes/ep-14-agentic-admin/` |
+> | `ep-13` | 13 | `episodes/ep-15-full-orchestra/` |
+
+> **Better Together restructure (June 2026).** The arc was reframed as a multi-series story (Season 1 Build the Foundation, Season 2 Dataverse Better Together, Season 3 Operate It). Season 2 took over numbers **9 to 13**: ep 9 Dataverse + F&O, ep 10 Dataverse + Web IQ, ep 11 Dataverse + Fabric IQ, ep 12 Dataverse + Foundry IQ, ep 13 Convergence. The original built agent/dashboard episodes (declarative agent, autonomous Sentinel, code-first agent, generative dashboard) were moved to `episodes/archive/` and their capabilities **absorbed** as the runtimes for Season 2. Immutable tags `ep-01..ep-13` are unchanged; only the docs were reorganized. New tags from here use the new numbering.
 
 Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 

@@ -404,9 +404,9 @@ are deliberately sized to land:
   has content. Trackers B/D fall back to a `[Category] (no detail in source)`
   reason — still better than NULL.
 
-The Ep 12 preflight (`python episodes/ep-12-the-dashboard/preflight.py`) verifies
+The dashboard preflight (`python episodes/archive/ep-12-the-dashboard/preflight.py`) verifies
 all of the above on the live env. If it ever fails after a fresh ingest, fix it
-in the **Ep 3 sample CSVs**, not in Ep 12 — Ep 12 only renders what Ep 3 lands.
+in the **Ep 3 sample CSVs**, not in the dashboard (it only renders what Ep 3 lands).
 
 ## Why Ep 3 matters for Ep 13 (Copilot Just Knows)
 

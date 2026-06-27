@@ -1,28 +1,28 @@
 # Episode 15 — Full Orchestra + Your Turn
 
 **Status:** ✅ Built · 🎬 Not yet recorded
-**Features:** ⭐ Six surfaces firing on one launch row in 60 seconds · ⭐ Open-source CTA — `git clone` → row in your env in <30 sec · ⭐ Repo flips public on drop
-**Layer:** 🎼 All layers — the closer
-**Coding agent:** Every coding agent and surface from Eps 1–11, on one stage
+**Features:** ⭐ Six surfaces firing on one launch row in 60 seconds · ⭐ Open-source CTA: `git clone` → row in your env in <30 sec · ⭐ Repo flips public on drop
+**Layer:** 🎼 All layers, the closer
+**Coding agent:** Every coding agent and surface from Eps 1–14, on one stage
 **Runtime:** All of the above
 
 ---
 
-> **Hook (Part 1):** *"Twelve episodes. One launch. Watch every piece play together."*
+> **Hook (Part 1):** *"Fourteen episodes. One launch. Watch every piece play together."*
 > **Hook (Part 2):** *"Now it's your turn. Clone, paste, ship."*
 
-The closer. Two parts. Part 1 is the **orchestra montage** — every capability built across Eps 1–11 firing in sequence on the same launch. Part 2 is **Your Turn** — viewer goes from `git clone` to a row in their own Dataverse env in under 30 seconds. The repo flips public the moment this drops.
+The closer. Two parts. Part 1 is the **orchestra montage**: every capability built across Eps 1–14 firing in sequence on the same launch. Part 2 is **Your Turn**: viewer goes from `git clone` to a row in their own Dataverse env in under 30 seconds. The repo flips public the moment this drops.
 
 ## Why this matters in the arc
 
-Eleven episodes have argued *"this is real, look at this slice."* Ep 15 closes the loop with two assertions:
+Fourteen episodes have argued *"this is real, look at this slice."* Ep 15 closes the loop with two assertions:
 
-1. **The slices are one system.** When the gen page (Ep 11), the autonomous Sentinel (Ep 9), the M365 Copilot grounding (Ep 12), and the management plane (Ep 14) all light up against the same record, the audience sees the platform — not eleven feature demos.
-2. **It's all in your hands now.** The repo isn't a marketing artifact. It's a runnable system. Cloning it gives you the same launch-control rig in your env in minutes. The CTA isn't *"go read the docs"* — it's *"go clone the repo."*
+1. **The slices are one system.** When the gen page (Ep 13), the autonomous Sentinel (Ep 11), the M365 Copilot grounding (Ep 13), and the management plane (Ep 14) all light up against the same record, the audience sees the platform, not fourteen feature demos.
+2. **It's all in your hands now.** The repo isn't a marketing artifact. It's a runnable system. Cloning it gives you the same launch-control rig in your env in minutes. The CTA isn't *"go read the docs"*; it's *"go clone the repo."*
 
 ## Pre-record state — "perfect launch week"
 
-The demo env must be in this exact state before camera turns on. `episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py` enforces it idempotently — re-runnable between takes.
+The demo env must be in this exact state before camera turns on. `episodes/ep-15-full-orchestra/orchestra/setup_launch_week.py` enforces it idempotently, re-runnable between takes.
 
 | Thing | Required state |
 |---|---|
@@ -42,14 +42,14 @@ Six surfaces fire in sequence. Each ~10 sec including a 1-sec lead/tail. Every s
 
 | # | Surface | Episode it came from | Beat |
 |---|---|---|---|
-| 1 | **Gen page dashboard** | Ep 11 | Re-establishing shot. Opens green across the board. *"Same record we built piece by piece — here's the whole picture."* |
-| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 5 + Ep 10 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
-| 3 | **Python pandas report** | Ep 3 | `python scripts/python/status_report.py` — table prints all milestones at 100%, zero blockers. *"Same data, scripted."* |
-| 4 | **GitHub issues via virtual entity** | Ep 4 | Dataverse view of `lc_githubissue` — every issue closed. *"External system, in our table."* |
-| 5 | **M365 Copilot** | Ep 12 | Exec-style prompt: *"Is the Q3 Widget Launch ready to ship?"* → "All gates passed." *"No agent. Just Copilot grounded in this data."* |
-| 6 | **Mark Shipped** | Ep 1 + Ep 11 | Toggle `lc_launchstatus` to `Launched` from chat. Confetti. Gen page repaints. *"And this is what shipped looks like."* |
+| 1 | **Gen page dashboard** | Ep 13 | Re-establishing shot. Opens green across the board. *"Same record we built piece by piece, here's the whole picture."* |
+| 2 | **Custom action `lc_CalculateLaunchReadiness`** | Ep 5 + Ep 12 | Invoke from terminal via the code-first agent. Returns verdict `GO`, score ≥90. *"The business logic that decides 'ship it' is one call."* |
+| 3 | **Python pandas report** | Ep 3 | `python scripts/python/status_report.py`: table prints all milestones at 100%, zero blockers. *"Same data, scripted."* |
+| 4 | **GitHub issues via virtual entity** | Ep 4 | Dataverse view of `lc_githubissue`: every issue closed. *"External system, in our table."* |
+| 5 | **M365 Copilot** | Ep 13 | Exec-style prompt: *"Is the Q3 Widget Launch ready to ship?"* → "All gates passed." *"No agent. Just Copilot grounded in this data."* |
+| 6 | **Mark Shipped** | Ep 1 + Ep 13 | Toggle `lc_launchstatus` to `Launched` from chat. Confetti. Gen page repaints. *"And this is what shipped looks like."* |
 
-**Bookend:** cut back to the Ep 1 cold-open spreadsheet chaos shot for 2 sec, then back to the all-green dashboard. Caption: *"From this — to this. Twelve episodes."*
+**Bookend:** cut back to the Ep 1 cold-open spreadsheet chaos shot for 2 sec, then back to the all-green dashboard. Caption: *"From this, to this. Fourteen episodes."*
 
 ## Part 2 — Your Turn (~30 sec)
 
@@ -119,13 +119,13 @@ No new tables, columns, plugins, actions, or agents. Ep 15 is pure orchestration
 
 ## Follow-ups (not blockers for the doc; blockers for going public)
 
-- [ ] Tag commits `ep-1` through `ep-12`; push tags
+- [ ] Tag commits `ep-1` through `ep-14`; push tags
 - [ ] Write LinkedIn copy for Ep 15 + the pinned-post version that lives at the top of James's profile through the campaign window
 - [ ] Schedule the recording day (Part 1 + Part 2 + teaser in a single half-day session)
 
 ## Cross-references
 
 - **Every prior episode.** The whole point.
-- **Ep 1 cold open** — the bookend cut.
-- **Ep 11 dashboard** — the re-establishing shot for surface #1 of the montage.
-- **Ep 14** — the capacity beat may make a cameo if a frame opens up; otherwise omitted to keep Ep 15 focused on launch state, not env state.
+- **Ep 1 cold open:** the bookend cut.
+- **Ep 13 dashboard:** the re-establishing shot for surface #1 of the montage.
+- **Ep 14:** the capacity beat may make a cameo if a frame opens up; otherwise omitted to keep Ep 15 focused on launch state, not env state.

@@ -63,7 +63,7 @@ The on-camera beat is the agent showing the FetchXML it generated **before** run
 
 > *"Show me everything the agents in this environment can read or write."*
 
-Agents have spread through the campaign: Copilot Studio Coordinator (Ep 8), Sentinel autonomous agent (Ep 9), the code-first agent (Ep 10). An admin needs the **standing report**: what tables, what actions, by which agent — without crawling each one's settings page.
+Agents have spread through the campaign: the Copilot Studio agent (now Ep 10, the Web IQ build), the Sentinel autonomous runtime (now Ep 11, Fabric IQ), the code-first agent (now Ep 12, Foundry IQ). An admin needs the **standing report**: what tables, what actions, by which agent — without crawling each one's settings page.
 
 The pitch: *"Before I approve the next agent into production, what's the surface area of the ones I already have?"*
 
