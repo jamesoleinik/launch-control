@@ -77,6 +77,10 @@ the web does not know your launch has a CDN milestone. The agent is the join.
 
 ## Build steps (new Copilot Studio agent builder)
 
+> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
+> fill in your values (including `WEBIQ_API_KEY`), and select it with
+> `LC_ENV=ep-10-dataverse-webiq`. Never commit a real Web IQ key.
+
 1. **Create the agent**, give it the outside-in instructions (role: connect
    internal launch blockers to live external signal; always cite the source;
    never invent a row that is not in Dataverse).

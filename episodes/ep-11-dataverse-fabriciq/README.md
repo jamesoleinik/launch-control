@@ -66,6 +66,10 @@ it watches and reasons.
 
 ## Build steps (outline)
 
+> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
+> fill in your values (`FABRIC_WORKSPACE_ID`, `FABRIC_ONTOLOGY_ID`), and select
+> it with `LC_ENV=ep-11-dataverse-fabriciq`.
+
 1. Reuse the autonomous agent shell from `agents/launch-sentinel/` (triggers,
    idempotency, the `lc_statusupdate` effector).
 2. Connect Fabric IQ as a tool / knowledge source the agent can query for the

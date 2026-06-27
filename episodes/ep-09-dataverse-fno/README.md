@@ -64,6 +64,10 @@ production-grade alternative.
 
 ## Build steps (outline)
 
+> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
+> fill in your values, and select it with `LC_ENV=ep-09-dataverse-fno` so
+> `scripts/auth.py` targets this environment instead of the repo-root `.env`.
+
 1. Identify the F&O entities worth surfacing (budget, PO, inventory for the SKU).
 2. Stand up the connection (virtual tables or dual-write) between the launch
    environment and F&O.
