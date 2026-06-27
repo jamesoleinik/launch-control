@@ -122,6 +122,29 @@ environment at runtime).
 }
 ```
 
+## Code artifacts (tested, no Copilot Studio required)
+
+These prove the outside-in logic in code and double as the recording substrate.
+They read `WEBIQ_API_KEY` from the environment (see `.env.example`); never commit
+a real key.
+
+| File | What it does |
+|---|---|
+| `webiq_client.py` | Minimal stdlib JSON-RPC client for the Web IQ MCP (`initialize`, `tools/list`, `web`, `news`, `browse`). |
+| `preflight.py` | Verifies the endpoint is reachable and the key is entitled to `web`; exits non-zero if not recording-ready. |
+| `fuse_external_signal.py` | The outside-in demo: joins each internal launch blocker with live Web IQ signal and prints a citable briefing. Runs on a bundled sample by default, or `--dataverse` to read live blocked tasks. |
+
+```bash
+# PowerShell: $env:LC_ENV = "ep-10-dataverse-webiq"
+python episodes/ep-10-dataverse-webiq/preflight.py
+python episodes/ep-10-dataverse-webiq/fuse_external_signal.py
+python episodes/ep-10-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
+```
+
+The same `web` / `news` calls and the same fusion prompt then drop straight into
+the Copilot Studio agent's Web IQ tool, so the UI build is a wiring exercise, not
+a logic one.
+
 ## Pre-record checklist
 
 - [ ] Web IQ API key (or Entra ID token) entitled to at least `web` and `news`.
