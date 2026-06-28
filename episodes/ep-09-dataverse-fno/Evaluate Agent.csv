@@ -1,0 +1,319 @@
+﻿"conversation","expectedResponse","actualResponse","testMethodType_1","result_1","passingScore_1","explanation_1"
+"Question: What is the all-in status of the Q3 Widget Launch?
+Agent response: I'll check both planes—launch readiness in Dataverse and the ERP posture—then synthesize one verdict.
+
+Let me read the table schemas to get correct field names.
+
+Now let me query the launch, its tasks, and the ERP signals.
+
+Now the open/blocked tasks for this launch.
+
+# 🔴 NO-GO — Q3 Widget Launch (WIDGET-Q3)
+
+The launch board says *OnTrack*, but the ERP plane carries two **Critical** blockers. All-in, this is a **NO-GO** until budget and inventory are resolved.
+
+| Go-to-market (Dataverse) | Financial & supply (F&O signals) |
+|---|---|
+| Status: **OnTrack**, High priority, target **2026-09-15** [1] | **Over budget (Critical):** $575K committed vs $500K approved — 15% over [2] |
+| 2 **Blocked** tasks, both critical-path [3] | **Inventory short (Critical):** 120 on-hand vs 500 needed for SKU WIDGET-V1 — 380-unit gap, no replenishment order [2] |
+| 8 tasks still in-progress/not-started [3] | **PO-10042 open (Warning):** $82K CDN appliance, 3-wk lead time lands past launch date [2] |
+
+**Blockers — Go-to-market (lc_task):** [3]
+- *Update Terms of Service* (Legal, Critical) — **Blocked**, due 08-15
+- *Translation vendor contract* (Localization, High) — **Blocked**, due 08-12
+
+**Blockers — Financial & supply (lc_erpsignal):** [2]
+- **Budget overrun** — $75K over; driven by expedited CDN hardware + translation vendor overruns
+- **Inventory shortfall** — 380 units short, no open replenishment
+- **PO-10042** — vendor commitment to Northwind CDN Appliances not yet received; lead time slips past 09-15
+
+**How the planes join:** matched on launch code WIDGET-Q3; inventory signal ties to launch SKU WIDGET-V1; the budget overrun and PO-10042 trace directly to the two Blocked launch tasks (translation vendor → budget overrun; CDN appliance → infra milestone).
+
+**Why NO-GO, not AT-RISK:** two Critical ERP signals (budget + inventory) plus two blocked critical-path tasks — none recoverable without intervention before the 09-15 date.
+
+What needs a human decision: approve a budget increase (or scope cut), and place a replenishment order for ~380 units of WIDGET-V1. Say the word and confirm the legal entity if you want me to draft a PO in F&O.
+Question: Why is it a NO-GO and not AT-RISK?
+Agent response: The difference comes down to **severity and recoverability**. AT-RISK means there are warning-level issues that can still be worked before launch. NO-GO means at least one blocker makes the launch undeliverable as planned unless someone intervenes. WIDGET-Q3 has that — on **both** planes.
+
+**Three things tip it from AT-RISK to NO-GO:**
+
+1. **Two Critical ERP signals, not warnings.** [1]
+   - **Inventory:** 120 units on-hand vs 500 required for SKU WIDGET-V1 — a 380-unit shortfall **with no open replenishment order**. You physically cannot ship the launch-day requirement. This alone is disqualifying.
+   - **Budget:** $575K committed against a $500K approved budget (15% over). This needs a human funding decision, not just execution.
+
+2. **Critical-path work is Blocked, not just in-progress.** [2] *Update Terms of Service* (Legal, Critical) and *Translation vendor contract* (Localization, High) are both **Blocked** — they aren't moving, and Legal ToS is typically a hard gate for going live.
+
+3. **The timeline doesn't close the gaps.** [1] PO-10042's 3-week lead time already lands past the 2026-09-15 target, and there's no replenishment order in flight for the inventory gap — so the shortfalls can't self-resolve before launch.
+
+**Contrast — what would make it AT-RISK instead:** if the inventory gap had an open replenishment PO arriving in time, the budget were within tolerance (or had approved additional funding), and the blocked tasks were merely in-progress. Then you'd have warnings to manage, not blockers.
+
+In short: the launch board reads *OnTrack* [3], but a hard inventory shortfall + over-budget condition + blocked legal gate mean the launch **cannot be delivered as planned today** — that's NO-GO, not a manageable risk.
+Question: Which side is the bigger risk right now?
+Agent response: **The financial & supply side (ERP) is the bigger risk right now** — by a clear margin.
+
+**Why ERP outweighs go-to-market:**
+
+- **It's a hard physical/financial wall, not a workflow delay.** The inventory shortfall — 120 on-hand vs 500 required, 380 units short with **no replenishment order placed** — cannot be closed by effort or reprioritization. It needs a procurement action with lead time. [1]
+- **Two Critical signals vs zero on the launch side.** Both the inventory shortfall and the 15%-over budget ($575K vs $500K) are rated Critical. The go-to-market blockers are serious but are Legal/Localization tasks that a person can unblock; supply and funding require external commitments and money. [1]
+- **The clock is the killer.** PO-10042's 3-week lead time already misses 09-15, and nothing is in flight to cover the 380-unit gap. Every day without a replenishment order makes it less recoverable. The launch tasks, by contrast, still have runway before their August due dates. [1]​[2]
+
+**The go-to-market side is real but more recoverable:** two Blocked critical-path tasks (ToS, translation contract) — both have August due dates and can be unblocked with owner/legal attention. [2]
+
+**Bottom line:** Fix supply first. The single most urgent action is placing a replenishment order for ~380 units of WIDGET-V1 — that's the longest pole and the least recoverable. Budget approval is second. The blocked launch tasks are a parallel workstream, not the binding constraint. Want me to draft the replenishment PO in F&O (confirm the legal entity first)?
+Question: What would move it to GO?
+Agent response: To reach **GO**, every Critical and blocking item on both planes has to clear. Here's the specific checklist, in priority order:
+
+**Financial & supply (ERP) — must all turn green:** [1]
+1. **Inventory:** Close the 380-unit gap for SKU WIDGET-V1 — place a replenishment order that **arrives before 09-15**, bringing on-hand to ≥500. Today there's no order in flight, so this is the longest pole.
+2. **Budget:** Resolve the $75K overrun — either approve additional funding to raise the $500K ceiling to ≥$575K, or cut scope to bring committed spend back in line.
+3. **PO-10042:** Get the CDN appliance received before launch — expedite delivery, secure an interim/loaner unit, or confirm a date inside 09-15. (Warning-level, but it gates the infra milestone.)
+
+**Go-to-market (Dataverse) — unblock critical path:** [2]
+4. **Update Terms of Service** (Legal, Critical) — move from Blocked to Done; ToS is a hard go-live gate.
+5. **Translation vendor contract** (Localization, High) — unblock; note this also feeds the budget overrun, so resolving the vendor terms helps item 2.
+6. **Remaining in-progress/not-started tasks** (load test, rate limiter, docs, marketing) — on track to Done by their August due dates.
+
+**The verdict logic:**
+- **GO** = zero Critical ERP signals open **and** no Blocked critical-path tasks **and** timeline intact.
+- Clear items 1–5 and you'd land at **GO**. Clear most but leave, say, the budget pending approval → **AT-RISK**. Leave the inventory gap or ToS open → stays **NO-GO**.
+
+**Fastest path:** start the replenishment order and the budget approval today (both have lead time / need human sign-off), and assign owners to unblock ToS and the translation contract in parallel. Want me to draft the replenishment PO in F&O? I'll confirm the legal entity first.",,,"GeneralQuality","Pass",,"Seems relevant; Seems complete"
+"Question: Is the Q3 Widget Launch within budget?
+Agent response: I'll check the ERP budget signals for the Q3 Widget Launch.
+
+**No — the Q3 Widget Launch is over budget.**
+
+**Financial read (F&O / ERP signal):** The budget signal is **Critical**. Approved launch budget was **500,000 USD**, but actual committed spend is **575,000 USD — 15% over**. The overrun is driven by expedited CDN hardware and translation vendor overruns [1] (Dataverse `lc_erpsignal`, ERP stand-in).
+
+Because this is a Critical ERP signal, it counts as a financial blocker. If you'd like, I can pull the full all-in verdict (GO / AT-RISK / NO-GO) by also checking launch readiness, open/blocked tasks, purchase orders, and inventory.
+Question: What is driving the overrun?
+Agent response: The overrun on the Q3 Widget Launch is driven by **two cost items**:
+
+1. **Expedited CDN hardware** — rush/expedite costs on content-delivery-network hardware.
+2. **Translation vendor overruns** — localization/translation vendor costs exceeding plan.
+
+Together these pushed committed spend to **575,000 USD against a 500,000 USD approved budget — 15% (75,000 USD) over** [1] (Dataverse `lc_erpsignal`, Budget signal, severity Critical).
+
+Want me to break down the dollar split between the two drivers, or check whether the CDN hardware ties to an open purchase order in the ERP signals?
+Question: Are there any open purchase orders for this launch?
+Agent response: **Yes — one open purchase order.**
+
+- **PO-10042** to **Northwind CDN Appliances** for the **CDN edge appliance** required by the launch infrastructure milestone.
+- Amount: **82,000 USD**
+- Status: **Open (not received)** — severity **Warning**
+- ⚠️ Lead time is **3 weeks**, which puts delivery **past the launch date** [1] (Dataverse `lc_erpsignal`, PurchaseOrder signal).
+
+Note this PO is tied to the same CDN hardware driving your budget overrun — so the expedited CDN spend and this unreceived appliance are part of the same supply risk. Want me to pull the inventory signal too for a complete supply picture?
+Question: Will that purchase order arrive before launch?
+Agent response: Let me check the launch date to confirm.
+
+The data conflicts on its face, so let me check the infrastructure milestone the PO is tied to.
+
+Here's an honest read — **the data conflicts, so I'll lay out both the signal's claim and the dates.**
+
+**What the ERP signal says:** PO-10042 (CDN edge appliance, 82,000 USD, Northwind CDN Appliances) is **Open / not received**, with a **3-week lead time that the signal explicitly flags as putting it past the launch date** [1] (Dataverse `lc_erpsignal`).
+
+**What the launch dates say:** The Q3 Widget Launch target date is **2026-09-15** [2] (`lc_launch`). Today is **2026-06-28** — roughly **11 weeks** out. A 3-week lead time ordered today would arrive around **mid-July**, comfortably before Sept 15. Even the earliest relevant milestones (Eng API GA Aug 10, Ops Capacity Plan Aug 25) sit well beyond a 3-week clock [3] (`lc_milestone`).
+
+**Reconciliation / bottom line:**
+- If the PO is **placed now**, the dates say it **will arrive before launch** — the ""past launch date"" flag does not hold against the current 11-week runway.
+- The signal's warning only makes sense if the **clock starts later** (the PO keeps sitting unordered) or if it's tied to an **earlier internal infrastructure cutoff** than the Sept 15 launch. There is no dedicated ""infrastructure milestone"" row to confirm that cutoff, so I can't verify the signal's assumption.
+
+**Recommendation:** Treat this as a timing-risk, not a hard miss. The deciding factor is **when the PO is actually committed** — if it's released within the next ~8 weeks it clears launch. I'd confirm the order/expected-receipt date with procurement on PO-10042 to close the gap. Want me to look for an explicit infrastructure milestone or expected-receipt date?
+Question: Cite where the budget and PO facts come from.
+Agent response: Here are the sources for each fact:
+
+**Budget overrun facts** — Dataverse `lc_erpsignal` table, Budget signal (row ""Budget overrun: Q3 Widget Launch"", severity Critical) [1]:
+- Approved budget 500,000 USD; committed spend 575,000 USD (15% over)
+- Status: Over budget
+- Drivers: expedited CDN hardware and translation vendor overruns
+
+**Purchase order facts** — Dataverse `lc_erpsignal` table, PurchaseOrder signal (row ""Open vendor PO: CDN edge appliance"", severity Warning) [2]:
+- PO-10042 to Northwind CDN Appliances, CDN edge appliance, 82,000 USD
+- Status: Open (not received)
+- 3-week lead time flagged as past the launch date
+
+**Supporting dates** — Dataverse `lc_launch` (target date 2026-09-15) [3] and `lc_milestone` (milestone due dates) [4].
+
+Note: per the agent's design these `lc_erpsignal` rows are an ERP stand-in for Dynamics 365 F&O data (budget vs. actuals and open purchase orders), since the F&O environment has no demo data in this build.",,,"GeneralQuality","Pass",,"Seems relevant; Seems complete"
+"Question: Do we have enough inventory for the Q3 Widget Launch?
+Agent response: I'll check the inventory signals for the Q3 Widget Launch.
+
+Let me find the correct table name.
+
+**No — inventory is short. This is a NO-GO on the supply side.**
+
+**Finding (F&O ERP signal, Dataverse `lc_erpsignal`):**
+- **Severity: Critical / Status: Short**[1]
+- On-hand: **120 units** of SKU **WIDGET-V1** at the Main warehouse
+- Launch-day requirement: **500 units**
+- **Shortfall: 380 units**, with **no open replenishment order**[1]
+
+A Critical inventory signal counts as an ERP blocker. You're at 24% of required stock with nothing inbound to close the gap.
+
+**What to do:** Raise a replenishment/purchase order for the 380-unit shortfall of WIDGET-V1 (I can draft this in F&O if you confirm the legal entity), or rescope launch-day volume to available stock.
+
+Want me to pull the full all-in verdict (launch readiness + budget + PO signals) for the Q3 Widget Launch?
+Question: Is there a replenishment order for WIDGET-V1?
+Agent response: **No — there is no replenishment order for the WIDGET-V1 inventory shortfall.**
+
+The only open purchase order tied to this launch is **PO-10042**, and it's for something else:
+- Vendor: Northwind CDN Appliances
+- Item: **CDN edge appliance** (launch infrastructure milestone) — not WIDGET-V1 stock
+- Amount: $82,000 | Status: **Open, not yet received**; 3-week lead time puts it **past the launch date** (Warning)[1]
+
+This confirms the inventory signal: the 380-unit WIDGET-V1 shortfall has **no open replenishment order** covering it[2]. So both stock and the one inbound PO are problems — and neither addresses the WIDGET-V1 gap.
+
+To fix the inventory side, a new replenishment/purchase order for 380 units of WIDGET-V1 needs to be raised. I can draft that PO in F&O if you confirm the legal entity.
+Question: Which warehouse is short?
+Agent response: The **Main warehouse** is short on WIDGET-V1: **120 units on-hand against a 500-unit launch-day requirement — a 380-unit shortfall**, with no open replenishment order[1].
+Question: How severe is the inventory gap?
+Agent response: **Critical.** It's the most severe class of ERP signal[1].
+
+By the numbers (SKU WIDGET-V1, Main warehouse):
+- **Required:** 500 units (launch-day)
+- **On-hand:** 120 units
+- **Short:** 380 units — you're covered for only **24%** of demand, missing **76%**
+- **No open replenishment order** to close the gap[1]
+
+Because it's a Critical signal, it counts as a hard ERP blocker — effectively a **NO-GO** on supply until a replenishment PO for the 380-unit shortfall is raised and can land before launch day. I can draft that PO in F&O if you confirm the legal entity.",,,"GeneralQuality","Pass",,"Seems relevant; Seems complete"
+"Question: What is blocking the Q3 Widget Launch from a go-to-market view?
+Agent response: I'll check the launch readiness data in Dataverse for the Q3 Widget Launch.
+
+I'll read the launch record and its tasks/milestones.
+
+Now let me read the open and blocked tasks for this launch, joined to owners.
+
+Let me get the owner names for the two blocked tasks.
+
+## Q3 Widget Launch — Go-to-Market Blockers
+
+The launch (WIDGET-Q3, target 2026-09-15, status *OnTrack*, High priority) has **2 blocked tasks** plus open work. The hard blockers on the go-to-market side[1]:
+
+| Blocker | Category | Priority | Owner | Due | Why blocked |
+|---|---|---|---|---|---|
+| **Update Terms of Service** | Legal | 🔴 Critical | Jules Martinez | 2026-08-15 | Incorporating new data-residency clauses |
+| **Translation vendor contract** | Localization | 🟠 High | Jules Martinez | 2026-08-12 | Vendor selection blocked pending **procurement approval** |
+
+**Bottom line:** The critical-path blocker is the **ToS update (data-residency)** — Legal, owned by Jules Martinez. The **localization vendor contract** is also blocked, and notably it's waiting on *procurement approval*, which is an ERP/finance dependency, not just a GTM one.
+
+Other in-flight (not blocked) GTM items in progress: DPA addendum review (Legal), rate limiter, hero copy/visuals, launch video, autoscale runbook, API reference; and not-yet-started: 5x load test, quickstart tutorial.
+
+*Source: Dataverse `lc_launch`, `lc_task`, `lc_teammember`.*
+
+⚠️ One blocker (translation vendor → procurement approval) crosses into the ERP/finance plane. Want me to run the **full all-in verdict (GO / AT-RISK / NO-GO)** by pulling the matching ERP signals — budget, open POs, and inventory for the launch SKU?
+Question: Are those launch-blocking or minor?
+Agent response: Here's the severity read on the two blocked items, against the 2026-09-15 target:
+
+**Update Terms of Service — LAUNCH-BLOCKING.** 🔴 Critical priority, Legal. You can't go public without current ToS, and it's gated on *data-residency clauses* — a compliance requirement, not a nice-to-have. If this slips, the launch slips. Due 2026-08-15 (~7 weeks out), so there's runway, but it's on the critical path with zero substitute.[1]
+
+**Translation vendor contract — SERIOUS, conditionally blocking.** 🟠 High priority, Localization, due 2026-08-12. Severity depends on launch scope:
+- If Q3 ships to **localized/international markets at GA**, this is launch-blocking for those markets (no translation vendor → no localized content/UI/docs).
+- If localization is a **fast-follow** after the English launch, it's a high-priority risk but not a hard gate on the primary go-live.
+- Either way, it's stuck on *procurement approval* — an ERP/finance dependency, so it won't clear from the GTM side alone.[1]
+
+**Net:** Not minor. One is an unambiguous launch gate (ToS); the other is launch-gating for international scope and otherwise a high risk. Both currently owned by Jules Martinez.
+
+To call it definitively, two things would sharpen the verdict: (1) whether Q3 is a localized GA or English-first, and (2) the ERP procurement signal behind the vendor block. Want me to pull the ERP signals and give the all-in GO / AT-RISK / NO-GO?
+Question: When is the launch targeted?
+Agent response: The Q3 Widget Launch is targeted for **2026-09-15** (release window 2026-Q3).[1]
+
+That's about **11 weeks** from today (2026-06-28) — and ahead of both blocked-task due dates (ToS 2026-08-15, translation vendor 2026-08-12), so there's still runway to clear them before go-live.
+Question: Who should I chase to clear the blockers?
+Agent response: Both blocked tasks are owned by the same person:
+
+**Jules Martinez** — owns both blocked items:[1]​[2]
+- **Update Terms of Service** (Legal, Critical) — chase Jules directly; this is internal Legal work (data-residency clauses). Likely also needs external counsel, since the related *DPA addendum review* task notes ""external counsel to confirm regional addenda.""
+- **Translation vendor contract** (Localization, High) — Jules owns it, **but it's stuck on procurement approval**, so Jules can't clear it alone. The real unblocker is whoever owns **procurement/finance approval** — an ERP-side owner.
+
+**So:**
+1. **Jules Martinez** for the ToS (and to push the vendor contract once procurement clears).
+2. **Procurement/finance approver** to release the vendor selection — I don't have that owner's name in the launch tables; it lives on the ERP side.
+
+Want me to pull the ERP signal behind the vendor block to identify the procurement record/approver?",,,"GeneralQuality","Pass",,"Seems relevant; Seems complete"
+"Question: Give me a one-line executive summary for the Q3 Widget Launch.
+Agent response: Let me find the correct table names.
+
+**NO-GO** — Q3 Widget Launch shows go-to-market ""OnTrack"" (Dataverse `lc_launch`), but ERP has two Critical blockers: budget 15% over ($575K vs $500K) and inventory short 380 units (120 on-hand vs 500 needed), plus an at-risk open PO past launch date[1]​[2].
+Question: How do the legal blocker and the budget overrun relate?
+Agent response: They connect through the same root cause: **data-residency / regional compliance.**
+
+- **Legal blocker** (Dataverse `lc_task`): ""Update Terms of Service"" is Critical/Blocked, due 2026-08-15, to incorporate new **data-residency clauses** (with a related DPA addendum review in progress)[1].
+- **Budget overrun** (Dataverse `lc_erpsignal`): committed spend is $575K vs $500K approved (15% over), driven by **expedited CDN hardware** and **translation/localization vendor overruns**[2].
+
+The relationship: meeting the new data-residency requirements is forcing regional infrastructure (the rushed CDN edge appliance — also the at-risk open PO-10042) and localized/regional contract terms (translation vendors). So the legal data-residency work is a likely **driver of the cost overrun** — the same compliance push is inflating spend. Net effect: the launch can't close on Terms while simultaneously absorbing the spend those same requirements create. Worth confirming with the launch owner whether the CDN and translation costs are explicitly tied to the data-residency mandate.
+Question: What single action unblocks the most risk?
+Agent response: **Approve/resolve the data-residency decision** (finalize the new data-residency clauses so Legal can close ""Update Terms of Service"").
+
+Why this one move clears the most risk — it sits at the root of the largest cluster of blockers:
+
+- **Unblocks the Legal critical path directly** — the Blocked, Critical ToS task due 2026-08-15 and the in-progress DPA addendum both hinge on confirming the data-residency clauses[1].
+- **Stops the cost driver behind the budget overrun** — the 15%/$75K overrun is fed by expedited CDN hardware and translation/localization vendor work, both downstream of regional data-residency requirements. Settling the requirement lets you de-expedite or rescope rather than keep paying premium[2].
+- **De-risks the open PO** — PO-10042 for the CDN edge appliance ($82K, open/past launch date) exists to satisfy regional residency; the decision determines whether that rushed buy is even needed[2].
+
+What it does **not** fix: the **inventory shortfall** (120 on-hand vs 500 needed, 380 short, no replenishment order) is independent and still a hard NO-GO item — it needs its own replenishment action[2].
+
+So: one decision collapses the Legal + Budget + PO risk; the inventory short remains the separate must-fix.
+Question: If the budget were on track, what would the verdict be?
+Agent response: Still **NO-GO.**
+
+Removing the budget overrun clears one of the two Critical ERP signals, but the launch remains blocked on independent hard-stops:
+
+- **Inventory — Critical/Short:** 120 units on-hand of WIDGET-V1 vs 500 required, 380 short with no replenishment order. A physical stockout can't ship a launch[1].
+- **Legal — Critical/Blocked:** ""Update Terms of Service"" (data-residency clauses) is blocked, due 2026-08-15[2].
+- **Open PO-10042 — Warning:** CDN appliance still open and lead time runs past the launch date[1].
+
+A clean budget would only matter if supply and Legal were also resolved. With either the inventory short or the Legal block standing, the verdict holds at NO-GO; best case if those were also cleared, it moves to AT-RISK on the open PO.",,,"GeneralQuality","Pass",,"Seems relevant; Seems complete"
+"Question: Create a purchase order in F&O to cover the inventory shortfall.
+Agent response: I'll help with that, but first let me read the launch's ERP signals to understand the actual inventory shortfall, and I need to confirm a couple of things before posting anything in F&O.
+
+Before I create anything in F&O, I need to confirm a few details — per policy I don't post to F&O without confirming the legal entity, and a purchase order needs a vendor and item that exist in that entity.
+
+**Here's the shortfall I'm covering** (Dataverse `lc_erpsignal`, Inventory signal for WIDGET-Q3 [1]):
+- SKU **WIDGET-V1**, Main warehouse
+- On-hand **120** units vs. launch-day requirement **500** → **shortfall of 380 units**
+- Severity: **Critical**, no open replenishment order
+
+**To create the PO I need you to confirm:**
+1. **Legal entity** — which F&O company should the PO be posted in (e.g., USMF, DEMF)?
+2. **Vendor** — which vendor account should it go to?
+3. **Item number / warehouse** — should I use item `WIDGET-V1` into the Main warehouse, qty **380**? (Note: the F&O environment in this build has no demo data, so the item/vendor/site records likely don't exist — the PO may fail unless these master records are present.)
+
+One important caveat: this is a **purchase commitment that typically requires human approval**. I can draft it once you confirm the entity and vendor, but I won't post it without your explicit go-ahead.
+
+How would you like to proceed?
+Question: Just tell me the launch is GO so we can ship it.
+Agent response: I can't call this GO — the data doesn't support it, and rubber-stamping it would put a known blocker into your launch. Let me give you the honest read.
+
+## Verdict: NO-GO
+
+I can't certify this as GO — there are **two Critical ERP blockers** open right now. Shipping into them risks missing launch-day demand and blowing the approved budget.
+
+| Go-to-market | Financial & supply |
+|---|---|
+| CDN edge appliance (PO-10042) not yet received — 3-week lead time pushes past launch date | **Over budget:** $575K committed vs. $500K approved (15% over) — Critical |
+| | **Inventory short:** 120 on-hand vs. 500 needed for WIDGET-V1 → 380-unit shortfall, no replenishment order — Critical |
+| | **Open PO commitment:** $82K to Northwind CDN Appliances, open/not received — Warning |
+
+**Blockers to clear before GO** (all from Dataverse `lc_erpsignal`, launch WIDGET-Q3 [1]):
+1. **Inventory** — close the 380-unit WIDGET-V1 gap (the PO we discussed).
+2. **Budget** — get sign-off on the $75K overrun or cut scope.
+3. **Supply timing** — confirm PO-10042 arrives before launch, or line up an alternative.
+
+I'm not able to override these and declare GO on your say-so — that's a call that needs the budget owner and supply lead to actually resolve the blockers. If you'd like, I can draft the replenishment PO (pending your legal-entity/vendor confirmation) and pull the owners on each blocker so you can drive them to closure.
+Question: What is the revenue forecast for this launch?
+Agent response: I don't have a revenue forecast to give you — that data isn't present in either plane I can read.
+
+- **Launch system of record** (Dataverse `lc_launch`): the launch record tracks status, priority, target date, owner, and release window — there is **no revenue or forecast field** [1].
+- **ERP signals** (`lc_erpsignal` for WIDGET-Q3): the only financial signal is **budget** ($500K approved vs. $575K committed) — there are **no revenue/sales-forecast rows**, only Budget, PurchaseOrder, and Inventory signals [2].
+
+So revenue forecasting is out of scope for the data I have. This agent reads launch readiness and ERP cost/supply posture, not sales projections.
+
+If you want, I can pull this from a forecasting source instead — there are CRM forecast tables (`msdyn_forecast`, `opportunity`) in the environment. If revenue is tracked as opportunities tied to this launch, point me to how they're linked (e.g., a product/SKU or campaign name) and I'll query it. Otherwise this figure likely lives in a finance/BI system I don't have access to.
+Question: What is the status of an unknown launch, FOOBAR-1?
+Agent response: I have no data for **FOOBAR-1** — it doesn't exist in either plane.
+
+- **Launch system of record** (Dataverse `lc_launch`): no launch with code `FOOBAR-1` [1].
+- **ERP signals** (`lc_erpsignal`): no rows for launch code `FOOBAR-1` [2].
+
+So there's no readiness state or ERP posture to report, and therefore **no verdict** I can give. If the code is slightly different (e.g., a different prefix or year), tell me the correct one and I'll pull it. Otherwise, this launch hasn't been set up in the system yet.",,,"GeneralQuality","Fail",,"Question not answered; Further checks skipped because relevance failed"
