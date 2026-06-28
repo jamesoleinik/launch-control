@@ -2,7 +2,7 @@
 
 Read-only probe of the Finance & Operations side of the Episode 9 environment.
 It does NOT seed anything; it tells you whether the ERP half has the master and
-transactional data the Launch ERP Readiness agent needs to produce its money shot
+transactional data the Launch ERP Readiness agent needs to produce its headline result
 (budget, vendor PO, inventory for the launch SKU).
 
 Why this is a check and not a seeder
@@ -39,7 +39,7 @@ import requests
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 from scripts import auth  # noqa: E402
 
-# The entities the Ep 9 money shot reads, with a friendly label.
+# The entities the Ep 9 headline result reads, with a friendly label.
 CHECKS = [
     ("Currencies", "currencies"),
     ("VendorsV2", "vendors"),
@@ -100,7 +100,7 @@ def main() -> int:
 
     print()
     if ready:
-        print("PASS: F&O has data for the Ep 9 money shot.")
+        print("PASS: F&O has data for the Ep 9 headline result.")
         return 0
     print("NOT READY: the ERP half is empty or unreachable. Provision the F&O "
           "environment WITH demo data (admin center / LCS demo topology), or "

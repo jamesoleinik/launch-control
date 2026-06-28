@@ -2,7 +2,7 @@
 
 This plan lets a separate Copilot CLI session build Episode 11 independently of
 the Ep 9 (F&O) and Ep 10 (Web IQ) sessions. Read it top to bottom, then work the
-checklist. The episode narrative and money shot live in `README.md`; this file is
+checklist. The episode narrative and headline result live in `README.md`; this file is
 the build runbook.
 
 ## One-line goal
@@ -89,7 +89,7 @@ live record to the modeled norm, and escalates only genuine anomalies by writing
       duplicate an analytical artifact into a Dataverse row.
 - [ ] Set the trigger: a scheduled morning sweep (and/or a "task blocks" event).
 
-### D. Validate the money shot
+### D. Validate the headline result
 - [ ] Run the scheduled sweep with no human prompt.
 - [ ] Dataverse reports the live blocker count; Fabric IQ reports the modeled norm;
       the agent writes a grounded `lc_statusupdate` only when the live count is a

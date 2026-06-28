@@ -60,7 +60,7 @@ User → "Should we slip Q3 Widget Launch?"
                    Recommend escalation; here are the blockers..."
 ```
 
-The third one is the money shot. **The agent doesn't know — or care — that
+The third one is the headline result. **The agent doesn't know — or care — that
 one tool is OData-over-MCP, one is a grounded knowledge index, and one is a
 sandboxed C# plugin.** From the prompt, they're all "tools."
 

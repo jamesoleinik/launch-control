@@ -65,7 +65,7 @@ I'll invoke the Custom API per the skill's instructions and report the result.
 ╰─────────────────╯
 ```
 
-The **brain-sync table** is the Episode 11 money shot. Every line in that table came from a `GET /api/data/v9.2/skills` call against the Dataverse environment, two seconds before the agent started. Edit a skill in Dataverse, re-run, the line counts shift — and so does the verdict downstream.
+The **brain-sync table** is the Episode 11 headline result. Every line in that table came from a `GET /api/data/v9.2/skills` call against the Dataverse environment, two seconds before the agent started. Edit a skill in Dataverse, re-run, the line counts shift — and so does the verdict downstream.
 
 ---
 

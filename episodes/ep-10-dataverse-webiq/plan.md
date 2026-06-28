@@ -2,7 +2,7 @@
 
 This plan lets a separate Copilot CLI session build Episode 10 independently of
 the Ep 9 (F&O) and Ep 11 (Fabric IQ) sessions. Read it top to bottom, then work
-the checklist. The episode narrative and money shot live in `README.md`; this file
+the checklist. The episode narrative and headline result live in `README.md`; this file
 is the build runbook.
 
 ## One-line goal
@@ -56,7 +56,7 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
       `lc_ep09erpreadiness` the same way. The agent must follow this skill.
 - [ ] Create the agent. Paste the Instructions from `agent-instructions.md` in
       this folder (create it; mirror the Ep 9 `agent-instructions.md` format:
-      role, tools, behavior, money-shot script).
+      role, tools, behavior, headline script).
 - [ ] Add **Tool 1: Microsoft Dataverse MCP Server (Preview)** for internal state.
 - [ ] Add **Tool 2: Web IQ MCP Server**. Endpoint `https://api.microsoft.ai/v3/mcp`,
       auth via `x-apikey` header (API key) or Entra ID token. Keep `news`, `web`,
@@ -64,9 +64,9 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
 - [ ] Pick the model in the builder.
 - [ ] (Optional) Enable Memory (Preview) for multi-turn "walk me through each
       blocker".
-- [ ] Preview with the money-shot prompt, then Publish.
+- [ ] Preview with the headline prompt, then Publish.
 
-### C. Validate the money shot
+### C. Validate the headline result
 - [ ] Prompt: "Give me the external risk picture for the Q3 Widget Launch."
 - [ ] The agent returns internal blockers (Dataverse) + live external signal
       (Web IQ `news`/`web`/`browse`) and **cites a source for every external
@@ -78,7 +78,7 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
 1. `episodes/ep-10-dataverse-webiq/agent-instructions.md` (paste-ready Instructions,
    same shape as Ep 9's).
 2. A short note in `README.md` under a "Build status" line recording that the
-   agent is built + the money shot validated (date, model picked).
+   agent is built + the headline result validated (date, model picked).
 3. No secrets committed: the Web IQ key stays in the gitignored `.env` only.
 
 ## Guardrails

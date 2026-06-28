@@ -13,7 +13,7 @@
 > **Building this episode?** Follow `plan.md` in this folder. It is the
 > self-contained build runbook for a dedicated CLI session: prerequisites, the
 > scriptable checks (already-tested code), the Copilot Studio agent steps, and the
-> money-shot validation. Ep 10 is the most self-contained of the Season 2 builds
+> headline validation. Ep 10 is the most self-contained of the Season 2 builds
 > and can run fully in parallel with Ep 9 and Ep 11.
 
 ---
@@ -61,7 +61,7 @@ see, and tie it back to the specific internal blockers it affects.
 - The model (your pick in the new builder) synthesizes a recommendation that
   cites both an internal row and an external source.
 
-### The money shot (uses real Web IQ responses captured during research)
+### The headline result (uses real Web IQ responses captured during research)
 
 > *"Give me the external risk picture for the Q3 Widget Launch."*
 

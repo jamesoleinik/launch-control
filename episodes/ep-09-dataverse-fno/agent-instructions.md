@@ -3,12 +3,24 @@
 Paste the block below into the **Instructions** box of the Copilot Studio agent
 shell that already has two tools attached: **Microsoft Dataverse MCP Server
 (Preview)** and **Dynamics 365 ERP MCP**. No other configuration is required for
-the money-shot demo.
+the headline demo.
 
 > The agent reasons across two planes that now live on one platform: the
 > go-to-market state (Dataverse `lc_` tables) and the financial / supply state
 > (Finance & Operations, reached through the ERP MCP). It returns one all-in
 > verdict per launch.
+
+> **Current build note (ERP-signal stand-in).** The target F&O environment ships
+> as a bare shell (only the empty `dat` template company), so the live `mserp_`
+> virtual entities are empty and scripted F&O writes are rejected by the X++
+> deserializer. Until the environment is provisioned with demo data, the ERP
+> posture is represented by a small, clearly labeled stand-in table that lives in
+> the SAME Dataverse environment: `lc_erpsignal` (budget, open purchase order,
+> inventory shortfall), seeded by `seed_erp_signals.py`. The agent reads it
+> through the Dataverse MCP. Once F&O demo data is provisioned, repoint the ERP
+> reads to the live F&O virtual entities / the Dynamics 365 ERP MCP and retire
+> `lc_erpsignal`. The narrative ("CRM risk and ERP risk on one record") is
+> identical either way.
 
 ---
 
@@ -36,6 +48,11 @@ Tools and what each owns:
   versus actuals, open purchase orders (vendor commitments that are not yet
   received), and on-hand inventory for the launch SKU. Use ERP form and API tools
   only when the user explicitly asks you to act in F&O.
+  In the current build the F&O environment has no demo data, so read the ERP
+  posture from the `lc_erpsignal` table in Dataverse instead (filter by
+  lc_launchcode, for example WIDGET-Q3): each row is one ERP signal with
+  lc_signaltype (Budget, PurchaseOrder, Inventory), lc_severity, lc_status,
+  lc_amount, and lc_detail. Treat any Critical signal as an ERP blocker.
 
 How to answer a status question:
 1. Read the launch row and its open or blocked tasks from Dataverse.
@@ -62,7 +79,7 @@ approve.
 
 ---
 
-## Money-shot script
+## Headline script
 
 Ask: **"What is the all-in status of the Q3 Widget Launch?"**
 

@@ -53,7 +53,7 @@ explicit and inspectable.
 - The Python agent fuses them and returns a recommendation that cites a Dataverse
   row **and** a Foundry IQ document.
 
-### The money shot
+### The headline result
 
 > *"Should we slip Q3 Widget, and what is the precedent?"*
 

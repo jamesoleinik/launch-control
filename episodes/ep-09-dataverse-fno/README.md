@@ -16,11 +16,21 @@
 > builder) already has the **Dataverse MCP** and **Dynamics 365 ERP MCP** tools
 > attached; paste `agent-instructions.md` (this folder) into its Instructions.
 >
-> **Open blocker (F&O data).** The F&O side ships as a bare `dat` template company
-> with no demo data, and OData writes fail at the X++ layer, so the ERP signals the
-> money shot needs cannot be scripted. The environment must be provisioned WITH
-> demo data (admin center / LCS demo topology) or loaded via the Data Management
-> Framework. Verify with `python fno_readiness.py` (exits 0 when ready).
+> **ERP signals (stand-in, in place now).** The F&O side ships as a bare `dat`
+> template company with no demo data, and OData writes fail at the X++ layer, so
+> the live `mserp_` virtual entities cannot be scripted. To keep the build moving
+> and make the headline result demonstrable today, a small, clearly labeled
+> stand-in table `lc_erpsignal` is seeded in the SAME environment (run
+> `python seed_erp_signals.py`): three signals for the Q3 Widget Launch (budget
+> 575k over a 500k approval, open vendor PO-10042 for the CDN appliance, inventory
+> 120 of 500 for WIDGET-V1). The agent reads it through the Dataverse MCP. This is
+> a temporary stand-in.
+>
+> **Swap-later (real F&O data).** Provision the environment WITH demo data (admin
+> center / LCS demo topology) or load it via the Data Management Framework, verify
+> with `python fno_readiness.py` (exits 0 when ready), then repoint the agent's ERP
+> reads to the live F&O virtual entities / Dynamics 365 ERP MCP and retire
+> `lc_erpsignal`. The narrative is identical either way.
 
 ---
 
@@ -67,7 +77,7 @@ Recommended hero for the episode: **virtual tables** (lighter, on-camera fast,
 and consistent with the Ep 4 federation story). Mention dual-write as the
 production-grade alternative.
 
-## The money shot
+## The headline result
 
 > *"What is the all-in status of the Q3 Widget Launch?"*
 

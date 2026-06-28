@@ -11,7 +11,7 @@
 > **Building this episode?** Follow `plan.md` in this folder. It is the
 > self-contained build runbook for a dedicated CLI session: prerequisites, the
 > Fabric IQ ontology steps, the autonomous-agent wiring (reusing
-> `agents/launch-sentinel/`), and the money-shot validation. This is the heaviest
+> `agents/launch-sentinel/`), and the headline validation. This is the heaviest
 > Season 2 build; land the scriptable parts first, then the browser wiring. Runs in
 > parallel with Ep 9 and Ep 10.
 
@@ -59,7 +59,7 @@ it watches and reasons.
   compares the live record to the Fabric IQ baseline, and escalates only the
   genuinely abnormal cases.
 
-### The money shot
+### The headline result
 
 > Scheduled morning sweep, no human prompt.
 

@@ -33,7 +33,7 @@ agent itself — paste each prompt into the Test panel and check the trace.
 8. **"Show me overdue milestones for Q3 Widget Launch."**
    - Expected tool: Dataverse MCP `lc_milestone` query
 
-## Both — Knowledge + MCP (the money shot)
+## Both — Knowledge + MCP (the headline result)
 
 9. **"Should we slip Q3 Widget Launch by a week? What does our policy say and what's the live status?"**
    - Expected tools: `Dataverse Knowledge` (Escalation Policy) + Custom API + Dataverse MCP
