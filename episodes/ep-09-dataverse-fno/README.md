@@ -32,6 +32,18 @@
 > reads to the live F&O virtual entities / Dynamics 365 ERP MCP and retire
 > `lc_erpsignal`. The narrative is identical either way.
 >
+> **Automating real F&O loads (DMF package API).** `dmf_package_import.py` drives
+> the supported Data management package REST API (GetAzureWriteUrl, blob upload,
+> ImportFromPackage, status polling) so F&O loads can be scripted instead of
+> hand-clicked. Verified on this env: auth, package upload, and ImportFromPackage
+> all succeed (HTTP 200, real execution id), so the automation itself works. The
+> queued import does not complete here because the environment's batch framework is
+> not processing jobs and the bare `dat` company lacks base configuration. Both are
+> provisioning conditions, the same prerequisites the manual Data management path
+> needs. Once the env is provisioned (batch running plus base setup), run
+> `python dmf_package_import.py --selftest-currency` then load vendor / item / PO
+> packages, verify with `fno_readiness.py`, and the stand-in can be retired.
+>
 > **Eval results.** The agent was tested in Copilot Studio with
 > `EvalConversationSet.csv` (6 conversations, 25 turns; exports in
 > `Evaluate Agent.csv` and `Evaluate Agent (1).csv`). The agent correctly returns a
