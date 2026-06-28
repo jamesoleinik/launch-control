@@ -1,12 +1,20 @@
 # Episode 10: Dataverse + Web IQ (the outside-in agent)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
+
+**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-10-dataverse-webiq/.env and re-run preflight (2026-06-28)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Copilot Studio agent in the new unified builder (model picker, Tools, Knowledge, Memory) · ⭐ Dataverse MCP Server (internal state) · ⭐ Web IQ MCP Server (live external signal) · ⭐ Two MCP servers composed in one agent
 **Layer:** 🟣 Layer 3 (the conversational surface), reaching data that does not live in the tenant at all
 **Coding agent:** Copilot Studio (new agent builder UI)
 **Runtime:** Copilot Studio agent + Dataverse MCP Server (Preview) + Web IQ MCP Server (`https://api.microsoft.ai/v3/mcp`)
 **Runtime showcased:** the **new Copilot Studio agent builder** (this episode also supersedes the Season 1 declarative-agent build, archived at `episodes/archive/ep-09-the-agent/`)
+
+> **Building this episode?** Follow `plan.md` in this folder. It is the
+> self-contained build runbook for a dedicated CLI session: prerequisites, the
+> scriptable checks (already-tested code), the Copilot Studio agent steps, and the
+> money-shot validation. Ep 10 is the most self-contained of the Season 2 builds
+> and can run fully in parallel with Ep 9 and Ep 11.
 
 ---
 

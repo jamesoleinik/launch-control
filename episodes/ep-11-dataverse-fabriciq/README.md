@@ -8,6 +8,13 @@
 **Runtime:** Copilot Studio autonomous agent + Dataverse MCP + Fabric IQ
 **Runtime showcased:** the **autonomous agent** pattern (reuses the Season 1 Sentinel build, archived at `episodes/archive/ep-10-autonomous-agents/` and the code at `agents/launch-sentinel/`)
 
+> **Building this episode?** Follow `plan.md` in this folder. It is the
+> self-contained build runbook for a dedicated CLI session: prerequisites, the
+> Fabric IQ ontology steps, the autonomous-agent wiring (reusing
+> `agents/launch-sentinel/`), and the money-shot validation. This is the heaviest
+> Season 2 build; land the scriptable parts first, then the browser wiring. Runs in
+> parallel with Ep 9 and Ep 10.
+
 ---
 
 ## The hook

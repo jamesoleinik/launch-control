@@ -7,6 +7,21 @@
 **Coding agent:** GitHub Copilot CLI / Copilot Studio (integration authored, not hand-clicked)
 **Runtime:** Dataverse + Dynamics 365 Finance & Operations
 
+> **Build status (this pass).** The Dataverse half is **built and seeded** in the
+> target environment: the `lc_` launch model (publisher + solution + 5 tables + 10
+> lookups) is deployed and the Q3 Widget Launch scenario is seeded (6 milestones,
+> 12 tasks with 2 blockers, status updates, team). The agent **Business Skill**
+> `lc_ep09erpreadiness` ("Launch ERP Readiness") is created in Dataverse from
+> `business-skills/ep09-erp-readiness.md`. The agent shell (Copilot Studio, new
+> builder) already has the **Dataverse MCP** and **Dynamics 365 ERP MCP** tools
+> attached; paste `agent-instructions.md` (this folder) into its Instructions.
+>
+> **Open blocker (F&O data).** The F&O side ships as a bare `dat` template company
+> with no demo data, and OData writes fail at the X++ layer, so the ERP signals the
+> money shot needs cannot be scripted. The environment must be provisioned WITH
+> demo data (admin center / LCS demo topology) or loaded via the Data Management
+> Framework. Verify with `python fno_readiness.py` (exits 0 when ready).
+
 ---
 
 ## The hook
