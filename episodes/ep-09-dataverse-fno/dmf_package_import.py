@@ -8,30 +8,44 @@ environment, this drives the same Data management engine the browser uses:
     PUT <package.zip> -> upload a DMF data package (Manifest.xml, PackageHeader.xml, <Entity>.csv)
     ImportFromPackage -> queue the import (returns executionId)
     GetExecutionSummaryStatus -> poll until terminal
-    GenerateImportTargetErrorKeysFile / GetImportTargetErrorKeysFileUrl -> pull errors
+    GetEntityExecutionSummaryStatusList / GetExecutionErrors -> per-entity result + errors
 
 Docs: https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/data-entities/data-management-api
 
-Note on dependencies: importing into the bare `dat` company succeeds for
-low-dependency reference data (for example Currency). Master/transactional
-entities (Vendors, Released products, Purchase orders) still require the usual
-F&O setup (number sequences, item model/dimension groups, posting profiles); the
-import will report those as target errors until that configuration exists.
+Verified end to end on eppcdemo1fno (the Ep 9 env): GetAzureWriteUrl, the blob
+PUT, ImportFromPackage, and the queued batch import all succeed and the data
+lands (a Currencies self-test inserts USD and the row is then readable at
+GET /data/Currencies). Getting there required five things the package MUST get
+right; each one silently imports zero rows or fails if wrong:
 
-Tested finding (eppcdemo1fno, the Ep 9 env): the full path runs end to end up to
-submission. GetAzureWriteUrl, the blob PUT, and ImportFromPackage all succeed
-(HTTP 200, server returns a real execution id). The import then never completes
-and no execution summary appears (GetExecutionSummaryStatus reports the execution
-id is not found and the data does not land), which means the queued DMF batch job
-is not being processed on that environment. Making imports actually land data
-requires the environment to be provisioned with a running batch framework and the
-base F&O configuration, the same prerequisite as the manual Data management path.
-The code here is correct and reusable once the environment processes batch jobs.
+  1. Manifest schema. Use <DefinitionGroupName> + <PackageEntityList> +
+     <DataManagementPackageEntityData> with an explicit <EntityMapList> (one
+     <EntityMap> per column). A manifest without the field map registers no
+     entity, so the import "succeeds" with zero rows and zero errors.
+  2. Entity name. Use the DMF entity label (for example "Currencies", target
+     CurrencyEntity), not the OData type name ("Currency"). The wrong name
+     returns 400 "Entity <x> does not exist in the target environment".
+  3. CSV encoding. SourceFormat CSV-Unicode requires the data file to be UTF-16
+     LE with BOM. A UTF-8 file fails with entity error "Selected file is not
+     Unicode".
+  4. XML namespace. Manifest.xml and PackageHeader.xml must use
+     http://schemas.microsoft.com/dynamics/2015/01/DataManagement.
+  5. CRLF line endings. The CSV must use \r\n. An LF-only file fails
+     ImportFromPackage with a misleading "the mapping is incorrect for entity
+     <x> and field {GUID}" (the field GUID is random per call). build_package
+     normalizes line endings so any input file works.
+
+Note on dependencies: low-dependency reference data (for example Currencies)
+imports cleanly. Master/transactional entities (Vendors, Released products,
+Purchase orders) additionally require the usual F&O setup (number sequences,
+item model/dimension groups, posting profiles) and will report target errors
+until that configuration exists. The CSV header columns must match the DMF
+entity field names (uppercase); they become both EntityField and XMLField.
 
 Usage:
     $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
     python episodes/ep-09-dataverse-fno/dmf_package_import.py --selftest-currency
-    python episodes/ep-09-dataverse-fno/dmf_package_import.py --entity Currency --csv path\to\Currency.csv --legal-entity dat
+    python episodes/ep-09-dataverse-fno/dmf_package_import.py --entity Currencies --csv path\to\Currencies.csv --legal-entity dat
 """
 
 import argparse
@@ -53,11 +67,11 @@ EPISODE = "ep-09-dataverse-fno"
 DMF = "/data/DataManagementDefinitionGroups/Microsoft.Dynamics.DataEntities."
 DC_NS = "http://schemas.microsoft.com/dynamics/2015/01/DataManagement"
 
-# A minimal, valid Currency row. USD with default rounding.
+# A minimal, valid Currencies row. Header columns must match the DMF entity
+# field names (uppercase); these become both EntityField and XMLField in the map.
 CURRENCY_CSV = (
-    "CURRENCYCODE,CURRENCYNAME,ROUNDINGPRECISION,ROUNDINGRULESELLPRICE,"
-    "ROUNDINGRULESPRICE,SYMBOL,DECIMALSCALE\r\n"
-    "USD,US Dollar,0.01,0.01,0.01,$,2\r\n"
+    "CURRENCYCODE,NAME,SYMBOL\r\n"
+    "USD,US Dollar,$\r\n"
 )
 
 
@@ -78,39 +92,73 @@ def _post(url, token, action, body):
                  "Content-Type": "application/json", "Accept": "application/json"},
         json=body, timeout=120,
     )
+    if not r.ok:
+        print(f"  [{action}] HTTP {r.status_code}: {r.text[:600]}")
     r.raise_for_status()
     return r.json().get("value")
 
 
-def build_manifest(entity_name, file_name):
+def _csv_columns(csv_text):
+    """First non-empty line of the CSV holds the column headers."""
+    for line in csv_text.lstrip("\ufeff").splitlines():
+        if line.strip():
+            return [c.strip() for c in line.split(",") if c.strip()]
+    return []
+
+
+def _entity_map(field):
+    # XMLField = column header in the CSV; EntityField = the DMF entity field.
+    # We keep them identical, so the CSV header must use the entity field names.
+    return (
+        "<EntityMap>"
+        "<ArrayIndex>0</ArrayIndex>"
+        f"<EntityField>{field}</EntityField>"
+        '<EntityFieldConversionList i:nil="true" />'
+        "<IsAutoDefault>false</IsAutoDefault>"
+        "<IsAutoGenerated>false</IsAutoGenerated>"
+        "<IsDefaultValueEqualNull>false</IsDefaultValueEqualNull>"
+        "<UseTextQualifier>false</UseTextQualifier>"
+        f"<XMLField>{field}</XMLField>"
+        "</EntityMap>"
+    )
+
+
+def build_manifest(group, entity_name, file_name, columns):
+    """A valid DMF manifest: definition group + one entity with an explicit
+    field map (EntityMapList). Without the field map DMF stages nothing."""
+    maps = "".join(_entity_map(c) for c in columns)
     return (
         '<?xml version="1.0" encoding="utf-8"?>\r\n'
         '<DataManagementPackageManifest '
         'xmlns:i="http://www.w3.org/2001/XMLSchema-instance" '
         f'xmlns="{DC_NS}">'
-        '<Entities>'
+        f'<DefinitionGroupName>{group}</DefinitionGroupName>'
+        '<Description>Launch Control DMF import</Description>'
+        '<PackageEntityList>'
         '<DataManagementPackageEntityData>'
+        '<DefaultRefreshType>FullPush</DefaultRefreshType>'
+        '<Disable>false</Disable>'
+        f'<EntityMapList>{maps}</EntityMapList>'
         f'<EntityName>{entity_name}</EntityName>'
-        '<ExcelExportStyle i:nil="true"/>'
-        '<ExecutionUnit>1</ExecutionUnit>'
+        '<ExecutionUnit>0</ExecutionUnit>'
         f'<InputFilePath>{file_name}</InputFilePath>'
-        '<LevelInExecutionUnit>1</LevelInExecutionUnit>'
+        '<LevelInExecutionUnit>0</LevelInExecutionUnit>'
+        '<SequenceInLevel>0</SequenceInLevel>'
         '<SkipStaging>false</SkipStaging>'
         '<SourceFormat>CSV-Unicode</SourceFormat>'
         '</DataManagementPackageEntityData>'
-        '</Entities>'
-        '<Name>LCImport</Name>'
+        '</PackageEntityList>'
         '</DataManagementPackageManifest>'
     )
 
 
-def build_header():
+def build_header(group):
     return (
         '<?xml version="1.0" encoding="utf-8"?>\r\n'
         '<DataManagementPackageHeader '
         'xmlns:i="http://www.w3.org/2001/XMLSchema-instance" '
         f'xmlns="{DC_NS}">'
-        '<Description>Launch Control DMF import</Description>'
+        f'<Description>{group}</Description>'
         '<ManifestType>Microsoft.Dynamics.AX.Framework.Tools.DataManagement.'
         'Serialization.DataManagementPackageManifest</ManifestType>'
         '<PackageType>DefinitionGroup</PackageType>'
@@ -119,13 +167,22 @@ def build_header():
     )
 
 
-def build_package(entity_name, csv_text):
+def _normalize_newlines(text):
+    # CSV-Unicode parsing requires CRLF line endings. An LF-only file mis-aligns
+    # the field mapping and fails with "mapping is incorrect for entity ... field {GUID}".
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\r\n")
+
+
+def build_package(group, entity_name, csv_text):
     file_name = f"{entity_name}.csv"
+    csv_text = _normalize_newlines(csv_text)
+    columns = _csv_columns(csv_text)
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("Manifest.xml", build_manifest(entity_name, file_name))
-        z.writestr("PackageHeader.xml", build_header())
-        z.writestr(file_name, csv_text)
+        z.writestr("Manifest.xml", build_manifest(group, entity_name, file_name, columns))
+        z.writestr("PackageHeader.xml", build_header(group))
+        # CSV-Unicode requires the data file to be UTF-16 LE with BOM and CRLF lines.
+        z.writestr(file_name, csv_text.encode("utf-16"))
     return buf.getvalue()
 
 
@@ -172,14 +229,28 @@ def poll_status(url, token, execution_id, timeout_s=300):
             if last and last not in ("NotRun", "Executing", "Queued"):
                 return last
         elif r.status_code == 400 and "were not found" in r.text:
-            # The job is accepted but the batch has not started processing it
-            # yet, so no execution summary exists. Keep waiting.
-            print("  status: pending (no execution summary yet; batch not started)")
+            # Execution record not created yet; the batch is still starting.
+            print("  status: pending (execution summary not available yet)")
             last = "Pending"
         else:
             print(f"  status poll HTTP {r.status_code}: {r.text[:160]}")
         time.sleep(10)
     return last
+
+
+def entity_status_list(url, token, execution_id):
+    try:
+        return _post(url, token, "GetEntityExecutionSummaryStatusList",
+                     {"executionId": execution_id})
+    except Exception:
+        return None
+
+
+def execution_errors(url, token, execution_id):
+    try:
+        return _post(url, token, "GetExecutionErrors", {"executionId": execution_id})
+    except Exception:
+        return None
 
 
 def pull_errors(url, token, execution_id, entity_name):
@@ -199,22 +270,29 @@ def pull_errors(url, token, execution_id, entity_name):
 def run_import(entity_name, csv_text, legal_entity):
     url = fno_url()
     token = fno_token(url)
+    group = f"LC-{entity_name}-{uuid.uuid4().hex[:8]}"
     print(f"F&O: {url}  | entity: {entity_name}  | legal entity: {legal_entity}")
-    pkg = build_package(entity_name, csv_text)
-    unique = f"LC-{entity_name}-{uuid.uuid4().hex[:8]}.zip"
+    print(f"  definition group: {group}")
+    pkg = build_package(group, entity_name, csv_text)
+    unique = f"{group}.zip"
     blob_url = get_write_url(url, token, unique)
     print(f"  got write URL ({unique})")
     upload_blob(blob_url, pkg)
     print(f"  uploaded package ({len(pkg)} bytes)")
-    exec_id = ""
-    returned = import_package(url, token, blob_url, "LCImport", legal_entity, exec_id)
+    returned = import_package(url, token, blob_url, group, legal_entity, "")
     print(f"  import queued, executionId: {returned}")
     status = poll_status(url, token, returned, timeout_s=420)
     print(f"  final status: {status}")
+    per_entity = entity_status_list(url, token, returned)
+    if per_entity:
+        print(f"  per-entity: {per_entity}")
     if status not in ("Succeeded", "Pending", None):
-        err = pull_errors(url, token, returned, entity_name)
-        if err:
-            print(f"  error keys file: {err}")
+        errs = execution_errors(url, token, returned)
+        if errs and errs != "[]":
+            print(f"  execution errors: {errs}")
+        keys = pull_errors(url, token, returned, entity_name)
+        if keys:
+            print(f"  error keys file: {keys}")
     return status
 
 
@@ -227,9 +305,9 @@ def main():
     args = ap.parse_args()
 
     if args.selftest_currency:
-        status = run_import("Currency", CURRENCY_CSV, args.legal_entity)
+        status = run_import("Currencies", CURRENCY_CSV, args.legal_entity)
     elif args.entity and args.csv:
-        with open(args.csv, encoding="utf-8") as f:
+        with open(args.csv, encoding="utf-8-sig") as f:
             csv_text = f.read()
         status = run_import(args.entity, csv_text, args.legal_entity)
     else:

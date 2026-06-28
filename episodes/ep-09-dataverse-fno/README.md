@@ -35,14 +35,21 @@
 > **Automating real F&O loads (DMF package API).** `dmf_package_import.py` drives
 > the supported Data management package REST API (GetAzureWriteUrl, blob upload,
 > ImportFromPackage, status polling) so F&O loads can be scripted instead of
-> hand-clicked. Verified on this env: auth, package upload, and ImportFromPackage
-> all succeed (HTTP 200, real execution id), so the automation itself works. The
-> queued import does not complete here because the environment's batch framework is
-> not processing jobs and the bare `dat` company lacks base configuration. Both are
-> provisioning conditions, the same prerequisites the manual Data management path
-> needs. Once the env is provisioned (batch running plus base setup), run
-> `python dmf_package_import.py --selftest-currency` then load vendor / item / PO
-> packages, verify with `fno_readiness.py`, and the stand-in can be retired.
+> hand-clicked. Verified end to end on this env: `python dmf_package_import.py
+> --selftest-currency` lands a currency row in F&O and reads back Succeeded, and the
+> batch framework processes the jobs in seconds. Getting the package to actually
+> stage and apply rows took five exact requirements, all baked into the script:
+> (1) a real manifest with an explicit `EntityMapList` (one `EntityMap` per CSV
+> column); without it DMF registers zero entities and the job "Finishes" having
+> imported nothing. (2) the DMF entity label name (for currency that is
+> `Currencies`, target `CurrencyEntity`), not the OData type. (3) the data file
+> encoded UTF-16 LE with BOM to satisfy `SourceFormat` `CSV-Unicode`. (4) the
+> `2015/01/DataManagement` XML namespace. (5) CRLF line endings in the CSV; an
+> LF-only file fails with a misleading "the mapping is incorrect for entity ...
+> field {GUID}". Use it to load vendor / item / PO packages, verify with
+> `fno_readiness.py`, and the stand-in can be retired. Note that reference masters
+> such as the ISO 4217 currency list ship pre-seeded, so pick entities that are
+> actually empty in a bare env when you want a visible "before / after".
 >
 > **Eval results.** The agent was tested in Copilot Studio with
 > `EvalConversationSet.csv` (6 conversations, 25 turns; exports in
