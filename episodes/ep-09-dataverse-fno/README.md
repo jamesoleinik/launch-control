@@ -240,8 +240,11 @@ production-grade alternative.
 7. Schedule the batch job: `python batch_launch_sync.py` runs the outstanding
    commitment digest; `.github/workflows/nightly-launch-procurement.yml` runs it
    nightly with the unified Dataverse CLI.
-8. Add the ERP fields to the launch view / model-driven form.
-9. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+8. Make it a native F&O batch (Batch job history): `python fno_batch_export.py --run`
+   stands up a DMF export batch with no dev box, and `fno-batch/` is the deploy-ready
+   X++ SysOperation batch. See `MCP-DEMO.md` section d.
+9. Add the ERP fields to the launch view / model-driven form.
+10. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
 
 ## Open questions to resolve before building
 

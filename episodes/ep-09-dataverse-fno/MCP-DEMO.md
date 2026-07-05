@@ -12,6 +12,7 @@ exiting non-zero on failure.
 | a. Read the unified model via MCP | `verify_mcp.py` | The Dataverse MCP server returns the launch-to-procurement join and rollups |
 | b. Write to F&O and to Dataverse | `write_fno.py`, `erp_mcp_write.py` | A new PO lands in F&O and a new engagement lands in Dataverse via MCP, then both read back through the unified endpoint |
 | c. Recurring batch job (unified CLI + GitHub) | `batch_launch_sync.py`, `.github/workflows/nightly-launch-procurement.yml` | A scheduled job uses the unified Dataverse CLI to digest outstanding vendor commitments nightly |
+| d. Native F&O batch job (Batch job history) | `fno-batch/` (X++), `fno_batch_export.py` (DMF) | The same work as a job inside the F&O batch server, so it appears under System administration > Inquiries > Batch jobs |
 
 All identifiers are demo values. Resolve the environment from the episode `.env`
 (`LC_ENV=ep-09-dataverse-fno`); nothing here hardcodes an env URL, tenant, or user.
@@ -129,6 +130,74 @@ Scheduler:
 schtasks /Create /SC DAILY /ST 06:00 /TN "LaunchProcurementDigest" ^
   /TR "powershell -NoProfile -Command \"$env:PYTHONIOENCODING='utf-8'; python <repo>\episodes\ep-09-dataverse-fno\batch_launch_sync.py --out <repo>\digest.json\""
 ```
+
+## d. Make it a native F&O batch job (Batch job history)
+
+Pillar c runs the digest *outside* F&O (GitHub Actions or Task Scheduler), so it
+does not appear under **System administration > Inquiries > Batch jobs**. To put a
+job on that screen it has to run inside the F&O batch server. There are two ways,
+and this episode ships both.
+
+### d1. X++ SysOperation batch (the proper native job)
+
+`fno-batch/` is a deploy-ready X++ scaffold: a SysOperation contract, service, and
+controller (`LcProcurementSyncController`) that aggregate open purchase-order
+commitment per vendor server-side and log the digest. Because the controller
+derives from `SysOperationServiceController`, F&O renders the standard **Run in the
+background** tab, so an operator can set a recurrence and batch group. Every run
+then lands in Batch job history.
+
+This is the "correct" native job, but it needs a **F&O developer environment**
+(Visual Studio + X++) to compile and a deployment path (LCS or a release pipeline)
+to install. It cannot be deployed from a data-plane session. Full deploy runbook:
+`fno-batch/README.md`.
+
+### d2. DMF export batch (native, no dev box)
+
+`fno_batch_export.py` stands up a genuine F&O batch using only the Data management
+(DMF) REST API, so it works against a running environment with no developer box:
+
+```
+python episodes/ep-09-dataverse-fno/fno_batch_export.py --setup    # create the export project
+python episodes/ep-09-dataverse-fno/fno_batch_export.py --run      # queue + run the batch export
+python episodes/ep-09-dataverse-fno/fno_batch_export.py --cleanup  # remove the project
+```
+
+It idempotently creates an **export** data project (`LC-Export-Procurement`) over
+the `Purchase order headers V2` entity, then calls `ExportToPackage`, which the
+F&O batch framework runs. Verified on the Ep 9 environment: the project and entity
+create (HTTP 201), `ExportToPackage` returns an executionId (HTTP 200), and the
+execution reports `Executing` in the batch framework, appearing in Data management
+job history with its batch task in Batch job history. Time to the terminal
+`Succeeded` status depends on batch-server throughput (a cold sandbox can sit in
+`Executing` for a while); the script polls up to ten minutes and treats a still
+running job as success.
+
+**Making d2 recur.** Two supported options:
+
+1. **F&O-native recurrence.** In F&O open **Data management**, select the
+   `LC-Export-Procurement` project, and use **Manage recurring data jobs** to add a
+   schedule. This needs an Azure AD application registered as a DMF integration
+   app in the environment (Data management > Framework parameters > recurring data
+   jobs), which is a one-time UI setup.
+2. **External trigger, native execution.** Call `fno_batch_export.py --run` on a
+   cron (the same GitHub Actions or Task Scheduler pattern as pillar c). The
+   recurrence lives in the scheduler, but each invocation queues a fresh F&O batch,
+   so every run still appears in Batch job history. This needs no integration-app
+   setup and reuses the auth you already have.
+
+### Which native option to pick
+
+| | d1. X++ SysOperation | d2. DMF export |
+| --- | --- | --- |
+| Runs in F&O batch server | Yes | Yes |
+| Shows in Batch job history | Yes | Yes |
+| Needs a dev box + deployment | Yes | No |
+| Custom cross-system logic | Yes (X++) | No (moves data only) |
+| Recurrence | F&O batch dialog | Recurring data jobs or external cron |
+
+Use d1 when the job must run custom logic server-side in F&O; use d2 when you just
+need the procurement data on a schedule and cannot deploy code.
 
 ## The unified Dataverse CLI, in one place
 

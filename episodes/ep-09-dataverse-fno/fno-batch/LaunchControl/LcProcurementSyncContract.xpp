@@ -1,0 +1,39 @@
+/// <summary>
+/// Data contract for the Launch Control procurement sync batch.
+/// Exposes the one tunable the operator sets when scheduling the job: the
+/// outstanding-commitment threshold above which a vendor is flagged AT-RISK.
+/// This mirrors RISK_OUTSTANDING_RATIO in batch_launch_sync.py, expressed here
+/// as an absolute currency amount so it reads naturally in the batch dialog.
+/// </summary>
+[DataContractAttribute]
+class LcProcurementSyncContract
+{
+    real    outstandingThreshold;
+    str     dataAreaId;
+
+    /// <summary>
+    /// Absolute outstanding commitment (committed minus invoiced) above which a
+    /// vendor is reported AT-RISK in the batch log. Defaults to 50000.
+    /// </summary>
+    [DataMemberAttribute('OutstandingThreshold'),
+     SysOperationLabelAttribute("Outstanding commitment threshold"),
+     SysOperationHelpTextAttribute("Flag vendors whose outstanding commitment exceeds this amount.")]
+    public real parmOutstandingThreshold(real _value = outstandingThreshold)
+    {
+        outstandingThreshold = _value;
+        return outstandingThreshold;
+    }
+
+    /// <summary>
+    /// Legal entity (company) to scope the purchase-order scan to. Defaults to
+    /// the F&O demo legal entity 'dat' used across Episode 9.
+    /// </summary>
+    [DataMemberAttribute('DataAreaId'),
+     SysOperationLabelAttribute("Legal entity"),
+     SysOperationHelpTextAttribute("Company whose purchase orders are summarized.")]
+    public str parmDataAreaId(str _value = dataAreaId)
+    {
+        dataAreaId = _value;
+        return dataAreaId;
+    }
+}
