@@ -24,34 +24,46 @@
 > narrative signal feed (budget / inventory / PO health) and sits alongside the
 > real F&O records below.
 >
-> **Real F&O records + the launch/procurement join (built and seeded now).**
+> **Real F&O records + the launch/procurement join (built, seeded, and verified).**
 > Scripted F&O OData writes DO work on this environment (an earlier note that they
 > fail at the X++ layer was wrong; a direct per-record OData POST is the reliable
 > loader on a bare env). `seed_vendor_work.py` lands the concrete CRM + ERP join:
-> it creates real F&O records (currency USD, vendor group `DEMO`, vendor `V0001`
-> Contoso Supply Co, and two open purchase orders PO-10501 / PO-10502), then
-> extends the launch model with a first-class `lc_vendorwork` table (a real
-> `lc_taskid` lookup to `lc_task`, plus the F&O vendor and PO business keys) and
-> seeds two engagements: the WIDGET-Q3 tasks "Translation vendor contract" and
-> "Launch video (90s)" are outsourced to Contoso, carrying committed 45k / 37k and
-> invoiced 0 / 12k against the two open POs. Net: 82k committed, 12k invoiced, 70k
-> open, with the translation deliverable blocking its milestone. The agent joins
-> the launch plan (Dataverse) to the vendor spend (F&O) from one endpoint.
+> it creates real F&O records (currency USD, vendor group `DEMO`, three vendors
+> `V0001` Contoso Supply Co / `V0002` Fabrikam Media / `V0003` Northwind Legal
+> Advisors, and six open purchase orders PO-10501..PO-10506), then extends the
+> launch model with a first-class `lc_vendorwork` table (a real `lc_taskid` lookup
+> to `lc_task`, plus the F&O vendor and PO business keys) and seeds **six**
+> outsourced WIDGET-Q3 engagements (translation, launch video, load testing, hero
+> copy, quickstart, DPA legal review). Net: **165k committed, 66k invoiced, 99k
+> open** across three vendors, with the translation deliverable blocking its
+> milestone. The agent joins the launch plan (Dataverse) to the vendor spend (F&O)
+> from one endpoint. Full build log and gotchas: **`VENDORWORK-BUILD.md`**.
+>
+> **Queryable through both Dataverse APIs (verified).** `verify_vendorwork.py`
+> proves the model two ways and exits non-zero on any failure: (1) the **OData Web
+> API** resolves all **6/6** `lc_vendorwork` rows to their live F&O vendor and PO
+> through the `mserp_*` virtual entities; (2) the **SQL / TDS endpoint**
+> (`host,5558`, Azure AD access token) joins `lc_vendorwork` to `lc_task` and
+> `lc_launch` and aggregates by vendor and launch. `lc_vendorwork` stores the F&O
+> keys as its own columns precisely so the model is queryable over TDS, which does
+> not expose virtual entities.
 >
 > Bare-env depth is **open documents only**: this env has no released products or
 > procurement categories, so the POs are open headers (no lines) and the committed
 > / invoiced amounts live on `lc_vendorwork`. Posting invoices to the ledger needs
 > a configuration project and is out of scope for the demo.
 >
-> **Virtual entities (optional upgrade, one-time UI toggle).** The "Finance and
-> Operations Virtual Entity" app is installed and the `FinanceAndOperationsVirtualEntity`
-> data provider is provisioned, but the `mserp_*` virtual tables are not generated
-> in this env. Generating them (for example `mserp_vendorsv2`,
-> `mserp_purchaseorderheaderv2`) is a one-time toggle on the "Finance and operations
-> virtual entities" maker-portal page (setting it programmatically times out the
-> synchronous generate plugin). Once generated, the same `lc_vendorwork` rows can
-> read the live vendor / PO through the `mserp_` tables with no reseed, because the
-> F&O business keys are already stored. Until then the key-join is fully functional.
+> **Virtual entities (generated in this env).** The `mserp_*` F&O virtual tables
+> are generated, so the live join is available: `mserp_vendvendorv2entities`
+> (vendor master, note the set name is NOT `mserp_vendorsv2`),
+> `mserp_purchpurchaseorderheaderv2entities` (PO headers), plus
+> `mserp_currencyentities` and `mserp_vendvendorgroupentities`. Generation is a
+> Dataverse-side operation driven off the `mserp_financeandoperationsentity`
+> catalog (the "Visible" checkbox on "Available finance and operations entities"
+> maps to the `mserp_hasbeengenerated` flag); it is API-drivable but async and
+> serialized (one entity at a time). Because the F&O business keys are stored on
+> `lc_vendorwork`, the same rows work with or without the virtual tables, with no
+> reseed. See `VENDORWORK-BUILD.md` for the exact steps.
 >
 > **Automating real F&O loads (DMF package API).** `dmf_package_import.py` drives
 > the supported Data management package REST API (GetAzureWriteUrl, blob upload,
@@ -134,7 +146,7 @@ tasks are done by an outside vendor and carry a real cost, and that cost is an E
 purchase order, not a CRM field. The model extends like this:
 
 ```
-lc_launch --< lc_task --< lc_vendorwork >-- F&O Vendor (V0001)
+lc_launch --< lc_task --< lc_vendorwork >-- F&O Vendor (V0001 / V0002 / V0003)
                                         >-- F&O PurchaseOrderHeader (PO-105xx)
 ```
 
@@ -143,14 +155,17 @@ lc_launch --< lc_task --< lc_vendorwork >-- F&O Vendor (V0001)
 keys (`lc_vendoraccount`, `lc_ponumber`) plus the money the launch team tracks
 (`lc_committedamount`, `lc_invoicedamount`, `lc_status`). Dataverse owns the launch
 plan and the decision to outsource; F&O owns the vendor master and the purchase
-order; `lc_vendorwork` is the seam. Seeded example for WIDGET-Q3: the translation
-and launch-video tasks are outsourced to Contoso Supply Co (F&O vendor `V0001`)
-against open POs PO-10501 / PO-10502, 82k committed and 12k invoiced, with the
-translation deliverable blocking its milestone.
+order; `lc_vendorwork` is the seam. Seeded for WIDGET-Q3: **six** tasks are
+outsourced across **three** vendors (Contoso Supply Co `V0001`, Fabrikam Media
+`V0002`, Northwind Legal Advisors `V0003`) against open POs PO-10501..PO-10506,
+**165k committed / 66k invoiced / 99k open**, with the translation deliverable
+blocking its milestone.
 
 Storing the F&O keys (rather than a hard Dataverse lookup to a virtual entity)
 keeps the join durable whether or not the `mserp_*` virtual entities are generated,
-and lets the rows light up the live F&O tables later with no reseed.
+and it is what makes the model queryable over the **SQL / TDS endpoint**, which
+does not expose virtual entities. Over OData the same keys light up a live read of
+the real F&O vendor and PO through the `mserp_*` tables, with no reseed.
 
 ## The integration options (pick one as the hero)
 
@@ -172,9 +187,9 @@ production-grade alternative.
 - **Dataverse** returns the go-to-market state: readiness NO-GO, two blockers.
 - **F&O** returns the financial state: the launch is over its approved budget, and
   open vendor POs are still uninvoiced.
-- **The join (`lc_vendorwork`)** returns the outsourced spend: 82k committed across
-  two Contoso engagements, only 12k invoiced, 70k open, and the translation
-  deliverable (an open PO, not yet received) is blocking a milestone.
+- **The join (`lc_vendorwork`)** returns the outsourced spend: 165k committed
+  across six engagements and three vendors, only 66k invoiced, 99k open, and the
+  translation deliverable (an open PO, not yet received) is blocking a milestone.
 - **Synthesis:** the launch is not just behind on tasks; it is over budget and
   waiting on a supplier the launch team is paying through ERP. CRM risk, ERP cost,
   and vendor risk on one record.
@@ -189,10 +204,13 @@ production-grade alternative.
 2. Stand up the connection (virtual tables or dual-write) between the launch
    environment and F&O.
 3. Seed the launch/procurement join: `python seed_vendor_work.py` creates the real
-   F&O vendor and open POs, extends the model with `lc_vendorwork` (lookup to
+   F&O vendors and open POs, extends the model with `lc_vendorwork` (lookup to
    `lc_task` plus the F&O keys), and marks the outsourced WIDGET-Q3 tasks.
-4. Add the ERP fields to the launch view / model-driven form.
-5. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+4. Verify both data APIs: `python verify_vendorwork.py` proves the OData live join
+   to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across
+   `lc_vendorwork` / `lc_task` / `lc_launch`. Full build log: `VENDORWORK-BUILD.md`.
+5. Add the ERP fields to the launch view / model-driven form.
+6. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
 
 ## Open questions to resolve before building
 

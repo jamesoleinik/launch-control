@@ -26,11 +26,17 @@ What it does (idempotent, safe to re-run):
    - Marks the outsourced tasks and upserts one ``lc_vendorwork`` row each,
      pointing at the real F&O vendor and PO.
 
-Why business keys instead of a Dataverse lookup to a virtual entity: on this env
-the Finance and Operations virtual entities (``mserp_*``) are not generated (that
-is a one-time maker-portal toggle, see the README). Storing the F&O keys keeps the
-join durable today and lets the same rows light up the ``mserp_`` tables later
-with no reseed.
+Why business keys instead of a Dataverse lookup to a virtual entity: the Finance
+and Operations virtual entities (``mserp_*``) are generated per entity (a one-time
+"Visible" toggle on the "Available finance and operations entities" catalog, see
+the README). Storing the F&O keys keeps the join durable regardless of whether the
+``mserp_`` tables are enabled, and it is the only key that also works over the
+Dataverse SQL (TDS) endpoint, which does not expose virtual entities. Once the
+``mserp_`` tables are generated, the same keys light up a live OData join with no
+reseed:
+
+  lc_vendorwork.lc_vendoraccount -> mserp_vendvendorv2entities.mserp_vendoraccountnumber
+  lc_vendorwork.lc_ponumber      -> mserp_purchpurchaseorderheaderv2entities.mserp_purchaseordernumber
 
 Run:
     $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
@@ -76,14 +82,32 @@ COLUMNS = {
 CURRENCY = {"CurrencyCode": "USD", "CurrencyCodeISO": "USD", "Name": "US Dollar"}
 VENDOR_GROUP = {"dataAreaId": DATA_AREA, "VendorGroupId": "DEMO",
                 "Description": "Demo vendors"}
-VENDOR = {
-    "dataAreaId": DATA_AREA,
-    "VendorAccountNumber": "V0001",
-    "VendorOrganizationName": "Contoso Supply Co",
-    "VendorGroupId": "DEMO",
-    "VendorPartyType": "Organization",
-    "CurrencyCode": "USD",
-}
+VENDORS = [
+    {
+        "dataAreaId": DATA_AREA,
+        "VendorAccountNumber": "V0001",
+        "VendorName": "Contoso Supply Co",
+        "VendorGroupId": "DEMO",
+        "VendorPartyType": "Organization",
+        "CurrencyCode": "USD",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "VendorAccountNumber": "V0002",
+        "VendorName": "Fabrikam Media",
+        "VendorGroupId": "DEMO",
+        "VendorPartyType": "Organization",
+        "CurrencyCode": "USD",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "VendorAccountNumber": "V0003",
+        "VendorName": "Northwind Legal Advisors",
+        "VendorGroupId": "DEMO",
+        "VendorPartyType": "Organization",
+        "CurrencyCode": "USD",
+    },
+]
 
 # One open PO header per outsourced engagement.
 PURCHASE_ORDERS = [
@@ -104,6 +128,42 @@ PURCHASE_ORDERS = [
         "LanguageId": "en-us",
         "RequestedDeliveryDate": "2026-08-20T00:00:00Z",
         "PurchaseOrderName": "WIDGET-Q3 launch video outsourcing (Contoso)",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "PurchaseOrderNumber": "PO-10503",
+        "OrderVendorAccountNumber": "V0001",
+        "CurrencyCode": "USD",
+        "LanguageId": "en-us",
+        "RequestedDeliveryDate": "2026-08-05T00:00:00Z",
+        "PurchaseOrderName": "WIDGET-Q3 load testing outsourcing (Contoso)",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "PurchaseOrderNumber": "PO-10504",
+        "OrderVendorAccountNumber": "V0002",
+        "CurrencyCode": "USD",
+        "LanguageId": "en-us",
+        "RequestedDeliveryDate": "2026-08-12T00:00:00Z",
+        "PurchaseOrderName": "WIDGET-Q3 hero copy + visuals (Fabrikam)",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "PurchaseOrderNumber": "PO-10505",
+        "OrderVendorAccountNumber": "V0002",
+        "CurrencyCode": "USD",
+        "LanguageId": "en-us",
+        "RequestedDeliveryDate": "2026-08-28T00:00:00Z",
+        "PurchaseOrderName": "WIDGET-Q3 quickstart tutorial (Fabrikam)",
+    },
+    {
+        "dataAreaId": DATA_AREA,
+        "PurchaseOrderNumber": "PO-10506",
+        "OrderVendorAccountNumber": "V0003",
+        "CurrencyCode": "USD",
+        "LanguageId": "en-us",
+        "RequestedDeliveryDate": "2026-07-30T00:00:00Z",
+        "PurchaseOrderName": "WIDGET-Q3 DPA addendum legal review (Northwind)",
     },
 ]
 
@@ -142,6 +202,74 @@ ENGAGEMENTS = [
         "lc_invoicedamount": 12000,
         "lc_status": "Invoice pending",
         "lc_duedate": "2026-08-20T00:00:00Z",
+    },
+    {
+        "lc_name": "Load + soak testing at 5x peak (Contoso)",
+        "lc_workkey": "WIDGET-Q3-VENDORWORK-LOADTEST",
+        "lc_launchcode": LAUNCH_CODE,
+        "lc_tasktitle": "Load test API at 5x peak",
+        "lc_vendoraccount": "V0001",
+        "lc_vendorname": "Contoso Supply Co",
+        "lc_scope": (
+            "Run 5x-peak load and 12-hour soak tests against the API, deliver a "
+            "latency/error report and tuning recommendations. Time-and-materials."
+        ),
+        "lc_ponumber": "PO-10503",
+        "lc_committedamount": 28000,
+        "lc_invoicedamount": 28000,
+        "lc_status": "Invoiced (paid)",
+        "lc_duedate": "2026-08-05T00:00:00Z",
+    },
+    {
+        "lc_name": "Hero copy + key visuals (Fabrikam)",
+        "lc_workkey": "WIDGET-Q3-VENDORWORK-HEROCOPY",
+        "lc_launchcode": LAUNCH_CODE,
+        "lc_tasktitle": "Hero copy + visuals",
+        "lc_vendoraccount": "V0002",
+        "lc_vendorname": "Fabrikam Media",
+        "lc_scope": (
+            "Write launch hero copy and produce three key visuals for the "
+            "landing page and social. Two revision rounds. Fixed-bid."
+        ),
+        "lc_ponumber": "PO-10504",
+        "lc_committedamount": 22000,
+        "lc_invoicedamount": 8000,
+        "lc_status": "Invoice pending",
+        "lc_duedate": "2026-08-12T00:00:00Z",
+    },
+    {
+        "lc_name": "Quickstart tutorial authoring (Fabrikam)",
+        "lc_workkey": "WIDGET-Q3-VENDORWORK-QUICKSTART",
+        "lc_launchcode": LAUNCH_CODE,
+        "lc_tasktitle": "Quickstart tutorial",
+        "lc_vendoraccount": "V0002",
+        "lc_vendorname": "Fabrikam Media",
+        "lc_scope": (
+            "Author the end-to-end quickstart tutorial with runnable samples in "
+            "three languages. Fixed-bid engagement."
+        ),
+        "lc_ponumber": "PO-10505",
+        "lc_committedamount": 15000,
+        "lc_invoicedamount": 0,
+        "lc_status": "PO open (not received)",
+        "lc_duedate": "2026-08-28T00:00:00Z",
+    },
+    {
+        "lc_name": "DPA addendum legal review (Northwind)",
+        "lc_workkey": "WIDGET-Q3-VENDORWORK-DPA",
+        "lc_launchcode": LAUNCH_CODE,
+        "lc_tasktitle": "DPA addendum review",
+        "lc_vendoraccount": "V0003",
+        "lc_vendorname": "Northwind Legal Advisors",
+        "lc_scope": (
+            "Outside-counsel review of the data processing addendum for the "
+            "launch, redline and sign-off memo. Fixed-fee."
+        ),
+        "lc_ponumber": "PO-10506",
+        "lc_committedamount": 18000,
+        "lc_invoicedamount": 18000,
+        "lc_status": "Invoiced (paid)",
+        "lc_duedate": "2026-07-30T00:00:00Z",
     },
 ]
 
@@ -190,9 +318,12 @@ def seed_fno(fno_url, token):
     _fno_ensure(s, fno_url, "VendorGroups",
                 f"dataAreaId eq '{DATA_AREA}' and VendorGroupId eq 'DEMO'",
                 VENDOR_GROUP, "vendor group DEMO")
-    _fno_ensure(s, fno_url, "Vendors",
-                f"dataAreaId eq '{DATA_AREA}' and VendorAccountNumber eq 'V0001'",
-                VENDOR, "vendor V0001")
+    for vendor in VENDORS:
+        acct = vendor["VendorAccountNumber"]
+        _fno_ensure(
+            s, fno_url, "Vendors",
+            f"dataAreaId eq '{DATA_AREA}' and VendorAccountNumber eq '{acct}'",
+            vendor, f"vendor {acct}")
     for po in PURCHASE_ORDERS:
         num = po["PurchaseOrderNumber"]
         _fno_ensure(
