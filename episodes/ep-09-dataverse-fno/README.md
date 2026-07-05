@@ -48,6 +48,16 @@
 > keys as its own columns precisely so the model is queryable over TDS, which does
 > not expose virtual entities.
 >
+> **Queryable through the Dataverse MCP server (verified).** `verify_mcp.py` proves
+> the *same* `lc_vendorwork` model is reachable the way an agent reaches it: it
+> `initialize`s an MCP session, lists tools, and calls `read_query` for the launch
+> procurement join and a GROUP BY vendor rollup, returning **6/6** engagements. The
+> MCP endpoint (`<env>/api/mcp`) requires a Power Platform admin to enable the
+> Dataverse MCP server for the environment and allowlist the calling client app
+> (Power Platform admin center > Environment > Settings > Product > Features >
+> Dataverse Model Context Protocol; see
+> [Configure the Dataverse MCP server](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable)).
+>
 > Bare-env depth is **open documents only**: this env has no released products or
 > procurement categories, so the POs are open headers (no lines) and the committed
 > / invoiced amounts live on `lc_vendorwork`. Posting invoices to the ledger needs
@@ -209,8 +219,11 @@ production-grade alternative.
 4. Verify both data APIs: `python verify_vendorwork.py` proves the OData live join
    to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across
    `lc_vendorwork` / `lc_task` / `lc_launch`. Full build log: `VENDORWORK-BUILD.md`.
-5. Add the ERP fields to the launch view / model-driven form.
-6. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+5. Verify the agent path: `python verify_mcp.py` proves the same model over the
+   Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP
+   server is enabled and the client app is allowlisted for the environment.
+6. Add the ERP fields to the launch view / model-driven form.
+7. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
 
 ## Open questions to resolve before building
 

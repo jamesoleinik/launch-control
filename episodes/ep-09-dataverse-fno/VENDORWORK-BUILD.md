@@ -7,6 +7,7 @@ idempotent and safe to re-run.
 
 - Build / seed: `python episodes/ep-09-dataverse-fno/seed_vendor_work.py`
 - Verify both APIs: `python episodes/ep-09-dataverse-fno/verify_vendorwork.py`
+- Verify the MCP path: `python episodes/ep-09-dataverse-fno/verify_mcp.py`
 
 All identifiers below (env, vendors, POs) are demo values for the Launch Control
 series. Resolve the environment from the episode `.env` (`LC_ENV=ep-09-dataverse-fno`);
@@ -192,3 +193,47 @@ Both checks pass:
 OData live join : PASS   (6/6 engagements resolve to live F&O vendor + PO)
 SQL / TDS join  : PASS   (6 rows; vendor and launch rollups correct)
 ```
+
+## Verification (Dataverse MCP server)
+
+`verify_mcp.py` proves the same `lc_vendorwork` model is reachable through the
+Dataverse **Model Context Protocol** endpoint, which is how a Copilot Studio or
+VS Code agent reads the environment. It speaks the streamable-HTTP JSON-RPC
+transport directly (no proxy needed for the test):
+
+1. `initialize` and capture the `Mcp-Session-Id` response header, then send the
+   `notifications/initialized` notification.
+2. `tools/list` and assert the core tools are present (`read_query`, `describe`,
+   `search`, `create_record`, `update_record`).
+3. `tools/call read_query` for the launch procurement join and a GROUP BY vendor
+   rollup.
+
+```
+MCP tools present    : PASS
+MCP read_query join  : PASS   (6/6 engagements)
+MCP GROUP BY rollup  : PASS   (3 vendors)
+```
+
+### Enabling the MCP server (one-time, Power Platform admin)
+
+The endpoint (`<env>/api/mcp`) returns **403 Forbidden** until an admin enables it
+and allowlists the calling client app. In the Power Platform admin center: select
+the environment, then **Settings > Product > Features > Dataverse Model Context
+Protocol**, turn on **Allow MCP clients to interact with Dataverse MCP server**,
+open **Advanced Settings**, and set the relevant client records (for example
+Microsoft GitHub Copilot) to **Is Enabled = Yes**. Enabling non-Microsoft clients
+requires a Managed Environment. Reference:
+https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable
+
+Notes captured while wiring this up:
+
+- The GA endpoint is `/api/mcp` (used by the `@microsoft/dataverse mcp` proxy at
+  runtime); `/api/mcp_preview` is opt-in per environment. Both returned 200 once
+  the clients were enabled here.
+- GROUP BY results table-qualify the grouped column
+  (`lc_vendorwork_lc_vendorname`, not `lc_vendorname`); the test script resolves any
+  key ending in `lc_vendorname`.
+- To use the MCP tools in-session, register a server against this env (for example
+  `npx @microsoft/dataverse@latest mcp https://<env>.crm.dynamics.com` in the
+  MCP config) and restart the CLI. The direct-HTTP test above needs no restart.
+
