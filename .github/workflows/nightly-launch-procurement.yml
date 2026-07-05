@@ -1,0 +1,73 @@
+# Recurring batch job (Episode 9): nightly launch-procurement exposure digest.
+#
+# Runs on a schedule and uses the UNIFIED DATAVERSE CLI (@microsoft/dataverse)
+# authenticated with GitHub OIDC federated credentials (no secrets in the repo).
+# It monitors Finance & Operations batch jobs and reads the unified
+# launch-plus-procurement model, then emits a per-launch outstanding-commitment
+# digest as a build artifact.
+#
+# One-time setup (see episodes/ep-09-dataverse-fno/MCP-DEMO.md):
+#   1. Register an Entra app and add it as an application user in the Dataverse
+#      environment (System Administrator or a least-privilege role that can read
+#      lc_vendorwork and run erp batch list).
+#   2. Add a GitHub federated credential on that app for this repo
+#      (subject: repo:<owner>/<repo>:ref:refs/heads/main and the schedule env).
+#   3. Set repo variables: DATAVERSE_URL, AZURE_CLIENT_ID, AZURE_TENANT_ID.
+
+name: nightly-launch-procurement
+
+on:
+  schedule:
+    # 06:00 UTC every day. Adjust the cron to your reporting window.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write   # required for OIDC federated auth
+  contents: read
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tooling
+        run: |
+          npm install -g @microsoft/dataverse@latest
+          pip install --upgrade azure-identity requests
+
+      - name: Authenticate the unified Dataverse CLI (GitHub federated)
+        run: |
+          dataverse auth create \
+            --environment "${{ vars.DATAVERSE_URL }}" \
+            --applicationId "${{ vars.AZURE_CLIENT_ID }}" \
+            --tenant "${{ vars.AZURE_TENANT_ID }}" \
+            --githubFederated
+
+      - name: Monitor F&O batch jobs (unified CLI, ERP route)
+        continue-on-error: true
+        run: dataverse erp batch list
+
+      - name: Nightly launch-procurement digest
+        env:
+          DATAVERSE_URL: ${{ vars.DATAVERSE_URL }}
+          TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+        run: |
+          python episodes/ep-09-dataverse-fno/batch_launch_sync.py \
+            --via cli --out launch-procurement-digest.json
+
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: launch-procurement-digest
+          path: launch-procurement-digest.json
+          if-no-files-found: error

@@ -29,87 +29,17 @@ import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import auth  # noqa: E402
-import requests  # noqa: E402
+from mcp_client import DataverseMcp  # noqa: E402
 
 EPISODE = "ep-09-dataverse-fno"
 LAUNCH_CODE = "WIDGET-Q3"
-EXPECTED_ENGAGEMENTS = 6
+# The seeder creates six base engagements; the write demo (write_fno.py) may add
+# more, so assert "at least the base six" rather than an exact count.
+MIN_ENGAGEMENTS = 6
 CORE_TOOLS = {"read_query", "describe", "search", "create_record", "update_record"}
-
-
-class McpClient:
-    """Minimal streamable-HTTP JSON-RPC client for the Dataverse MCP server."""
-
-    def __init__(self, base_url, token):
-        self.url = f"{base_url.rstrip('/')}/api/mcp"
-        self.session = requests.Session()
-        self.headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json, text/event-stream",
-            "Content-Type": "application/json",
-        }
-        self._id = 0
-
-    @staticmethod
-    def _parse(resp):
-        if "text/event-stream" in resp.headers.get("Content-Type", ""):
-            payload = None
-            for line in resp.text.splitlines():
-                if line.startswith("data:"):
-                    try:
-                        payload = json.loads(line[5:].strip())
-                    except json.JSONDecodeError:
-                        pass
-            return payload
-        return resp.json()
-
-    def _rpc(self, method, params=None, notify=False):
-        body = {"jsonrpc": "2.0", "method": method}
-        if not notify:
-            self._id += 1
-            body["id"] = self._id
-        if params is not None:
-            body["params"] = params
-        resp = self.session.post(
-            self.url, headers=self.headers, data=json.dumps(body), timeout=120
-        )
-        resp.raise_for_status()
-        sid = resp.headers.get("Mcp-Session-Id")
-        if sid:
-            self.headers["Mcp-Session-Id"] = sid
-        if notify:
-            return None
-        return self._parse(resp)
-
-    def initialize(self):
-        res = self._rpc(
-            "initialize",
-            {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "verify_mcp", "version": "1.0"},
-            },
-        )
-        self._rpc("notifications/initialized", notify=True)
-        return (res or {}).get("result", {}).get("serverInfo", {})
-
-    def list_tools(self):
-        res = self._rpc("tools/list")
-        return [t["name"] for t in (res or {}).get("result", {}).get("tools", [])]
-
-    def read_query(self, sql):
-        res = self._rpc(
-            "tools/call", {"name": "read_query", "arguments": {"querytext": sql}}
-        )
-        result = (res or {}).get("result")
-        if result is None:
-            raise RuntimeError(f"read_query failed: {json.dumps(res)[:400]}")
-        text = "".join(
-            c.get("text", "") for c in result.get("content", []) if c.get("type") == "text"
-        )
-        return json.loads(text) if text.strip() else []
 
 
 def main():
@@ -119,9 +49,9 @@ def main():
     print(f"Dataverse env: {url}")
     print(f"MCP endpoint : {url}/api/mcp\n")
 
-    client = McpClient(url, token)
+    client = DataverseMcp(url, token)
 
-    info = client.initialize()
+    info = client.initialize(client_name="verify_mcp")
     print(f"== initialize ==\n  server: {info.get('name')} v{info.get('version')}\n")
 
     tools = client.list_tools()
@@ -144,9 +74,9 @@ def main():
             f"{float(r.get('lc_committedamount') or 0):>9.0f}"
             f"{float(r.get('lc_invoicedamount') or 0):>9.0f}  {r.get('lc_status', '')}"
         )
-    query_ok = len(rows) == EXPECTED_ENGAGEMENTS
+    query_ok = len(rows) >= MIN_ENGAGEMENTS
     print(
-        f"\n  returned {len(rows)}/{EXPECTED_ENGAGEMENTS} engagements: "
+        f"\n  returned {len(rows)} engagements (>= {MIN_ENGAGEMENTS} expected): "
         f"{'PASS' if query_ok else 'FAIL'}\n"
     )
 

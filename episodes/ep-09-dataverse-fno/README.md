@@ -58,6 +58,17 @@
 > Dataverse Model Context Protocol; see
 > [Configure the Dataverse MCP server](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable)).
 >
+> **Read, write, and a recurring batch job (verified).** The full demo spine lives
+> in **`MCP-DEMO.md`**: `verify_mcp.py` reads the unified model through the
+> Dataverse MCP server; `write_fno.py` writes a new PO to F&O and a new engagement
+> to Dataverse through the MCP `create_record` tool, then reads both back from the
+> one endpoint; `erp_mcp_write.py` drives the local F&O (ERP) MCP server hosted by
+> `dataverse mcp <fno-url>`; and `batch_launch_sync.py` plus the
+> `nightly-launch-procurement` GitHub Actions workflow run a scheduled
+> outstanding-commitment digest with the unified Dataverse CLI. Note: the Dataverse
+> MCP server can write `lc_*` tables but not the F&O `mserp_*` virtual entities
+> (platform "nested pipeline" restriction), so F&O writes use the ERP path.
+>
 > Bare-env depth is **open documents only**: this env has no released products or
 > procurement categories, so the POs are open headers (no lines) and the committed
 > / invoiced amounts live on `lc_vendorwork`. Posting invoices to the ledger needs
@@ -222,8 +233,15 @@ production-grade alternative.
 5. Verify the agent path: `python verify_mcp.py` proves the same model over the
    Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP
    server is enabled and the client app is allowlisted for the environment.
-6. Add the ERP fields to the launch view / model-driven form.
-7. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+6. Write across both planes: `python write_fno.py` creates a new F&O PO and a new
+   `lc_vendorwork` engagement (the latter through the MCP `create_record` tool),
+   then reads both back through the unified MCP. `erp_mcp_write.py` drives the local
+   F&O (ERP) MCP server. Full demo spine: `MCP-DEMO.md`.
+7. Schedule the batch job: `python batch_launch_sync.py` runs the outstanding
+   commitment digest; `.github/workflows/nightly-launch-procurement.yml` runs it
+   nightly with the unified Dataverse CLI.
+8. Add the ERP fields to the launch view / model-driven form.
+9. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
 
 ## Open questions to resolve before building
 
