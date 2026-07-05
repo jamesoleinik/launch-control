@@ -1,15 +1,22 @@
-"""Episode 9 ERP-signal stand-in: table + seed for eppcdemo1fno.
+"""Episode 9 ERP-signal stand-in: table + seed for the Ep 9 F&O environment.
 
-Why this exists: the F&O (ERP) side of the Ep 9 environment ships as a bare
-shell (only the empty `dat` template company), and scripted F&O OData writes
-fail in the X++ deserializer, so the live `mserp_` virtual entities are empty.
-To make the CRM + ERP "better together" headline result demonstrable today, this
-script lands a small, clearly labeled ERP-signal representation in the SAME
-Dataverse environment, co-resident with the `lc_` launch tables.
+Why this exists: this is a lightweight, self-contained representation of ERP
+signals (budget, purchase order, inventory) landed in the SAME Dataverse
+environment as the ``lc_`` launch tables, so the CRM + ERP "better together"
+headline result is demonstrable from a single endpoint even before the live F&O
+``mserp_`` virtual entities are generated.
 
-It is a temporary stand-in. Once the F&O environment is provisioned WITH demo
-data, swap the agent over to the live F&O virtual entities (mserp_*) / the
-Dynamics 365 ERP MCP and retire `lc_erpsignal`.
+Update (verified): scripted F&O OData writes DO work on this environment. Real
+records now exist in F&O (vendor V0001, currency USD, open POs) and the concrete
+launch <-> procurement join is seeded by ``seed_vendor_work.py`` (``lc_vendorwork``
+linked to ``lc_task`` with the F&O vendor/PO business keys). Keep ``lc_erpsignal``
+as the broader signal feed (budget / inventory / PO health) for the narrative; it
+complements, and is not replaced by, the real F&O records.
+
+Once the F&O virtual entities (``mserp_*``) are enabled in this env (a one-time
+maker-portal toggle, see the README), the agent can read the live vendor/PO rows
+directly and ``lc_erpsignal`` can be trimmed to the signals that have no F&O
+document behind them.
 
 Idempotent: creating an existing table is skipped; seed rows are upserted by a
 natural key (lc_signalkey).
