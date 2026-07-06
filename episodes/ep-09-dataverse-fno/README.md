@@ -428,8 +428,22 @@ Type this into GitHub Copilot CLI:
 |---|---|
 | Reconciliation policy skill | `business-skills/ep09-vendor-invoice-reconciliation.md` |
 
-Publish it to the environment with the `lc-business-skills` tooling (or paste its body
-as a skill in Copilot Studio). The skill is the single source of the reconciliation
+Publish it to the environment as a governed Dataverse **Business Skill** (the `skills`
+table), so Act 4's agent references it from Dataverse rather than carrying a pasted
+copy. Publishing there means a policy edit is a single re-publish, not a re-paste into
+every agent:
+
+```
+python scripts/python/_upload_skill.py \
+  --name "Vendor Invoice Reconciliation (event-driven, from a launch procurement signal)" \
+  --uniquename lc_ep09_vendor_invoice_reconciliation \
+  --description "Event-driven Episode 9 Act 3 policy: reconcile one launch procurement gap across Dataverse and Finance and Operations and write back one grounded outcome." \
+  business-skills/ep09-vendor-invoice-reconciliation.md
+```
+
+Then confirm the live `body` matches the file (the `skills` table dedupes on
+`uniquename`, so verify by reading the record back and comparing rather than trusting
+the create/patch response alone). The skill is the single source of the reconciliation
 logic; Act 4's agent instruction box only points at it.
 
 ---
