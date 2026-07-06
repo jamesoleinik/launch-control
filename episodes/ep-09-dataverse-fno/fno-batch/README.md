@@ -81,9 +81,9 @@ To match the external digest's committed / invoiced / outstanding columns, exten
 `VendInvoiceJour`, joined on the vendor account. Keep it a second grouped
 aggregate rather than a per-line method call so it stays set-based.
 
-## The Act 2 variant: `LcProcurementReconcile` (writes `lc_reconciliation`)
+## The Act 3 variant: `LcProcurementReconcile` (writes `lc_reconciliation`)
 
-Episode 9 Act 2 turns this from a *reporting* batch into an *event-producing* one.
+Episode 9 Act 3 turns this from a *reporting* batch into an *event-producing* one.
 Instead of only logging a digest, the reconcile variant is the **producer** in the
 event-driven chain: for each vendor engagement whose committed amount is
 under-invoiced, its terminal step POSTs one row to the Dataverse Web API

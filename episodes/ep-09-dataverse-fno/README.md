@@ -193,31 +193,36 @@ the real F&O vendor and PO through the `mserp_*` tables, with no reseed.
 F&O is reached through **virtual tables** (read-through, no replication; the same
 federation pattern as Ep 4) plus the **Dynamics 365 ERP MCP** for agent reads. This
 episode deliberately does **not** use dual-write: nothing is bi-directionally synced
-between CRM and ERP. Where Act 2 needs to write a launch-side record from an F&O
+between CRM and ERP. Where Act 3 needs to write a launch-side record from an F&O
 batch, it uses a plain Dataverse Web API POST, not a dual-write mapping. Virtual
 tables keep the demo light and on-camera fast, and keep one source of truth per fact.
 
 ---
 
-## The build: four acts
+## The build: five acts
 
 The build is one continuous arc, authored by coding agents, no dual-write anywhere:
 
 1. **Act 1** extends the data model across both planes: the ERP records in Finance &
    Operations and the linked launch tables in Dataverse (`lc_vendorwork` join +
    `lc_reconciliation` trigger table).
-2. **Act 2** puts a recurring **F&O batch job** on top of that model to process the
+2. **Act 2** **populates** that model through the two MCP servers driven by the
+   unified data CLI: the F&O ERP MCP (vendors, products, POs, and the company
+   configuration its form tools can stand up) and the Dataverse MCP (the launch-side
+   rows). A committed validator reports the live scaffold gap.
+3. **Act 3** puts a recurring **F&O batch job** on top of that model to process the
    POs and invoices and emit a reconciliation signal row.
-3. **Act 3** writes the reconciliation policy as a **Business Skill** over the unified
+4. **Act 4** writes the reconciliation policy as a **Business Skill** over the unified
    model, the Dataverse MCP (reads), and the F&O MCP (vendor / PO / invoice writes).
-4. **Act 4** stands up and **evaluates an asynchronous agent** that mounts the skill
+5. **Act 5** stands up and **evaluates an asynchronous agent** that mounts the skill
    and the two MCP servers and wakes on the trigger row.
 
 ```
 Act 1  extend model  ->  lc_vendorwork (join)  +  lc_reconciliation (trigger)  +  F&O vendors/POs
-Act 2  F&O batch     ->  processes POs/invoices, writes one lc_reconciliation row (Open)
-Act 3  Business Skill->  reconciliation policy over unified model + Dataverse MCP + F&O MCP
-Act 4  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Reconciled
+Act 2  MCP populate  ->  ERP MCP + Dataverse MCP fill the model; validator shows the scaffold gap
+Act 3  F&O batch     ->  processes POs/invoices, writes one lc_reconciliation row (Open)
+Act 4  Business Skill->  reconciliation policy over unified model + Dataverse MCP + F&O MCP
+Act 5  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Reconciled
 ```
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored), fill
@@ -317,16 +322,16 @@ tools (see Ted Ohlsson, "Creating F&O Legal Entities from Copilot Studio", 2026)
 process is iterative and best driven interactively (for example in Copilot Studio),
 not headless. If real posted F&O invoices are required and re-provisioning with demo
 data is not an option, this ERP-MCP form-tool route is the in-place alternative; for
-the Act 2 reconciliation gap demo it is not necessary.
+the Act 3 reconciliation gap demo it is not necessary.
 
-This is why Act 2 is designed around the committed-versus-invoiced **gap** rather
+This is why Act 3 is designed around the committed-versus-invoiced **gap** rather
 than around posting live F&O invoices: the reconciliation reads the committed amount
 from the purchase order and the invoiced amount from `lc_vendorwork`, and the under
 invoiced state is exactly what the async agent chases. Posting real vendor invoices
 in F&O is not a prerequisite for the demo. A **PO-based** vendor invoice, if you do
 configure the ledger, additionally needs a posted product receipt so there is a
 received quantity to invoice (the PO to product receipt to vendor invoice cycle, see
-Act 3).
+the Act 2 scaffold).
 
 ---
 
@@ -454,13 +459,105 @@ recording, it is the fourth check in [Test and validate the solution](#test-and-
 
 ---
 
-## Act 2 · The F&O batch that processes POs and invoices
+## Act 2 · Populate the model through the ERP and Dataverse MCP servers
 
-Act 2 puts a **recurring Finance & Operations batch job** on top of the model. Its
+Act 1 defined the model. Act 2 **fills** it, and it does so through the **two MCP
+servers driven by the unified data CLI**, not by hand-written OData scripts. The
+same CLI hosts both:
+
+- the **Dataverse MCP server** (remote, `<env>/api/mcp`) for the launch-side tables
+  (`lc_vendorwork`, `lc_reconciliation`) and for reading the F&O virtual entities,
+  and
+- the **Finance & Operations ERP MCP server**, hosted locally over stdio by the same
+  CLI (`dataverse mcp <fno-operations-url>`). It exposes three tool families: **data
+  tools** (OData CRUD), **form tools** (drive the F&O configuration forms and their
+  X++ logic like a functional consultant would), and **API tools** (custom X++).
+
+A coding agent drives those tools to stand the scenario up end to end.
+`erp_mcp_write.py` is the reference driver that spawns the ERP MCP server over the
+CLI and calls a create tool.
+
+### The scaffolding, validated at runtime
+
+Before populating anything, enumerate every F&O object the vendor-invoice flow
+depends on, in dependency order, and check it live. `validate_fno_scaffold.py` is the
+committed, read-only check (it exits non-zero while the company cannot yet post an
+invoice):
+
+```
+$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
+python episodes/ep-09-dataverse-fno/validate_fno_scaffold.py
+```
+
+Against a **bare `dat` legal entity** it reports three layers:
+
+| Layer | Object | Built by | Bare `dat` |
+| --- | --- | --- | --- |
+| Config | Ledger accounting currency | ERP MCP **form tools** | missing |
+| Config | Chart of accounts + main accounts | ERP MCP **form tools** | missing |
+| Config | Fiscal calendar + open periods | ERP MCP **form tools** | missing |
+| Config | Account structure (active) | ERP MCP **form tools** | missing |
+| Config | Vendor posting profile | ERP MCP **form tools** | missing |
+| Config | Terms of payment, tax codes | ERP MCP form / data tools | missing |
+| Config | Currencies | ships with environment | present (3) |
+| Config | AP number sequence references | `setup_fno_number_sequences.py` | present (see preamble) |
+| Master | Vendor group | ERP MCP data tools | present (1) |
+| Master | Vendors | ERP MCP data tools | present (3) |
+| Master | Released products (item-backed lines) | ERP MCP data tools | missing |
+| Master | Purchase orders | ERP MCP data tools | present (7) |
+| Txn | Product receipts | ERP MCP form / data tools | missing |
+| Txn | Vendor invoices | ERP MCP form / data tools | missing |
+| Dataverse | `lc_vendorwork`, `lc_reconciliation` rows | Dataverse MCP | present (Act 1) |
+
+The lesson is in the split: the **Master** layer (vendors, POs) and the **Dataverse**
+layer populate cleanly through data tools and the Dataverse MCP, but the entire
+**Config** layer is missing, and that is why a bare `dat` cannot post an invoice.
+
+### The critical dependency: configure the company with the form tools
+
+As the number-sequence preamble proves, raw OData cannot create a chart of accounts
+or wire the ledger; the composite financial entities gate creation behind X++. The
+**ERP MCP form tools** are the path that can, because they drive the same
+configuration forms a functional consultant uses.
+
+The agent should not improvise that configuration from generic knowledge. Ground it
+on an **authoritative learning path** and let it execute the steps against the form
+tools, in order. The Microsoft Learn finance and operations configuration path is the
+source of record, starting with the global address book and moving through the
+financial foundation:
+
+- [Plan and configure the global address book (GAB)](https://learn.microsoft.com/training/modules/plan-config-global-address-book-finance-operations/)
+  (parties, party roles: the vendor is a party role over a GAB party).
+- Legal entities and the organization hierarchy.
+- Currencies and exchange rates, then the **ledger** (accounting and reporting
+  currency).
+- The **chart of accounts**, main accounts, and main account categories.
+- The **fiscal calendar** and open periods.
+- The **account structure** and advanced rules.
+- Accounts payable posting profiles, terms of payment, and sales tax codes.
+
+This mirrors the point behind the tool-behavior metrics work later in the series:
+when the goal is "get the agent unstuck," you change the instrument, encode the
+domain's pitfalls into the grounding, and move fixes into the prompt rather than
+hoping a bigger model guesses the right F&O sequence. Grounding the config plan on
+the learning path is exactly that: it turns "configure a legal entity" from a coin
+flip into a checklist the form tools execute deterministically.
+
+Only after the Config layer exists do the Master and Txn layers (data tools) and the
+launch-side rows (Dataverse MCP) complete the scenario, and `validate_fno_scaffold.py`
+flips to exit 0. If you would rather not configure a bare company on camera, provision
+the environment with demo data (the configured `USMF` company) and point the validator
+at it (`--company USMF`); the whole Config layer is then already present.
+
+---
+
+## Act 3 · The F&O batch that processes POs and invoices
+
+Act 3 puts a **recurring Finance & Operations batch job** on top of the model. Its
 only job is detect-and-emit: on a recurrence it reads the POs and invoiced-to-date,
 finds each engagement whose committed amount is under-invoiced, and drops one
 `lc_reconciliation` row (status Open) per gap. It writes nothing else and reasons
-about nothing; the reconciliation logic is Act 3.
+about nothing; the reconciliation logic is Act 4.
 
 ### The build
 
@@ -491,9 +588,9 @@ engagements; a re-run is idempotent (skips when an Open signal already exists).
 
 ---
 
-## Act 3 · The reconciliation Business Skill
+## Act 4 · The reconciliation Business Skill
 
-Act 3 writes the reconciliation **policy** as a Dataverse **Business Skill**, so the
+Act 4 writes the reconciliation **policy** as a Dataverse **Business Skill**, so the
 reasoning is a governed, reusable asset rather than prompt text buried in an agent.
 The skill is authored by a coding agent and references three things: (a) the **unified
 data model** built in Act 1, (b) the **Dataverse MCP server** for data access (read
@@ -524,7 +621,7 @@ Type this into GitHub Copilot CLI:
 | Reconciliation policy skill | `business-skills/ep09-vendor-invoice-reconciliation.md` |
 
 Publish it to the environment as a governed Dataverse **Business Skill** (the `skills`
-table), so Act 4's agent references it from Dataverse rather than carrying a pasted
+table), so Act 5's agent references it from Dataverse rather than carrying a pasted
 copy. Publishing there means a policy edit is a single re-publish, not a re-paste into
 every agent:
 
@@ -532,20 +629,20 @@ every agent:
 python scripts/python/_upload_skill.py \
   --name "Vendor Invoice Reconciliation (event-driven, from a launch procurement signal)" \
   --uniquename lc_ep09_vendor_invoice_reconciliation \
-  --description "Event-driven Episode 9 Act 3 policy: reconcile one launch procurement gap across Dataverse and Finance and Operations and write back one grounded outcome." \
+  --description "Event-driven Episode 9 Act 4 policy: reconcile one launch procurement gap across Dataverse and Finance and Operations and write back one grounded outcome." \
   business-skills/ep09-vendor-invoice-reconciliation.md
 ```
 
 Then confirm the live `body` matches the file (the `skills` table dedupes on
 `uniquename`, so verify by reading the record back and comparing rather than trusting
 the create/patch response alone). The skill is the single source of the reconciliation
-logic; Act 4's agent instruction box only points at it.
+logic; Act 5's agent instruction box only points at it.
 
 ---
 
-## Act 4 · The asynchronous agent and its evaluation
+## Act 5 · The asynchronous agent and its evaluation
 
-Act 4 stands up the **autonomous agent** that mounts the Act 3 skill and both MCP
+Act 5 stands up the **autonomous agent** that mounts the Act 4 skill and both MCP
 servers, and evaluates it. No one asks it a question: it wakes on the Dataverse
 row-add event, reconciles the one gap, and writes back the outcome.
 
@@ -553,7 +650,7 @@ row-add event, reconciles the one gap, and writes back the outcome.
 
 Type this into GitHub Copilot CLI:
 
-> *Read the Act 4 section of this episode's README, then set me up to build and*
+> *Read the Act 5 section of this episode's README, then set me up to build and*
 > *evaluate the asynchronous reconciliation agent. It shouldn't wait for anyone to*
 > *ask it anything; it should wake up on its own whenever the batch drops a new row*
 > *in lc_reconciliation, reconcile that one gap, and write the outcome back. Give me*
@@ -584,7 +681,7 @@ and the paste-verbatim instruction shell):
    trigger row and the unified model, writes the outcome) and the **Dynamics 365 F&O
    MCP** (confirms the gap and makes authorized vendor / PO / invoice entries).
 2. **Business Skill.** Publish `ep09-vendor-invoice-reconciliation` to the Dataverse
-   `skills` table (Act 3). The agent reads that skill body from Dataverse at runtime
+   `skills` table (Act 4). The agent reads that skill body from Dataverse at runtime
    through the Dataverse MCP before it acts, so the policy is not pasted into the
    instruction box and a policy edit is one re-publish. Do not duplicate its steps into
    the instruction box; the Dataverse skill owns them.
@@ -675,11 +772,11 @@ provable before it is recorded.
 | Both data APIs | `python verify_vendorwork.py` | OData live join to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across `lc_vendorwork` / `lc_task` / `lc_launch`. |
 | The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), plus a cross-plane read of the F&O `mserp_*` virtual entities over the *same* MCP endpoint, reconciled against `lc_vendorwork` (7/7), once the MCP server is enabled and the client app is allowlisted. |
 | Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
-| Act 2 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
-| Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the four under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
-| Act 4 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Reconciled - Gap` / `Reconciled - Match` with a grounded `lc_agentoutcome`; exactly once per signal. |
+| Act 3 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
+| Act 3 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the four under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
+| Act 5 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Reconciled - Gap` / `Reconciled - Match` with a grounded `lc_agentoutcome`; exactly once per signal. |
 
-**Act 4 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
+**Act 5 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
 the sample `EvalReconciliationSet.csv` (import format per `EvalConversationTemplate.csv`):
 eight conversations covering a material gap, a closed gap, an immaterial gap, an
 F&O-unreachable fallback, the post-to-ledger guardrail, idempotency, legal-entity
@@ -706,9 +803,9 @@ column and row security carry over to the launch view and model-driven form.
 
 - **Scope.** One ERP signal (budget) for a tight episode, or budget + PO + inventory
   for a richer but longer one.
-- **Act 2 batch on camera.** Emit one signal by hand (deterministic) or schedule the
+- **Act 3 batch on camera.** Emit one signal by hand (deterministic) or schedule the
   stand-in producer / native batch so the row appears "on its own" during recording.
-- **Act 3 F&O writes.** Resolved as a policy choice: the skill is draft-only on the
+- **Act 4 F&O writes.** Resolved as a policy choice: the skill is draft-only on the
   ledger. The F&O ERP MCP (OData) has no post or action-invoke tool (record CRUD only), so
   posting is not reachable that way. It *is* reachable through a Dataverse Custom API
   wrapper (F&O vendor-invoice operations already surface as `msdyn_VendInvoice*CustomAPI`,

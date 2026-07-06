@@ -1,4 +1,4 @@
-# Ep 9 Act 4 agent: asynchronous vendor-invoice reconciliation
+# Ep 9 Act 5 agent: asynchronous vendor-invoice reconciliation
 
 This is the **event-driven** counterpart to the synchronous readiness agent in
 `agent-instructions.md`. It is not asked a question by a human. It wakes on a
@@ -22,7 +22,7 @@ as the synchronous ep-09 agent (`<your-fno-env>`).
    publish the `ep09-vendor-invoice-reconciliation` skill (source:
    `business-skills/ep09-vendor-invoice-reconciliation.md`) to this environment's
    `skills` table as a governed Business Skill (uniquename
-   `lc_ep09_vendor_invoice_reconciliation`; see Act 3 for the publish command). The
+   `lc_ep09_vendor_invoice_reconciliation`; see Act 4 for the publish command). The
    agent does **not** carry a pasted copy: the Instructions box below has it **read the
    skill body from Dataverse at runtime** through the Dataverse MCP before it acts, so
    Dataverse is the single source of truth and a policy edit is one re-publish. Do
