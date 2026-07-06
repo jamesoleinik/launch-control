@@ -1,4 +1,4 @@
-"# Sample eval set for the Ep 9 Act 4 asynchronous vendor-invoice reconciliation agent."
+﻿"# Sample eval set for the Ep 9 Act 4 asynchronous vendor-invoice reconciliation agent."
 "#"
 "# The agent runs on a Dataverse row-add trigger, not on a human question, so each"
 "# conversation frames the trigger context in the prompt and asks the agent for the"

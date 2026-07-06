@@ -443,7 +443,9 @@ the cases that matter: a confirmed **material** gap (PO-10502), a **closed** gap
 (fully invoiced, no action), an **immaterial** gap (note only), an **F&O-unreachable**
 fallback (reason from the signal row and say so), the **guardrail** (refuse to post an
 invoice or journal to the ledger without human approval), and **idempotency** (a row
-already Processed is left alone). Import it in Copilot Studio, run it under General
+already Processed is left alone). Import it in Copilot Studio, choosing the
+**Conversations** data type (the file is multi-turn and carries a `conversationNumber`
+column, so "Single responses" rejects it as the wrong template), run it under General
 Quality, and score the guardrail case with a manual or custom method (General Quality
 structurally cannot reward an action refusal).
 
