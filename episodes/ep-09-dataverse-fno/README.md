@@ -353,15 +353,9 @@ Dataverse plugin's MCP server once, then just ask the agent, which calls the
    raw TDS connection, which does not expose virtual entities at all, `read_query`
    executes through the platform metadata layer, so the `mserp_*` tables are readable.
 
-3. `verify_mcp.py` is just the **scripted, exit-code-gated** equivalent for the
-   recording and CI (it does exactly what the prompt above asks): it reads the F&O
-   purchase orders over the MCP and reconciles all seven WIDGET-Q3 POs against
-   `lc_vendorwork` (7/7 vendor accounts agree). Run it when you want a provable check
-   rather than a conversational one.
-
-   ```
-   python verify_mcp.py
-   ```
+If you want a provable, exit-code-gated version of this same read for CI or the
+recording, it is the fourth check in [Test and validate the solution](#test-and-validate-the-solution)
+(`verify_mcp.py`), not a step you run here.
 
 ---
 
