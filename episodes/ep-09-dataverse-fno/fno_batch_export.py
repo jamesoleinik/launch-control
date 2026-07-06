@@ -69,10 +69,20 @@ def _client():
 
 
 def _post(url, headers, action, body):
-    r = requests.post(f"{url}{DMF}{action}", headers=headers, json=body, timeout=180)
-    if not r.ok:
-        raise RuntimeError(f"{action} -> HTTP {r.status_code}: {r.text[:400]}")
-    return r.json().get("value")
+    # The F&O operations endpoint occasionally drops the TLS connection mid-poll
+    # (UNEXPECTED_EOF_WHILE_READING). Retry transient network/SSL flaps so a long
+    # export poll does not fail a whole run; mirrors write_fno.py's _fno_call.
+    last = None
+    for _ in range(5):
+        try:
+            r = requests.post(f"{url}{DMF}{action}", headers=headers, json=body, timeout=180)
+            if not r.ok:
+                raise RuntimeError(f"{action} -> HTTP {r.status_code}: {r.text[:400]}")
+            return r.json().get("value")
+        except requests.exceptions.RequestException as exc:
+            last = exc
+            time.sleep(3)
+    raise RuntimeError(f"{action} failed after retries: {last}")
 
 
 def ensure_project(url, headers):
