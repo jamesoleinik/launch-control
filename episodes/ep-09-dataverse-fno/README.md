@@ -233,6 +233,35 @@ one-time setup, not part of the recorded demo: export the `LaunchControl` soluti
 unified, F&O-linked environment (`pac solution import --path LaunchControl.zip`), then
 run the seed scripts there. No dual-write is introduced.
 
+### Optional preamble: provision F&O vendor-invoice number sequences
+
+A freshly stood-up legal entity (here `dat`) can be missing the Accounts Payable
+number sequences. Without them, Finance & Operations refuses to create or post a
+vendor invoice, in the app and through any API alike, with *"Numbers could not be
+generated because a number sequence reference is missing."* In F&O you must set up a
+number sequence and associate it with a reference before you can create records for
+that reference (see
+[Number sequences overview](https://learn.microsoft.com/dynamics365/fin-ops-core/fin-ops/organization-administration/number-sequence-overview)).
+
+The supported UI fix is the **Generate number sequences** wizard. The programmatic
+equivalent is `scripts/python/setup_fno_number_sequences.py`, which is fully
+data-driven over the F&O OData surface: it creates the number sequence **code**
+(entity set `SequenceV2Tables`, the collection name of `NumberSequenceTableV2Entity`,
+which drops the `Number` prefix) and then binds the **reference**
+(`NumberSequencesV2References`) for the AP vendor-invoice datatypes
+(`PurchInternalInvoiceId`, `PurchInvoiceVoucher`). The code table is not reachable
+through the Dataverse MCP virtual-entity path, so this provisioning runs against F&O
+OData. It is idempotent and dry-run first:
+
+```
+python scripts/python/setup_fno_number_sequences.py --dry-run
+python scripts/python/setup_fno_number_sequences.py
+```
+
+Number sequences unblock creation of a vendor invoice; a **PO-based** vendor invoice
+additionally needs a posted product receipt so there is a received quantity to
+invoice (the PO to product receipt to vendor invoice cycle, see Act 3).
+
 ---
 
 ## Act 1 · Extend the data model (ERP + linked Dataverse tables)
