@@ -279,7 +279,15 @@ OData or MCP call, so it cannot be retrofitted into an already-deployed empty
 environment from a script. To use it:
 
 1. Provision (or redeploy) the F&O environment with **demo data enabled** so the
-   configured `USMF` company is present.
+   configured `USMF` company is present. Contoso demo data is applied by deploying a
+   **Demo** topology environment through Lifecycle Services (see
+   [Deploy a demo environment](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/deployment/deploy-demo-environment)),
+   not by importing a package into an existing empty company. There is no
+   Microsoft-supported "upload this zip and an empty legal entity becomes postable"
+   artifact; ad-hoc Data Management imports of currencies or accounts into a bare
+   company fail on the interdependent ledger prerequisites. Partial community packages
+   (for example the FastTrack implementation assets) add vendors or customers but
+   assume a ledger that is already configured.
 2. Point `FNO_URL` at that environment and run the seed against `USMF` (pass
    `--company USMF` where the scripts accept it); the AP number sequences above are
    already set up in `USMF`, so that preamble becomes a no-op there.
