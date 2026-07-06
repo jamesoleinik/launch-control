@@ -40,6 +40,12 @@ LAUNCH_CODE = "WIDGET-Q3"
 # more, so assert "at least the base six" rather than an exact count.
 MIN_ENGAGEMENTS = 6
 CORE_TOOLS = {"read_query", "describe", "search", "create_record", "update_record"}
+# F&O purchase-order header virtual entity. Over the MCP `read_query` tool this must
+# be the singular *logical* name; the OData set name (`...entities`) is rejected as
+# "not found in the metadata cache." Unlike a raw TDS connection (which does not
+# expose virtual entities at all), `read_query` executes through the platform
+# metadata layer, so the F&O `mserp_*` virtual tables are readable.
+PO_VIRTUAL_ENTITY = "mserp_purchpurchaseorderheaderv2entity"
 
 
 def main():
@@ -102,12 +108,51 @@ def main():
     rollup_ok = len(rollup) > 0
     print(f"\n  rollup rows: {len(rollup)} ({'PASS' if rollup_ok else 'FAIL'})\n")
 
-    print("== Result ==")
-    print(f"  MCP tools present    : {'PASS' if tools_ok else 'FAIL'}")
-    print(f"  MCP read_query join  : {'PASS' if query_ok else 'FAIL'}")
-    print(f"  MCP GROUP BY rollup  : {'PASS' if rollup_ok else 'FAIL'}")
+    print("== tools/call read_query: F&O virtual entity (cross-plane over the MCP) ==\n")
+    # Prove the SAME MCP endpoint reads the live F&O purchase orders (a virtual
+    # entity), then reconcile each lc_vendorwork PO against its F&O vendor account.
+    expected = {
+        r["lc_ponumber"]: r.get("lc_vendoraccount")
+        for r in rows
+        if r.get("lc_ponumber")
+    }
+    virtual_ok = False
+    if expected:
+        po_list = ", ".join("'" + po.replace("'", "''") + "'" for po in expected)
+        fno_rows = client.read_query(
+            "SELECT mserp_purchaseordernumber, mserp_ordervendoraccountnumber "
+            f"FROM {PO_VIRTUAL_ENTITY} "
+            f"WHERE mserp_purchaseordernumber IN ({po_list})"
+        )
+        actual = {
+            r.get("mserp_purchaseordernumber"): r.get("mserp_ordervendoraccountnumber")
+            for r in fno_rows
+        }
+        matched = 0
+        for po, vendor in sorted(expected.items()):
+            fno_vendor = actual.get(po)
+            agree = fno_vendor is not None and fno_vendor == vendor
+            matched += 1 if agree else 0
+            print(
+                f"  {po:10} lc_vendorwork={vendor or '?':8} "
+                f"F&O virtual={fno_vendor or 'MISSING':8} "
+                f"{'match' if agree else 'MISMATCH'}"
+            )
+        virtual_ok = matched == len(expected)
+        print(
+            f"\n  {matched}/{len(expected)} POs resolved to the same vendor in the F&O "
+            f"virtual entity over the MCP: {'PASS' if virtual_ok else 'FAIL'}\n"
+        )
+    else:
+        print("  no lc_vendorwork PO numbers to reconcile: FAIL\n")
 
-    if not (tools_ok and query_ok and rollup_ok):
+    print("== Result ==")
+    print(f"  MCP tools present         : {'PASS' if tools_ok else 'FAIL'}")
+    print(f"  MCP read_query join       : {'PASS' if query_ok else 'FAIL'}")
+    print(f"  MCP GROUP BY rollup       : {'PASS' if rollup_ok else 'FAIL'}")
+    print(f"  MCP F&O virtual-table read: {'PASS' if virtual_ok else 'FAIL'}")
+
+    if not (tools_ok and query_ok and rollup_ok and virtual_ok):
         raise SystemExit(1)
 
 

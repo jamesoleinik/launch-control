@@ -301,6 +301,54 @@ status of the Q3 Widget Launch, and what are we paying outside vendors for it?"*
 get CRM risk, ERP cost, and vendor risk from one endpoint. Acts 2 to 4 make that
 reconciliation autonomous.
 
+### Confirm F&O virtual tables through the Dataverse MCP (locally, in GitHub Copilot CLI)
+
+The join above is durable because `lc_vendorwork` stores the F&O keys as columns, so
+it resolves over TDS with or without the virtual entities. But the payoff of the
+unified platform is that a coding agent can read the *live* F&O purchase orders
+through the **same** Dataverse MCP endpoint it uses for the `lc_*` tables, with no
+second connector. Confirm it locally before you record.
+
+1. Register the Dataverse MCP server with GitHub Copilot CLI. Add an entry to your
+   personal `~/.copilot/mcp-config.json` (do not commit it, it points at your
+   environment):
+
+   ```json
+   {
+     "mcpServers": {
+       "dataverse": {
+         "command": "npx",
+         "args": ["-y", "@microsoft/dataverse", "mcp", "https://<your-env>.crm.dynamics.com/api/mcp"]
+       }
+     }
+   }
+   ```
+
+   The client app GitHub Copilot uses (`MCP_CLIENT_ID = aebc6443-996d-45c2-90f0-388ff96faa56`)
+   must be allowlisted on the environment and the Dataverse MCP server enabled (see
+   [Configure the Dataverse MCP server](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable)).
+   Restart the CLI so it picks up the server.
+
+2. Ask Copilot to read the F&O virtual entity through `read_query`:
+
+   > *Through the Dataverse MCP `read_query` tool, list the F&O purchase orders from*
+   > *`mserp_purchpurchaseorderheaderv2entity` (select `mserp_purchaseordernumber` and*
+   > *`mserp_ordervendoraccountnumber`), then reconcile each one against the matching*
+   > *`lc_vendorwork` row and tell me if the vendor accounts agree.*
+
+   Use the **singular logical name** (`...entity`), not the OData set name
+   (`...entities`, which `read_query` rejects as not in the metadata cache). Unlike a
+   raw TDS connection, which does not expose virtual entities at all, `read_query`
+   executes through the platform metadata layer, so the `mserp_*` tables are readable.
+
+3. The scripted equivalent (what the video shows on screen) is the fourth proof in
+   `verify_mcp.py`: it reads the F&O purchase orders over the MCP and reconciles all
+   seven WIDGET-Q3 POs against `lc_vendorwork` (7/7 vendor accounts agree).
+
+   ```
+   python verify_mcp.py
+   ```
+
 ---
 
 ## Act 2 · The F&O batch that processes POs and invoices
@@ -503,7 +551,7 @@ provable before it is recorded.
 | Check | Command | Proves |
 |---|---|---|
 | Both data APIs | `python verify_vendorwork.py` | OData live join to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across `lc_vendorwork` / `lc_task` / `lc_launch`. |
-| The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP server is enabled and the client app is allowlisted. |
+| The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), plus a cross-plane read of the F&O `mserp_*` virtual entities over the *same* MCP endpoint, reconciled against `lc_vendorwork` (7/7), once the MCP server is enabled and the client app is allowlisted. |
 | Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
 | Act 2 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
 | Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
