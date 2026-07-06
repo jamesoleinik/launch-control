@@ -80,3 +80,55 @@ To match the external digest's committed / invoiced / outstanding columns, exten
 (vendor transactions, `TransType == LedgerTransType::Purch`) or
 `VendInvoiceJour`, joined on the vendor account. Keep it a second grouped
 aggregate rather than a per-line method call so it stays set-based.
+
+## The Act 2 variant: `LcProcurementReconcile` (writes `lc_reconciliation`)
+
+Episode 9 Act 2 turns this from a *reporting* batch into an *event-producing* one.
+Instead of only logging a digest, the reconcile variant is the **producer** in the
+event-driven chain: for each vendor engagement whose committed amount is
+under-invoiced, its terminal step POSTs one row to the Dataverse Web API
+`lc_reconciliation` table (status `Open`). That row-add is what wakes the
+asynchronous Copilot Studio agent (see `../async-agent-instructions.md`), which
+pulls in the `ep09-vendor-invoice-reconciliation` Business Skill and reconciles the
+gap. The batch only emits the signal; it does not reconcile.
+
+To build it, copy the three classes above to `LcProcurementReconcile*` and change
+the service body so that, after computing committed-minus-invoiced per engagement,
+it calls the Dataverse Web API for each material gap:
+
+- Authenticate to the linked Dataverse environment (the F&O batch runs under a
+  service identity; use an `HttpsUrl` / managed-identity token to
+  `<dataverse-url>/api/data/v9.2/lc_reconciliations`).
+- POST `{ "lc_name": ..., "lc_signalkey": <engagement key>, "lc_ponumber": ...,
+  "lc_committedamount": ..., "lc_invoicedamount": ..., "lc_gapamount": ...,
+  "lc_status": "Open", "lc_launchid@odata.bind": "/lc_launchs(<id>)",
+  "lc_vendorworkid@odata.bind": "/lc_vendorworks(<id>)" }`.
+- Make it idempotent: query for an existing `Open` signal with the same
+  `lc_signalkey` first and skip if present (the same rule the stand-in producer
+  enforces).
+
+No dual-write is involved: this is a plain Web API POST from the batch to a
+Dataverse table, not a dual-write mapping.
+
+`emit_reconciliation_signals.py` is the runnable stand-in for exactly this producer
+(same detection, same idempotent `lc_reconciliation` write, via the Dataverse MCP),
+so the event-driven demo works today without deploying X++.
+
+## A note on deploying from the CLI (as of this writing)
+
+The classic path above (Visual Studio build -> deployable package -> LCS/pipeline)
+is the supported route today. Two lighter paths are emerging but are **not usable
+yet** on public tooling:
+
+- **Unified developer experience**: compile locally in Visual Studio with the
+  Finance and Operations extensions and push straight to the connected environment
+  via *Extensions > Dynamics 365 > Deploy > Deploy Models to Online Environment*.
+  No LCS package, no maintenance window. This still needs local Visual Studio + the
+  F&O extensions.
+- **PAC CLI ERP commands** (`pac package init/deploy --package-type erp`,
+  `pac env feature`, `pac tool xpp`): these are announced but **flighted off** in
+  the current public `pac` (verified on 2.8.1: `--package-type erp` is listed in
+  help but the parser rejects `erp`; `pac env feature` and `pac tool xpp` are not
+  present). When they GA, an F&O X++ model will be buildable and deployable from a
+  CLI session with no Visual Studio. Until then, the native batch is deployed in
+  Visual Studio, and the runnable demo uses `emit_reconciliation_signals.py`.

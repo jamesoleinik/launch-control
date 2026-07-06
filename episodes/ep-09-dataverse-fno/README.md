@@ -215,6 +215,62 @@ production-grade alternative.
   waiting on a supplier the launch team is paying through ERP. CRM risk, ERP cost,
   and vendor risk on one record.
 
+## Act 2: event-driven invoice reconciliation
+
+Act 1 answers a human's question by reading across both planes. Act 2 removes the
+human from the loop: a recurring batch emits an event, and an autonomous agent
+reacts. The chain, no dual-write anywhere:
+
+```
+recurring F&O batch (native X++, or the emit_reconciliation_signals stand-in)
+   detects under-invoiced engagements
+   -- writes one row -->  lc_reconciliation (status Open)
+                                 |
+                    "When a row is added" trigger fires
+                                 v
+   async Copilot Studio agent  +  ep09-vendor-invoice-reconciliation Business Skill
+   reads the live PO / invoiced-to-date from F&O (ERP MCP), confirms the gap,
+   drafts the follow-up, writes lc_agentoutcome, sets lc_status = Processed
+```
+
+The design keeps the two roles clean:
+
+- **Producer** is the recurring **F&O batch**. Its only job is detect-and-emit: for
+  each engagement whose committed amount is under-invoiced, drop one
+  `lc_reconciliation` row. The production batch is the native X++ SysOperation class
+  in `fno-batch/` (built and deployed in Visual Studio via the unified developer
+  experience; the CLI ERP build path is still flighted off, so the X++ is documented
+  but not authored on camera). `emit_reconciliation_signals.py` is the runnable
+  stand-in that does the identical detection and idempotent `lc_reconciliation` write
+  through the Dataverse MCP, so the event-driven demo works today.
+- **Consumer** is the **asynchronous agent**. It carries no reconciliation logic in
+  its instruction box; it pulls in the `ep09-vendor-invoice-reconciliation` Business
+  Skill (`business-skills/ep09-vendor-invoice-reconciliation.md`) and reasons over the
+  Dataverse and F&O MCP servers. Setup and instructions:
+  `async-agent-instructions.md`.
+
+`lc_reconciliation` is deliberately a separate table from `lc_vendorwork` so the
+row-add trigger fires only on batch output, never when an engagement is edited.
+
+For the recording, emit exactly one signal by hand so a single row-add cleanly wakes
+the agent:
+
+```
+$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
+python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
+```
+
+### Optional preamble: move the solution into a unified environment
+
+The event-driven arc assumes the launch model and Finance & Operations live in the
+same unified environment. If you are starting from a CRM-only environment, that is a
+one-time setup, not part of the recorded demo: export the `LaunchControl` solution
+from the source environment (`pac solution export --name LaunchControl --managed
+false`) and import it into the unified, F&O-linked environment (`pac solution import
+--path LaunchControl.zip`), then run the seed scripts there. No dual-write is
+introduced; the F&O side is reached through virtual tables and the ERP MCP, and the
+Act 2 producer writes `lc_reconciliation` with a plain Web API POST.
+
 ## Build steps (outline)
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
@@ -243,8 +299,14 @@ production-grade alternative.
 8. Make it a native F&O batch (Batch job history): `python fno_batch_export.py --run`
    stands up a DMF export batch with no dev box, and `fno-batch/` is the deploy-ready
    X++ SysOperation batch. See `MCP-DEMO.md` section d.
-9. Add the ERP fields to the launch view / model-driven form.
-10. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+9. Wire the event-driven Act 2: `python reconciliation_model.py` creates the
+   `lc_reconciliation` trigger table; `python emit_reconciliation_signals.py --po
+   PO-10502` emits one signal (stand-in for the recurring F&O batch); build the
+   asynchronous agent with a "When a row is added" trigger on `lc_reconciliation`
+   and the `ep09-vendor-invoice-reconciliation` Business Skill
+   (`async-agent-instructions.md`).
+10. Add the ERP fields to the launch view / model-driven form.
+11. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
 
 ## Open questions to resolve before building
 
