@@ -209,23 +209,61 @@ financial/supply state (F&O) together.
 > in your values, and select it with `LC_ENV=ep-09-dataverse-fno` so
 > `scripts/auth.py` targets this environment instead of the repo-root `.env`.
 
-1. **Stand up the launch model + the CRM/ERP join.** `python seed_vendor_work.py`
-   creates the real F&O records (currency, vendor group, three vendors, open POs),
-   extends the launch model with the first-class `lc_vendorwork` join (a real
-   `lc_taskid` lookup plus the F&O vendor and PO business keys), and marks the six
-   outsourced WIDGET-Q3 tasks. Net: 165k committed / 66k invoiced / 99k open across
-   three vendors. Full build log and gotchas: `VENDORWORK-BUILD.md`.
-2. **Seed the ERP signal feed.** `python seed_erp_signals.py` lands the clearly
-   labeled `lc_erpsignal` table (budget over approval, an open vendor PO, an
-   inventory shortfall) in the same environment, the narrative ERP posture the agent
-   reads through the Dataverse MCP.
-3. **Surface F&O as virtual tables.** Generate the `mserp_*` virtual entities
-   (vendor master, PO headers) so the same `lc_vendorwork` keys light up a live OData
-   join to the real F&O records. See `VENDORWORK-BUILD.md` for the exact steps.
-4. **Build the agent.** In the new Copilot Studio builder, attach the **Dataverse
-   MCP Server (Preview)** and **Dynamics 365 ERP MCP** tools, publish the
-   `lc_ep09erpreadiness` Business Skill (`business-skills/ep09-erp-readiness.md`),
-   and paste `agent-instructions.md` into the Instructions box.
+### Step 1 · Prompt the coding agent to extend the data model
+
+The data-model extension is not hand-drawn in the maker portal; it is authored by a
+coding agent. Type this into GitHub Copilot CLI:
+
+> *Extend the LaunchControl model so outsourced launch work is joined to Finance &*
+> *Operations. Create a first-class `lc_vendorwork` table with a real `lc_taskid`*
+> *lookup to `lc_task`, and store the F&O business keys on it (`lc_vendoraccount`,*
+> *`lc_ponumber`) plus the money the launch team tracks (`lc_committedamount`,*
+> *`lc_invoicedamount`, `lc_status`). Then create the real F&O side to join to:*
+> *currency USD, a `DEMO` vendor group, three vendors (Contoso Supply Co, Fabrikam*
+> *Media, Northwind Legal Advisors) and their open purchase orders. Seed six*
+> *outsourced WIDGET-Q3 engagements against those POs, with the translation*
+> *deliverable blocking its milestone. Make the script idempotent and re-runnable,*
+> *and verify the join resolves from Dataverse to the F&O records.*
+
+(Copilot has the `dv-overview`, `dv-metadata`, and `dv-data` skills loaded, so it
+already knows the `LaunchControl` solution, the `lc_` prefix, the `lc_launch` /
+`lc_task` shape, and that `scripts/auth.py` handles tokens. Storing the F&O keys as
+columns on `lc_vendorwork`, rather than a hard lookup to a virtual entity, is the one
+design choice to confirm: it keeps the join durable with or without the `mserp_*`
+virtual tables and queryable over TDS.)
+
+#### What Copilot produces
+
+| Artifact | Where it lands |
+|---|---|
+| Idempotent model + seed script | `seed_vendor_work.py` |
+| Build log and gotchas | `VENDORWORK-BUILD.md` |
+
+#### What you run on screen
+
+`python seed_vendor_work.py` creates the real F&O records (currency, vendor group,
+three vendors, open POs), extends the launch model with the first-class
+`lc_vendorwork` join, and marks the six outsourced WIDGET-Q3 tasks. Net: 165k
+committed / 66k invoiced / 99k open across three vendors.
+
+### Step 2 · Seed the ERP signal feed
+
+`python seed_erp_signals.py` lands the clearly labeled `lc_erpsignal` table (budget
+over approval, an open vendor PO, an inventory shortfall) in the same environment,
+the narrative ERP posture the agent reads through the Dataverse MCP.
+
+### Step 3 · Surface F&O as virtual tables
+
+Generate the `mserp_*` virtual entities (vendor master, PO headers) so the same
+`lc_vendorwork` keys light up a live OData join to the real F&O records. See
+`VENDORWORK-BUILD.md` for the exact steps.
+
+### Step 4 · Build the agent
+
+In the new Copilot Studio builder, attach the **Dataverse MCP Server (Preview)** and
+**Dynamics 365 ERP MCP** tools, publish the `lc_ep09erpreadiness` Business Skill
+(`business-skills/ep09-erp-readiness.md`), and paste `agent-instructions.md` into the
+Instructions box.
 
 ### The headline result (Act 1)
 
