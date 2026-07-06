@@ -2,7 +2,7 @@
 
 **Status:** ✍️ Draft (Season 2 opener) · 🎬 Not yet recorded
 **Season:** 2 (Dataverse, Better Together)
-**Features:** ⭐ Dataverse and Dynamics 365 Finance & Operations on one platform · ⭐ Dual-write / virtual tables across CRM and ERP · ⭐ One launch record enriched with ERP cost and supply signal
+**Features:** ⭐ Dataverse and Dynamics 365 Finance & Operations on one platform · ⭐ Virtual tables + ERP MCP across CRM and ERP (no dual-write) · ⭐ One launch record enriched with ERP cost and supply signal
 **Layer:** 🟢 Layer 0 (the data foundation) widening: the source of truth now spans CRM and ERP
 **Coding agent:** GitHub Copilot CLI / Copilot Studio (integration authored, not hand-clicked)
 **Runtime:** Dataverse + Dynamics 365 Finance & Operations
@@ -188,38 +188,67 @@ and it is what makes the model queryable over the **SQL / TDS endpoint**, which
 does not expose virtual entities. Over OData the same keys light up a live read of
 the real F&O vendor and PO through the `mserp_*` tables, with no reseed.
 
-## The integration options (pick one as the hero)
+## The connection pattern (and why not dual-write)
 
-1. **Virtual tables over F&O:** surface F&O entities (for example a project
-   budget or a purchase order) as virtual tables in the launch environment.
-   Read-through, no replication. Mirrors the Ep 4 virtual-entity pattern.
-2. **Dual-write:** bi-directional, near-real-time sync of selected entities
-   between the CRM and F&O environments. Heavier, but writes flow both ways.
+F&O is reached through **virtual tables** (read-through, no replication; the same
+federation pattern as Ep 4) plus the **Dynamics 365 ERP MCP** for agent reads. This
+episode deliberately does **not** use dual-write: nothing is bi-directionally synced
+between CRM and ERP. Where Act 2 needs to write a launch-side record from an F&O
+batch, it uses a plain Dataverse Web API POST, not a dual-write mapping. Virtual
+tables keep the demo light and on-camera fast, and keep one source of truth per fact.
 
-Recommended hero for the episode: **virtual tables** (lighter, on-camera fast,
-and consistent with the Ep 4 federation story). Mention dual-write as the
-production-grade alternative.
+---
 
-## The headline result
+## Act 1 · The synchronous readiness agent (build, step by step)
+
+Act 1 is the "ask across both planes" agent: a human asks for a launch's all-in
+status and the agent answers by reading the go-to-market state (Dataverse) and the
+financial/supply state (F&O) together.
+
+> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored), fill
+> in your values, and select it with `LC_ENV=ep-09-dataverse-fno` so
+> `scripts/auth.py` targets this environment instead of the repo-root `.env`.
+
+1. **Stand up the launch model + the CRM/ERP join.** `python seed_vendor_work.py`
+   creates the real F&O records (currency, vendor group, three vendors, open POs),
+   extends the launch model with the first-class `lc_vendorwork` join (a real
+   `lc_taskid` lookup plus the F&O vendor and PO business keys), and marks the six
+   outsourced WIDGET-Q3 tasks. Net: 165k committed / 66k invoiced / 99k open across
+   three vendors. Full build log and gotchas: `VENDORWORK-BUILD.md`.
+2. **Seed the ERP signal feed.** `python seed_erp_signals.py` lands the clearly
+   labeled `lc_erpsignal` table (budget over approval, an open vendor PO, an
+   inventory shortfall) in the same environment, the narrative ERP posture the agent
+   reads through the Dataverse MCP.
+3. **Surface F&O as virtual tables.** Generate the `mserp_*` virtual entities
+   (vendor master, PO headers) so the same `lc_vendorwork` keys light up a live OData
+   join to the real F&O records. See `VENDORWORK-BUILD.md` for the exact steps.
+4. **Build the agent.** In the new Copilot Studio builder, attach the **Dataverse
+   MCP Server (Preview)** and **Dynamics 365 ERP MCP** tools, publish the
+   `lc_ep09erpreadiness` Business Skill (`business-skills/ep09-erp-readiness.md`),
+   and paste `agent-instructions.md` into the Instructions box.
+
+### The headline result (Act 1)
 
 > *"What is the all-in status of the Q3 Widget Launch, and what are we paying
 > outside vendors for it?"*
 
 - **Dataverse** returns the go-to-market state: readiness NO-GO, two blockers.
-- **F&O** returns the financial state: the launch is over its approved budget, and
-  open vendor POs are still uninvoiced.
-- **The join (`lc_vendorwork`)** returns the outsourced spend: 165k committed
-  across six engagements and three vendors, only 66k invoiced, 99k open, and the
-  translation deliverable (an open PO, not yet received) is blocking a milestone.
+- **F&O** returns the financial state: over the approved budget, open vendor POs
+  still uninvoiced.
+- **The join (`lc_vendorwork`)** returns the outsourced spend: 165k committed across
+  six engagements and three vendors, only 66k invoiced, 99k open, and the translation
+  deliverable (an open PO, not yet received) blocking a milestone.
 - **Synthesis:** the launch is not just behind on tasks; it is over budget and
   waiting on a supplier the launch team is paying through ERP. CRM risk, ERP cost,
   and vendor risk on one record.
 
-## Act 2: event-driven invoice reconciliation
+---
 
-Act 1 answers a human's question by reading across both planes. Act 2 removes the
-human from the loop: a recurring batch emits an event, and an autonomous agent
-reacts. The chain, no dual-write anywhere:
+## Act 2 · The event-driven reconciliation agent (build, step by step)
+
+Act 1 answers a human's question. Act 2 removes the human from the loop: a recurring
+batch emits an event, and an autonomous agent reacts. The chain, no dual-write
+anywhere:
 
 ```
 recurring F&O batch (native X++, or the emit_reconciliation_signals stand-in)
@@ -246,75 +275,77 @@ The design keeps the two roles clean:
 - **Consumer** is the **asynchronous agent**. It carries no reconciliation logic in
   its instruction box; it pulls in the `ep09-vendor-invoice-reconciliation` Business
   Skill (`business-skills/ep09-vendor-invoice-reconciliation.md`) and reasons over the
-  Dataverse and F&O MCP servers. Setup and instructions:
-  `async-agent-instructions.md`.
+  Dataverse and F&O MCP servers. Setup and instructions: `async-agent-instructions.md`.
 
 `lc_reconciliation` is deliberately a separate table from `lc_vendorwork` so the
 row-add trigger fires only on batch output, never when an engagement is edited.
 
-For the recording, emit exactly one signal by hand so a single row-add cleanly wakes
-the agent:
+Build steps:
 
-```
-$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
-python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
-```
+1. **Create the trigger table.** `python reconciliation_model.py` creates the
+   idempotent `lc_reconciliation` table with lookups to `lc_launch` and
+   `lc_vendorwork`.
+2. **Emit a signal (the producer).** For the recording, emit exactly one signal by
+   hand so a single row-add cleanly wakes the agent:
+
+   ```
+   $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
+   python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
+   ```
+
+   In production this is the native F&O X++ batch (`fno-batch/`, the
+   `LcProcurementReconcile` variant) running on a recurrence.
+3. **Publish the reconciliation Business Skill** (`ep09-vendor-invoice-reconciliation`)
+   so the async agent can pull it in at trigger time.
+4. **Build the asynchronous agent.** In Copilot Studio, attach the Dataverse and F&O
+   MCP tools, mount the skill, and add a **"When a row is added" trigger on
+   `lc_reconciliation`** (optionally filtered to `lc_status eq 'Open'`). Full setup:
+   `async-agent-instructions.md`.
 
 ### Optional preamble: move the solution into a unified environment
 
 The event-driven arc assumes the launch model and Finance & Operations live in the
 same unified environment. If you are starting from a CRM-only environment, that is a
 one-time setup, not part of the recorded demo: export the `LaunchControl` solution
-from the source environment (`pac solution export --name LaunchControl --managed
-false`) and import it into the unified, F&O-linked environment (`pac solution import
---path LaunchControl.zip`), then run the seed scripts there. No dual-write is
-introduced; the F&O side is reached through virtual tables and the ERP MCP, and the
-Act 2 producer writes `lc_reconciliation` with a plain Web API POST.
+(`pac solution export --name LaunchControl --managed false`) and import it into the
+unified, F&O-linked environment (`pac solution import --path LaunchControl.zip`), then
+run the seed scripts there. No dual-write is introduced.
 
-## Build steps (outline)
+---
 
-> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
-> fill in your values, and select it with `LC_ENV=ep-09-dataverse-fno` so
-> `scripts/auth.py` targets this environment instead of the repo-root `.env`.
+## Test and validate the solution
 
-1. Identify the F&O entities worth surfacing (budget, PO, inventory for the SKU).
-2. Stand up the connection (virtual tables or dual-write) between the launch
-   environment and F&O.
-3. Seed the launch/procurement join: `python seed_vendor_work.py` creates the real
-   F&O vendors and open POs, extends the model with `lc_vendorwork` (lookup to
-   `lc_task` plus the F&O keys), and marks the outsourced WIDGET-Q3 tasks.
-4. Verify both data APIs: `python verify_vendorwork.py` proves the OData live join
-   to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across
-   `lc_vendorwork` / `lc_task` / `lc_launch`. Full build log: `VENDORWORK-BUILD.md`.
-5. Verify the agent path: `python verify_mcp.py` proves the same model over the
-   Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP
-   server is enabled and the client app is allowlisted for the environment.
-6. Write across both planes: `python write_fno.py` creates a new F&O PO and a new
-   `lc_vendorwork` engagement (the latter through the MCP `create_record` tool),
-   then reads both back through the unified MCP. `erp_mcp_write.py` drives the local
-   F&O (ERP) MCP server. Full demo spine: `MCP-DEMO.md`.
-7. Schedule the batch job: `python batch_launch_sync.py` runs the outstanding
-   commitment digest; `.github/workflows/nightly-launch-procurement.yml` runs it
-   nightly with the unified Dataverse CLI.
-8. Make it a native F&O batch (Batch job history): `python fno_batch_export.py --run`
-   stands up a DMF export batch with no dev box, and `fno-batch/` is the deploy-ready
-   X++ SysOperation batch. See `MCP-DEMO.md` section d.
-9. Wire the event-driven Act 2: `python reconciliation_model.py` creates the
-   `lc_reconciliation` trigger table; `python emit_reconciliation_signals.py --po
-   PO-10502` emits one signal (stand-in for the recurring F&O batch); build the
-   asynchronous agent with a "When a row is added" trigger on `lc_reconciliation`
-   and the `ep09-vendor-invoice-reconciliation` Business Skill
-   (`async-agent-instructions.md`).
-10. Add the ERP fields to the launch view / model-driven form.
-11. Validate security: the same Ep 8 roles must govern ERP-sourced columns too.
+Every check below is scripted and exits non-zero on failure, so the solution is
+provable before it is recorded.
+
+| Check | Command | Proves |
+|---|---|---|
+| Both data APIs | `python verify_vendorwork.py` | OData live join to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across `lc_vendorwork` / `lc_task` / `lc_launch`. |
+| The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP server is enabled and the client app is allowlisted. |
+| Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
+| Native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
+| Act 2 producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
+| Act 2 round-trip | agent write-back on the row | The async agent flips the Open row to `Processed` with a grounded `lc_agentoutcome`; exactly once per signal. |
+
+**Agent eval (Copilot Studio).** Act 1 was tested with `EvalConversationSet.csv`
+(6 conversations, 25 turns; exports in `Evaluate Agent.csv` /
+`Evaluate Agent (1).csv`). The agent returns NO-GO for WIDGET-Q3 citing both planes,
+drills budget / PO / inventory, lists the two CRM blockers, and holds its guardrails
+(declines to post to F&O without legal-entity and vendor confirmation, refuses to
+certify GO, will not invent a revenue forecast, rejects an unknown launch code). 5 of
+6 pass under General Quality; the one fail is a scoring-method mismatch (General
+Quality cannot reward an action refusal), not an agent defect, so the guardrail case
+is restated as a policy question or scored with a manual method.
+
+**Security.** The same Ep 8 roles must govern ERP-sourced columns too; validate that
+column and row security carry over to the launch view and model-driven form.
 
 ## Open questions to resolve before building
 
-- **Access.** Confirm we have an F&O environment and licensing to demo against.
-  This is the biggest gating risk in Season 2.
-- **Hero pattern.** Virtual tables vs dual-write for the recorded demo.
-- **Scope.** One ERP signal (budget) for a tight episode, or budget + PO +
-  inventory for a richer but longer one.
+- **Scope.** One ERP signal (budget) for a tight episode, or budget + PO + inventory
+  for a richer but longer one.
+- **Act 2 producer on camera.** Emit one signal by hand (deterministic), or schedule
+  the stand-in producer so the row appears "on its own" during the recording.
 
 ## Cross-references
 
