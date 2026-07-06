@@ -307,18 +307,22 @@ The join above is durable because `lc_vendorwork` stores the F&O keys as columns
 it resolves over TDS with or without the virtual entities. But the payoff of the
 unified platform is that a coding agent can read the *live* F&O purchase orders
 through the **same** Dataverse MCP endpoint it uses for the `lc_*` tables, with no
-second connector. Confirm it locally before you record.
+second connector. You do not need to write any code to confirm it: register the
+Dataverse plugin's MCP server once, then just ask the agent, which calls the
+`read_query` tool for you.
 
-1. Register the Dataverse MCP server with GitHub Copilot CLI. Add an entry to your
-   personal `~/.copilot/mcp-config.json` (do not commit it, it points at your
-   environment):
+1. Register the Dataverse MCP server with GitHub Copilot CLI. The `@microsoft/dataverse`
+   plugin ships an `mcp` command that proxies the environment; point it at your
+   environment **base URL** (the proxy appends `/api/mcp` itself). Add an entry to your
+   personal `~/.copilot/mcp-config.json` (do not commit it, it names your environment):
 
    ```json
    {
      "mcpServers": {
        "dataverse": {
+         "type": "stdio",
          "command": "npx",
-         "args": ["-y", "@microsoft/dataverse", "mcp", "https://<your-env>.crm.dynamics.com/api/mcp"]
+         "args": ["-y", "@microsoft/dataverse@latest", "mcp", "https://<your-env>.crm.dynamics.com"]
        }
      }
    }
@@ -329,7 +333,8 @@ second connector. Confirm it locally before you record.
    [Configure the Dataverse MCP server](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable)).
    Restart the CLI so it picks up the server.
 
-2. Ask Copilot to read the F&O virtual entity through `read_query`:
+2. Ask Copilot to read the F&O virtual entity. No script: the agent invokes the
+   plugin's `read_query` tool directly.
 
    > *Through the Dataverse MCP `read_query` tool, list the F&O purchase orders from*
    > *`mserp_purchpurchaseorderheaderv2entity` (select `mserp_purchaseordernumber` and*
@@ -341,9 +346,11 @@ second connector. Confirm it locally before you record.
    raw TDS connection, which does not expose virtual entities at all, `read_query`
    executes through the platform metadata layer, so the `mserp_*` tables are readable.
 
-3. The scripted equivalent (what the video shows on screen) is the fourth proof in
-   `verify_mcp.py`: it reads the F&O purchase orders over the MCP and reconciles all
-   seven WIDGET-Q3 POs against `lc_vendorwork` (7/7 vendor accounts agree).
+3. `verify_mcp.py` is just the **scripted, exit-code-gated** equivalent for the
+   recording and CI (it does exactly what the prompt above asks): it reads the F&O
+   purchase orders over the MCP and reconciles all seven WIDGET-Q3 POs against
+   `lc_vendorwork` (7/7 vendor accounts agree). Run it when you want a provable check
+   rather than a conversational one.
 
    ```
    python verify_mcp.py
