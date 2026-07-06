@@ -488,13 +488,17 @@ and the paste-verbatim instruction shell):
 1. **Tools.** Attach the **Microsoft Dataverse MCP Server (Preview)** (reads the
    trigger row and the unified model, writes the outcome) and the **Dynamics 365 F&O
    MCP** (confirms the gap and makes authorized vendor / PO / invoice entries).
-2. **Business Skill.** Mount `ep09-vendor-invoice-reconciliation`. Do not duplicate its
-   steps into the instruction box; the skill owns them.
+2. **Business Skill.** Publish `ep09-vendor-invoice-reconciliation` to the Dataverse
+   `skills` table (Act 3). The agent reads that skill body from Dataverse at runtime
+   through the Dataverse MCP before it acts, so the policy is not pasted into the
+   instruction box and a policy edit is one re-publish. Do not duplicate its steps into
+   the instruction box; the Dataverse skill owns them.
 3. **Trigger.** Add **"When a row is added, Microsoft Dataverse"** on
    `lc_reconciliation` (optionally filtered to `lc_status eq 'Open'`), mapping the new
    row's key into the agent's input. This is what makes it asynchronous.
 4. **Instructions.** Paste the short shell from `async-agent-instructions.md`: it frames
-   the role and points at the skill, nothing more.
+   the role and has the agent pull the governing skill from Dataverse at runtime before
+   acting, nothing more.
 
 > **The trigger table must exist and be change-tracked first.** The "When a row is
 > added" trigger only lists `lc_reconciliation` (Reconciliation Signal) once Act 1 has

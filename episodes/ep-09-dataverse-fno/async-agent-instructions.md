@@ -18,12 +18,16 @@ as the synchronous ep-09 agent (`<your-fno-env>`).
      from Finance & Operations to confirm the gap, and makes any authorized vendor,
      purchase order, or invoice entry the reconciliation calls for.
 
-2. **Business Skill** (this is where the logic lives): attach the
-   `ep09-vendor-invoice-reconciliation` skill (source:
-   `business-skills/ep09-vendor-invoice-reconciliation.md`). Publish it to this
-   environment with the `lc-business-skills` tooling, or paste its body as a skill
-   in Copilot Studio. Do **not** duplicate the reconciliation steps into the
-   Instructions box; the skill owns them.
+2. **Business Skill** (this is where the logic lives, and it lives in Dataverse):
+   publish the `ep09-vendor-invoice-reconciliation` skill (source:
+   `business-skills/ep09-vendor-invoice-reconciliation.md`) to this environment's
+   `skills` table as a governed Business Skill (uniquename
+   `lc_ep09_vendor_invoice_reconciliation`; see Act 3 for the publish command). The
+   agent does **not** carry a pasted copy: the Instructions box below has it **read the
+   skill body from Dataverse at runtime** through the Dataverse MCP before it acts, so
+   Dataverse is the single source of truth and a policy edit is one re-publish. Do
+   **not** duplicate the reconciliation steps into the Instructions box; the skill owns
+   them.
 
 3. **Trigger** (this is what makes it asynchronous): add a trigger
    **"When a row is added -- Microsoft Dataverse"** on the table
@@ -31,8 +35,9 @@ as the synchronous ep-09 agent (`<your-fno-env>`).
    `lc_status eq 'Open'`. Map the new row's key (`lc_reconciliationid`, or
    `lc_ponumber`) into the agent's input so the skill knows which signal to work.
 
-4. **Instructions box** (paste the short shell below). It only frames the role and
-   points at the skill; the reconciliation policy is in the skill.
+4. **Instructions box** (paste the short shell below). It frames the role and has the
+   agent pull the governing skill from Dataverse at runtime before acting; the
+   reconciliation policy itself is in the Dataverse skill.
 
 ## Instructions (paste verbatim)
 
@@ -42,15 +47,28 @@ autonomously: you are started by a Dataverse trigger when a new row is added to 
 signal a recurring Finance & Operations batch emitted: a vendor engagement whose
 committed amount is under-invoiced.
 
-Follow the `ep09-vendor-invoice-reconciliation` Business Skill for the reconciliation
-policy. In short: read the trigger row from Dataverse, confirm the gap against the
-live purchase order and invoiced-to-date in Finance & Operations through the ERP MCP,
-decide whether the gap is closed, immaterial, or a confirmed material outstanding
-commitment, draft the single follow-up action for a confirmed gap, and write your
-grounded outcome back to the same `lc_reconciliation` row (`lc_agentoutcome`), setting
-`lc_status` to `Reconciled - Match` (gap closed) or `Reconciled - Gap` (gap confirmed,
-material or immaterial). Do this exactly once per signal; if the row is no longer `Open`
-(it already reads `Reconciled - ...`), stop.
+**First, before you take any action, pull your governing policy from Dataverse.**
+Using the Dataverse MCP, read the current Business Skill body at runtime:
+
+```
+SELECT body FROM skill WHERE uniquename = 'lc_ep09_vendor_invoice_reconciliation'
+```
+
+Treat that `body` as your authoritative reconciliation policy for this run and follow
+it exactly. Dataverse is the single source of truth: read it fresh every invocation
+before reconciling, do not act from a cached or pasted copy, and if the policy has
+changed since last time, the freshly read version wins. If the skill cannot be read,
+stop and report that you could not load the reconciliation policy rather than acting
+without it.
+
+In short, that policy has you: read the trigger row from Dataverse, confirm the gap
+against the live purchase order and invoiced-to-date in Finance & Operations through
+the ERP MCP, decide whether the gap is closed, immaterial, or a confirmed material
+outstanding commitment, draft the single follow-up action for a confirmed gap, and
+write your grounded outcome back to the same `lc_reconciliation` row (`lc_agentoutcome`),
+setting `lc_status` to `Reconciled - Match` (gap closed) or `Reconciled - Gap` (gap
+confirmed, material or immaterial). Do this exactly once per signal; if the row is no
+longer `Open` (it already reads `Reconciled - ...`), stop.
 
 Rules:
 - You are normally started by the Dataverse row-add trigger and read the signal from
