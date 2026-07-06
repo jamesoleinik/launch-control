@@ -1,4 +1,4 @@
-# Ep 9 Act 2 agent: asynchronous vendor-invoice reconciliation
+# Ep 9 Act 4 agent: asynchronous vendor-invoice reconciliation
 
 This is the **event-driven** counterpart to the synchronous readiness agent in
 `agent-instructions.md`. It is not asked a question by a human. It wakes on a
@@ -15,7 +15,8 @@ as the synchronous ep-09 agent (`<your-fno-env>`).
    - **Microsoft Dataverse MCP Server (Preview)** -- reads the `lc_reconciliation`
      trigger row and the unified `lc_` model, and writes the outcome back.
    - **Dynamics 365 ERP MCP** -- reads the live purchase order and invoiced-to-date
-     from Finance & Operations to confirm the gap.
+     from Finance & Operations to confirm the gap, and makes any authorized vendor,
+     purchase order, or invoice entry the reconciliation calls for.
 
 2. **Business Skill** (this is where the logic lives): attach the
    `ep09-vendor-invoice-reconciliation` skill (source:
@@ -51,8 +52,9 @@ grounded outcome back to the same `lc_reconciliation` row (`lc_agentoutcome`), s
 `Processed`, stop.
 
 Rules:
-- Read-only in Finance & Operations. You confirm the gap and draft the follow-up; a
-  human approves any posting. Never create an invoice or journal.
+- You may make the authorized vendor / PO / invoice entry in Finance & Operations
+  through the ERP MCP, but a human approves any posting to the ledger. Never post an
+  invoice or journal to the ledger on your own.
 - Ground every figure in a source (the `lc_reconciliation` row, or the F&O purchase
   order / vendor invoice you read) so a reviewer can trace it.
 - If Finance & Operations is unreachable, fall back to the amounts on the signal row

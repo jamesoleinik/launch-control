@@ -199,155 +199,223 @@ tables keep the demo light and on-camera fast, and keep one source of truth per 
 
 ---
 
-## Act 1 · The synchronous readiness agent (build, step by step)
+## The build: four acts
 
-Act 1 is the "ask across both planes" agent: a human asks for a launch's all-in
-status and the agent answers by reading the go-to-market state (Dataverse) and the
-financial/supply state (F&O) together.
+The build is one continuous arc, authored by coding agents, no dual-write anywhere:
+
+1. **Act 1** extends the data model across both planes: the ERP records in Finance &
+   Operations and the linked launch tables in Dataverse (`lc_vendorwork` join +
+   `lc_reconciliation` trigger table).
+2. **Act 2** puts a recurring **F&O batch job** on top of that model to process the
+   POs and invoices and emit a reconciliation signal row.
+3. **Act 3** writes the reconciliation policy as a **Business Skill** over the unified
+   model, the Dataverse MCP (reads), and the F&O MCP (vendor / PO / invoice writes).
+4. **Act 4** stands up and **evaluates an asynchronous agent** that mounts the skill
+   and the two MCP servers and wakes on the trigger row.
+
+```
+Act 1  extend model  ->  lc_vendorwork (join)  +  lc_reconciliation (trigger)  +  F&O vendors/POs
+Act 2  F&O batch     ->  processes POs/invoices, writes one lc_reconciliation row (Open)
+Act 3  Business Skill->  reconciliation policy over unified model + Dataverse MCP + F&O MCP
+Act 4  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Processed
+```
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored), fill
 > in your values, and select it with `LC_ENV=ep-09-dataverse-fno` so
 > `scripts/auth.py` targets this environment instead of the repo-root `.env`.
 
-### Step 1 · Prompt the coding agent to extend the data model
-
-The data-model extension is not hand-drawn in the maker portal; it is authored by a
-coding agent. Type this into GitHub Copilot CLI:
-
-> *Extend the LaunchControl model so outsourced launch work is joined to Finance &*
-> *Operations. Create a first-class `lc_vendorwork` table with a real `lc_taskid`*
-> *lookup to `lc_task`, and store the F&O business keys on it (`lc_vendoraccount`,*
-> *`lc_ponumber`) plus the money the launch team tracks (`lc_committedamount`,*
-> *`lc_invoicedamount`, `lc_status`). Then create the real F&O side to join to:*
-> *currency USD, a `DEMO` vendor group, three vendors (Contoso Supply Co, Fabrikam*
-> *Media, Northwind Legal Advisors) and their open purchase orders. Seed six*
-> *outsourced WIDGET-Q3 engagements against those POs, with the translation*
-> *deliverable blocking its milestone. Make the script idempotent and re-runnable,*
-> *and verify the join resolves from Dataverse to the F&O records.*
-
-(Copilot has the `dv-overview`, `dv-metadata`, and `dv-data` skills loaded, so it
-already knows the `LaunchControl` solution, the `lc_` prefix, the `lc_launch` /
-`lc_task` shape, and that `scripts/auth.py` handles tokens. Storing the F&O keys as
-columns on `lc_vendorwork`, rather than a hard lookup to a virtual entity, is the one
-design choice to confirm: it keeps the join durable with or without the `mserp_*`
-virtual tables and queryable over TDS.)
-
-#### What Copilot produces
-
-| Artifact | Where it lands |
-|---|---|
-| Idempotent model + seed script | `seed_vendor_work.py` |
-| Build log and gotchas | `VENDORWORK-BUILD.md` |
-
-#### What you run on screen
-
-`python seed_vendor_work.py` creates the real F&O records (currency, vendor group,
-three vendors, open POs), extends the launch model with the first-class
-`lc_vendorwork` join, and marks the six outsourced WIDGET-Q3 tasks. Net: 165k
-committed / 66k invoiced / 99k open across three vendors.
-
-### Step 2 · Seed the ERP signal feed
-
-`python seed_erp_signals.py` lands the clearly labeled `lc_erpsignal` table (budget
-over approval, an open vendor PO, an inventory shortfall) in the same environment,
-the narrative ERP posture the agent reads through the Dataverse MCP.
-
-### Step 3 · Surface F&O as virtual tables
-
-Generate the `mserp_*` virtual entities (vendor master, PO headers) so the same
-`lc_vendorwork` keys light up a live OData join to the real F&O records. See
-`VENDORWORK-BUILD.md` for the exact steps.
-
-### Step 4 · Build the agent
-
-In the new Copilot Studio builder, attach the **Dataverse MCP Server (Preview)** and
-**Dynamics 365 ERP MCP** tools, publish the `lc_ep09erpreadiness` Business Skill
-(`business-skills/ep09-erp-readiness.md`), and paste `agent-instructions.md` into the
-Instructions box.
-
-### The headline result (Act 1)
-
-> *"What is the all-in status of the Q3 Widget Launch, and what are we paying
-> outside vendors for it?"*
-
-- **Dataverse** returns the go-to-market state: readiness NO-GO, two blockers.
-- **F&O** returns the financial state: over the approved budget, open vendor POs
-  still uninvoiced.
-- **The join (`lc_vendorwork`)** returns the outsourced spend: 165k committed across
-  six engagements and three vendors, only 66k invoiced, 99k open, and the translation
-  deliverable (an open PO, not yet received) blocking a milestone.
-- **Synthesis:** the launch is not just behind on tasks; it is over budget and
-  waiting on a supplier the launch team is paying through ERP. CRM risk, ERP cost,
-  and vendor risk on one record.
-
----
-
-## Act 2 · The event-driven reconciliation agent (build, step by step)
-
-Act 1 answers a human's question. Act 2 removes the human from the loop: a recurring
-batch emits an event, and an autonomous agent reacts. The chain, no dual-write
-anywhere:
-
-```
-recurring F&O batch (native X++, or the emit_reconciliation_signals stand-in)
-   detects under-invoiced engagements
-   -- writes one row -->  lc_reconciliation (status Open)
-                                 |
-                    "When a row is added" trigger fires
-                                 v
-   async Copilot Studio agent  +  ep09-vendor-invoice-reconciliation Business Skill
-   reads the live PO / invoiced-to-date from F&O (ERP MCP), confirms the gap,
-   drafts the follow-up, writes lc_agentoutcome, sets lc_status = Processed
-```
-
-The design keeps the two roles clean:
-
-- **Producer** is the recurring **F&O batch**. Its only job is detect-and-emit: for
-  each engagement whose committed amount is under-invoiced, drop one
-  `lc_reconciliation` row. The production batch is the native X++ SysOperation class
-  in `fno-batch/` (built and deployed in Visual Studio via the unified developer
-  experience; the CLI ERP build path is still flighted off, so the X++ is documented
-  but not authored on camera). `emit_reconciliation_signals.py` is the runnable
-  stand-in that does the identical detection and idempotent `lc_reconciliation` write
-  through the Dataverse MCP, so the event-driven demo works today.
-- **Consumer** is the **asynchronous agent**. It carries no reconciliation logic in
-  its instruction box; it pulls in the `ep09-vendor-invoice-reconciliation` Business
-  Skill (`business-skills/ep09-vendor-invoice-reconciliation.md`) and reasons over the
-  Dataverse and F&O MCP servers. Setup and instructions: `async-agent-instructions.md`.
-
-`lc_reconciliation` is deliberately a separate table from `lc_vendorwork` so the
-row-add trigger fires only on batch output, never when an engagement is edited.
-
-Build steps:
-
-1. **Create the trigger table.** `python reconciliation_model.py` creates the
-   idempotent `lc_reconciliation` table with lookups to `lc_launch` and
-   `lc_vendorwork`.
-2. **Emit a signal (the producer).** For the recording, emit exactly one signal by
-   hand so a single row-add cleanly wakes the agent:
-
-   ```
-   $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
-   python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
-   ```
-
-   In production this is the native F&O X++ batch (`fno-batch/`, the
-   `LcProcurementReconcile` variant) running on a recurrence.
-3. **Publish the reconciliation Business Skill** (`ep09-vendor-invoice-reconciliation`)
-   so the async agent can pull it in at trigger time.
-4. **Build the asynchronous agent.** In Copilot Studio, attach the Dataverse and F&O
-   MCP tools, mount the skill, and add a **"When a row is added" trigger on
-   `lc_reconciliation`** (optionally filtered to `lc_status eq 'Open'`). Full setup:
-   `async-agent-instructions.md`.
-
 ### Optional preamble: move the solution into a unified environment
 
-The event-driven arc assumes the launch model and Finance & Operations live in the
-same unified environment. If you are starting from a CRM-only environment, that is a
+The whole arc assumes the launch model and Finance & Operations live in the same
+unified environment. If you are starting from a CRM-only environment, that is a
 one-time setup, not part of the recorded demo: export the `LaunchControl` solution
 (`pac solution export --name LaunchControl --managed false`) and import it into the
 unified, F&O-linked environment (`pac solution import --path LaunchControl.zip`), then
 run the seed scripts there. No dual-write is introduced.
+
+---
+
+## Act 1 · Extend the data model (ERP + linked Dataverse tables)
+
+Act 1 authors the unified model everything else rides on: the real ERP records in
+Finance & Operations, and the linked Dataverse tables that join a launch to its
+vendor spend and carry the reconciliation signal. It is not hand-drawn in the maker
+portal; it is authored by a coding agent.
+
+### The prompt
+
+Type this into GitHub Copilot CLI:
+
+> *Extend the LaunchControl model so outsourced launch work is joined to Finance &*
+> *Operations, no dual-write. On the ERP side, create the real F&O records to join*
+> *to: currency USD, a `DEMO` vendor group, three vendors (Contoso Supply Co,*
+> *Fabrikam Media, Northwind Legal Advisors) and their open purchase orders. On the*
+> *Dataverse side, create a first-class `lc_vendorwork` join table with a real*
+> *`lc_taskid` lookup to `lc_task` that stores the F&O business keys*
+> *(`lc_vendoraccount`, `lc_ponumber`) plus the money the launch team tracks*
+> *(`lc_committedamount`, `lc_invoicedamount`, `lc_status`); and a separate*
+> *`lc_reconciliation` trigger table with lookups to `lc_launch` and `lc_vendorwork`*
+> *and an `lc_status` / `lc_agentoutcome` for the downstream agent to write. Seed six*
+> *outsourced WIDGET-Q3 engagements against those POs, with the translation*
+> *deliverable blocking its milestone. Make every script idempotent and re-runnable,*
+> *and verify the join resolves from Dataverse to the F&O records.*
+
+(Copilot has the `dv-overview`, `dv-metadata`, and `dv-data` skills loaded, so it
+already knows the `LaunchControl` solution, the `lc_` prefix, the `lc_launch` /
+`lc_task` shape, and that `scripts/auth.py` handles tokens. Two design choices to
+confirm: store the F&O keys as columns on `lc_vendorwork` rather than a hard lookup to
+a virtual entity, so the join stays durable with or without the `mserp_*` virtual
+tables and is queryable over TDS; and keep `lc_reconciliation` a *separate* table from
+`lc_vendorwork` so its row-add trigger fires only on batch output, never on an
+engagement edit.)
+
+### What Copilot produces
+
+| Artifact | Where it lands |
+|---|---|
+| ERP records + `lc_vendorwork` join, idempotent seed | `seed_vendor_work.py` |
+| `lc_reconciliation` trigger table, idempotent | `reconciliation_model.py` |
+| ERP signal feed (budget / PO / inventory posture) | `seed_erp_signals.py` |
+| Build log and gotchas | `VENDORWORK-BUILD.md` |
+
+### What you run on screen
+
+```
+python seed_vendor_work.py       # ERP records + lc_vendorwork join + outsourced tasks
+python reconciliation_model.py   # lc_reconciliation trigger table
+python seed_erp_signals.py       # optional: the ERP signal feed (lc_erpsignal)
+```
+
+`seed_vendor_work.py` lands the real F&O records (currency, vendor group, three
+vendors, open POs) and the `lc_vendorwork` join, and marks the six outsourced
+WIDGET-Q3 tasks. Net: **165k committed / 66k invoiced / 99k open** across three
+vendors, with the translation deliverable blocking its milestone. Then surface F&O as
+virtual tables: generate the `mserp_*` virtual entities (vendor master, PO headers) so
+the same `lc_vendorwork` keys light up a live OData join to the real F&O records (see
+`VENDORWORK-BUILD.md`).
+
+The model now spans both planes on one platform: **Dataverse** owns the launch and the
+decision to outsource, **F&O** owns the vendor master and the purchase order, and
+`lc_vendorwork` is the seam. A human can already ask the all-in question, *"what is the
+status of the Q3 Widget Launch, and what are we paying outside vendors for it?"*, and
+get CRM risk, ERP cost, and vendor risk from one endpoint. Acts 2 to 4 make that
+reconciliation autonomous.
+
+---
+
+## Act 2 · The F&O batch that processes POs and invoices
+
+Act 2 puts a **recurring Finance & Operations batch job** on top of the model. Its
+only job is detect-and-emit: on a recurrence it reads the POs and invoiced-to-date,
+finds each engagement whose committed amount is under-invoiced, and drops one
+`lc_reconciliation` row (status Open) per gap. It writes nothing else and reasons
+about nothing; the reconciliation logic is Act 3.
+
+### The build
+
+- The production batch is a native **X++ SysOperation** class in `fno-batch/`, built
+  and deployed in **Visual Studio** via the unified developer experience. The CLI ERP
+  build path (`pac ... --package-type erp`) is still flighted off, so the X++ is
+  documented and deploy-ready but not authored on camera; see `fno-batch/README.md`
+  for the class and the deploy runbook.
+- `emit_reconciliation_signals.py` is the runnable **stand-in** that does the
+  identical detection and the identical idempotent `lc_reconciliation` write through
+  the Dataverse MCP, so the event-driven demo runs today without the dev box. The
+  batch-to-Dataverse write is a plain Web API POST, not dual-write.
+
+### What you run on screen
+
+For the recording, emit exactly one signal by hand so a single row-add cleanly wakes
+the agent (in production this is the recurring X++ batch):
+
+```
+$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
+python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
+```
+
+This writes one Open `lc_reconciliation` row for the Launch video engagement:
+committed 37,000, invoiced 12,000, gap 25,000, both lookups (`lc_launch`,
+`lc_vendorwork`) set. A dry run (`--dry-run`) previews the five under-invoiced
+engagements; a re-run is idempotent (skips when an Open signal already exists).
+
+---
+
+## Act 3 · The reconciliation Business Skill
+
+Act 3 writes the reconciliation **policy** as a Dataverse **Business Skill**, so the
+reasoning is a governed, reusable asset rather than prompt text buried in an agent.
+The skill is authored by a coding agent and references three things: (a) the **unified
+data model** built in Act 1, (b) the **Dataverse MCP server** for data access (read
+the trigger row and the `lc_` model, write the outcome back), and (c) the **Dynamics
+365 F&O MCP server** for any updates or entries to the vendor, purchase order, or
+invoice records.
+
+### The prompt
+
+Type this into GitHub Copilot CLI:
+
+> *Create a Business Skill `ep09-vendor-invoice-reconciliation` in our house style*
+> *(Description, numbered Instructions, a "what this skill is NOT" section). It is run*
+> *by an autonomous agent when a row is added to `lc_reconciliation`. Policy: read the*
+> *trigger row and the unified launch/vendor model through the Dataverse MCP; confirm*
+> *the gap against the live purchase order and invoiced-to-date in Finance &*
+> *Operations through the F&O MCP; classify the gap as closed, immaterial, or a*
+> *confirmed material outstanding commitment; for a confirmed gap, use the F&O MCP to*
+> *make the authorized vendor / PO / invoice entry and draft the single follow-up*
+> *action; then write a grounded `lc_agentoutcome` back to the row and set `lc_status`*
+> *to Processed, exactly once. Ground every figure in its source, and require human*
+> *approval before any financial posting to the ledger.*
+
+### What Copilot produces
+
+| Artifact | Where it lands |
+|---|---|
+| Reconciliation policy skill | `business-skills/ep09-vendor-invoice-reconciliation.md` |
+
+Publish it to the environment with the `lc-business-skills` tooling (or paste its body
+as a skill in Copilot Studio). The skill is the single source of the reconciliation
+logic; Act 4's agent instruction box only points at it.
+
+---
+
+## Act 4 · The asynchronous agent and its evaluation
+
+Act 4 stands up the **autonomous agent** that mounts the Act 3 skill and both MCP
+servers, and evaluates it. No one asks it a question: it wakes on the Dataverse
+row-add event, reconciles the one gap, and writes back the outcome.
+
+### Build the agent
+
+In the new Copilot Studio builder (`async-agent-instructions.md` has the full setup
+and the paste-verbatim instruction shell):
+
+1. **Tools.** Attach the **Microsoft Dataverse MCP Server (Preview)** (reads the
+   trigger row and the unified model, writes the outcome) and the **Dynamics 365 F&O
+   MCP** (confirms the gap and makes authorized vendor / PO / invoice entries).
+2. **Business Skill.** Mount `ep09-vendor-invoice-reconciliation`. Do not duplicate its
+   steps into the instruction box; the skill owns them.
+3. **Trigger.** Add **"When a row is added, Microsoft Dataverse"** on
+   `lc_reconciliation` (optionally filtered to `lc_status eq 'Open'`), mapping the new
+   row's key into the agent's input. This is what makes it asynchronous.
+4. **Instructions.** Paste the short shell from `async-agent-instructions.md`: it frames
+   the role and points at the skill, nothing more.
+
+### Evaluate the agent
+
+A sample eval set ships in this folder as `EvalReconciliationSet.csv` (import format
+matches `EvalConversationTemplate.csv`). It exercises the reconciliation policy across
+the cases that matter: a confirmed **material** gap (PO-10502), a **closed** gap
+(fully invoiced, no action), an **immaterial** gap (note only), an **F&O-unreachable**
+fallback (reason from the signal row and say so), the **guardrail** (refuse to post an
+invoice or journal to the ledger without human approval), and **idempotency** (a row
+already Processed is left alone). Import it in Copilot Studio, run it under General
+Quality, and score the guardrail case with a manual or custom method (General Quality
+structurally cannot reward an action refusal).
+
+Expected outcome for the headline PO-10502 signal: verdict confirmed material gap;
+figures PO-10502 (Contoso Supply Co) committed 37,000 / invoiced 12,000 / 25,000
+outstanding; next action request the outstanding invoice from Contoso, which blocks the
+Launch video task on WIDGET-Q3; `lc_status` flips Open to Processed.
 
 ---
 
@@ -361,19 +429,24 @@ provable before it is recorded.
 | Both data APIs | `python verify_vendorwork.py` | OData live join to the `mserp_*` virtual entities (6/6) and the SQL / TDS join across `lc_vendorwork` / `lc_task` / `lc_launch`. |
 | The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), once the MCP server is enabled and the client app is allowlisted. |
 | Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
-| Native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
-| Act 2 producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
-| Act 2 round-trip | agent write-back on the row | The async agent flips the Open row to `Processed` with a grounded `lc_agentoutcome`; exactly once per signal. |
+| Act 2 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
+| Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
+| Act 4 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Processed` with a grounded `lc_agentoutcome`; exactly once per signal. |
 
-**Agent eval (Copilot Studio).** Act 1 was tested with `EvalConversationSet.csv`
-(6 conversations, 25 turns; exports in `Evaluate Agent.csv` /
-`Evaluate Agent (1).csv`). The agent returns NO-GO for WIDGET-Q3 citing both planes,
-drills budget / PO / inventory, lists the two CRM blockers, and holds its guardrails
-(declines to post to F&O without legal-entity and vendor confirmation, refuses to
-certify GO, will not invent a revenue forecast, rejects an unknown launch code). 5 of
-6 pass under General Quality; the one fail is a scoring-method mismatch (General
-Quality cannot reward an action refusal), not an agent defect, so the guardrail case
-is restated as a policy question or scored with a manual method.
+**Act 4 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
+the sample `EvalReconciliationSet.csv` (import format per `EvalConversationTemplate.csv`):
+material gap, closed gap, immaterial gap, F&O-unreachable fallback, the post-to-ledger
+guardrail, and idempotency. Import it, run under General Quality, and score the
+guardrail case with a manual or custom method (General Quality structurally cannot
+reward an action refusal, so any prompt commanding a forbidden posting is graded "not
+answered" even when the agent correctly refuses).
+
+**Companion: the synchronous read model.** The unified model from Act 1 also answers the
+human "all-in status" question directly; that synchronous path was validated in Copilot
+Studio with `EvalConversationSet.csv` (6 conversations, 25 turns; exports in
+`Evaluate Agent.csv` / `Evaluate Agent (1).csv`), reading NO-GO for WIDGET-Q3 across
+both planes and holding the same no-unconfirmed-write guardrail (5 of 6 pass; the one
+fail is the same General-Quality-cannot-reward-a-refusal method mismatch).
 
 **Security.** The same Ep 8 roles must govern ERP-sourced columns too; validate that
 column and row security carry over to the launch view and model-driven form.
@@ -382,8 +455,11 @@ column and row security carry over to the launch view and model-driven form.
 
 - **Scope.** One ERP signal (budget) for a tight episode, or budget + PO + inventory
   for a richer but longer one.
-- **Act 2 producer on camera.** Emit one signal by hand (deterministic), or schedule
-  the stand-in producer so the row appears "on its own" during the recording.
+- **Act 2 batch on camera.** Emit one signal by hand (deterministic) or schedule the
+  stand-in producer / native batch so the row appears "on its own" during recording.
+- **Act 3 F&O writes.** How far the skill goes on the F&O MCP: draft-only versus making
+  the authorized vendor / PO / invoice entry, with human approval always gating a
+  ledger posting.
 
 ## Cross-references
 

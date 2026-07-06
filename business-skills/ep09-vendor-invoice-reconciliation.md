@@ -2,8 +2,8 @@
 
 ## Description
 
-The Season 2 / Episode 9 (Act 2) Business Skill for the **asynchronous** Launch
-Control agent. The agent is not prompted by a human; it wakes on a Dataverse event,
+The Season 2 / Episode 9 Business Skill (Act 3) for the **asynchronous** Launch
+Control agent (Act 4). The agent is not prompted by a human; it wakes on a Dataverse event,
 "When a row is added -- Microsoft Dataverse" on the `lc_reconciliation` table. Each
 new row is a procurement signal a recurring Finance & Operations batch emitted: one
 vendor engagement whose committed amount is under-invoiced. This skill defines how
@@ -48,13 +48,15 @@ row and say so in the outcome.
 The trigger is always the gap relative to the live F&O truth, never the raw number on
 the row.
 
-### Step 4: Draft the follow-up (grounded, no side effects in F&O)
+### Step 4: Make the authorized F&O entry and draft the follow-up (grounded)
 
 For a confirmed material gap, produce a short, executive follow-up: the vendor and PO,
 the outstanding amount, the launch and task it belongs to, and the single next action
 (for example "request invoice from Contoso for PO-10502, 25,000 outstanding, blocks
-the Launch video task on WIDGET-Q3"). Do **not** post journals, create invoices, or
-change anything in F&O. Reconciliation drafts the action; a human approves it.
+the Launch video task on WIDGET-Q3"). Using the Dynamics 365 ERP MCP, you may make the
+authorized vendor / purchase order / invoice entry the follow-up calls for. You may
+**not** post an invoice or journal to the ledger on your own: a human approves any
+ledger posting. Ground every entry in its source so a reviewer can trace it.
 
 ### Step 5: Write back one outcome and close the signal (idempotent)
 
@@ -73,8 +75,9 @@ row; the batch owns row creation, the agent only closes rows.
 - It does **not** create `lc_reconciliation` rows. The recurring F&O batch (native
   X++ SysOperation class, or the signal-producer script that stands in for it) is the
   sole producer. The agent is the consumer.
-- It does **not** write to Finance & Operations. It reads F&O to confirm the gap and
-  drafts a follow-up; posting is a separate, human-approved action.
+- It does **not** post to the ledger. It may make the authorized vendor / PO / invoice
+  entry in Finance & Operations through the ERP MCP, but posting an invoice or journal
+  to the ledger is a separate, human-approved action.
 - It does **not** answer a human prompt. The runtime is the Dataverse row-add trigger;
   the agent reconciles one signal per event.
 - It does **not** double-process. Idempotency on `lc_status` is mandatory across
