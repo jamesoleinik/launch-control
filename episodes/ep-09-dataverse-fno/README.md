@@ -391,7 +391,7 @@ python episodes/ep-09-dataverse-fno/emit_reconciliation_signals.py --po PO-10502
 
 This writes one Open `lc_reconciliation` row for the Launch video engagement:
 committed 37,000, invoiced 12,000, gap 25,000, both lookups (`lc_launch`,
-`lc_vendorwork`) set. A dry run (`--dry-run`) previews the five under-invoiced
+`lc_vendorwork`) set. A dry run (`--dry-run`) previews the four under-invoiced
 engagements; a re-run is idempotent (skips when an Open signal already exists).
 
 ---
@@ -562,7 +562,7 @@ provable before it is recorded.
 | The agent read path | `python verify_mcp.py` | The same model over the Dataverse MCP server (`initialize` / `tools/list` / `read_query`), plus a cross-plane read of the F&O `mserp_*` virtual entities over the *same* MCP endpoint, reconciled against `lc_vendorwork` (7/7), once the MCP server is enabled and the client app is allowlisted. |
 | Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
 | Act 2 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
-| Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
+| Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the four under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
 | Act 4 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Reconciled - Gap` / `Reconciled - Match` with a grounded `lc_agentoutcome`; exactly once per signal. |
 
 **Act 4 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
