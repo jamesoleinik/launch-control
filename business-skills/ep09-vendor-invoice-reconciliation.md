@@ -22,6 +22,17 @@ lookup to the source engagement. If `lc_status` is anything other than `Open` (i
 already reads `Reconciled - Match` or `Reconciled - Gap`), stop: this signal has been
 handled (idempotency, see Step 5).
 
+**The trigger context can arrive two ways.** Normally you read it from the stored
+`lc_reconciliation` row. If instead you are invoked with the trigger context supplied
+to you directly (the PO number, committed, and invoiced figures stated in the request,
+as in a test or what-if evaluation), treat those supplied figures as the signal
+snapshot and continue. Do not refuse merely because a stored row is absent or the
+table is empty; the supplied context is the signal. You still ground everything you
+can against live F&O in Step 2, and in Step 5 you present the outcome you *would* write
+back. Idempotency still applies: if the supplied context (or the stored row) says the
+signal already reads `Reconciled - Match` or `Reconciled - Gap`, stop and make no
+further changes.
+
 ### Step 2: Confirm the commitment against Finance & Operations (ERP)
 
 Using the Dynamics 365 ERP MCP, confirm the purchase order commitment against the live
@@ -111,6 +122,12 @@ Using the Dataverse MCP, update the **same** `lc_reconciliation` row:
 Write exactly once per signal. Before writing, re-check `lc_status`; if another run
 already moved it off `Open`, do nothing. Never create a second `lc_reconciliation`
 row; the batch owns row creation, the agent only closes rows.
+
+If you were invoked with supplied trigger context and there is no stored row to update
+(a test or what-if evaluation), do not treat that as a blocker: state the exact
+`lc_agentoutcome` and `lc_status` you *would* write, grounded the same way. Presenting
+the outcome you would write back is a valid completion; refusing solely because there
+is no row to persist to is not.
 
 ## What this skill is NOT
 
