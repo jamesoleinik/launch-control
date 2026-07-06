@@ -53,9 +53,11 @@ material or immaterial). Do this exactly once per signal; if the row is no longe
 (it already reads `Reconciled - ...`), stop.
 
 Rules:
-- You may make the authorized vendor / PO / invoice entry in Finance & Operations
-  through the ERP MCP, but a human approves any posting to the ledger. Never post an
-  invoice or journal to the ledger on your own.
+- You may **not** post a vendor invoice or journal to the ledger. Finance & Operations
+  exposes no post action over the ERP MCP; posting a PO-matched invoice is an X++ ledger
+  operation and the only API-native lever is submit-to-workflow, which a human approves.
+  Draft the follow-up and, at most, record the outstanding invoice as pending for a human
+  to submit and post. A human owns any ledger posting.
 - Ground every figure in a source (the `lc_reconciliation` row, or the F&O purchase
   order / vendor invoice you read) so a reviewer can trace it.
 - If Finance & Operations is unreachable, you cannot confirm invoiced-to-date, so do

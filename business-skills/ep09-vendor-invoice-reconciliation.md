@@ -22,18 +22,44 @@ lookup to the source engagement. If `lc_status` is anything other than `Open` (i
 already reads `Reconciled - Match` or `Reconciled - Gap`), stop: this signal has been
 handled (idempotency, see Step 5).
 
-### Step 2: Confirm the gap against Finance & Operations (ERP)
+### Step 2: Confirm the commitment against Finance & Operations (ERP)
 
-Do not trust the amounts on the signal row blindly; they are a snapshot from when the
-batch ran. Using the Dynamics 365 ERP MCP, read the live financial truth for this PO:
+Using the Dynamics 365 ERP MCP, confirm the purchase order commitment against the live
+F&O ledger for this PO.
 
-- the purchase order header for `lc_ponumber` (vendor, currency, status),
-- the invoiced-to-date for that PO (vendor invoice journal / the invoiced amount on
-  the order), versus the committed order total.
+**Query the `dat` legal entity (company `DAT`), not `USMF`.** Every Launch Control PO,
+vendor, and invoice lives in the `dat` company. `USMF` is the F&O demo default and holds
+none of this data: querying it returns an empty result at best and an "Internal Server
+Error" from the SQL data tool at worst. Always constrain the read to `dataAreaId eq 'dat'`
+(or pass the company / `companyId` as `DAT`). If a read errors or comes back empty,
+re-check the legal entity is `dat` before concluding F&O is unreachable.
 
-Recompute the real gap = committed minus invoiced from F&O. If the ERP MCP or the F&O
-data is unreachable in this build, you cannot confirm invoiced-to-date: do not treat the
-snapshot on the `lc_reconciliation` row as final or fabricate a gap from it. Say so
+Read the purchase order header from **`PurchaseOrderHeadersV2`** in `dat`, filtered on
+`dataAreaId eq 'dat' and PurchaseOrderNumber eq '<lc_ponumber>'`: take
+`OrderVendorAccountNumber`, `PurchaseOrderName`, `CurrencyCode`, `PurchaseOrderStatus`,
+and `DocumentApprovalStatus`. Use the exact entity and field names above; do not guess
+field names. Confirm the PO is a real, approved, open commitment and that its vendor
+matches the signal row (flag any vendor mismatch instead of glossing over it).
+
+**Invoiced-to-date.** F&O is the system of record for posted vendor invoices; the launch
+procurement signal (`lc_reconciliation` / `lc_vendorwork`) tracks invoicing progress for
+the launch. Posted vendor invoices live in **`VendInvoiceJournalHeaders`** (the posted
+journal); pending, not-yet-posted invoices live in **`VendorInvoiceHeaders`**. The PO
+header (`PurchaseOrderHeadersV2`) has no invoiced-amount field, so do not read
+invoiced-to-date off the PO. Read the posted journal for the PO in `dat`:
+
+- If `VendInvoiceJournalHeaders` has posted vendor invoices for the PO, those are
+  authoritative: use their total as invoiced-to-date, even if it differs from the signal
+  (the ledger wins; note the discrepancy).
+- If F&O has no posted invoices for the PO (an empty result, which is the normal state in
+  this build until invoices post), take invoiced-to-date from the signal row's
+  `lc_invoicedamount`. An empty result is a real "not yet posted in the ledger," not a
+  legal-entity error. F&O still confirms the PO commitment; the snapshot supplies
+  invoiced-to-date.
+
+Recompute the real gap = committed (confirmed in F&O) minus invoiced-to-date. If the ERP
+MCP or the F&O data is genuinely unreachable in this build (after confirming the legal
+entity is `dat`), you cannot confirm the commitment: do not fabricate a verdict. Say so
 plainly and hold the signal (see Step 5) rather than closing it.
 
 ### Step 3: Decide (POLICY)
@@ -50,15 +76,21 @@ plainly and hold the signal (see Step 5) rather than closing it.
 The trigger is always the gap relative to the live F&O truth, never the raw number on
 the row.
 
-### Step 4: Make the authorized F&O entry and draft the follow-up (grounded)
+### Step 4: Draft the grounded follow-up (no ledger posting)
 
 For a confirmed material gap, produce a short, executive follow-up: the vendor and PO,
 the outstanding amount, the launch and task it belongs to, and the single next action
 (for example "request invoice from Contoso for PO-10502, 25,000 outstanding, blocks
-the Launch video task on WIDGET-Q3"). Using the Dynamics 365 ERP MCP, you may make the
-authorized vendor / purchase order / invoice entry the follow-up calls for. You may
-**not** post an invoice or journal to the ledger on your own: a human approves any
-ledger posting. Ground every entry in its source so a reviewer can trace it.
+the Launch video task on WIDGET-Q3"). Ground every figure in its source so a reviewer
+can trace it.
+
+You may **not** post a vendor invoice or journal to the ledger. This is not only policy:
+Finance & Operations exposes **no post action** over the ERP MCP / OData surface. Posting
+a PO-matched vendor invoice is an X++ ledger operation (`PurchFormLetter`), and the only
+API-native lever is submitting a pending vendor invoice to an approval workflow
+(`SubmitToWorkflow` on the pending-vendor-invoice entity), which a human then approves. So
+your authorized output is the drafted follow-up plus, at most, recording the outstanding
+vendor invoice as pending for a human to submit and post. A human owns any ledger posting.
 
 ### Step 5: Write back one outcome and close the signal (idempotent)
 
@@ -81,9 +113,10 @@ row; the batch owns row creation, the agent only closes rows.
 - It does **not** create `lc_reconciliation` rows. The recurring F&O batch (native
   X++ SysOperation class, or the signal-producer script that stands in for it) is the
   sole producer. The agent is the consumer.
-- It does **not** post to the ledger. It may make the authorized vendor / PO / invoice
-  entry in Finance & Operations through the ERP MCP, but posting an invoice or journal
-  to the ledger is a separate, human-approved action.
+- It does **not** post to the ledger. Finance & Operations exposes no post action over
+  the ERP MCP; posting a PO-matched vendor invoice is an X++ operation (`PurchFormLetter`)
+  and the only API-native lever is submit-to-workflow, which a human approves. The agent
+  drafts the follow-up and may record a pending invoice at most; a human posts.
 - It does **not** answer a human prompt. The runtime is the Dataverse row-add trigger;
   the agent reconciles one signal per event.
 - It does **not** double-process. Idempotency on `lc_status` is mandatory across

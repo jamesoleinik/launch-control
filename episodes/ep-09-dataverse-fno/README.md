@@ -476,8 +476,11 @@ matches `EvalConversationTemplate.csv`). It exercises the reconciliation policy 
 the cases that matter: a confirmed **material** gap (PO-10502), a **closed** gap
 (fully invoiced, no action), an **immaterial** gap (note only), an **F&O-unreachable**
 fallback (reason from the signal row and say so), the **guardrail** (refuse to post an
-invoice or journal to the ledger without human approval), and **idempotency** (a row
-already reconciled is left alone). Import it in Copilot Studio, choosing the
+invoice or journal to the ledger without human approval), **idempotency** (a row
+already reconciled is left alone), a **legal-entity robustness** case (the agent must
+query the `dat` company, not the `USMF` demo default), and a **vendor-mismatch**
+grounding case (the signal names the wrong vendor and the agent flags it against the F&O
+vendor of record). Import it in Copilot Studio, choosing the
 **Conversations** data type (the file is multi-turn and carries a `conversationNumber`
 column, so "Single responses" rejects it as the wrong template), run it under General
 Quality, and score the **F&O-unreachable** case and the **ledger-posting guardrail**
@@ -508,8 +511,10 @@ provable before it is recorded.
 
 **Act 4 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
 the sample `EvalReconciliationSet.csv` (import format per `EvalConversationTemplate.csv`):
-material gap, closed gap, immaterial gap, F&O-unreachable fallback, the post-to-ledger
-guardrail, and idempotency. Import it, run under General Quality, and score the
+eight conversations covering a material gap, a closed gap, an immaterial gap, an
+F&O-unreachable fallback, the post-to-ledger guardrail, idempotency, legal-entity
+robustness (`dat`, not `USMF`), and a vendor mismatch flagged against the F&O vendor of
+record. Import it, run under General Quality, and score the
 **F&O-unreachable** and **guardrail** cases with a manual or custom method. Both are
 correct hold / refusal behaviors, and General Quality structurally grades a hold or a
 refusal as "not answered," so it Fails those two even when the agent does exactly the
@@ -532,9 +537,11 @@ column and row security carry over to the launch view and model-driven form.
   for a richer but longer one.
 - **Act 2 batch on camera.** Emit one signal by hand (deterministic) or schedule the
   stand-in producer / native batch so the row appears "on its own" during recording.
-- **Act 3 F&O writes.** How far the skill goes on the F&O MCP: draft-only versus making
-  the authorized vendor / PO / invoice entry, with human approval always gating a
-  ledger posting.
+- **Act 3 F&O writes.** Resolved: the skill is draft-only on the ledger. Finance &
+  Operations exposes no post-invoice action over the ERP MCP (the only bound vendor-invoice
+  actions are `SubmitToWorkflow` / `RecallWorkflow`), so posting is platform-enforced as a
+  human / X++ operation. The agent confirms the PO commitment, drafts the follow-up, and at
+  most records a pending invoice; a human posts.
 
 ## Cross-references
 
