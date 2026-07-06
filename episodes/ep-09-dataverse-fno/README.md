@@ -295,6 +295,18 @@ environment from a script. To use it:
 3. From a configured company you can create and post real vendor invoices in the app
    and over OData.
 
+Configuring an existing empty environment in place is not a viable alternative to
+demo data. Tested against this environment, the General Ledger foundation cannot be
+stood up over OData: creating a `ChartOfAccounts` row throws an X++
+`TargetInvocationException` (these composite financial entities gate creation behind
+business logic that OData create does not satisfy), and a `Ledger` PATCH that tries
+to set the accounting currency is rejected with *"Field 'Calendar' must be filled
+in; Field 'Chart of accounts' must be filled in."* So the ledger cannot be wired,
+the accounting currency cannot be set, and vendor invoices cannot be created. The
+same limitation applies to hand-authored Data Management packages for these entities.
+A company that ships configured (via demo data at provisioning) remains the only
+reliable route to real F&O invoice posting.
+
 This is why Act 2 is designed around the committed-versus-invoiced **gap** rather
 than around posting live F&O invoices: the reconciliation reads the committed amount
 from the purchase order and the invoiced amount from `lc_vendorwork`, and the under
