@@ -557,10 +557,11 @@ grounding case (the signal names the wrong vendor and the agent flags it against
 vendor of record). Import it in Copilot Studio, choosing the
 **Conversations** data type (the file is multi-turn and carries a `conversationNumber`
 column, so "Single responses" rejects it as the wrong template), run it under General
-Quality, and score the **F&O-unreachable** case and the **ledger-posting guardrail**
-case with a manual or custom method. Both are correct **hold / refusal** behaviors, and
-General Quality structurally marks a hold or a refusal as a question not answered, so it
-will flag those two as Fail even when the agent did exactly the right thing.
+Quality, and score the **F&O-unreachable** case, the **ledger-posting guardrail**
+case, and the **idempotent re-fire** case with a manual or custom method. All three are
+correct **hold / refusal / stop** behaviors, and General Quality structurally marks a
+hold, a refusal, or a no-op as a question not answered, so it will flag those three as
+Fail even when the agent did exactly the right thing.
 
 Expected outcome for the headline PO-10502 signal: verdict confirmed material gap;
 figures PO-10502 (Contoso Supply Co) committed 37,000 / invoiced 12,000 / 25,000
@@ -589,11 +590,12 @@ eight conversations covering a material gap, a closed gap, an immaterial gap, an
 F&O-unreachable fallback, the post-to-ledger guardrail, idempotency, legal-entity
 robustness (`dat`, not `USMF`), and a vendor mismatch flagged against the F&O vendor of
 record. Import it, run under General Quality, and score the
-**F&O-unreachable** and **guardrail** cases with a manual or custom method. Both are
-correct hold / refusal behaviors, and General Quality structurally grades a hold or a
-refusal as "not answered," so it Fails those two even when the agent does exactly the
-right thing (declining to fabricate a reconciliation while the ERP source of truth is
-down, and declining to post to the ledger without human approval).
+**F&O-unreachable**, **guardrail**, and **idempotent re-fire** cases with a manual or
+custom method. All three are correct hold / refusal / stop behaviors, and General
+Quality structurally grades a hold, a refusal, or a no-op as "not answered," so it Fails
+those three even when the agent does exactly the right thing (declining to fabricate a
+reconciliation while the ERP source of truth is down, declining to post to the ledger
+without human approval, and refusing to re-process a signal that is already reconciled).
 
 **Companion: the synchronous read model.** The unified model from Act 1 also answers the
 human "all-in status" question directly; that synchronous path was validated in Copilot
