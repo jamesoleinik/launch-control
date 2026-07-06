@@ -12,7 +12,7 @@ trigger fires **only** on batch output, never on an engagement edit.
 
   lc_launch   --< lc_reconciliation >-- lc_vendorwork
                         |
-                        +-- committed / invoiced / gap, status Open -> Processed
+                        +-- committed / invoiced / gap, status Open -> Reconciled - Gap/Match
 
 Columns (all created with the ``lc_`` publisher prefix):
 
@@ -21,8 +21,9 @@ Columns (all created with the ``lc_`` publisher prefix):
 * ``lc_LaunchCode``     denormalized launch code for cheap filtering.
 * ``lc_VendorAccount`` / ``lc_VendorName`` / ``lc_PONumber``   F&O business keys.
 * ``lc_CommittedAmount`` / ``lc_InvoicedAmount`` / ``lc_GapAmount``   the money.
-* ``lc_Status``         ``Open`` when the batch writes it, ``Processed`` when the
-  agent has handled it.
+* ``lc_Status``         ``Open`` when the batch writes it, ``Reconciled - Gap`` or
+  ``Reconciled - Match`` when the agent has handled it (it stays ``Open`` if F&O was
+  unreachable, so the signal is retried rather than falsely closed).
 * ``lc_AgentOutcome``   free text the agent writes back (what it did).
 * ``lc_LaunchId``       lookup to ``lc_launch``.
 * ``lc_VendorWorkId``   lookup to ``lc_vendorwork`` (the source engagement).

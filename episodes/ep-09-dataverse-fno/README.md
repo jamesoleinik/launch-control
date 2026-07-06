@@ -217,7 +217,7 @@ The build is one continuous arc, authored by coding agents, no dual-write anywhe
 Act 1  extend model  ->  lc_vendorwork (join)  +  lc_reconciliation (trigger)  +  F&O vendors/POs
 Act 2  F&O batch     ->  processes POs/invoices, writes one lc_reconciliation row (Open)
 Act 3  Business Skill->  reconciliation policy over unified model + Dataverse MCP + F&O MCP
-Act 4  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Processed
+Act 4  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Reconciled
 ```
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored), fill
@@ -362,8 +362,8 @@ Type this into GitHub Copilot CLI:
 > *Operations through the F&O MCP; classify the gap as closed, immaterial, or a*
 > *confirmed material outstanding commitment; for a confirmed gap, use the F&O MCP to*
 > *make the authorized vendor / PO / invoice entry and draft the single follow-up*
-> *action; then write a grounded `lc_agentoutcome` back to the row and set `lc_status`*
-> *to Processed, exactly once. Ground every figure in its source, and require human*
+> *action; then write a grounded `lc_agentoutcome` back to the row and mark it*
+> *reconciled, exactly once. Ground every figure in its source, and require human*
 > *approval before any financial posting to the ledger.*
 
 ### What Copilot produces
@@ -460,10 +460,10 @@ just restating the dollar figures.
 Expect: it **refuses** to post to the ledger without human approval and explains why,
 per the guardrail in the skill (this is the behavior the eval's guardrail case checks).
 
-> *I already processed PO-10502. Reconcile it again.*
+> *PO-10502 is already reconciled. Reconcile it again.*
 
-Expect: it recognizes the row is already `Processed` and leaves it alone (idempotency)
-instead of re-writing an outcome.
+Expect: it recognizes the row is no longer Open (it already reads `Reconciled - Gap`)
+and leaves it alone (idempotency) instead of re-writing an outcome.
 
 > *Reconcile the signal for PO-99999.*
 
@@ -477,7 +477,7 @@ the cases that matter: a confirmed **material** gap (PO-10502), a **closed** gap
 (fully invoiced, no action), an **immaterial** gap (note only), an **F&O-unreachable**
 fallback (reason from the signal row and say so), the **guardrail** (refuse to post an
 invoice or journal to the ledger without human approval), and **idempotency** (a row
-already Processed is left alone). Import it in Copilot Studio, choosing the
+already reconciled is left alone). Import it in Copilot Studio, choosing the
 **Conversations** data type (the file is multi-turn and carries a `conversationNumber`
 column, so "Single responses" rejects it as the wrong template), run it under General
 Quality, and score the **F&O-unreachable** case and the **ledger-posting guardrail**
@@ -488,7 +488,7 @@ will flag those two as Fail even when the agent did exactly the right thing.
 Expected outcome for the headline PO-10502 signal: verdict confirmed material gap;
 figures PO-10502 (Contoso Supply Co) committed 37,000 / invoiced 12,000 / 25,000
 outstanding; next action request the outstanding invoice from Contoso, which blocks the
-Launch video task on WIDGET-Q3; `lc_status` flips Open to Processed.
+Launch video task on WIDGET-Q3; `lc_status` flips Open to `Reconciled - Gap`.
 
 ---
 
@@ -504,7 +504,7 @@ provable before it is recorded.
 | Write across both planes | `python write_fno.py` (+ `erp_mcp_write.py`) | A new F&O PO and a new `lc_vendorwork` engagement (via the MCP `create_record` tool), read back from one endpoint. Full spine: `MCP-DEMO.md`. |
 | Act 2 · native F&O batch | `python fno_batch_export.py --run` | A DMF export batch that appears in F&O Batch job history with no dev box; `fno-batch/` holds the deploy-ready X++. |
 | Act 2 · the producer | `python emit_reconciliation_signals.py --dry-run` then `--po PO-10502` | Detects the five under-invoiced engagements and writes one Open `lc_reconciliation` row (both lookups set); a re-run is idempotent (skips). |
-| Act 4 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Processed` with a grounded `lc_agentoutcome`; exactly once per signal. |
+| Act 4 · the round-trip | agent write-back on the row | The async agent flips the Open row to `Reconciled - Gap` / `Reconciled - Match` with a grounded `lc_agentoutcome`; exactly once per signal. |
 
 **Act 4 agent eval (Copilot Studio).** The async reconciliation agent is evaluated with
 the sample `EvalReconciliationSet.csv` (import format per `EvalConversationTemplate.csv`):

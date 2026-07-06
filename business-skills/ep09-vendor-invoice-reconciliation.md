@@ -18,8 +18,9 @@ outcome. It owns the reasoning; the batch only emits the event.
 Using the Dataverse MCP, read the `lc_reconciliation` row that fired the trigger.
 Take from it: `lc_ponumber`, `lc_vendoraccount` / `lc_vendorname`, `lc_launchcode`,
 `lc_committedamount`, `lc_invoicedamount`, `lc_gapamount`, and the `lc_vendorworkid`
-lookup to the source engagement. If `lc_status` is already `Processed`, stop: this
-signal has been handled (idempotency, see Step 5).
+lookup to the source engagement. If `lc_status` is anything other than `Open` (it
+already reads `Reconciled - Match` or `Reconciled - Gap`), stop: this signal has been
+handled (idempotency, see Step 5).
 
 ### Step 2: Confirm the gap against Finance & Operations (ERP)
 
@@ -31,8 +32,9 @@ batch ran. Using the Dynamics 365 ERP MCP, read the live financial truth for thi
   the order), versus the committed order total.
 
 Recompute the real gap = committed minus invoiced from F&O. If the ERP MCP or the F&O
-data is unreachable in this build, fall back to the amounts on the `lc_reconciliation`
-row and say so in the outcome.
+data is unreachable in this build, you cannot confirm invoiced-to-date: do not treat the
+snapshot on the `lc_reconciliation` row as final or fabricate a gap from it. Say so
+plainly and hold the signal (see Step 5) rather than closing it.
 
 ### Step 3: Decide (POLICY)
 
@@ -64,10 +66,14 @@ Using the Dataverse MCP, update the **same** `lc_reconciliation` row:
 
 - set `lc_agentoutcome` to the grounded summary from Step 3/4 (the verdict, the F&O
   figures used, and the drafted next action or the reason for closing),
-- set `lc_status` to `Processed`.
+- set `lc_status` to the terminal value for the verdict: `Reconciled - Match` when the
+  gap is closed (fully invoiced), or `Reconciled - Gap` when a gap is confirmed (whether
+  material or immaterial). If F&O was unreachable in Step 2, do **not** mark the row
+  reconciled: leave `lc_status` as `Open` and flag it for re-confirmation once F&O is
+  back, so the signal is retried rather than falsely closed.
 
 Write exactly once per signal. Before writing, re-check `lc_status`; if another run
-already set it to `Processed`, do nothing. Never create a second `lc_reconciliation`
+already moved it off `Open`, do nothing. Never create a second `lc_reconciliation`
 row; the batch owns row creation, the agent only closes rows.
 
 ## What this skill is NOT

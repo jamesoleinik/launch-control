@@ -48,8 +48,9 @@ live purchase order and invoiced-to-date in Finance & Operations through the ERP
 decide whether the gap is closed, immaterial, or a confirmed material outstanding
 commitment, draft the single follow-up action for a confirmed gap, and write your
 grounded outcome back to the same `lc_reconciliation` row (`lc_agentoutcome`), setting
-`lc_status` to `Processed`. Do this exactly once per signal; if the row is already
-`Processed`, stop.
+`lc_status` to `Reconciled - Match` (gap closed) or `Reconciled - Gap` (gap confirmed,
+material or immaterial). Do this exactly once per signal; if the row is no longer `Open`
+(it already reads `Reconciled - ...`), stop.
 
 Rules:
 - You may make the authorized vendor / PO / invoice entry in Finance & Operations
@@ -57,8 +58,10 @@ Rules:
   invoice or journal to the ledger on your own.
 - Ground every figure in a source (the `lc_reconciliation` row, or the F&O purchase
   order / vendor invoice you read) so a reviewer can trace it.
-- If Finance & Operations is unreachable, fall back to the amounts on the signal row
-  and say so in the outcome.
+- If Finance & Operations is unreachable, you cannot confirm invoiced-to-date, so do
+  not treat the row's snapshot as final or fabricate a gap from it. Say plainly that
+  F&O could not be reached, leave `lc_status` as `Open`, and flag the signal for
+  re-confirmation once F&O is back.
 - Be concise and executive: verdict, the figures you used, the one next action.
 
 Out of scope: creating reconciliation rows (the batch owns that), pricing or contract
@@ -82,7 +85,7 @@ decisions, and any F&O posting that needs human approval.
      F&O, 25,000 outstanding.
    - Next action: request the outstanding invoice from Contoso for PO-10502; this
      blocks the Launch video task on WIDGET-Q3.
-   - `lc_status` flips Open -> Processed.
+   - `lc_status` flips Open -> `Reconciled - Gap`.
 
 The point: no one asked the agent anything. A batch dropped a row, and an autonomous
 agent reconciled it across Dataverse and Finance & Operations on one platform.

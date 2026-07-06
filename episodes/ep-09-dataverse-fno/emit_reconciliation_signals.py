@@ -14,7 +14,7 @@ Studio agent pulls in when the row-add trigger fires.
                                                                      |
                                                           row-add trigger fires
                                                                      v
-  consumer (async agent + Business Skill)  -- reads F&O, drafts action, sets Processed
+  consumer (async agent + Business Skill)  -- reads F&O, drafts action, marks reconciled
 
 For the demo recording we usually write **one** signal by hand
 (``--po PO-10502``) so a single row-add cleanly wakes the agent on camera. The full
