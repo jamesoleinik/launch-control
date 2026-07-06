@@ -266,10 +266,25 @@ next fails with *"The accounting currency has not been specified for ledger dat"
 because the ledger has no accounting currency, chart of accounts, main accounts, or
 fiscal calendar. Making a template company transactional (chart of accounts and
 account structures, fiscal calendar, ledger currencies and posting profiles, tax) is
-a full financial configuration. The supported path is to import a demo or
-configuration data package, or provision an environment that already ships the
-configured demo company (for example `USMF`), not to hand-build the ledger entity by
-entity over OData.
+a full financial configuration, not something to hand-build entity by entity over
+OData.
+
+The recommended path is **demo data**: use a legal entity that ships fully
+configured, rather than configuring `dat`. In Finance & Operations, the Contoso demo
+data (which includes the transactional `USMF` legal entity, complete with chart of
+accounts, fiscal calendar, currencies, posting profiles, vendors, and purchase
+orders) is applied when the environment is **provisioned**, through the Power
+Platform admin center or LCS. It is a deployment-time and admin operation, not an
+OData or MCP call, so it cannot be retrofitted into an already-deployed empty
+environment from a script. To use it:
+
+1. Provision (or redeploy) the F&O environment with **demo data enabled** so the
+   configured `USMF` company is present.
+2. Point `FNO_URL` at that environment and run the seed against `USMF` (pass
+   `--company USMF` where the scripts accept it); the AP number sequences above are
+   already set up in `USMF`, so that preamble becomes a no-op there.
+3. From a configured company you can create and post real vendor invoices in the app
+   and over OData.
 
 This is why Act 2 is designed around the committed-versus-invoiced **gap** rather
 than around posting live F&O invoices: the reconciliation reads the committed amount
