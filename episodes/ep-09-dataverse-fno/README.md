@@ -311,23 +311,30 @@ second connector. You do not need to write any code to confirm it: register the
 Dataverse plugin's MCP server once, then just ask the agent, which calls the
 `read_query` tool for you.
 
-1. Register the Dataverse MCP server with GitHub Copilot CLI. The `@microsoft/dataverse`
-   plugin ships an `mcp` command that proxies the environment; point it at your
-   environment **base URL** (the proxy appends `/api/mcp` itself). Add an entry to your
-   personal `~/.copilot/mcp-config.json` (do not commit it, it names your environment):
+1. Register the Dataverse MCP server with the **`dv-connect` skill** from the
+   [Dataverse-skills](https://github.com/microsoft/Dataverse-skills) plugin (the same
+   plugin that provides `dv-metadata` and `dv-data` used in the Act 1 prompt). Its
+   Step 6 registers the server idempotently for whichever agent you run (Copilot,
+   Claude, Cursor, or Codex), so you never hand-write config. Just ask:
+
+   > *Run dv-connect and register the Dataverse MCP server for my environment.*
+
+   For GitHub Copilot CLI the skill writes an **HTTP** entry to your personal
+   `~/.copilot/mcp-config.json` (do not commit it, it names your environment):
 
    ```json
    {
      "mcpServers": {
-       "dataverse": {
-         "type": "stdio",
-         "command": "npx",
-         "args": ["-y", "@microsoft/dataverse@latest", "mcp", "https://<your-env>.crm.dynamics.com"]
+       "DataverseMcp<orgid>": {
+         "type": "http",
+         "url": "https://<your-env>.crm.dynamics.com/api/mcp"
        }
      }
    }
    ```
 
+   (For Claude or Cursor the same skill instead runs a `... mcp add` CLI command that
+   launches the `@microsoft/dataverse` stdio proxy against the environment base URL.)
    The client app GitHub Copilot uses (`MCP_CLIENT_ID = aebc6443-996d-45c2-90f0-388ff96faa56`)
    must be allowlisted on the environment and the Dataverse MCP server enabled (see
    [Configure the Dataverse MCP server](https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-disable)).
