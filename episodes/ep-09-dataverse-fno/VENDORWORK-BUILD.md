@@ -52,6 +52,15 @@ model queryable both ways:
   amounts live on the real `lc_vendorwork` table, the same rows are fully
   queryable (and joinable to `lc_task` / `lc_launch`) over TDS.
 
+> Note: the direct TDS endpoint (`host,5558`) is what does not expose virtual
+> entities. The Dataverse **MCP `read_query`** tool is a separate path (it takes a
+> `SELECT` but executes through the platform metadata layer, not raw TDS), so it
+> *can* read the `mserp_*` virtual entities. Verified: `SELECT TOP 2
+> mserp_purchaseordernumber FROM mserp_purchpurchaseorderheaderv2entity` returns live
+> F&O POs over `read_query`. Use the singular **logical** name
+> (`mserp_purchpurchaseorderheaderv2entity`), not the OData set name (`...entities`),
+> which `read_query` rejects as not found in the metadata cache.
+
 One model, two endpoints, no reseed required when virtual entities are toggled on
 or off.
 
