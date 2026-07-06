@@ -274,15 +274,16 @@ configured, rather than configuring `dat`. In Finance & Operations, the Contoso 
 data (which includes the transactional `USMF` legal entity, complete with chart of
 accounts, fiscal calendar, currencies, posting profiles, vendors, and purchase
 orders) is applied when the environment is **provisioned**, through the Power
-Platform admin center or LCS. It is a deployment-time and admin operation, not an
+Platform admin center (PPAC). It is a deployment-time and admin operation, not an
 OData or MCP call, so it cannot be retrofitted into an already-deployed empty
 environment from a script. To use it:
 
-1. Provision (or redeploy) the F&O environment with **demo data enabled** so the
-   configured `USMF` company is present. Contoso demo data is applied by deploying a
-   **Demo** topology environment through Lifecycle Services (see
-   [Deploy a demo environment](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/deployment/deploy-demo-environment)),
-   not by importing a package into an existing empty company. There is no
+1. Provision a new environment in the **Power Platform admin center**
+   (`admin.powerplatform.microsoft.com` > Manage > Environments > New), add a
+   Dataverse data store, set **Enable Dynamics 365 apps** to **Yes**, and select the
+   finance and operations app, choosing the demo or sample data option so the
+   configured `USMF` company is present. (Lifecycle Services, the older LCS
+   deployment surface, is deprecated in favor of PPAC.) There is no
    Microsoft-supported "upload this zip and an empty legal entity becomes postable"
    artifact; ad-hoc Data Management imports of currencies or accounts into a bare
    company fail on the interdependent ledger prerequisites. Partial community packages
