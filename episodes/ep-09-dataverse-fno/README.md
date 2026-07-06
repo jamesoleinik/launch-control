@@ -537,11 +537,13 @@ column and row security carry over to the launch view and model-driven form.
   for a richer but longer one.
 - **Act 2 batch on camera.** Emit one signal by hand (deterministic) or schedule the
   stand-in producer / native batch so the row appears "on its own" during recording.
-- **Act 3 F&O writes.** Resolved: the skill is draft-only on the ledger. Finance &
-  Operations exposes no post-invoice action over the ERP MCP (the only bound vendor-invoice
-  actions are `SubmitToWorkflow` / `RecallWorkflow`), so posting is platform-enforced as a
-  human / X++ operation. The agent confirms the PO commitment, drafts the follow-up, and at
-  most records a pending invoice; a human posts.
+- **Act 3 F&O writes.** Resolved as a policy choice: the skill is draft-only on the
+  ledger. The F&O ERP MCP (OData) has no post or action-invoke tool (record CRUD only), so
+  posting is not reachable that way. It *is* reachable through a Dataverse Custom API
+  wrapper (F&O vendor-invoice operations already surface as `msdyn_VendInvoice*CustomAPI`,
+  which the Dataverse MCP can invoke) or by submit-to-workflow; we keep those human-gated on
+  purpose. The agent confirms the PO commitment, drafts the follow-up, and at most records a
+  pending invoice; a human posts.
 
 ## Cross-references
 

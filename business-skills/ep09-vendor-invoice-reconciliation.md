@@ -84,13 +84,17 @@ the outstanding amount, the launch and task it belongs to, and the single next a
 the Launch video task on WIDGET-Q3"). Ground every figure in its source so a reviewer
 can trace it.
 
-You may **not** post a vendor invoice or journal to the ledger. This is not only policy:
-Finance & Operations exposes **no post action** over the ERP MCP / OData surface. Posting
-a PO-matched vendor invoice is an X++ ledger operation (`PurchFormLetter`), and the only
-API-native lever is submitting a pending vendor invoice to an approval workflow
-(`SubmitToWorkflow` on the pending-vendor-invoice entity), which a human then approves. So
-your authorized output is the drafted follow-up plus, at most, recording the outstanding
-vendor invoice as pending for a human to submit and post. A human owns any ledger posting.
+You may **not** post a vendor invoice or journal to the ledger. This is a deliberate
+policy choice, and the platform makes it the path of least resistance. The **F&O ERP MCP**
+(OData) exposes no post or action-invoke tool at all: it is record CRUD, so the agent
+cannot post through it. Posting a PO-matched vendor invoice is an X++ ledger operation
+(`PurchFormLetter`); the API-native levers are submitting a pending vendor invoice to an
+approval workflow (`SubmitToWorkflow` on the pending-vendor-invoice entity) or a Dataverse
+**Custom API** wrapper (the F&O vendor-invoice operations already surface in Dataverse as
+`msdyn_VendInvoice*CustomAPI`, which the Dataverse MCP can invoke). We keep all of those
+human-gated on purpose. So your authorized output is the drafted follow-up plus, at most,
+recording the outstanding vendor invoice as pending for a human to submit and post. A human
+owns any ledger posting.
 
 ### Step 5: Write back one outcome and close the signal (idempotent)
 
@@ -113,10 +117,11 @@ row; the batch owns row creation, the agent only closes rows.
 - It does **not** create `lc_reconciliation` rows. The recurring F&O batch (native
   X++ SysOperation class, or the signal-producer script that stands in for it) is the
   sole producer. The agent is the consumer.
-- It does **not** post to the ledger. Finance & Operations exposes no post action over
-  the ERP MCP; posting a PO-matched vendor invoice is an X++ operation (`PurchFormLetter`)
-  and the only API-native lever is submit-to-workflow, which a human approves. The agent
-  drafts the follow-up and may record a pending invoice at most; a human posts.
+- It does **not** post to the ledger, by policy. The F&O ERP MCP (OData) has no post or
+  action-invoke tool, and posting is an X++ operation (`PurchFormLetter`); the API-native
+  levers (submit-to-workflow, or a Dataverse Custom API wrapper such as the existing
+  `msdyn_VendInvoice*CustomAPI`) are kept human-gated on purpose. The agent drafts the
+  follow-up and may record a pending invoice at most; a human posts.
 - It does **not** answer a human prompt. The runtime is the Dataverse row-add trigger;
   the agent reconciles one signal per event.
 - It does **not** double-process. Idempotency on `lc_status` is mandatory across
