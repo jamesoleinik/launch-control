@@ -73,6 +73,22 @@ MCP or the F&O data is genuinely unreachable in this build (after confirming the
 entity is `dat`), you cannot confirm the commitment: do not fabricate a verdict. Say so
 plainly and hold the signal (see Step 5) rather than closing it.
 
+**How the F&O invoice cycle shapes the gap.** In Dynamics 365 F&O a PO-based vendor
+invoice completes a three-step cycle: purchase order (the commitment) then product
+receipt (goods or services received, in `ProductReceiptHeaders` / `ProductReceiptLines`)
+then vendor invoice. A vendor is normally invoiced only for what has been received, so the
+committed-minus-invoiced gap has two parts: a **deliver remainder** (ordered but not yet
+received) and an **invoice remainder** (received on a product receipt but not yet
+invoiced). The portion that genuinely warrants chasing a vendor invoice is the invoice
+remainder (received, not invoiced); the not-yet-delivered portion is a delivery matter, not
+an invoice matter, so call it out as such rather than dunning for an invoice that is not yet
+due. When a posted vendor invoice clears the last remainder, F&O flips
+`PurchaseOrderStatus` to `Invoiced`; while any remainder is open it stays `Backorder` (or
+`Received`), and more invoices can post against it. In this build no product receipts are
+posted yet (`ProductReceiptHeaders` is empty and the POs read `Backorder`), so the full
+committed amount is still an open commitment and the signal's `lc_invoicedamount` stands as
+invoiced-to-date; note in your outcome that the gap is pre-receipt when that is the case.
+
 ### Step 3: Decide (POLICY)
 
 - **Gap closed** (F&O now shows fully invoiced / no remaining commitment): no dollars
@@ -99,13 +115,16 @@ You may **not** post a vendor invoice or journal to the ledger. This is a delibe
 policy choice, and the platform makes it the path of least resistance. The **F&O ERP MCP**
 (OData) exposes no post or action-invoke tool at all: it is record CRUD, so the agent
 cannot post through it. Posting a PO-matched vendor invoice is an X++ ledger operation
-(`PurchFormLetter`); the API-native levers are submitting a pending vendor invoice to an
-approval workflow (`SubmitToWorkflow` on the pending-vendor-invoice entity) or a Dataverse
-**Custom API** wrapper (the F&O vendor-invoice operations already surface in Dataverse as
-`msdyn_VendInvoice*CustomAPI`, which the Dataverse MCP can invoke). We keep all of those
-human-gated on purpose. So your authorized output is the drafted follow-up plus, at most,
-recording the outstanding vendor invoice as pending for a human to submit and post. A human
-owns any ledger posting.
+(`PurchFormLetter`) that runs inside F&O only after a human approves the vendor-invoice
+workflow; there is no direct "post to ledger" API. The F&O vendor-invoice operations do
+surface in Dataverse as invokable **Custom APIs** (`msdyn_VendInvoice*CustomAPI`), but the
+only one that advances an invoice is `msdyn_VendInvoiceSubmitToWorkflowCustomAPI`
+(`invoiceId`, `comment`): it submits a pending invoice to the approval workflow, it does
+not post. No `msdyn_VendInvoice*PostCustomAPI` exists. The actual ledger post is observed
+after the fact through the `mserp_VendorInvoiceJournalPostedBusinessEvent`. We keep the
+submit-to-workflow lever human-gated on purpose. So your authorized output is the drafted
+follow-up plus, at most, recording the outstanding vendor invoice as pending for a human to
+submit and post. A human owns any ledger posting.
 
 ### Step 5: Write back one outcome and close the signal (idempotent)
 
@@ -135,10 +154,11 @@ is no row to persist to is not.
   X++ SysOperation class, or the signal-producer script that stands in for it) is the
   sole producer. The agent is the consumer.
 - It does **not** post to the ledger, by policy. The F&O ERP MCP (OData) has no post or
-  action-invoke tool, and posting is an X++ operation (`PurchFormLetter`); the API-native
-  levers (submit-to-workflow, or a Dataverse Custom API wrapper such as the existing
-  `msdyn_VendInvoice*CustomAPI`) are kept human-gated on purpose. The agent drafts the
-  follow-up and may record a pending invoice at most; a human posts.
+  action-invoke tool, and posting is an X++ operation (`PurchFormLetter`) that F&O runs only
+  after a human approves the workflow. The one API-native lever that surfaces in Dataverse,
+  `msdyn_VendInvoiceSubmitToWorkflowCustomAPI`, only submits a pending invoice for approval
+  (there is no direct-post Custom API); it is kept human-gated on purpose. The agent drafts
+  the follow-up and may record a pending invoice at most; a human posts.
 - It does **not** answer a human prompt. The runtime is the Dataverse row-add trigger;
   the agent reconciles one signal per event.
 - It does **not** double-process. Idempotency on `lc_status` is mandatory across
