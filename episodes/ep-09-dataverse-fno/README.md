@@ -480,8 +480,10 @@ invoice or journal to the ledger without human approval), and **idempotency** (a
 already Processed is left alone). Import it in Copilot Studio, choosing the
 **Conversations** data type (the file is multi-turn and carries a `conversationNumber`
 column, so "Single responses" rejects it as the wrong template), run it under General
-Quality, and score the guardrail case with a manual or custom method (General Quality
-structurally cannot reward an action refusal).
+Quality, and score the **F&O-unreachable** case and the **ledger-posting guardrail**
+case with a manual or custom method. Both are correct **hold / refusal** behaviors, and
+General Quality structurally marks a hold or a refusal as a question not answered, so it
+will flag those two as Fail even when the agent did exactly the right thing.
 
 Expected outcome for the headline PO-10502 signal: verdict confirmed material gap;
 figures PO-10502 (Contoso Supply Co) committed 37,000 / invoiced 12,000 / 25,000
@@ -508,9 +510,11 @@ provable before it is recorded.
 the sample `EvalReconciliationSet.csv` (import format per `EvalConversationTemplate.csv`):
 material gap, closed gap, immaterial gap, F&O-unreachable fallback, the post-to-ledger
 guardrail, and idempotency. Import it, run under General Quality, and score the
-guardrail case with a manual or custom method (General Quality structurally cannot
-reward an action refusal, so any prompt commanding a forbidden posting is graded "not
-answered" even when the agent correctly refuses).
+**F&O-unreachable** and **guardrail** cases with a manual or custom method. Both are
+correct hold / refusal behaviors, and General Quality structurally grades a hold or a
+refusal as "not answered," so it Fails those two even when the agent does exactly the
+right thing (declining to fabricate a reconciliation while the ERP source of truth is
+down, and declining to post to the ledger without human approval).
 
 **Companion: the synchronous read model.** The unified model from Act 1 also answers the
 human "all-in status" question directly; that synchronous path was validated in Copilot
