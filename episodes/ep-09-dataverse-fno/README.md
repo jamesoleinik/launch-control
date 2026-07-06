@@ -426,11 +426,14 @@ and the paste-verbatim instruction shell):
 4. **Instructions.** Paste the short shell from `async-agent-instructions.md`: it frames
    the role and points at the skill, nothing more.
 
-> **The trigger table must exist first.** The "When a row is added" trigger only lists
-> `lc_reconciliation` (Reconciliation Signal) once Act 1 has created it in this
-> environment. If you do not see the table when building the agent, run the Act 1 build
-> (`python reconciliation_model.py`) against the environment you are pointing Copilot
-> Studio at, then refresh the trigger's table picker.
+> **The trigger table must exist and be change-tracked first.** The "When a row is
+> added" trigger only lists `lc_reconciliation` (Reconciliation Signal) once Act 1 has
+> created it **and enabled change tracking** on it in this environment (a freshly
+> created custom table has change tracking off, so it will not appear in the trigger's
+> table picker). If you do not see the table when building the agent, run the Act 1
+> build (`python reconciliation_model.py`, which creates the table and turns change
+> tracking on) against the environment Copilot Studio points at, then refresh the
+> table picker.
 
 ### Evaluate the agent
 

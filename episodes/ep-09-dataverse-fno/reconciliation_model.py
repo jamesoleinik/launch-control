@@ -38,6 +38,8 @@ import os
 import sys
 import time
 
+import requests
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
 
@@ -124,12 +126,65 @@ def ensure_reconciliation_table(client):
             _ensure_lookup(client, field, target, display_name)
 
 
+def ensure_change_tracking(url, token):
+    """Enable change tracking on lc_reconciliation. Idempotent.
+
+    The Copilot Studio / Dataverse "When a row is added" trigger only lists a
+    table (and only fires reliably) when the table has change tracking enabled.
+    A freshly created custom table has it off, so the trigger picker will not
+    show lc_reconciliation until this runs.
+    """
+    h = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0",
+    }
+    meta = requests.get(
+        f"{url}/api/data/v9.2/EntityDefinitions(LogicalName='{LOGICAL}')"
+        "?$select=LogicalName,ChangeTrackingEnabled",
+        headers=h,
+    ).json()
+    if meta.get("ChangeTrackingEnabled") is True:
+        print("[skip] change tracking already enabled")
+        return
+    metadata_id = meta["MetadataId"]
+    body = {
+        "@odata.type": "Microsoft.Dynamics.CRM.EntityMetadata",
+        "MetadataId": metadata_id,
+        "LogicalName": LOGICAL,
+        "ChangeTrackingEnabled": True,
+        "HasChanged": True,
+    }
+    # Metadata updates must be a full PUT (partial PATCH is rejected with 405);
+    # a minimal body plus MSCRM.MergeLabels is accepted.
+    r = requests.put(
+        f"{url}/api/data/v9.2/EntityDefinitions(MetadataId={metadata_id})",
+        headers={**h, "MSCRM.MergeLabels": "true"},
+        json=body,
+    )
+    if r.status_code not in (200, 204):
+        raise RuntimeError(
+            f"could not enable change tracking ({r.status_code}): {r.text[:300]}")
+    pub = requests.post(
+        f"{url}/api/data/v9.2/PublishXml",
+        headers=h,
+        json={"ParameterXml": f"<importexportxml><entities><entity>{LOGICAL}"
+                              "</entity></entities></importexportxml>"},
+    )
+    if pub.status_code not in (200, 204):
+        raise RuntimeError(f"publish failed ({pub.status_code}): {pub.text[:300]}")
+    print("[ok]   change tracking enabled and published")
+
+
 def main():
     auth.load_env(EPISODE)
     url = os.environ["DATAVERSE_URL"].rstrip("/")
     print(f"Dataverse env: {url}\n")
     client = DataverseClient(url, auth.get_credential(EPISODE))
     ensure_reconciliation_table(client)
+    ensure_change_tracking(url, auth.get_token(EPISODE))
     print("\nDone. lc_reconciliation is ready as the agent trigger surface.")
 
 
