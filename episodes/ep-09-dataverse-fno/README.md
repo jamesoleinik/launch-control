@@ -248,19 +248,37 @@ equivalent is `scripts/python/setup_fno_number_sequences.py`, which is fully
 data-driven over the F&O OData surface: it creates the number sequence **code**
 (entity set `SequenceV2Tables`, the collection name of `NumberSequenceTableV2Entity`,
 which drops the `Number` prefix) and then binds the **reference**
-(`NumberSequencesV2References`) for the AP vendor-invoice datatypes
-(`PurchInternalInvoiceId`, `PurchInvoiceVoucher`). The code table is not reachable
-through the Dataverse MCP virtual-entity path, so this provisioning runs against F&O
-OData. It is idempotent and dry-run first:
+(`NumberSequencesV2References`) for the vendor-invoice cycle datatypes
+(`PurchInternalInvoiceId`, `PurchInvoiceVoucher`, `PurchInternalPackingSlipId`,
+`PurchPackingSlipVoucher`, `PurchInternalCreditNoteId`, `PurchCreditNoteVoucher`,
+`PurchaseOrderVoucher`). The code table is not reachable through the Dataverse MCP
+virtual-entity path, so this provisioning runs against F&O OData. It is idempotent
+and dry-run first:
 
 ```
 python scripts/python/setup_fno_number_sequences.py --dry-run
 python scripts/python/setup_fno_number_sequences.py
 ```
 
-Number sequences unblock creation of a vendor invoice; a **PO-based** vendor invoice
-additionally needs a posted product receipt so there is a received quantity to
-invoice (the PO to product receipt to vendor invoice cycle, see Act 3).
+Number sequences are only the first gap in a bare legal entity. `dat` is F&O's
+empty **template** company: past the number sequences, creating a vendor invoice
+next fails with *"The accounting currency has not been specified for ledger dat"*
+because the ledger has no accounting currency, chart of accounts, main accounts, or
+fiscal calendar. Making a template company transactional (chart of accounts and
+account structures, fiscal calendar, ledger currencies and posting profiles, tax) is
+a full financial configuration. The supported path is to import a demo or
+configuration data package, or provision an environment that already ships the
+configured demo company (for example `USMF`), not to hand-build the ledger entity by
+entity over OData.
+
+This is why Act 2 is designed around the committed-versus-invoiced **gap** rather
+than around posting live F&O invoices: the reconciliation reads the committed amount
+from the purchase order and the invoiced amount from `lc_vendorwork`, and the under
+invoiced state is exactly what the async agent chases. Posting real vendor invoices
+in F&O is not a prerequisite for the demo. A **PO-based** vendor invoice, if you do
+configure the ledger, additionally needs a posted product receipt so there is a
+received quantity to invoice (the PO to product receipt to vendor invoice cycle, see
+Act 3).
 
 ---
 

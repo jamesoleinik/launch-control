@@ -76,6 +76,36 @@ NUMBER_SEQUENCES = [
         "prefix": "VVCH",
         "name": "LC vendor invoice voucher",
     },
+    {
+        "datatype": "PurchInternalPackingSlipId",
+        "code": "Vpsl_1",
+        "prefix": "VPSL",
+        "name": "LC product receipt",
+    },
+    {
+        "datatype": "PurchPackingSlipVoucher",
+        "code": "Vpsv_1",
+        "prefix": "VPSV",
+        "name": "LC product receipt voucher",
+    },
+    {
+        "datatype": "PurchInternalCreditNoteId",
+        "code": "Vcrn_1",
+        "prefix": "VCRN",
+        "name": "LC vendor credit note",
+    },
+    {
+        "datatype": "PurchCreditNoteVoucher",
+        "code": "Vcnv_1",
+        "prefix": "VCNV",
+        "name": "LC vendor credit note voucher",
+    },
+    {
+        "datatype": "PurchaseOrderVoucher",
+        "code": "Vpov_1",
+        "prefix": "VPOV",
+        "name": "LC purchase order voucher",
+    },
 ]
 
 
