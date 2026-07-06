@@ -246,19 +246,19 @@ portal; it is authored by a coding agent.
 
 Type this into GitHub Copilot CLI:
 
-> *Extend the LaunchControl model so outsourced launch work is joined to Finance &*
-> *Operations, no dual-write. On the ERP side, create the real F&O records to join*
-> *to: currency USD, a `DEMO` vendor group, three vendors (Contoso Supply Co,*
-> *Fabrikam Media, Northwind Legal Advisors) and their open purchase orders. On the*
-> *Dataverse side, create a first-class `lc_vendorwork` join table with a real*
-> *`lc_taskid` lookup to `lc_task` that stores the F&O business keys*
-> *(`lc_vendoraccount`, `lc_ponumber`) plus the money the launch team tracks*
-> *(`lc_committedamount`, `lc_invoicedamount`, `lc_status`); and a separate*
-> *`lc_reconciliation` trigger table with lookups to `lc_launch` and `lc_vendorwork`*
-> *and an `lc_status` / `lc_agentoutcome` for the downstream agent to write. Seed six*
-> *outsourced WIDGET-Q3 engagements against those POs, with the translation*
-> *deliverable blocking its milestone. Make every script idempotent and re-runnable,*
-> *and verify the join resolves from Dataverse to the F&O records.*
+> *Read the Act 1 section of this episode's README, then build the unified data model*
+> *it describes. Some of our launch tasks are actually done by outside vendors and*
+> *paid through Finance & Operations, so I want a launch to see its real vendor spend*
+> *without copying any ERP data into CRM (no dual-write). Set up the F&O side we join*
+> *to: USD currency, a DEMO vendor group, three vendors (Contoso Supply Co, Fabrikam*
+> *Media, Northwind Legal Advisors) and their open purchase orders. Then on the*
+> *Dataverse side add a lc_vendorwork join table that ties an outsourced lc_task to*
+> *its vendor and PO and tracks committed vs invoiced amounts, plus a separate*
+> *lc_reconciliation table for the batch to drop signals into and the agent to write*
+> *its outcome back. Seed six outsourced engagements for the Q3 Widget Launch, with*
+> *the translation deliverable blocking its milestone. Keep every script idempotent so*
+> *I can re-run it, and show me the launch-to-vendor join actually resolving when*
+> *you're done.*
 
 (Copilot has the `dv-overview`, `dv-metadata`, and `dv-data` skills loaded, so it
 already knows the `LaunchControl` solution, the `lc_` prefix, the `lc_launch` /
@@ -384,6 +384,32 @@ Act 4 stands up the **autonomous agent** that mounts the Act 3 skill and both MC
 servers, and evaluates it. No one asks it a question: it wakes on the Dataverse
 row-add event, reconciles the one gap, and writes back the outcome.
 
+### The prompt
+
+Type this into GitHub Copilot CLI:
+
+> *Read the Act 4 section of this episode's README, then set me up to build and*
+> *evaluate the asynchronous reconciliation agent. It shouldn't wait for anyone to*
+> *ask it anything; it should wake up on its own whenever the batch drops a new row*
+> *in lc_reconciliation, reconcile that one gap, and write the outcome back. Give me*
+> *the Copilot Studio setup for the new-experience agent (the two MCP tools, the*
+> *ep09-vendor-invoice-reconciliation skill, and the "when a row is added" trigger on*
+> *lc_reconciliation) and a short instruction shell that just points at the skill. Then*
+> *write me a sample eval set I can import to test it, covering the cases that matter:*
+> *a real material gap, a fully-invoiced one with nothing to do, a tiny immaterial one,*
+> *what it does when F&O is unreachable, that it refuses to post to the ledger without*
+> *approval, and that it won't re-process a row that's already done.*
+
+Copilot produces the two artifacts below. The Copilot Studio agent itself is assembled
+in the browser (the one hand-built step in the episode), following that setup.
+
+### What Copilot produces
+
+| Artifact | Where it lands |
+|---|---|
+| Async agent setup + paste-verbatim instruction shell | `async-agent-instructions.md` |
+| Sample eval set for the reconciliation agent | `EvalReconciliationSet.csv` |
+
 ### Build the agent
 
 In the new Copilot Studio builder (`async-agent-instructions.md` has the full setup
@@ -399,6 +425,12 @@ and the paste-verbatim instruction shell):
    row's key into the agent's input. This is what makes it asynchronous.
 4. **Instructions.** Paste the short shell from `async-agent-instructions.md`: it frames
    the role and points at the skill, nothing more.
+
+> **The trigger table must exist first.** The "When a row is added" trigger only lists
+> `lc_reconciliation` (Reconciliation Signal) once Act 1 has created it in this
+> environment. If you do not see the table when building the agent, run the Act 1 build
+> (`python reconciliation_model.py`) against the environment you are pointing Copilot
+> Studio at, then refresh the trigger's table picker.
 
 ### Evaluate the agent
 
