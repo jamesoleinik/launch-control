@@ -23,6 +23,7 @@ Both expose the same three helpers: ``initialize()``, ``list_tools()`` and
 import json
 import subprocess
 import threading
+import time
 
 import requests
 
@@ -175,25 +176,61 @@ class StdioMcp:
         if notify:
             return None
 
-        result = {}
+        want_id = body.get("id")
+        deadline = time.monotonic() + timeout
+        noise = []
 
-        def read_line():
-            line = self.proc.stdout.readline()
-            result["line"] = line
+        def read_line(sink):
+            sink["line"] = self.proc.stdout.readline()
 
-        # A dedicated thread lets us bound the read so a server that is blocked
-        # on interactive auth cannot hang the caller forever.
-        t = threading.Thread(target=read_line, daemon=True)
-        t.start()
-        t.join(timeout)
-        line = result.get("line")
-        if not line:
-            raise McpError(
-                "no response from ERP MCP server within "
-                f"{timeout}s (likely awaiting interactive auth). "
-                f"stderr:\n{self.stderr[-1500:]}"
-            )
-        return json.loads(line)
+        # The CLI-hosted ERP MCP server interleaves human-readable banners and log
+        # lines with the JSON-RPC frames on stdout, so read line by line and skip
+        # anything that is not the JSON-RPC response for this request. A dedicated
+        # thread bounds each read so a server blocked on interactive auth cannot
+        # hang the caller forever.
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise McpError(
+                    f"no JSON-RPC response to '{method}' from ERP MCP server "
+                    f"within {timeout}s (likely awaiting interactive auth). "
+                    f"non-JSON stdout:\n{chr(10).join(noise[-10:])}\n"
+                    f"stderr:\n{self.stderr[-1500:]}"
+                )
+            sink = {}
+            t = threading.Thread(target=read_line, args=(sink,), daemon=True)
+            t.start()
+            t.join(remaining)
+            if "line" not in sink:
+                raise McpError(
+                    f"no response to '{method}' from ERP MCP server within "
+                    f"{timeout}s (likely awaiting interactive auth). "
+                    f"stderr:\n{self.stderr[-1500:]}"
+                )
+            raw = sink["line"]
+            if raw == "":
+                raise McpError(
+                    f"ERP MCP server closed stdout before answering '{method}'. "
+                    f"non-JSON stdout:\n{chr(10).join(noise[-10:])}\n"
+                    f"stderr:\n{self.stderr[-1500:]}"
+                )
+            line = raw.strip()
+            if not line:
+                continue
+            try:
+                msg = json.loads(line)
+            except json.JSONDecodeError:
+                noise.append(line)
+                continue
+            if not isinstance(msg, dict):
+                noise.append(line)
+                continue
+            if want_id is not None and msg.get("id") == want_id:
+                return msg
+            if want_id is None and "id" not in msg:
+                return msg
+            # A notification or a response to a different request: keep reading.
+            noise.append(line)
 
     def initialize(self, client_name="launchcontrol-demo", timeout=120):
         res = self._send(
@@ -222,3 +259,14 @@ class StdioMcp:
         if result.get("isError"):
             raise McpError(_extract_text(result) or json.dumps(result)[:400])
         return _extract_text(result)
+
+    def read_query(self, sql, timeout=180):
+        text = self.call("read_query", {"querytext": sql}, timeout=timeout)
+        return json.loads(text) if text.strip() else []
+
+    def create_record(self, tablename, item, timeout=180):
+        return self.call(
+            "create_record",
+            {"tablename": tablename, "item": json.dumps(item)},
+            timeout=timeout,
+        )

@@ -206,10 +206,11 @@ The build is one continuous arc, authored by coding agents, no dual-write anywhe
 1. **Act 1** extends the data model across both planes: the ERP records in Finance &
    Operations and the linked launch tables in Dataverse (`lc_vendorwork` join +
    `lc_reconciliation` trigger table).
-2. **Act 2** **populates** that model through the two MCP servers driven by the
-   unified data CLI: the F&O ERP MCP (vendors, products, POs, and the company
-   configuration its form tools can stand up) and the Dataverse MCP (the launch-side
-   rows). A committed validator reports the live scaffold gap.
+2. **Act 2** **populates** that model through the unified data CLI: the Dataverse MCP
+   `create_record` fills the launch-side rows (live), and the F&O OData write path the
+   Copilot Studio ERP connector wraps fills vendors, products, and POs. The company
+   financial configuration is an interactive ERP-connector step. A committed validator
+   reports the live scaffold gap.
 3. **Act 3** puts a recurring **F&O batch job** on top of that model to process the
    POs and invoices and emit a reconciliation signal row.
 4. **Act 4** writes the reconciliation policy as a **Business Skill** over the unified
@@ -219,7 +220,7 @@ The build is one continuous arc, authored by coding agents, no dual-write anywhe
 
 ```
 Act 1  extend model  ->  lc_vendorwork (join)  +  lc_reconciliation (trigger)  +  F&O vendors/POs
-Act 2  MCP populate  ->  ERP MCP + Dataverse MCP fill the model; validator shows the scaffold gap
+Act 2  MCP populate  ->  Dataverse MCP fills lc_ rows; F&O OData fills master data; validator shows the gap
 Act 3  F&O batch     ->  processes POs/invoices, writes one lc_reconciliation row (Open)
 Act 4  Business Skill->  reconciliation policy over unified model + Dataverse MCP + F&O MCP
 Act 5  async agent   ->  "When a row is added" trigger runs the skill, writes outcome, Reconciled
@@ -461,21 +462,34 @@ recording, it is the fourth check in [Test and validate the solution](#test-and-
 
 ## Act 2 · Populate the model through the ERP and Dataverse MCP servers
 
-Act 1 defined the model. Act 2 **fills** it, and it does so through the **two MCP
-servers driven by the unified data CLI**, not by hand-written OData scripts. The
-same CLI hosts both:
+Act 1 defined the model. Act 2 **fills** it through the MCP surface the unified data
+CLI hosts, not hand-written OData scripts. A sign-in against this environment pins
+down exactly what that surface is (validated live, `erp_mcp_write.py --check-operations`):
 
-- the **Dataverse MCP server** (remote, `<env>/api/mcp`) for the launch-side tables
-  (`lc_vendorwork`, `lc_reconciliation`) and for reading the F&O virtual entities,
-  and
-- the **Finance & Operations ERP MCP server**, hosted locally over stdio by the same
-  CLI (`dataverse mcp <fno-operations-url>`). It exposes three tool families: **data
-  tools** (OData CRUD), **form tools** (drive the F&O configuration forms and their
-  X++ logic like a functional consultant would), and **API tools** (custom X++).
+- `dataverse mcp <dataverse-url>` hosts the **Dataverse MCP server**, the same server
+  reachable over HTTP at `<env>/api/mcp`, exposing **15 tools**: `read_query`,
+  `create_record`, `update_record`, `delete_record`, `search`, `create_table` /
+  `update_table` / `delete_table`, `describe`, the `*_skill` tools, and the file tools.
+- `dataverse mcp <fno-operations-url>` (the F&O operations URL) hosts **0 tools**.
+  There is no separate "F&O ERP MCP" behind this CLI; the operations URL exposes
+  nothing.
 
-A coding agent drives those tools to stand the scenario up end to end.
-`erp_mcp_write.py` is the reference driver that spawns the ERP MCP server over the
-CLI and calls a create tool.
+So one server does the work. `erp_mcp_write.py` drives it over stdio (`initialize` ->
+`tools/list` -> `create_record`), and the launch-side rows populate live through it:
+
+```
+$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
+python episodes/ep-09-dataverse-fno/erp_mcp_write.py --check-operations   # 15 vs 0 tools
+python episodes/ep-09-dataverse-fno/erp_mcp_write.py --write              # create an lc_ row
+```
+
+The F&O (ERP) side is different. F&O has no HTTP MCP endpoint of its own, and a create
+through the Dataverse MCP's virtual-entity path is rejected by the platform ("Custom
+plugin execution is not allowed in nested pipeline for Virtual Entity"). So F&O
+**reads** come through the Dataverse MCP `read_query` over the `mserp_*` virtual
+entities, but F&O **writes** go through the F&O OData API. That OData write is exactly
+the operation the interactive **Copilot Studio Dynamics 365 ERP connector** performs
+for an agent; `write_fno.py` is the code-first equivalent.
 
 ### The scaffolding, validated at runtime
 
@@ -489,42 +503,46 @@ $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
 python episodes/ep-09-dataverse-fno/validate_fno_scaffold.py
 ```
 
-Against a **bare `dat` legal entity** it reports three layers:
+Against a **bare `dat` legal entity** it reports three layers, with the build path
+that matches the validated tool surface above:
 
 | Layer | Object | Built by | Bare `dat` |
 | --- | --- | --- | --- |
-| Config | Ledger accounting currency | ERP MCP **form tools** | missing |
-| Config | Chart of accounts + main accounts | ERP MCP **form tools** | missing |
-| Config | Fiscal calendar + open periods | ERP MCP **form tools** | missing |
-| Config | Account structure (active) | ERP MCP **form tools** | missing |
-| Config | Vendor posting profile | ERP MCP **form tools** | missing |
-| Config | Terms of payment, tax codes | ERP MCP form / data tools | missing |
+| Config | Ledger accounting currency | Copilot Studio ERP connector / F&O UI | missing |
+| Config | Chart of accounts + main accounts | Copilot Studio ERP connector / F&O UI | missing |
+| Config | Fiscal calendar + open periods | Copilot Studio ERP connector / F&O UI | missing |
+| Config | Account structure (active) | Copilot Studio ERP connector / F&O UI | missing |
+| Config | Vendor posting profile | Copilot Studio ERP connector / F&O UI | missing |
+| Config | Terms of payment, tax codes | ERP connector / F&O OData | missing |
 | Config | Currencies | ships with environment | present (3) |
-| Config | AP number sequence references | `setup_fno_number_sequences.py` | present (see preamble) |
-| Master | Vendor group | ERP MCP data tools | present (1) |
-| Master | Vendors | ERP MCP data tools | present (3) |
-| Master | Released products (item-backed lines) | ERP MCP data tools | missing |
-| Master | Purchase orders | ERP MCP data tools | present (7) |
-| Txn | Product receipts | ERP MCP form / data tools | missing |
-| Txn | Vendor invoices | ERP MCP form / data tools | missing |
-| Dataverse | `lc_vendorwork`, `lc_reconciliation` rows | Dataverse MCP | present (Act 1) |
+| Config | AP number sequence references | `setup_fno_number_sequences.py` (F&O OData) | present (see preamble) |
+| Master | Vendor group | F&O OData (ERP connector write) | present (1) |
+| Master | Vendors | F&O OData (ERP connector write) | present (3) |
+| Master | Released products (item-backed lines) | F&O OData (ERP connector write) | missing |
+| Master | Purchase orders | F&O OData (ERP connector write) | present (7) |
+| Txn | Product receipts | Copilot Studio ERP connector / F&O UI | missing |
+| Txn | Vendor invoices | Copilot Studio ERP connector / F&O UI | missing |
+| Dataverse | `lc_vendorwork`, `lc_reconciliation` rows | Dataverse MCP `create_record` | present (Act 1 + Act 2) |
 
-The lesson is in the split: the **Master** layer (vendors, POs) and the **Dataverse**
-layer populate cleanly through data tools and the Dataverse MCP, but the entire
-**Config** layer is missing, and that is why a bare `dat` cannot post an invoice.
+The lesson is in the split: the **Dataverse** layer populates cleanly through the
+Dataverse MCP `create_record` (proven live in this act), the **Master** layer through
+F&O OData, but the entire **Config** layer is missing, and that is why a bare `dat`
+cannot post an invoice.
 
-### The critical dependency: configure the company with the form tools
+### The critical dependency: configure the company (interactive, not the CLI)
 
 As the number-sequence preamble proves, raw OData cannot create a chart of accounts
 or wire the ledger; the composite financial entities gate creation behind X++. The
-**ERP MCP form tools** are the path that can, because they drive the same
-configuration forms a functional consultant uses.
+CLI-hosted Dataverse MCP does not help here either: it exposes no form or config tool,
+and its virtual-entity writes are blocked. The path that **can** stand up the ledger
+is the interactive **Copilot Studio Dynamics 365 ERP connector** (or the F&O UI),
+which drives the configuration forms and their X++ logic the way a functional
+consultant does.
 
 The agent should not improvise that configuration from generic knowledge. Ground it
-on an **authoritative learning path** and let it execute the steps against the form
-tools, in order. The Microsoft Learn finance and operations configuration path is the
-source of record, starting with the global address book and moving through the
-financial foundation:
+on an **authoritative learning path** and let it execute the steps in order. The
+Microsoft Learn finance and operations configuration path is the source of record,
+starting with the global address book and moving through the financial foundation:
 
 - [Plan and configure the global address book (GAB)](https://learn.microsoft.com/training/modules/plan-config-global-address-book-finance-operations/)
   (parties, party roles: the vendor is a party role over a GAB party).
@@ -541,13 +559,13 @@ when the goal is "get the agent unstuck," you change the instrument, encode the
 domain's pitfalls into the grounding, and move fixes into the prompt rather than
 hoping a bigger model guesses the right F&O sequence. Grounding the config plan on
 the learning path is exactly that: it turns "configure a legal entity" from a coin
-flip into a checklist the form tools execute deterministically.
+flip into a checklist the ERP connector executes step by step.
 
-Only after the Config layer exists do the Master and Txn layers (data tools) and the
-launch-side rows (Dataverse MCP) complete the scenario, and `validate_fno_scaffold.py`
-flips to exit 0. If you would rather not configure a bare company on camera, provision
-the environment with demo data (the configured `USMF` company) and point the validator
-at it (`--company USMF`); the whole Config layer is then already present.
+Only after the Config layer exists do the Master and Txn layers complete the scenario
+and `validate_fno_scaffold.py` flips to exit 0. If you would rather not configure a
+bare company on camera, provision the environment with demo data (the configured
+`USMF` company) and point the validator at it (`--company USMF`); the whole Config
+layer is then already present.
 
 ---
 
