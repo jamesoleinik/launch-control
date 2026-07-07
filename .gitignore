@@ -97,3 +97,6 @@ episodes/ep-99-clawpilot-dataverse/
 .deploy/
 
 tmp/cowork-template-extracted/
+
+# ERP MCP device-flow token cache (local only)
+episodes/ep-09-dataverse-fno/.erp_token_cache.json
