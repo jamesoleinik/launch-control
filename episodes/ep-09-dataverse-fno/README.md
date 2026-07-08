@@ -492,26 +492,34 @@ operations host at `/mcp`, not reachable through that CLI.
 
 The `/mcp` endpoint is gated two ways: Entra OAuth (its RFC 9728 protected-resource
 metadata advertises the authorization server and the `.../mcp/mcp.tools` scope) and an
-F&O **Allowed MCP Clients** list (System administration > Setup) that admits only
-listed Entra client ids. The Copilot Studio and VS Code / GitHub Copilot clients are
-pre-authorized by default, so registering the server in an allowlisted client and
-signing in is enough. An arbitrary app id (for example the Azure CLI client that
-`scripts/auth.py` uses) is refused with HTTP 403 until an admin adds it to that list,
-and the list is not exposed as an OData entity, so it can only be edited in the F&O UI.
-Two ways to connect from this repo:
+F&O **Allowed MCP Clients** list (System administration > Setup, form `McpAllowedClient`)
+that admits only listed Entra client ids by GUID. The Cowork, Copilot Studio, and
+VS Code / GitHub Copilot clients are pre-authorized by default, so registering the
+server in one of those clients and signing in is enough. An arbitrary app id (for
+example the Azure CLI client that `scripts/auth.py` uses) is refused with HTTP 403
+until it is added to that list; the list is not exposed as an OData entity, so it is
+edited in the F&O UI or, neatly, by driving the `McpAllowedClient` form through the ERP
+MCP's own `form_*` tools from an already-allowlisted client (New, set `Name` / `ClientId`
+/ `Allowed`, `form_save_form`). New entries take effect after a short propagation delay
+(a couple of minutes). Two ways to connect from this repo:
 
 - **In the coding agent (this session):** add an `http` server entry to the Copilot
   CLI's `mcp-config.json` pointing at `<fno-operations-url>/mcp`. The CLI signs in as
   its pre-authorized client and the 21 tools load after a reconnect.
 - **Code-first:** `erp_mcp_http.py` speaks the same streamable-HTTP MCP protocol. It
-  performs a device-code sign-in with the pre-authorized public client, caches the
-  token locally, then runs `initialize` -> `tools/list` -> `tools/call`:
+  signs in interactively (a browser opens; `--device` forces device-code instead),
+  caches the token locally, then runs `initialize` -> `tools/list` -> `tools/call`:
 
   ```
   $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
-  python episodes/ep-09-dataverse-fno/erp_mcp_http.py                       # sign in, list 21 tools
-  python episodes/ep-09-dataverse-fno/erp_mcp_http.py --call data_find_entity_type '{"query":"vendor"}'
+  python episodes/ep-09-dataverse-fno/erp_mcp_http.py                 # sign in, list 21 tools
+  python episodes/ep-09-dataverse-fno/erp_mcp_http.py --schemas form_open_menu_item
+  python episodes/ep-09-dataverse-fno/erp_mcp_http.py --script steps.json   # run a tool sequence in one session
   ```
+
+  Use `--script` (a JSON list of `{"tool": ..., "arguments": ...}` steps) for any
+  `form_*` work: form state lives in one MCP session, so the open / set / save calls
+  must run in a single process.
 
 The launch-side rows populate through the Dataverse MCP (`erp_mcp_write.py` drives it
 over stdio: `initialize` -> `tools/list` -> `create_record`):

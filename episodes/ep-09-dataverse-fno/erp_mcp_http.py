@@ -78,15 +78,29 @@ def _sign_in(authority: str, scope: str) -> str:
     if accounts:
         result = app.acquire_token_silent([scope], account=accounts[0])
     if not result or "access_token" not in result:
-        flow = app.initiate_device_flow(scopes=[scope])
-        if "user_code" not in flow:
-            raise SystemExit(
-                "Failed to start device flow: " + json.dumps(flow, indent=2)
-            )
-        print("\n=== SIGN IN ===")
-        print(flow["message"])
-        print("===============\n", flush=True)
-        result = app.acquire_token_by_device_flow(flow)
+        use_device = "--device" in sys.argv
+        if not use_device:
+            # Interactive auth auto-opens the default browser on a loopback redirect;
+            # the user just picks an account (no code to type). Falls back to device
+            # code if a browser cannot be launched (for example a headless host).
+            try:
+                print("Opening a browser to sign in (pick your account)...", flush=True)
+                result = app.acquire_token_interactive(
+                    scopes=[scope], prompt="select_account"
+                )
+            except Exception as exc:  # noqa: BLE001
+                print("Interactive sign-in unavailable (" + str(exc) + ").")
+                result = None
+        if not result or "access_token" not in result:
+            flow = app.initiate_device_flow(scopes=[scope])
+            if "user_code" not in flow:
+                raise SystemExit(
+                    "Failed to start device flow: " + json.dumps(flow, indent=2)
+                )
+            print("\n=== SIGN IN ===")
+            print(flow["message"])
+            print("===============\n", flush=True)
+            result = app.acquire_token_by_device_flow(flow)
     if "access_token" not in result:
         raise SystemExit(
             "Sign-in failed: "
@@ -185,15 +199,35 @@ def main() -> int:
     print("Session:", client.session_id)
 
     args = sys.argv[1:]
-    if args and args[0] == "--call":
+    positional = [a for a in args if not a.startswith("--")]
+    if "--script" in args:
+        script_path = args[args.index("--script") + 1]
+        steps = json.loads(open(script_path, "r", encoding="utf-8").read())
+        for i, step in enumerate(steps, 1):
+            name = step["tool"]
+            arguments = step.get("arguments", {})
+            print(f"\n--- step {i}: {name} {json.dumps(arguments)} ---")
+            out = client.call_tool(name, arguments)
+            print(json.dumps(out, indent=2)[:8000])
+        return 0
+    if positional and positional[0] == "--call" or (args and args[0] == "--call"):
         name = args[1]
         arguments = json.loads(args[2]) if len(args) > 2 else {}
         print(f"\nCalling {name} with {json.dumps(arguments)}")
         out = client.call_tool(name, arguments)
-        print(json.dumps(out, indent=2)[:6000])
+        print(json.dumps(out, indent=2)[:8000])
         return 0
 
     tools = client.list_tools()
+    if "--schemas" in args:
+        wanted = [a for a in positional]
+        for t in tools:
+            if wanted and t.get("name") not in wanted:
+                continue
+            print("\n===", t.get("name"), "===")
+            print(t.get("description", ""))
+            print(json.dumps(t.get("inputSchema", {}), indent=2)[:4000])
+        return 0
     print(f"\n{len(tools)} tools:")
     for t in tools:
         print(" -", t.get("name"), ":", (t.get("description") or "").split("\n")[0][:80])
