@@ -188,9 +188,72 @@ Objects built this run, all via the Dynamics 365 ERP MCP:
 | Vendor posting profile | `PostingProfileHeaders` + `PostingProfileLines` | 1 (`LC`) |
 | Payment terms | `PaymentTerms` | 2 (`Net30`, `Net45`) |
 
+## Invoice-posting test: validating the human-approved posting skill
 
+After the Config layer completed, the authorized vendor-invoice posting that the Act 5
+agent is forbidden to do on its own was tested end to end against `dat`, and the
+`business-skills/ep09-vendor-invoice-posting.md` skill was written from and then
+re-validated against that run. The scenario is the reconciliation gap: 25,000
+outstanding on PO-10502 (Contoso Supply Co, vendor `V0001`).
 
+### Prerequisites provisioned to reach a postable state
 
+Standing up the Config layer was necessary but not sufficient to post a general
+journal; three additional prerequisites surfaced (each a hard blocker) and were
+provisioned through the ERP MCP:
+
+- **Account structure activated and assigned.** The queued `LC-PL` activation batch
+  ran to completion (status `Active`), then `Ledgers(LegalEntityId='dat')`
+  `AccountStructureName1` was set to `LC-PL`.
+- **Two number sequences bound for `dat`** (`SequenceV2Tables` code +
+  `NumberSequencesV2References`): `LedgerJournalId` (journal batch number) and
+  `GeneralJournalEntryJournalNumber` (GL entry number). A general journal will not
+  post without both; the symptom is the generic "a number sequence reference is
+  missing" during Validate or Post even for a pure ledger-to-ledger line.
+- **Dimensions activated for data entities.** `DimensionAttributeActivations`
+  (`DoActivate` = `Yes`) plus an active `DimensionIntegrationFormats` row of type
+  `DataEntityLedgerDimensionFormat` with format `MainAccount`. Without these,
+  OData line creation fails with "Only active dimensions can be used" then "No active
+  format for data entities has been set up."
+
+A `Daily` general-journal name `LCGENJ` was created with a vendor-invoice voucher
+series (`Vvch_1`).
+
+### First posting run (skill authored from this)
+
+- Created header on `LCGENJ` and one ledger-to-ledger line: Cr accounts payable
+  `200100` 25,000, offset Dr expense `618100`, USD, `TransDate` in an open 2026 period.
+- Posted through the `LedgerJournalTable` form (Post -> poll
+  `__TimerForAsyncTaskPolling` -> "Number of vouchers posted to the journal: 1"):
+  journal `LEDJ-000001`, voucher **VVCH-000001**.
+- Reversed with a compensating mirror journal (Dr `200100` / Cr `618100`, 25,000):
+  journal `LEDJ-000006`, voucher **VVCH-000006**. Accounts `200100` and `618100` each
+  net to zero.
+
+The ledger-to-ledger line was chosen over a vendor sub-ledger line (`AccountType`
+`Vend` + posting profile) because the sub-ledger path needs additional AP number
+sequences a bare demo entity lacks; the skill documents that tradeoff.
+
+### Skill re-validation run (zero reconfiguration)
+
+To prove the skill is reproducible, the whole procedure was re-run against the
+now-provisioned environment with no setup changes:
+
+- Posted journal `LEDJ-000007` (Cr `200100` / Dr `618100`, 25,000) via the form: one
+  voucher posted, `Posted` = yes.
+- Reversed with journal `LEDJ-000008` (Dr `200100` / Cr `618100`, 25,000): one voucher
+  posted. Read back through `data_find_entities_sql`, the pair nets to zero on both
+  the AP account and the expense account.
+
+The re-run needed no reconfiguration, confirming every prerequisite the skill documents
+(ledger wiring, active + assigned account structure, the two number sequences, active
+dimensions, a voucher-series journal name) is in place and the posting/reversal
+procedure is repeatable. The ledger is left clean (all test vouchers reversed).
+
+| Run | Post journal / voucher | Reversal journal / voucher | Net |
+| --- | --- | --- | --- |
+| Authoring | `LEDJ-000001` / VVCH-000001 | `LEDJ-000006` / VVCH-000006 | zero |
+| Re-validation | `LEDJ-000007` | `LEDJ-000008` | zero |
 
 
 
