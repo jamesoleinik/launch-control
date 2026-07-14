@@ -16,7 +16,7 @@ The "Launch Control" LinkedIn series: building one project end-to-end, told as a
 | [4](ep-04-extending-and-enforcing/) | Extending & Enforcing the Model | Virtual entities (custom GitHub Issues) **+ a server-side business rule** the coding agent authors; guardrails every future agent must honor |
 | [5](ep-05-custom-tools/) | Custom Tools | Custom API + two BYO MCP custom connectors registered with `paconn` |
 | [6](ep-06-cowork-plugin/) | Cowork Plugin for Dataverse | Build & publish a Dataverse-aware Cowork (Teams) plugin: Entra registration → Power Platform MCP allowlist → Teams Developer Portal → schema-aware Business Skill |
-| [7](ep-07-scout-autopilot/) | Microsoft Scout 🟡 | _(placeholder: blocked on Frontier preview access)_ Hand the Ep-5 substrate to an Autopilot agent and post launch briefings into Teams |
+| [7](ep-07-scout-autopilot/) | Microsoft Scout 🟡 | The Dataverse MCP face-lift (16 tools, semantic `search_data` over records and attached files) driven by an always-on Scout Autopilot agent on a schedule |
 | [8](ep-08-security/) | Roles & Reach | Security for a headless world: row-level roles **and** column-level data masking, authored from any coding agent (now Cursor) |
 
 ### Season 2: Dataverse, Better Together
