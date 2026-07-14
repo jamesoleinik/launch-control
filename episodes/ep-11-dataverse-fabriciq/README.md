@@ -1,6 +1,7 @@
 # Episode 11: Dataverse + Fabric IQ (structured state meets semantic data)
 
-**Status:** ✍️ Draft · 🎬 Not yet recorded
+**Status:** 🛠️ In Build (Phase 2: Data substrate) · 🎬 Not yet recorded
+**Build status (this pass):** Dataverse-to-OneLake link setup in progress. Prerequisite check: Track Changes must be enabled on all `lc_*` custom tables before linking to Fabric.
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Fabric IQ (semantic data layer over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Autonomous agent runtime (event + recurrence triggers) · ⭐ Reasoning over governed analytics, not just rows
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
@@ -76,6 +77,15 @@ it watches and reasons.
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
 > fill in your values (`FABRIC_WORKSPACE_ID`, `FABRIC_ONTOLOGY_ID`), and select
 > it with `LC_ENV=ep-11-dataverse-fabriciq`.
+
+> **Prerequisite check:** All `lc_*` custom tables must have **Track Changes enabled**
+> before they can be linked to Fabric OneLake. Run:
+> ```
+> python scripts/python/check_track_changes.py
+> ```
+> If any tables show "DISABLED", enable Track Changes in the table properties (Dataverse
+> admin portal or Power Platform admin center). This is required for near real-time
+> sync to OneLake.
 
 1. Reuse the autonomous agent shell from `agents/launch-sentinel/` (triggers,
    idempotency, the `lc_statusupdate` effector).

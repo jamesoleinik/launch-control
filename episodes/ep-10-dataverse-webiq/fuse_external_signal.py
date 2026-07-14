@@ -106,6 +106,8 @@ def main():
                     help="Max blockers to process (default 3).")
     ap.add_argument("--results", type=int, default=2,
                     help="External results per blocker (default 2).")
+    ap.add_argument("--demo", action="store_true",
+                    help="Show available Web IQ tools and run sample queries for the first blocker.")
     args = ap.parse_args()
 
     try:
@@ -113,6 +115,37 @@ def main():
     except WebIqError as exc:
         print(f"FAIL: {exc}")
         return 1
+
+    # Demo mode: list tools and run sample queries to showcase Web IQ capabilities
+    if args.demo:
+        print("Initializing Web IQ demo...")
+        try:
+            info = client.initialize().get("serverInfo", {})
+            print("Server:", info.get("name"), info.get("version"))
+        except Exception:
+            pass
+        tools = client.tool_names()
+        print("Available Web IQ tools:", ", ".join([t for t in tools if t]))
+        sample_query = to_query(SAMPLE_BLOCKERS[0]["title"]) if SAMPLE_BLOCKERS else "popular news"
+        print(f"\nSample query: {sample_query}\n")
+        if "news" in tools:
+            print("-- news results --")
+            try:
+                for n in client.news(sample_query, max_results=2):
+                    print(f" - {n.get('title')}\n   {n.get('url')}")
+            except Exception as exc:
+                print(f"  news call failed: {exc}")
+        if "web" in tools:
+            print("-- web results --")
+            try:
+                for w in client.web(sample_query, max_results=2):
+                    print(f" - {w.get('title')}\n   {w.get('url')}")
+            except Exception as exc:
+                print(f"  web call failed: {exc}")
+        if "browse" in tools:
+            print("-- browse available (use for authoritative pages) --")
+        print("\nDemo complete. Use --dataverse to run against live Dataverse blockers or omit to run the bundled sample.")
+        return 0
 
     if args.dataverse:
         try:

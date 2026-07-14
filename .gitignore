@@ -10,6 +10,10 @@ a365.config.json
 # Ingest temp payloads
 scripts/cli/.tmp-*.json
 
+# Build artifacts and env-specific value files (may contain env URLs / oauth reference ids)
+.build/
+artifacts/
+
 # Python
 __pycache__/
 *.py[cod]
