@@ -1,6 +1,8 @@
 # Environment & secrets
 .env
 .env.bak_*
+.env.dev
+.env.prod
 # atk-managed OAuth client secrets (per-env user files)
 **/.env.*.user
 *.local
@@ -84,6 +86,9 @@ social/
 .token_cache.bin
 *.snk
 solutions/*.zip
+# Plugin build artifacts (packaged Cowork/Dataverse plugin zips; regenerate locally)
+plugins/*.zip
+plugins/**/*.zip
 # Local-only Copilot CLI "clean home" sandbox + its launcher.
 # Contains Azure auth tokens, Copilot session DB, MCP config, and the
 # entire installed-plugins/ tree. Never commit -- regenerate locally.
