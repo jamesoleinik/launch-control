@@ -46,9 +46,9 @@ script reports a bounded "awaiting interactive auth" error, then exits non-zero.
 
 Run:
     $env:PYTHONIOENCODING="utf-8"
-    python episodes/ep-09-dataverse-fno/erp_mcp_write.py            # list tools
-    python episodes/ep-09-dataverse-fno/erp_mcp_write.py --check-operations
-    python episodes/ep-09-dataverse-fno/erp_mcp_write.py --write    # create an lc_ row
+    python episodes/ep-09-dataverse-fno/scripts/erp_mcp_write.py            # list tools
+    python episodes/ep-09-dataverse-fno/scripts/erp_mcp_write.py --check-operations
+    python episodes/ep-09-dataverse-fno/scripts/erp_mcp_write.py --write    # create an lc_ row
 """
 
 import argparse
@@ -56,7 +56,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scripts"))
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "scripts"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import auth  # noqa: E402

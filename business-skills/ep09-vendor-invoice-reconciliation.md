@@ -1,165 +1,250 @@
-# Vendor Invoice Reconciliation (event-driven, from a launch procurement signal)
+# Vendor Invoice Reconciliation (assistive, from a vendor invoice a person uploads)
 
 ## Description
 
-The Season 2 / Episode 9 Business Skill (Act 3) for the **asynchronous** Launch
-Control agent (Act 4). The agent is not prompted by a human; it wakes on a Dataverse event,
-"When a row is added -- Microsoft Dataverse" on the `lc_reconciliation` table. Each
-new row is a procurement signal a recurring Finance & Operations batch emitted: one
-vendor engagement whose committed amount is under-invoiced. This skill defines how
-the agent reconciles that single gap across two planes (the launch plan in Dataverse
-and the financial truth in Finance & Operations) and writes back exactly one grounded
-outcome. It owns the reasoning; the batch only emits the event.
+The Season 2 / Episode 9 Business Skill for the **assistive** Launch Control agent. A
+person opens a chat, provides a vendor invoice (uploaded or pasted), and says it arrived, for example *"Here
+is the latest invoice from Fabrikam Media for the Q3 Widget Launch hero copy work.
+Reconcile it before I pay it."* The agent reads the provided invoice, reconciles it
+across two planes, records the work as complete when the person confirms delivery, and,
+on an explicit go-ahead, posts the vendor invoice, all in the one conversation.
+
+1. **Does the invoice match the purchase order?** The financial truth lives in Dynamics
+   365 Finance & Operations. The agent confirms the invoice amount against the PO line
+   (amount, matching policy) through the Dynamics 365 ERP MCP.
+2. **Is the work actually done?** The project truth lives in Dataverse. The agent
+   follows the launch procurement join (`lc_vendorwork -> lc_task`) and reads the
+   launch task status through the Dataverse MCP. A task flagged **Blocked** is a
+   recorded impediment the agent will not post past. A task still **in flight**
+   (`NotStarted` / `InProgress`) is one the person, who owns the work, can confirm is
+   delivered; the agent then **records that completion** on the task in Dataverse before
+   posting.
+
+When the money and the work agree and the person says go, the agent posts in Finance &
+Operations through the ERP MCP **form tools**: it posts the **product receipt** against
+the confirmed PO, then posts the **vendor invoice** (see `ep09-vendor-invoice-posting`).
+If the amount does not match, the agent **stops and asks for a corrected or new vendor
+invoice** rather than posting. If the work is blocked, the agent holds and asks the
+person how they want to proceed with the work blocker. A human is always in the loop;
+the agent never posts, and never marks work complete, on its own.
+
+This replaces the earlier event-driven design (a recurring batch dropped a signal row
+and an autonomous agent chased a committed-vs-invoiced gap). There is no batch, no
+trigger, and no `lc_reconciliation` row: the uploaded invoice is the trigger and the
+posted F&O vendor invoice is the outcome.
+
+## Data model and how to search it
+
+The reconciliation joins two planes. The **project truth** (is the work done?) lives in
+Dataverse; the **financial truth** (does the money match?) lives in Dynamics 365 Finance
+& Operations. One Dataverse row, `lc_vendorwork`, is the bridge: it holds the F&O
+business keys (vendor account, PO number) and a lookup to the launch task.
+
+**Join path**
+
+```
+lc_launch (launch)
+   |  lc_launchcode
+lc_vendorwork (launch <-> procurement bridge)  --lc_taskid-->  lc_task (the outsourced work)
+   |  lc_vendoraccount / lc_ponumber (F&O business keys)
+   |  lc_VendorRef / lc_PORef (lookups to the F&O virtual tables)
+   v
+Dynamics 365 F&O:  VendVendorV2  /  PurchaseOrderHeadersV2  /  PurchaseOrderLinesV2
+```
+
+**Dataverse tables (read via the Dataverse MCP)**
+
+- **`lc_vendorwork`** (entity set `lc_vendorworks`): one row per outsourced engagement.
+  - `lc_name` (primary name), `lc_workkey` (stable key), `lc_launchcode` (which launch),
+    `lc_tasktitle` (matches `lc_task.lc_title`), `lc_scope` (memo).
+  - F&O business keys: `lc_vendoraccount`, `lc_vendorname`, `lc_ponumber`.
+  - Amounts: `lc_committedamount`, `lc_invoicedamount` (decimals). `lc_status`, `lc_duedate`.
+  - Lookups: `lc_taskid` -> `lc_task`; `lc_VendorRef` -> `mserp_vendvendorv2entity`;
+    `lc_PORef` -> `mserp_purchpurchaseorderheaderv2entity` (where generated).
+- **`lc_task`** (entity set `lc_tasks`): the launch task the engagement outsources.
+  - `lc_taskid` (id), `lc_title` (name), and the choice `lc_taskstatus`:
+    `NotStarted` = `10600301`, `InProgress` = `10600302`, `Blocked` = `10600303`,
+    `Done` = `10600304`.
+- **`lc_launch`**: launch context, keyed by `lc_launchcode` (read only if you need the
+  launch name for the summary).
+
+**F&O entities (read via the Dynamics 365 ERP MCP OData / data tools)**
+
+- **`PurchaseOrderLinesV2`**: `dataAreaId`, `PurchaseOrderNumber`, `LineAmount`,
+  `PurchasePrice`, `OrderedPurchaseQuantity`, `PurchaseOrderLineStatus`,
+  `VendorInvoiceMatchingPolicy`. This is the line the invoice amount is matched against.
+- **`PurchaseOrderHeadersV2`**: `dataAreaId`, `PurchaseOrderNumber`,
+  `OrderVendorAccountNumber`, `PurchaseOrderStatus` (the confirmed PO flips to
+  `Invoiced` after a successful post).
+- **`VendVendorV2`**: `dataAreaId`, `VendorAccountNumber`, `VendorName` (to confirm the
+  vendor account behind the invoice).
+
+### Search strategy (Dataverse first, F&O for the financial truth)
+
+1. **Find the engagement in Dataverse.** Prefer the most specific key the invoice gives
+   you. If the invoice cites a PO number, filter `lc_vendorwork` on
+   `lc_ponumber eq '<po>'`. Otherwise filter on the launch and vendor, for example
+   `lc_launchcode eq '<launchcode>' and lc_vendoraccount eq '<vendoraccount>'`, or match
+   `lc_vendorname` against the vendor on the invoice. Read back `lc_ponumber`,
+   `lc_vendoraccount`, `lc_committedamount`, `lc_invoicedamount`, and the `lc_taskid`
+   lookup. If more than one row matches, list them and ask which invoice this is; do not
+   pick one silently.
+2. **Read the task status in Dataverse.** Resolve `lc_taskid` to `lc_task` and read
+   `lc_taskstatus`. If you only have `lc_tasktitle`, match it to `lc_task.lc_title`.
+3. **Confirm the money in F&O.** Take `lc_ponumber` from the engagement and read
+   `PurchaseOrderLinesV2` filtered on
+   `dataAreaId eq 'dat' and PurchaseOrderNumber eq '<lc_ponumber>'`. Match the invoice
+   amount to `LineAmount`. **Always constrain to `dataAreaId eq 'dat'`** (see Step 3).
+
+**Fallback to F&O when Dataverse is thin or the keys disagree.** The invoice, not
+Dataverse, is the source of the PO number. So:
+
+- If **no `lc_vendorwork` row matches**, but the invoice cites a PO number, go straight
+  to F&O and confirm the PO exists: read `PurchaseOrderHeadersV2` on
+  `dataAreaId eq 'dat' and PurchaseOrderNumber eq '<po>'` and its line in
+  `PurchaseOrderLinesV2`. Report that the launch has no recorded engagement for this PO
+  and ask the person whether to proceed on the F&O record alone; do not invent a
+  Dataverse row.
+- If the **engagement's `lc_ponumber` and the invoice's PO number disagree**, trust the
+  invoice for the financial read (query F&O on the invoice's PO), and flag the mismatch
+  to the person.
+- If a **Dataverse read fails**, you can still do the financial check from the invoice's
+  PO number against F&O, but you cannot complete the work-complete check without
+  `lc_task`; say which plane is unavailable rather than guessing.
+- If an **F&O read errors or returns empty**, re-check the legal entity is `dat` before
+  concluding F&O is unreachable (Step 3). Only after that, hold and say the financial
+  truth cannot be confirmed.
 
 ## Instructions
 
-### Step 1: Read the trigger row (Dataverse)
+### Step 1: Read the invoice the person provides
 
-Using the Dataverse MCP, read the `lc_reconciliation` row that fired the trigger.
-Take from it: `lc_ponumber`, `lc_vendoraccount` / `lc_vendorname`, `lc_launchcode`,
-`lc_committedamount`, `lc_invoicedamount`, `lc_gapamount`, and the `lc_vendorworkid`
-lookup to the source engagement. If `lc_status` is anything other than `Open` (it
-already reads `Reconciled - Match` or `Reconciled - Gap`), stop: this signal has been
-handled (idempotency, see Step 5).
+The person provides the vendor invoice, either by **uploading** it (a PDF or image) or by
+**pasting its details** into the chat. Read whichever was provided and take the
+**vendor**, the **project / launch** it is for, the **invoice amount**, the
+**purchase order number** if the invoice cites one, and the **invoice number** and
+**currency**. If the person provides neither an upload nor pasted invoice details, ask
+them to supply the invoice before you touch any data; do not reconcile from a remembered
+or assumed figure. If a field is missing or
+unreadable on the invoice, ask one short clarifying question. Do not guess the vendor,
+the launch, or the amount.
 
-**The trigger context can arrive two ways.** Normally you read it from the stored
-`lc_reconciliation` row. If instead you are invoked with the trigger context supplied
-to you directly (the PO number, committed, and invoiced figures stated in the request,
-as in a test or what-if evaluation), treat those supplied figures as the signal
-snapshot and continue. Do not refuse merely because a stored row is absent or the
-table is empty; the supplied context is the signal. You still ground everything you
-can against live F&O in Step 2, and in Step 5 you present the outcome you *would* write
-back. Idempotency still applies: if the supplied context (or the stored row) says the
-signal already reads `Reconciled - Match` or `Reconciled - Gap`, stop and make no
-further changes.
+### Step 2: Identify the engagement (Dataverse)
 
-### Step 2: Confirm the commitment against Finance & Operations (ERP)
+Using the Dataverse MCP, find the one `lc_vendorwork` engagement that matches the
+vendor and the launch from the invoice. Read `lc_ponumber`, `lc_vendoraccount` /
+`lc_vendorname`, `lc_launchcode`, `lc_committedamount`, `lc_invoicedamount`, and the
+`lc_taskid` lookup to the outsourced `lc_task`. The engagement carries the F&O business
+keys (and, where generated, the `lc_VendorRef` / `lc_PORef` lookups to the F&O virtual
+tables) that tie the launch task to the real purchase order. If more than one engagement
+matches, list them and ask which invoice this is.
 
-Using the Dynamics 365 ERP MCP, confirm the purchase order commitment against the live
-F&O ledger for this PO.
+### Step 3: Financial check (Finance & Operations)
+
+Using the Dynamics 365 ERP MCP, confirm the invoice amount against the live purchase
+order line.
 
 **Query the `dat` legal entity (company `DAT`), not `USMF`.** Every Launch Control PO,
-vendor, and invoice lives in the `dat` company. `USMF` is the F&O demo default and holds
-none of this data: querying it returns an empty result at best and an "Internal Server
-Error" from the SQL data tool at worst. Always constrain the read to `dataAreaId eq 'dat'`
-(or pass the company / `companyId` as `DAT`). If a read errors or comes back empty,
-re-check the legal entity is `dat` before concluding F&O is unreachable.
+vendor, and invoice lives in `dat`; `USMF` is the F&O demo default and holds none of
+this data. Constrain every read to `dataAreaId eq 'dat'`. If a read errors or comes
+back empty, re-check the legal entity is `dat` before concluding F&O is unreachable.
 
-Read the purchase order header from **`PurchaseOrderHeadersV2`** in `dat`, filtered on
-`dataAreaId eq 'dat' and PurchaseOrderNumber eq '<lc_ponumber>'`: take
-`OrderVendorAccountNumber`, `PurchaseOrderName`, `CurrencyCode`, `PurchaseOrderStatus`,
-and `DocumentApprovalStatus`. Use the exact entity and field names above; do not guess
-field names. Confirm the PO is a real, approved, open commitment and that its vendor
-matches the signal row (flag any vendor mismatch instead of glossing over it).
+Read the PO line from **`PurchaseOrderLinesV2`**, filtered on
+`dataAreaId eq 'dat' and PurchaseOrderNumber eq '<lc_ponumber>'`: take `LineAmount`,
+`PurchasePrice`, `OrderedPurchaseQuantity`, `PurchaseOrderLineStatus`, and
+`VendorInvoiceMatchingPolicy`. Confirm the invoice amount from Step 1 matches the PO
+line amount (`LineAmount`).
 
-**Invoiced-to-date.** F&O is the system of record for posted vendor invoices; the launch
-procurement signal (`lc_reconciliation` / `lc_vendorwork`) tracks invoicing progress for
-the launch. Posted vendor invoices live in **`VendInvoiceJournalHeaders`** (the posted
-journal); pending, not-yet-posted invoices live in **`VendorInvoiceHeaders`**. The PO
-header (`PurchaseOrderHeadersV2`) has no invoiced-amount field, so do not read
-invoiced-to-date off the PO. Read the posted journal for the PO in `dat`:
+- **Amount matches**: the financial side is clean; continue to Step 4.
+- **Amount does not match**: stop. State both figures (invoiced vs PO line) and ask the
+  person to obtain a corrected or new invoice from the vendor. This is the primary
+  blocker: do not post, do not override, and do not partial-pay an invoice that does
+  not match the PO line. If the linked Dataverse task is also not `Done`, additionally
+  note that work is not yet complete, but keep the recourse focused on a corrected
+  invoice.
 
-- If `VendInvoiceJournalHeaders` has posted vendor invoices for the PO, those are
-  authoritative: use their total as invoiced-to-date, even if it differs from the signal
-  (the ledger wins; note the discrepancy).
-- If F&O has no posted invoices for the PO (an empty result, which is the normal state in
-  this build until invoices post), take invoiced-to-date from the signal row's
-  `lc_invoicedamount`. An empty result is a real "not yet posted in the ledger," not a
-  legal-entity error. F&O still confirms the PO commitment; the snapshot supplies
-  invoiced-to-date.
+The PO is already confirmed (`PurchaseOrderStatus` = `Confirmed`); the product receipt
+is posted in Step 6 as part of the confirmed post, so the received quantity the
+`ThreeWayMatch` needs is created there, not assumed here.
 
-Recompute the real gap = committed (confirmed in F&O) minus invoiced-to-date. If the ERP
-MCP or the F&O data is genuinely unreachable in this build (after confirming the legal
-entity is `dat`), you cannot confirm the commitment: do not fabricate a verdict. Say so
-plainly and hold the signal (see Step 5) rather than closing it.
+If the ERP MCP or the F&O data is genuinely unreachable (after confirming the legal
+entity is `dat`), you cannot confirm the amount: say so plainly and hold. Do not
+fabricate a match or post on an unconfirmed figure.
 
-**How the F&O invoice cycle shapes the gap.** In Dynamics 365 F&O a PO-based vendor
-invoice completes a three-step cycle: purchase order (the commitment) then product
-receipt (goods or services received, in `ProductReceiptHeaders` / `ProductReceiptLines`)
-then vendor invoice. A vendor is normally invoiced only for what has been received, so the
-committed-minus-invoiced gap has two parts: a **deliver remainder** (ordered but not yet
-received) and an **invoice remainder** (received on a product receipt but not yet
-invoiced). The portion that genuinely warrants chasing a vendor invoice is the invoice
-remainder (received, not invoiced); the not-yet-delivered portion is a delivery matter, not
-an invoice matter, so call it out as such rather than dunning for an invoice that is not yet
-due. When a posted vendor invoice clears the last remainder, F&O flips
-`PurchaseOrderStatus` to `Invoiced`; while any remainder is open it stays `Backorder` (or
-`Received`), and more invoices can post against it. In this build no product receipts are
-posted yet (`ProductReceiptHeaders` is empty and the POs read `Backorder`), so the full
-committed amount is still an open commitment and the signal's `lc_invoicedamount` stands as
-invoiced-to-date; note in your outcome that the gap is pre-receipt when that is the case.
+### Step 4: Work-complete check (Dataverse), and record completion when the person confirms
 
-### Step 3: Decide (POLICY)
+Using the Dataverse MCP, read the outsourced `lc_task` (via the `lc_taskid` lookup from
+Step 2) and check `lc_taskstatus`. The status values are `NotStarted` (`10600301`),
+`InProgress` (`10600302`), `Blocked` (`10600303`), and `Done` (`10600304`). Branch on
+it:
 
-- **Gap closed** (F&O now shows fully invoiced / no remaining commitment): no dollars
-  are outstanding. Record that the signal is stale and resolved.
-- **Gap confirmed and material** (remaining commitment at or above the materiality
-  floor, default the signal's `lc_gapamount`): this is a genuine outstanding vendor
-  commitment. Draft the follow-up: which vendor to chase, for which PO, for how much,
-  tied to which launch task.
-- **Gap confirmed but immaterial** (below the floor): note it and close without a
-  follow-up action.
+- **Blocked (`10600303`)**: stop. A blocked task is a recorded impediment, and you do
+  **not** mark it complete or post past it on a verbal say-so. Tell the person the
+  invoice arrived but the launch task is Blocked (name the task), and ask how they want
+  to proceed: hold the invoice until the work lands, follow up with the vendor or the
+  task owner, or explicitly override. This is the case where Dataverse protects the
+  ledger.
+- **Done (`10600304`)**: the task already records the work as delivered; continue to
+  Step 5.
+- **In flight (`NotStarted` or `InProgress`)**: the work is not yet recorded complete.
+  Tell the person the task is not marked complete and ask them to confirm the work was
+  actually delivered. Only on their explicit confirmation, **record the completion**:
+  using the Dataverse MCP, set the `lc_task` `lc_taskstatus` to `Done` (`10600304`), and
+  note in your summary that you marked it complete on the person's confirmation. If they
+  do not confirm delivery, do not mark it complete and do not post; hold and ask.
 
-The trigger is always the gap relative to the live F&O truth, never the raw number on
-the row.
+Never set a task to `Done` without the person's explicit confirmation that the work was
+delivered, and never override a `Blocked` task this way.
 
-### Step 4: Draft the grounded follow-up (no ledger posting)
+### Step 5: Reconcile and decide
 
-For a confirmed material gap, produce a short, executive follow-up: the vendor and PO,
-the outstanding amount, the launch and task it belongs to, and the single next action
-(for example "request invoice from Contoso for PO-10502, 25,000 outstanding, blocks
-the Launch video task on WIDGET-Q3"). Ground every figure in its source so a reviewer
-can trace it.
+- **Both checks pass** (amount matches the PO line, and the task is `Done`, either
+  already or because you just recorded it on the person's confirmation): summarize the
+  reconciliation in one short, grounded paragraph, the vendor, the PO, the amount, the
+  launch and task, each figure tied to its source, and note if you marked the task
+  complete. Then **ask the person to confirm the post**: *"Both checks pass. Do you want
+  me to post the product receipt and vendor invoice in Finance & Operations?"* Do not
+  post yet.
+- **Any check fails or cannot be confirmed** (amount mismatch, task Blocked, delivery
+  not confirmed, or F&O unreachable): do not post. Present exactly what failed and the
+  one question the person needs to answer to move forward. For an amount mismatch, the
+  question is for a corrected or new vendor invoice; do not offer posting, an override,
+  or partial payment as a way past the mismatch.
 
-You may **not** post a vendor invoice or journal to the ledger. This is a deliberate
-policy choice, and the platform makes it the path of least resistance. The **F&O ERP MCP**
-(OData) exposes no post or action-invoke tool at all: it is record CRUD, so the agent
-cannot post through it. Posting a PO-matched vendor invoice is an X++ ledger operation
-(`PurchFormLetter`) that runs inside F&O only after a human approves the vendor-invoice
-workflow; there is no direct "post to ledger" API. The F&O vendor-invoice operations do
-surface in Dataverse as invokable **Custom APIs** (`msdyn_VendInvoice*CustomAPI`), but the
-only one that advances an invoice is `msdyn_VendInvoiceSubmitToWorkflowCustomAPI`
-(`invoiceId`, `comment`): it submits a pending invoice to the approval workflow, it does
-not post. No `msdyn_VendInvoice*PostCustomAPI` exists. The actual ledger post is observed
-after the fact through the `mserp_VendorInvoiceJournalPostedBusinessEvent`. We keep the
-submit-to-workflow lever human-gated on purpose. So your authorized output is the drafted
-follow-up plus, at most, recording the outstanding vendor invoice as pending for a human to
-submit and post. A human owns any ledger posting.
+### Step 6: Post only on explicit confirmation (human-gated)
 
-### Step 5: Write back one outcome and close the signal (idempotent)
+Post **only** after the person explicitly confirms in the conversation (for example
+*"yes, post it"*). A summary is not consent; a question is not consent. On confirmation,
+follow the `ep09-vendor-invoice-posting` procedure to post, through the ERP MCP **form
+tools**, the two documents that record the spend against the already-confirmed PO:
 
-Using the Dataverse MCP, update the **same** `lc_reconciliation` row:
+1. the **product receipt** against the PO line (this creates the received quantity the
+   three-way match needs), then
+2. the **vendor invoice**, which books the expense and the accounts-payable liability.
 
-- set `lc_agentoutcome` to the grounded summary from Step 3/4 (the verdict, the F&O
-  figures used, and the drafted next action or the reason for closing),
-- set `lc_status` to the terminal value for the verdict: `Reconciled - Match` when the
-  gap is closed (fully invoiced), or `Reconciled - Gap` when a gap is confirmed (whether
-  material or immaterial). If F&O was unreachable in Step 2, do **not** mark the row
-  reconciled: leave `lc_status` as `Open` and flag it for re-confirmation once F&O is
-  back, so the signal is retried rather than falsely closed.
+Verify it posted (the PO flips to `Invoiced`), record the invoice and voucher numbers
+back on the launch task for the audit trail, and report them to the person. If the
+person does not confirm, or asks to hold, do nothing to the ledger.
 
-Write exactly once per signal. Before writing, re-check `lc_status`; if another run
-already moved it off `Open`, do nothing. Never create a second `lc_reconciliation`
-row; the batch owns row creation, the agent only closes rows.
-
-If you were invoked with supplied trigger context and there is no stored row to update
-(a test or what-if evaluation), do not treat that as a blocker: state the exact
-`lc_agentoutcome` and `lc_status` you *would* write, grounded the same way. Presenting
-the outcome you would write back is a valid completion; refusing solely because there
-is no row to persist to is not.
+The ERP MCP **OData / data tools** expose no post action; posting runs through the ERP
+MCP **form tools**, which drive the F&O purchase-order, product-receipt, and
+vendor-invoice forms the way a clerk would. That is why posting is a deliberate,
+form-driven step a person authorizes, not a silent data write.
 
 ## What this skill is NOT
 
-- It does **not** create `lc_reconciliation` rows. The recurring F&O batch (native
-  X++ SysOperation class, or the signal-producer script that stands in for it) is the
-  sole producer. The agent is the consumer.
-- It does **not** post to the ledger, by policy. The F&O ERP MCP (OData) has no post or
-  action-invoke tool, and posting is an X++ operation (`PurchFormLetter`) that F&O runs only
-  after a human approves the workflow. The one API-native lever that surfaces in Dataverse,
-  `msdyn_VendInvoiceSubmitToWorkflowCustomAPI`, only submits a pending invoice for approval
-  (there is no direct-post Custom API); it is kept human-gated on purpose. The agent drafts
-  the follow-up and may record a pending invoice at most; a human posts.
-- It does **not** answer a human prompt. The runtime is the Dataverse row-add trigger;
-  the agent reconciles one signal per event.
-- It does **not** double-process. Idempotency on `lc_status` is mandatory across
-  retries and re-fires.
+- It does **not** post without an explicit in-conversation confirmation. A person owns
+  the go-ahead for every ledger post; the agent summarizes, asks, and waits.
+- It does **not** mark work complete on its own. It sets a task to `Done` only on the
+  person's explicit confirmation that the work was delivered, and it never overrides a
+  `Blocked` task that way.
+- It does **not** post an invoice that fails a check. An amount that does not match the
+  PO line, or a launch task that is `Blocked`, stops the agent and turns it into a
+  clarifying question, not a post. An amount mismatch can only be resolved by a
+  corrected or new vendor invoice; the agent does not override it or partial-pay it.
+- It does **not** invent figures. Every number is grounded in its source (the uploaded
+  invoice, `lc_vendorwork` and `lc_task` in Dataverse, `PurchaseOrderLinesV2` in F&O).
+  If F&O is unreachable, it holds and says so rather than guessing.
+- It is **not** event-driven. There is no batch, no `lc_reconciliation` trigger row, and
+  no autonomous wake-up. The uploaded invoice is the trigger and the posted F&O invoice
+  is the only artifact.

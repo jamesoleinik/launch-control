@@ -18,8 +18,8 @@ The scaffold is grouped into three layers:
 
 Run:
     $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
-    python episodes/ep-09-dataverse-fno/validate_fno_scaffold.py
-    python episodes/ep-09-dataverse-fno/validate_fno_scaffold.py --company USMF
+    python episodes/ep-09-dataverse-fno/scripts/validate_fno_scaffold.py
+    python episodes/ep-09-dataverse-fno/scripts/validate_fno_scaffold.py --company USMF
 
 Exit code is 0 when every Txn-enabling Config item is present, 1 otherwise, so it
 can gate a build.
@@ -32,8 +32,8 @@ import time
 
 import urllib3
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "scripts"))
 
 import auth  # noqa: E402
 import requests  # noqa: E402

@@ -9,8 +9,8 @@ the available tools.
 Resolve the environment from ``.env`` (LC_ENV); nothing here is hardcoded.
 
 Usage:
-    python erp_mcp_http.py            # sign in, initialize, list tools
-    python erp_mcp_http.py --list     # same as default
+    python scripts/erp_mcp_http.py            # sign in, initialize, list tools
+    python scripts/erp_mcp_http.py --list     # same as default
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ DEFAULT_CLIENT_ID = "aebc6443-996d-45c2-90f0-388ff96faa56"
 
 def _load_env() -> str:
     here = os.path.dirname(os.path.abspath(__file__))
-    root = os.path.abspath(os.path.join(here, os.pardir, os.pardir))
+    root = os.path.abspath(os.path.join(here, os.pardir, os.pardir, os.pardir))
     sys.path.insert(0, os.path.join(root, "scripts"))
     import auth  # noqa: E402
 

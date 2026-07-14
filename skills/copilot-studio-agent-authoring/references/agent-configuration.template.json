@@ -1,0 +1,39 @@
+{
+  "categories": [],
+  "channels": [
+    {
+      "id": "MsTeams",
+      "channelId": "MsTeams",
+      "channelSpecifier": null,
+      "displayName": null
+    }
+  ],
+  "settings": {},
+  "publishOnCreate": false,
+  "publishOnImport": true,
+  "isLightweightBot": false,
+  "$kind": "BotConfiguration",
+  "recognizer": {
+    "$kind": "CLICopilotRecognizer"
+  },
+  "agentSettings": {
+    "$kind": "AgentSettings",
+    "model": {
+      "$kind": "ModelConfig",
+      "series": "Opus48"
+    },
+    "instructions": {
+      "$kind": "Instructions",
+      "segments": [
+        {
+          "$kind": "StaticSegment",
+          "value": "__INSTRUCTIONS__"
+        }
+      ]
+    },
+    "web": {
+      "$kind": "WebSettings",
+      "enableWebSearch": false
+    }
+  }
+}

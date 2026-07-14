@@ -12,7 +12,7 @@ This proves the launch-to-procurement join is queryable two ways:
 
 Run:
     $env:PYTHONIOENCODING="utf-8"
-    python episodes/ep-09-dataverse-fno/verify_vendorwork.py
+    python episodes/ep-09-dataverse-fno/scripts/verify_vendorwork.py
 
 Requires ``pyodbc`` and an ODBC Driver for SQL Server (17 or 18). The TDS
 connection string must set ``TrustServerCertificate=yes`` or Driver 17 fails
@@ -23,7 +23,7 @@ import os
 import struct
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
 
 import auth  # noqa: E402

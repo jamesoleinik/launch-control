@@ -5,9 +5,9 @@ built and made queryable through **both** Dataverse data APIs (OData Web API and
 the SQL / TDS endpoint). It doubles as a runbook: the two scripts named here are
 idempotent and safe to re-run.
 
-- Build / seed: `python episodes/ep-09-dataverse-fno/seed_vendor_work.py`
-- Verify both APIs: `python episodes/ep-09-dataverse-fno/verify_vendorwork.py`
-- Verify the MCP path: `python episodes/ep-09-dataverse-fno/verify_mcp.py`
+- Build / seed: `python episodes/ep-09-dataverse-fno/scripts/seed_vendor_work.py`
+- Verify both APIs: `python episodes/ep-09-dataverse-fno/scripts/verify_vendorwork.py`
+- Verify the MCP path: `python episodes/ep-09-dataverse-fno/scripts/verify_mcp.py`
 
 All identifiers below (env, vendors, POs) are demo values for the Launch Control
 series. Resolve the environment from the episode `.env` (`LC_ENV=ep-09-dataverse-fno`);
@@ -34,7 +34,7 @@ lc_launch --< lc_task --< lc_vendorwork >-- F&O Vendor (V0001 / V0002 / V0003)
   | Translation vendor contract | Contoso Supply Co (V0001) | PO-10501 | 45,000 | 0 | PO open |
   | Launch video (90s) | Contoso Supply Co (V0001) | PO-10502 | 37,000 | 12,000 | Invoice pending |
   | Load test API at 5x peak | Contoso Supply Co (V0001) | PO-10503 | 28,000 | 28,000 | Invoiced (paid) |
-  | Hero copy + visuals | Fabrikam Media (V0002) | PO-10504 | 22,000 | 8,000 | Invoice pending |
+  | Hero copy + visuals | Fabrikam Media (V0002) | PO-10514 | 22,000 | 8,000 | Invoice pending |
   | Quickstart tutorial | Fabrikam Media (V0002) | PO-10505 | 15,000 | 0 | PO open |
   | DPA addendum review | Northwind Legal Advisors (V0003) | PO-10506 | 18,000 | 18,000 | Invoiced (paid) |
 
@@ -107,7 +107,7 @@ Entities generated for this build: `VendVendorV2Entity`,
 
 ### 2. Seed the F&O masters and open POs (direct OData writes)
 
-`seed_vendor_work.py` writes directly to the F&O OData endpoint
+`scripts/seed_vendor_work.py` writes directly to the F&O OData endpoint
 (`{FNO}/data/...`), which is the reliable loader on a bare env (the DMF package
 path can produce FK phantoms; see the README).
 
@@ -143,7 +143,7 @@ Note the key is `SystemParameters(0)` (integer key), not `SystemParameters(ID='0
 
 ### 4. Build `lc_vendorwork` and seed the join (Dataverse side)
 
-`seed_vendor_work.py` creates the `lc_vendorwork` table (simple columns) via the
+`scripts/seed_vendor_work.py` creates the `lc_vendorwork` table (simple columns) via the
 Python SDK, then adds the `lc_taskid` lookup to `lc_task`.
 
 Gotcha: **lookup propagation lag.** Immediately after `create_lookup_field`, a POST
@@ -152,7 +152,7 @@ that binds `lc_taskid@odata.bind` can 400. The script retries the lookup create
 
 ## Verification (both APIs)
 
-`verify_vendorwork.py` runs both proofs and exits non-zero on any failure.
+`scripts/verify_vendorwork.py` runs both proofs and exits non-zero on any failure.
 
 ### OData Web API (live F&O join)
 
@@ -205,7 +205,7 @@ SQL / TDS join  : PASS   (6 rows; vendor and launch rollups correct)
 
 ## Verification (Dataverse MCP server)
 
-`verify_mcp.py` proves the same `lc_vendorwork` model is reachable through the
+`scripts/verify_mcp.py` proves the same `lc_vendorwork` model is reachable through the
 Dataverse **Model Context Protocol** endpoint, which is how a Copilot Studio or
 VS Code agent reads the environment. It speaks the streamable-HTTP JSON-RPC
 transport directly (no proxy needed for the test):

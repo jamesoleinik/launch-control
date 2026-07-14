@@ -106,6 +106,15 @@ NUMBER_SEQUENCES = [
         "prefix": "VPOV",
         "name": "LC purchase order voucher",
     },
+    {
+        # The easily-missed one: without a SubledgerJournalNum reference the vendor
+        # invoice post fails with the generic "a number sequence reference is
+        # missing". Non-continuous like the rest, so it never contends on post.
+        "datatype": "SubledgerJournalNum",
+        "code": "Sslj_1",
+        "prefix": "SSLJ",
+        "name": "LC subledger journal",
+    },
 ]
 
 

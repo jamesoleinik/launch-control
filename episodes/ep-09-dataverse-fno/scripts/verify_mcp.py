@@ -1,7 +1,7 @@
 """Verify the WIDGET-Q3 vendor-outsourcing model over the Dataverse MCP server.
 
 This is the third proof for the "better together" join, complementing
-``verify_vendorwork.py`` (raw OData + SQL/TDS). It exercises the *same*
+``scripts/verify_vendorwork.py`` (raw OData + SQL/TDS). It exercises the *same*
 ``lc_vendorwork`` data through the Dataverse Model Context Protocol (MCP)
 endpoint, the way a Copilot Studio or VS Code agent reaches the environment:
 
@@ -20,14 +20,14 @@ https://learn.microsoft.com/power-apps/maker/data-platform/data-platform-mcp-dis
 
 Run:
     $env:PYTHONIOENCODING="utf-8"
-    python episodes/ep-09-dataverse-fno/verify_mcp.py
+    python episodes/ep-09-dataverse-fno/scripts/verify_mcp.py
 """
 
 import json
 import os
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

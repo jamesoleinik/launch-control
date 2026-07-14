@@ -6,7 +6,7 @@ GitHub Copilot CLI after the ERP MCP server was registered in the session.
 
 Environment identifiers are resolved from `.env` and omitted here.
 
-## Starting state (validate_fno_scaffold.py)
+## Starting state (scripts/validate_fno_scaffold.py)
 
 | Layer | Object | Count | Status |
 | --- | --- | --- | --- |
@@ -130,7 +130,7 @@ The clean path was the data entities instead:
 
 ### Validator checkpoint: Config layer complete
 
-With the vendor posting profile present, `validate_fno_scaffold.py --company dat`
+With the vendor posting profile present, `scripts/validate_fno_scaffold.py --company dat`
 now reports every transaction-enabling Config item present and exits 0:
 
 ```
@@ -145,9 +145,9 @@ Config layer complete: 'dat' can create/post vendor invoices.
 ```
 
 Remaining non-blocking gaps: payment terms, tax codes, released products (added
-next), plus the transaction outputs (product receipts, vendor invoices) that Act 2's
-batch and agent produce. The `LC` posting profile should also be set as the default
-in Accounts payable parameters for live posting.
+next), plus the transaction outputs (product receipts, vendor invoices) that the
+assistive agent posts on confirmation. The `LC` posting profile should also be set
+as the default in Accounts payable parameters for live posting.
 
 ### 6. Payment terms (done), tax codes + released products (optional, documented)
 
@@ -165,7 +165,7 @@ in Accounts payable parameters for live posting.
 
 ### Final state
 
-`validate_fno_scaffold.py --company dat` exits 0: all six transaction-enabling
+`scripts/validate_fno_scaffold.py --company dat` exits 0: all six transaction-enabling
 Config items are present, so `dat` can create/post a vendor invoice. The only piece
 that finishes asynchronously is account-structure activation (`LC-PL` moves to
 `Active` when the F&O batch server runs the queued activation job); once active it
@@ -190,11 +190,11 @@ Objects built this run, all via the Dynamics 365 ERP MCP:
 
 ## Invoice-posting test: validating the human-approved posting skill
 
-After the Config layer completed, the authorized vendor-invoice posting that the Act 5
-agent is forbidden to do on its own was tested end to end against `dat`, and the
-`business-skills/ep09-vendor-invoice-posting.md` skill was written from and then
-re-validated against that run. The scenario is the reconciliation gap: 25,000
-outstanding on PO-10502 (Contoso Supply Co, vendor `V0001`).
+After the Config layer completed, the human-approved vendor-invoice posting that the
+assistive agent performs only on an explicit go-ahead was tested end to end against
+`dat`, and the `business-skills/ep09-vendor-invoice-posting.md` skill was written from
+and then re-validated against that run. The scenario is the outstanding amount on
+PO-10502 (Contoso Supply Co, vendor `V0001`): 25,000 remaining.
 
 ### Prerequisites provisioned to reach a postable state
 

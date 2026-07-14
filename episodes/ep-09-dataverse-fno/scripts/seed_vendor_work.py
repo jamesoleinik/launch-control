@@ -25,6 +25,10 @@ What it does (idempotent, safe to re-run):
      against live F&O whether or not the ``mserp_`` virtual entities are enabled.
    - Marks the outsourced tasks and upserts one ``lc_vendorwork`` row each,
      pointing at the real F&O vendor and PO.
+   - Pins two demo task statuses the assistive reconciliation agent reads: the
+     translation task stays Blocked (the discrepancy it holds) and the hero-copy
+     task stays InProgress so the agent marks it complete live before posting
+     (the clean pass PO-10514).
 
 Why business keys instead of a Dataverse lookup to a virtual entity: the Finance
 and Operations virtual entities (``mserp_*``) are generated per entity (a one-time
@@ -38,20 +42,33 @@ reseed:
   lc_vendorwork.lc_vendoraccount -> mserp_vendvendorv2entities.mserp_vendoraccountnumber
   lc_vendorwork.lc_ponumber      -> mserp_purchpurchaseorderheaderv2entities.mserp_purchaseordernumber
 
+3. Additive virtual-table lookups (add_vendorwork_lookups): once the ``mserp_``
+   tables are generated, this also creates two real N:1 lookups from
+   ``lc_vendorwork`` (a standard table) to the F&O virtual tables and binds the
+   seeded rows, so a model-driven app shows related F&O detail:
+
+  lc_vendorwork.lc_VendorRef -> mserp_vendvendorv2entity            (by VendorAccountNumber)
+  lc_vendorwork.lc_PORef     -> mserp_purchpurchaseorderheaderv2entity (by PurchaseOrderNumber)
+
+   The lookups are additive: the plain-text keys remain the durable join (and the
+   only one that works over SQL / TDS). Standard -> virtual is the supported lookup
+   direction; cascades are None.
+
 Run:
     $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
-    python episodes/ep-09-dataverse-fno/seed_vendor_work.py
+    python episodes/ep-09-dataverse-fno/scripts/seed_vendor_work.py
 """
 
 import os
 import sys
 import time
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
 
 import auth  # noqa: E402
 import requests  # noqa: E402
+import add_vendorwork_lookups  # noqa: E402
 from PowerPlatform.Dataverse.client import DataverseClient  # noqa: E402
 
 EPISODE = "ep-09-dataverse-fno"
@@ -140,7 +157,7 @@ PURCHASE_ORDERS = [
     },
     {
         "dataAreaId": DATA_AREA,
-        "PurchaseOrderNumber": "PO-10504",
+        "PurchaseOrderNumber": "PO-10514",
         "OrderVendorAccountNumber": "V0002",
         "CurrencyCode": "USD",
         "LanguageId": "en-us",
@@ -231,7 +248,7 @@ ENGAGEMENTS = [
             "Write launch hero copy and produce three key visuals for the "
             "landing page and social. Two revision rounds. Fixed-bid."
         ),
-        "lc_ponumber": "PO-10504",
+        "lc_ponumber": "PO-10514",
         "lc_committedamount": 22000,
         "lc_invoicedamount": 8000,
         "lc_status": "Invoice pending",
@@ -383,6 +400,40 @@ def _task_ids_by_title(url, h):
     return {t["lc_title"]: t["lc_taskid"] for t in r.json().get("value", [])}
 
 
+# Deterministic demo task statuses for the assistive reconciliation agent. The
+# work-complete check reads lc_task.lc_taskstatus, so the demo pins exactly two
+# outcomes: the translation task stays Blocked (the engineered discrepancy the
+# agent holds), and the hero-copy task stays InProgress so the agent marks it
+# complete live in the clean pass (PO-10514) before posting. lc_taskstatus:
+# NotStarted=10600301, InProgress=10600302, Blocked=10600303, Done=10600304.
+TASK_STATUS_BY_TITLE = {
+    "Translation vendor contract": 10600303,  # Blocked (discrepancy: work not done)
+    "Hero copy + visuals": 10600302,          # InProgress (agent marks it Done live)
+}
+
+
+def set_task_statuses(url, token):
+    h = {
+        "Authorization": f"******",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0",
+    }
+    task_ids = _task_ids_by_title(url, h)
+    for title, status in TASK_STATUS_BY_TITLE.items():
+        tid = task_ids.get(title)
+        if not tid:
+            print(f"[warn] task '{title}' not found; cannot set status")
+            continue
+        requests.patch(
+            f"{url}/api/data/v9.2/lc_tasks({tid})", headers=h,
+            json={"lc_taskstatus": status}).raise_for_status()
+        label = {10600301: "NotStarted", 10600302: "InProgress",
+                 10600303: "Blocked", 10600304: "Done"}.get(status, str(status))
+        print(f"[status] task '{title}' -> {label}")
+
+
 def upsert_engagements(url, token):
     h = {
         "Authorization": f"Bearer {token}",
@@ -453,6 +504,12 @@ def main():
 
     print("\n== Dataverse: seed the launch <-> procurement join ==")
     upsert_engagements(url, dv_token)
+
+    print("\n== Dataverse: pin demo task statuses (discrepancy + clean pass) ==")
+    set_task_statuses(url, dv_token)
+
+    print("\n== Dataverse: F&O virtual-table lookups on lc_vendorwork ==")
+    add_vendorwork_lookups.apply_lookups(url, dv_token)
 
     summarize(url, dv_token)
 
