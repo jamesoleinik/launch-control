@@ -345,15 +345,41 @@ one per side of the model:
   `form_*` family is the key: it drives the F&O configuration **forms** and their X++
   logic the way a functional consultant does, which is what stands up the ledger.
 
-Do not confuse the ERP MCP with the Dataverse CLI proxy. `dataverse mcp
-<fno-operations-url>` returns **0 tools**, because the `@microsoft/dataverse` CLI only
-ever speaks to the Dataverse endpoint. The F&O ERP MCP is a **separate** server on the
-operations host at `/mcp`, not reachable through that CLI.
-
 > Connecting to the ERP MCP is a one-time gate (Entra OAuth plus the F&O Allowed MCP
 > Clients list). You registered it in Setup and the deep detail is in Appendix B; the
 > pre-authorized Copilot / Copilot Studio / Cowork clients connect by signing in, so the
 > acts below assume the 21 tools are already loaded.
+
+### The prompt
+
+Type this into GitHub Copilot CLI:
+
+> *Read the Act 2 section of this episode's README, then populate the model using the*
+> *reference scripts in `episodes/ep-09-dataverse-fno/scripts/`. Write the launch-side*
+> *`lc_vendorwork` rows through the Dataverse MCP (`erp_mcp_write.py --write`), then run*
+> *`validate_fno_scaffold.py` to show me the live Config gap on `dat`. Close that gap by*
+> *following the `ep09-configure-legal-entity-for-invoicing` Business Skill, re-running the*
+> *validator after each layer and stopping when it exits 0. To skip configuring on camera,*
+> *point the validator at the demo company instead (`--company USMF`).*
+
+The Config-layer build is written down as a governed, reusable Dataverse **Business
+Skill**, `business-skills/ep09-configure-legal-entity-for-invoicing.md`, the same house
+style as the reconciliation and posting skills (Acts 3 and 4). The skill owns the
+dependency-ordered procedure (fiscal calendar, chart of accounts and main accounts,
+account structure, ledger wiring, vendor posting profile, payment terms) grounded on the
+Microsoft Learn path; `validate_fno_scaffold.py` stays the deterministic gate that
+certifies the result. Publish it to the environment alongside the others so an edit is a
+single re-publish:
+
+```
+python scripts/python/_upload_skill.py \
+  --name "Configure a Legal Entity for Invoicing (stand up the F&O Config layer through the ERP MCP)" \
+  --uniquename lc_ep09_configure_legal_entity_for_invoicing \
+  --description "Episode 9 Config-layer procedure: stand up the F&O ledger wiring, chart of accounts, fiscal calendar, account structure, and vendor posting profile a bare legal entity needs before it can post a vendor invoice, built through the ERP MCP and gated by validate_fno_scaffold.py." \
+  business-skills/ep09-configure-legal-entity-for-invoicing.md
+```
+
+
 
 The launch-side rows populate through the Dataverse MCP (`scripts/erp_mcp_write.py` drives it
 over stdio: `initialize` -> `tools/list` -> `create_record`):
@@ -380,28 +406,32 @@ $env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-09-dataverse-fno"
 python episodes/ep-09-dataverse-fno/scripts/validate_fno_scaffold.py
 ```
 
-Against a **bare `dat` legal entity** it reports three layers, with the build path
-that matches the validated tool surface above:
+Against a **freshly provisioned `dat` legal entity** (before Act 2's configuration
+work) it reports three layers, with the build path that matches the validated tool
+surface above:
 
-| Layer | Object | Built by | Bare `dat` |
+| Layer | Object | Built by | Starting `dat` |
 | --- | --- | --- | --- |
 | Config | Ledger accounting currency | ERP MCP `form_*` tools (or ERP connector / F&O UI) | missing |
 | Config | Chart of accounts + main accounts | ERP MCP `form_*` tools (or ERP connector / F&O UI) | missing |
 | Config | Fiscal calendar + open periods | ERP MCP `form_*` tools (or ERP connector / F&O UI) | missing |
 | Config | Account structure (active) | ERP MCP `form_*` tools (or ERP connector / F&O UI) | missing |
 | Config | Vendor posting profile | ERP MCP `form_*` tools (or ERP connector / F&O UI) | missing |
-| Config | Terms of payment, tax codes | ERP MCP `form_*` / `data_*` (or ERP connector) | missing |
+| Config | Terms of payment | ERP MCP `form_*` / `data_*` (or ERP connector) | missing |
+| Config | Tax codes | ERP MCP `form_*` / `data_*` (or ERP connector) | missing |
 | Config | Currencies | ships with environment | present (3) |
 | Config | AP number sequence references | `setup_fno_number_sequences.py` (F&O OData) | present (see preamble) |
-| Master | Vendor group | ERP MCP `data_*` / F&O OData | present (1) |
-| Master | Vendors | ERP MCP `data_*` / F&O OData | present (3) |
+| Master | Vendor group | ERP MCP `data_*` / F&O OData | present (1, seeded) |
+| Master | Vendors | ERP MCP `data_*` / F&O OData | present (3, seeded) |
 | Master | Released products (item-backed lines) | ERP MCP `data_*` / F&O OData | missing |
-| Master | Purchase orders | ERP MCP `data_*` / F&O OData | present (7) |
+| Master | Purchase orders | ERP MCP `data_*` / F&O OData | present (7, seeded) |
 | Txn | Product receipts | ERP MCP `form_*` / `api_*` (or F&O UI) | missing |
 | Txn | Vendor invoices | ERP MCP `form_*` / `api_*` (or F&O UI) | missing |
 | Dataverse | `lc_vendorwork` rows | Dataverse MCP `create_record` | present (Act 1 + Act 2) |
 
-The lesson is in the split: the **Dataverse** layer populates cleanly through the
+Counts describe the seeded starting point and drift as the acts run (for example, a
+later act adds a purchase order and posts a product receipt); `validate_fno_scaffold.py`
+always reports the live numbers. The lesson is in the split: the **Dataverse** layer populates cleanly through the
 Dataverse MCP `create_record` (proven live in this act), the **Master** layer through
 F&O OData, but the entire **Config** layer is missing, and that is why a bare `dat`
 cannot post an invoice.
