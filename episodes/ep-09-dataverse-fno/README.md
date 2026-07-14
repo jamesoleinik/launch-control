@@ -171,7 +171,8 @@ recording. There are two supported ways to get there:
 Either path gives you a single environment where the `lc_*` launch tables and the F&O
 vendor, purchase-order, product-receipt, and vendor-invoice records live together, which
 is what makes the two-check reconciliation and the live post possible. The one-time
-solution move and the F&O number-sequence provisioning are covered in Appendix A.
+solution move, the F&O virtual-entity generation, and the F&O number-sequence
+provisioning are covered in Appendix A.
 
 ### Register the two MCP servers (once, before Act 1)
 
@@ -759,6 +760,47 @@ one-time setup, not part of the recorded demo: export the `LaunchControl` soluti
 (`pac solution export --name LaunchControl --managed false`) and import it into the
 unified, F&O-linked environment (`pac solution import --path LaunchControl.zip`), then
 run the seed scripts there.
+
+### Optional preamble: generate the F&O virtual entities (the `mserp_*` tables)
+
+Acts 1 and 2 assume the F&O vendor and purchase-order data is reachable in Dataverse
+as `mserp_*` virtual tables. Standing those up is a one-time **Dataverse** operation,
+not an ERP one, and it is two documented steps:
+
+1. **Configure** finance and operations virtual entities in Dataverse
+   ([Configure Dataverse virtual entities](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/power-platform/admin-reference)).
+   On a unified (F&O-linked) environment this configuration is done automatically, so
+   the step is usually a no-op here; on an unlinked environment you must complete it
+   first.
+2. **Generate** the specific entities you want by making each one **Visible** in the
+   catalog
+   ([Enable Dataverse virtual entities](https://learn.microsoft.com/dynamics365/fin-ops-core/dev-itpro/power-platform/enable-virtual-entities)).
+
+The Microsoft how-to walks the generate step through a point-and-click catalog view,
+but you do not have to click it. The "Visible" checkbox is just a flag
+(`mserp_hasbeengenerated`) on a catalog table (`mserp_financeandoperationsentity`), so
+**a coding agent can flip it for you** over the Dataverse MCP or the Web API, which is
+how this build does it. Ask the agent to PATCH the catalog row for each entity:
+
+```
+PATCH {DATAVERSE}/api/data/v9.2/mserp_financeandoperationsentities(<id>)
+{ "mserp_hasbeengenerated": true }
+```
+
+Find `<id>` by filtering the catalog on `mserp_physicalname` (for example
+`VendVendorV2Entity`). Two things bite if you drive it programmatically: generation is
+**async and serialized** (firing several PATCHes at once returns a lock error for all
+but one, and the winner's HTTP call often times out even though the entity generates a
+minute or two later, so do them one at a time and poll), and the resulting **entity
+set name is not what you would guess** (`mserp_<physicalname lowercased>` + `s`, so
+`VendVendorV2Entity` becomes `mserp_vendvendorv2entities`, not `mserp_vendorsv2`, which
+404s and looks like a failed generation). Full detail and the other gotchas are in
+`VENDORWORK-BUILD.md`.
+
+Entities generated for this build: `VendVendorV2Entity`,
+`PurchPurchaseOrderHeaderV2Entity`, `CurrencyEntity`, `VendVendorGroupEntity`. Once
+they exist, the `lc_vendorwork` keys light up a live OData join to the real F&O records
+with no reseed.
 
 ### Optional preamble: provision F&O vendor-invoice number sequences
 
