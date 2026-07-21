@@ -2,7 +2,7 @@
 
 **Status:** ✍️ Reworked draft (Season 2 finale) · 🎬 Not yet recorded
 **Season:** 2 (Dataverse, Better Together)
-**Features:** ⭐ Native M365 Copilot grounding over Dataverse (Dataverse intelligence / Work IQ) · ⭐ The Web IQ, Fabric IQ, and Foundry IQ agents from Eps 10 to 12 collaborating on one launch · ⭐ One question, four answers, one platform
+**Features:** ⭐ Native M365 Copilot grounding over Dataverse (Dataverse intelligence / Work IQ) · ⭐ The Web IQ, Fabric IQ, and Foundry IQ agents from the Season 2 intelligence episodes collaborating on one launch · ⭐ One question, four answers, one platform
 **Layer:** 🟣 Layer 3, the conversational surface, where everything converges
 **Coding agent:** _None for the native beat._ The platform answers on its own. The three agents come from Eps 10 to 12.
 **Runtime:** M365 Copilot + the three Season 2 agents
@@ -20,9 +20,9 @@ prior episodes each paired Dataverse with one partner. Here they converge on a
 single launch:
 
 - **Native M365 Copilot** reads Dataverse directly, no agent in the middle.
-- **The Web IQ agent (Ep 10)** brings the live external risk.
-- **The Fabric IQ agent (Ep 11)** brings the semantic anomaly read.
-- **The Foundry IQ agent (Ep 12)** brings the cited, document-grounded judgment.
+- **The Web IQ agent** brings the live external risk.
+- **The Fabric IQ agent** brings the semantic anomaly read.
+- **The Foundry IQ agent** brings the cited, document-grounded judgment.
 
 ## Beat 1: Native Copilot, zero agents
 
@@ -116,13 +116,13 @@ manage it."*
       (>= 60 min since flip).
 - [ ] Smoke prompt returns a grounded answer.
 - [ ] Demo env primed (launch app opened + clicked through).
-- [ ] The three Season 2 agents (Eps 10 to 12) published and reachable.
+- [ ] The three Season 2 intelligence agents published and reachable.
 - [ ] Prompts typed live, not pasted; backup prompt staged.
 
 ## Cross-references
 
 - **Ep 3:** the data model, relationships, and `lc_risksummary` prompt column
   that native grounding reads.
-- **Eps 10 to 12:** the Web IQ, Fabric IQ, and Foundry IQ agents that join native
-  Copilot here.
+- **Season 2 intelligence episodes:** the Web IQ, Fabric IQ, and Foundry IQ agents
+  that join native Copilot here.
 - **Season 3** (Agentic Administration): managing the system this season built.

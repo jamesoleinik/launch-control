@@ -21,7 +21,7 @@ The "Launch Control" LinkedIn series: building one project end-to-end, told as a
 
 ### Season 2: Dataverse, Better Together
 
-The thesis: Dataverse is not an island. Each episode pairs it with another part of the Microsoft stack: first the operational other half (ERP), then three intelligence layers, and the finale converges them.
+The thesis: Dataverse is not an island. Each episode pairs it with another part of the Microsoft stack: operational state (ERP), external signal (Web IQ), internal analytics semantics (Fabric IQ), federated knowledge (Foundry IQ), then convergence.
 
 | # | Episode | Hero capability |
 |---|---|---|

@@ -31,6 +31,10 @@ Microsoft Fabric. It turns raw enterprise data into business meaning with
 ontologies, KPIs, trends, and graph reasoning, so an agent can ask "is this
 launch tracking abnormally?" and get an answer grounded in trusted analytics.
 
+> **Sequencing note (Season 2):** This is Episode 11. For launch announcements,
+> we may present this Fabric-first story ahead of Episode 10 to spotlight the
+> Link data / Link to Fabric experience refresh.
+
 ## Why this is a complement, not a duplicate (the design rule)
 
 The boundary test stays the same: *would this naturally be a row I query, relate,
@@ -86,6 +90,21 @@ it watches and reasons.
 > If any tables show "DISABLED", enable Track Changes in the table properties (Dataverse
 > admin portal or Power Platform admin center). This is required for near real-time
 > sync to OneLake.
+>
+> **Fabric Link replication latency (measured, eppcdemo1fno, 2026-07-21):**
+>
+> | Metric | Value |
+> |--------|-------|
+> | Median | ~11 seconds |
+> | P90 | ~36 seconds |
+> | P95 | ~48 seconds |
+> | Max observed | ~69 seconds |
+> | Throughput | ~80 rows/min avg, 136/min peak |
+> | Cold-start (first sync) | ~10-12 minutes |
+>
+> Under sustained write load the Fabric Link runs continuously (new micro-batch every
+> ~60s). The first sync after a long idle period is ~10-12 minutes (cold-start warm-up).
+> All rows in a 2,863-row bulk test replicated within 5 minutes once the link was warm.
 
 1. Reuse the autonomous agent shell from `agents/launch-sentinel/` (triggers,
    idempotency, the `lc_statusupdate` effector).
@@ -108,7 +127,6 @@ it watches and reasons.
 
 - **`episodes/archive/ep-10-autonomous-agents/`** and `agents/launch-sentinel/`:
   the autonomous runtime this episode reuses.
-- **Ep 10:** the Web IQ agent (external signal); this is the internal-semantic
-  counterpart.
+- **Ep 10:** the Web IQ agent (external signal); this is the internal-semantic counterpart.
 - **Ep 13** (convergence): the Fabric IQ agent runs alongside Web IQ and Foundry
   IQ on one launch.

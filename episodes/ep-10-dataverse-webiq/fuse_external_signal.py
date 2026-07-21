@@ -56,18 +56,31 @@ def fetch_dataverse_blockers(max_items):
     auth.load_env(os.environ.get("LC_ENV", "ep-10-dataverse-webiq"))
     base = os.environ["DATAVERSE_URL"].rstrip("/")
     token = auth.get_token(os.environ.get("LC_ENV"))
-    q = ("lc_tasks?$select=lc_title,lc_blockerreason&"
-         "$filter=lc_isblocked eq true&$top=%d" % max_items)
-    url = base + "/api/data/v9.2/" + urllib.parse.quote(q, safe="?=&$")
-    req = urllib.request.Request(url, headers={
-        "Authorization": "Bearer " + token,
-        "Accept": "application/json",
-        "OData-MaxVersion": "4.0", "OData-Version": "4.0",
-    })
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        rows = json.load(resp).get("value", [])
-    return [{"title": r.get("lc_title", ""), "category": "",
-             "blockerreason": r.get("lc_blockerreason", "")} for r in rows]
+
+    # Environment schemas differ slightly. Try the historical shape first,
+    # then fall back to the current status-choice shape.
+    queries = [
+        "lc_tasks?$select=lc_title,lc_blockerreason&$filter=lc_isblocked eq true&$top=%d",
+        "lc_tasks?$select=lc_title,lc_taskstatus&$filter=lc_taskstatus eq 10600303&$top=%d",
+    ]
+    last_exc = None
+    for tmpl in queries:
+        try:
+            q = tmpl % max_items
+            url = base + "/api/data/v9.2/" + urllib.parse.quote(q, safe="?=&$")
+            req = urllib.request.Request(url, headers={
+                "Authorization": "Bearer " + token,
+                "Accept": "application/json",
+                "OData-MaxVersion": "4.0", "OData-Version": "4.0",
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                rows = json.load(resp).get("value", [])
+            return [{"title": r.get("lc_title", ""), "category": "",
+                     "blockerreason": r.get("lc_blockerreason", "")} for r in rows]
+        except Exception as exc:
+            last_exc = exc
+            continue
+    raise last_exc
 
 
 def briefing(client, blockers, per_blocker=2):

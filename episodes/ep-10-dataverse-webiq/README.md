@@ -24,6 +24,9 @@
 > would never put in Dataverse: the live web. It connects what is happening inside
 > the launch to what is happening outside it, in one breath."*
 
+> **Sequencing note (Season 2):** This is still Episode 10. For some release beats,
+> we may present the Fabric IQ story first, then return to this outside-in Web IQ beat.
+
 The F&O episode joined Dataverse to the other half of the business. This episode
 joins it to the other half of the **world**. The reason a launch is actually at
 risk often lives outside the tenant: a vendor outage, a freshly published CVE, a
