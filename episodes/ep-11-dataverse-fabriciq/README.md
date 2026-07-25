@@ -1,7 +1,17 @@
-# Episode 11: Dataverse + Fabric IQ (structured state meets semantic data)
+# Episode 11: Dataverse + Fabric IQ (two-plane AI architecture)
 
-**Status:** 🛠️ In Build (Phase 2: Data substrate) · 🎬 Not yet recorded
-**Build status (this pass):** Dataverse-to-OneLake link setup in progress. Prerequisite check: Track Changes must be enabled on all `lc_*` custom tables before linking to Fabric.
+**Status:** 🛠️ In Build (Phase 4: Operations Agent) · 🎬 Not yet recorded
+**Build status (this pass):**
+- Track Changes ENABLED on all 7 `lc_*` tables (confirmed 2026-07-21)
+- Fabric Link (low-latency sync) active: eppcdemo1fno → LaunchControl workspace
+- All 6 `lc_*` tables live in Fabric (1 launch, 12 tasks, 6 milestones, 5 status updates)
+- Replication latency benchmarked: **median 11s, P95 48s, max 69s** under load (2,863 rows)
+- Eventhouse `LaunchControlEH` created + KQL database provisioned
+- 6 external Delta tables over Fabric Link lakehouse (4 Dataverse + 2 F&O tables)
+- `VendorEnrichment` native KQL table seeded (V0001/V0002/V0003 with names + risk scores)
+- 3 KQL functions deployed: `fn_live_red_updates`, `fn_vendor_risk_for_blocker`, `fn_blocker_pattern_history`
+- **E2E data flow verified**: Dataverse write → Fabric Link → KQL eventhouse in **58s** (lag=65s from createdon)
+- Next: create Fabric Operations Agent (one portal step required; see `SKILL.md`)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Fabric IQ (semantic data layer over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Autonomous agent runtime (event + recurrence triggers) · ⭐ Reasoning over governed analytics, not just rows
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
@@ -26,14 +36,54 @@
 
 The Web IQ episode reached outside the tenant for live signal. This one stays
 inside, but reaches **up a level**: from individual rows to the **semantic
-meaning** of the data. Fabric IQ is the semantic intelligence layer over
-Microsoft Fabric. It turns raw enterprise data into business meaning with
-ontologies, KPIs, trends, and graph reasoning, so an agent can ask "is this
-launch tracking abnormally?" and get an answer grounded in trusted analytics.
+meaning** of the data — and introduces a second AI agent that lives natively in
+Fabric, triggered by the first.
 
 > **Sequencing note (Season 2):** This is Episode 11. For launch announcements,
 > we may present this Fabric-first story ahead of Episode 10 to spotlight the
-> Link data / Link to Fabric experience refresh.
+> low-latency Fabric Link / Link to Fabric experience refresh.
+
+## The two-plane architecture
+
+This episode demonstrates a pattern none of the prior episodes showed: **two
+AI agents in two different runtimes, orchestrated by data**.
+
+```
+User prompt
+    |
+[Copilot Studio agent]  -- Dataverse MCP (live launch state)
+    |  writes lc_statusupdate (health=RED=10600603) to Dataverse
+    |
+    v  ~11s median (low-latency Fabric Link)
+[LaunchControl Fabric Lakehouse]  -- lc_* tables as Delta Parquet + F&O vend* tables
+    |
+    v
+[KQL Database: LaunchControlEH]
+    |  external Delta tables: lc_statusupdate, lc_task, lc_launch,
+    |                         lc_vendorwork, fno_vendtable, fno_vendtransopen
+    |  native table: VendorEnrichment (names, on_time_pct, risk_tier)
+    |  functions: fn_live_red_updates(), fn_vendor_risk_for_blocker(),
+    |             fn_blocker_pattern_history()
+    |
+[Fabric Operations Agent: LaunchControlOpsAgent]
+    |  rule: new lc_statusupdate with lc_health == 10600603 (Red)
+    |  → join VendorEnrichment for vendor context
+    |  → join fn_blocker_pattern_history() for anomaly baseline
+    v
+Teams alert: "Q3 Widget: Acme Translations (V0001, High risk, 61% on-time)
+              SLA breach. RED is a 95th-pct outlier for this launch phase."
+```
+
+The bridge is **low-latency Fabric Link** (2026 feature). Benchmarked in this
+environment: median replication latency **11 seconds**, P95 **48 seconds**,
+all 2,863 test rows replicated within **5 minutes** under sustained load. E2E
+confirmed this session: two RED health status updates written to Dataverse appeared
+in the KQL eventhouse in **58 seconds** (lag from `createdon`: 65s).
+Run `python episodes/ep-11-dataverse-fabriciq/show_replication_latency.py`
+to see the full distribution.
+
+The Fabric Operations Agent adds what the Studio agent cannot: **cross-launch
+historical context** from the full data estate, not just the current record.
 
 ## Why this is a complement, not a duplicate (the design rule)
 
@@ -76,20 +126,17 @@ it watches and reasons.
    blocker count for its phase (8 vs a modeled 2 to 3). Historically this pattern
    precedes a slip. Flagging for review." Grounded escalation, not a raw count.
 
-## Build steps (outline)
+## Build steps
 
-> **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
-> fill in your values (`FABRIC_WORKSPACE_ID`, `FABRIC_ONTOLOGY_ID`), and select
-> it with `LC_ENV=ep-11-dataverse-fabriciq`.
+> **Local config.** Copy `.env.example` to `.env` (gitignored), fill in your values.
+> Key vars: `FABRIC_WORKSPACE_ID`, `FABRIC_LAKEHOUSE_NAME`, `FABRIC_KQL_CLUSTER_URI`.
+> Select with `LC_ENV=ep-11-dataverse-fabriciq`.
 
 > **Prerequisite check:** All `lc_*` custom tables must have **Track Changes enabled**
 > before they can be linked to Fabric OneLake. Run:
 > ```
 > python scripts/python/check_track_changes.py
 > ```
-> If any tables show "DISABLED", enable Track Changes in the table properties (Dataverse
-> admin portal or Power Platform admin center). This is required for near real-time
-> sync to OneLake.
 >
 > **Fabric Link replication latency (measured, eppcdemo1fno, 2026-07-21):**
 >
@@ -99,29 +146,75 @@ it watches and reasons.
 > | P90 | ~36 seconds |
 > | P95 | ~48 seconds |
 > | Max observed | ~69 seconds |
-> | Throughput | ~80 rows/min avg, 136/min peak |
+> | E2E (write → KQL) | ~58 seconds |
 > | Cold-start (first sync) | ~10-12 minutes |
->
-> Under sustained write load the Fabric Link runs continuously (new micro-batch every
-> ~60s). The first sync after a long idle period is ~10-12 minutes (cold-start warm-up).
-> All rows in a 2,863-row bulk test replicated within 5 minutes once the link was warm.
 
-1. Reuse the autonomous agent shell from `agents/launch-sentinel/` (triggers,
-   idempotency, the `lc_statusupdate` effector).
-2. Connect Fabric IQ as a tool / knowledge source the agent can query for the
-   semantic baseline.
-3. Encode the decision: escalate only when the live Dataverse state diverges from
-   the Fabric IQ norm beyond a threshold.
-4. Validate that no analytical artifact is duplicated into Dataverse rows.
+### Step 1: Eventhouse + KQL database (DONE)
 
-## Open questions to resolve before building
+Eventhouse `LaunchControlEH` created in LaunchControl workspace via Fabric REST API.
+KQL database auto-provisioned. All tables and functions deployed with one script.
 
-- **Access.** Confirm a Microsoft Fabric environment with Fabric IQ available to
-  demo against, and that the launch data (or a representative dataset) is modeled.
-- **How Fabric IQ attaches** to a Copilot Studio agent (tool vs knowledge vs MCP)
-  at record time; confirm the current path.
-- **Baseline data.** The anomaly beat needs enough historical launches (real or
-  seeded) for a credible "norm."
+```bash
+# Dry-run first:
+python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --dry-run
+
+# Apply (idempotent):
+python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --apply
+```
+
+This creates:
+- **6 external Delta tables** over the Fabric Link lakehouse (`lc_statusupdate`,
+  `lc_task`, `lc_launch`, `lc_vendorwork`, `fno_vendtable`, `fno_vendtransopen`)
+- **`VendorEnrichment`** native table: vendor names + delivery performance + risk tier
+  for V0001 (Acme Translations), V0002 (GlobalTech Licensing), V0003 (SwiftLogix Freight)
+- **3 KQL functions**: `fn_live_red_updates()`, `fn_vendor_risk_for_blocker(name)`,
+  `fn_blocker_pattern_history()`
+
+### Step 2: E2E trigger test (DONE)
+
+```bash
+# Trigger RED health writes and watch for KQL replication:
+python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
+
+# With cleanup (removes demo records from Dataverse):
+python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300 --cleanup
+```
+
+**Verified result:** Two vendor-linked RED health updates appeared in KQL in 58 seconds.
+
+### Step 3: Operations Agent (portal step required)
+
+The Fabric Operations Agent REST API is in Preview. The `OperationsAgentV1.json`
+payload schema is undocumented — you must create one in the Fabric portal first
+to get the structure, then use `GET /getDefinition` to extract the JSON.
+
+**Portal steps** (one-time, to get the JSON schema):
+1. Open the LaunchControl workspace in Fabric portal
+2. **+ New item** → search "Operations Agent" → create with name `LaunchControlOpsAgent`
+3. In the portal, add a rule: "When a new item appears in lc_statusupdate where
+   lc_health equals 10600603 (Red), run a Teams notification with vendor context"
+4. After saving, call:
+   ```
+   GET https://api.fabric.microsoft.com/v1/workspaces/{wsId}/operationsAgents/{agentId}/getDefinition
+   ```
+   to extract the `OperationsAgentV1.json` schema.
+5. Document it in `operations_agent_schema.json` in this folder.
+6. Run `python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --apply`
+   to script the remaining rules.
+
+Note the Operations Agent ID in `.env` as `FABRIC_OPS_AGENT_ID`.
+
+### Step 4: Full E2E validation
+
+```bash
+python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
+```
+
+Observe:
+1. RED health status update written to Dataverse
+2. Fabric Link replicates to OneLake (~11s median, ~58s E2E including KQL availability)
+3. Operations Agent rule fires (requires Step 3 complete)
+4. Teams alert received with vendor context from VendorEnrichment join
 
 ## Cross-references
 
