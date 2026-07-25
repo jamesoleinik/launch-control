@@ -1,131 +1,113 @@
-# Ep 11 build plan: Dataverse + Fabric IQ (parallel CLI session)
+# Ep 11 build plan: Dataverse + Fabric Operations Agent
 
-This plan lets a separate Copilot CLI session build Episode 11 independently of
-the Ep 9 (F&O) and Ep 10 (Web IQ) sessions. Read it top to bottom, then work the
-checklist. The episode narrative and headline result live in `README.md`; this file is
-the build runbook.
+This runbook reflects the current architecture choice: eventhouse + KQL (not
+Fabric ontology). It tracks what is already built and what remains to finish the
+episode.
 
 ## One-line goal
 
-An **autonomous** Copilot Studio agent that reasons over two planes: the live
-per-launch state (Dataverse MCP) and the **semantic baseline** of the business
-(Fabric IQ ontology over Microsoft Fabric). It fires on a schedule, compares the
-live record to the modeled norm, and escalates only genuine anomalies by writing a
-`lc_statusupdate` row.
+Use two AI planes:
+1. Copilot Studio agent writes `lc_statusupdate` in Dataverse when launch risk is high.
+2. Fabric Operations Agent detects RED updates in KQL, enriches with vendor context,
+   and sends an escalation.
 
-## Status entering this session
+The bridge is low-latency Fabric Link (Dataverse to OneLake to KQL external Delta).
 
-- **TODO (most work):** this episode is the least built of the three. It needs a
-  Fabric IQ ontology created in the Fabric workspace, the autonomous agent wired
-  to it, and enough historical launch data to make "normal" credible.
-- **Reusable assets:** the autonomous runtime already exists at
-  `agents/launch-sentinel/` (triggers, idempotency, the `lc_statusupdate`
-  effector). This episode reuses it; do not rebuild it from scratch.
+## Status now
 
-## Prerequisites / local config
+Completed:
+- Track Changes enabled on `lc_*` tables.
+- Fabric Link active from Dataverse env to LaunchControl workspace.
+- Eventhouse `LaunchControlEH` and KQL database provisioned.
+- `setup_eventhouse.py` created and applied:
+  - external Delta tables: `lc_statusupdate`, `lc_task`, `lc_launch`, `lc_vendorwork`,
+    `fno_vendtable`, `fno_vendtransopen`
+  - native table: `VendorEnrichment` seeded with V0001, V0002, V0003
+  - functions: `fn_live_red_updates`, `fn_vendor_risk_for_blocker`,
+    `fn_blocker_pattern_history`
+- `show_replication_latency.py` created for latency distribution output.
+- Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
+- `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
+- E2E write-path validated with `trigger_red_health.py`:
+  - Dataverse RED writes replicated and queryable in KQL in about 58s.
 
-1. Copy `.env.example` to `.env` in this folder (gitignored) and fill in:
-   - `DATAVERSE_URL` (env holding the `lc_` launch tables).
-   - `FABRIC_WORKSPACE_ID` (the Fabric workspace that will hold the ontology; the
-     provisioned workspace is named "EPPC", a Fabric F-SKU capacity).
-   - `FABRIC_ONTOLOGY_ID` (filled in after you create the ontology, step B).
-   - `POWERBI_WORKSPACE` (the `powerbi://api.powerbi.com/v1.0/myorg/<workspace>`
-     connection string).
-   - `TENANT_ID`.
-2. Select this env: PowerShell `$env:LC_ENV = "ep-11-dataverse-fabriciq"`.
-3. Set `$env:PYTHONIOENCODING="utf-8"` before running Python.
+In progress:
+- Operations Agent rule wiring in Fabric portal, then definition capture.
 
-## Connection facts (confirmed)
+Blocked:
+- Final Teams action wiring for Operations Agent requires portal connection details
+  not exposed through current scripted endpoints.
 
-- Connecting a Copilot Studio agent to Fabric uses the **Fabric IQ Ontology MCP**
-  server (Microsoft, Premium, Preview): "enables agents to interact with Microsoft
-  Fabric IQ Ontology using the Model Context Protocol."
-- Auth: Login with Microsoft Entra ID.
-- Required connection inputs: **Workspace ID** (the Fabric workspace containing the
-  ontology) and **Ontology ID** (the ID of the Fabric IQ ontology). Both go in
-  `.env` and are pasted into the MCP tool connection in the builder.
+## Prerequisites and local config
+
+1. Copy `.env.example` to `.env` (gitignored) in this folder.
+2. Set values for:
+   - `DATAVERSE_URL`
+   - `FABRIC_WORKSPACE_ID`
+   - `FABRIC_WORKSPACE_NAME`
+   - `FABRIC_LAKEHOUSE_NAME`
+   - `FABRIC_KQL_CLUSTER_URI`
+   - `FABRIC_KQL_DATABASE_NAME`
+3. Select env:
+   - PowerShell: `$env:LC_ENV = "ep-11-dataverse-fabriciq"`
+4. Set encoding:
+   - PowerShell: `$env:PYTHONIOENCODING = "utf-8"`
 
 ## Build checklist
 
-### A. Get the data into Fabric (scriptable + portal)
-- [ ] Resolve the Fabric **Workspace ID** for the "EPPC" workspace via the Power BI
-      / Fabric REST API using an az token (`az account get-access-token --resource
-      https://api.fabric.microsoft.com`), or read it from the workspace URL in the
-      Fabric portal. Record it in `.env` as `FABRIC_WORKSPACE_ID`.
-- [ ] Link the Dataverse launch data into Fabric (Dataverse-to-OneLake / Link to
-      Microsoft Fabric, or a semantic model over the `lc_` tables) so the ontology
-      has something to model.
-- [ ] Ensure there is enough **historical launch data** (real or seeded) for a
-      credible "norm". The anomaly beat needs many launches, not one. Reuse the
-      rich seed scripts (`scripts/python/seed_launch_demo_rich.py`) and consider
-      seeding several historical launches with varying blocker counts.
+### A. KQL substrate (done)
+- [x] Create eventhouse and KQL database.
+- [x] Create external Delta tables with impersonation URI form:
+  `h@'abfss://<WorkspaceName>@onelake.dfs.fabric.microsoft.com/<Lakehouse>.Lakehouse/Tables/<table>;impersonate'`
+- [x] Seed native `VendorEnrichment` table.
+- [x] Create KQL helper functions.
 
-### B. Build the Fabric IQ ontology (Fabric portal, browser)
-- [ ] In the EPPC workspace, create a **Fabric IQ ontology** over the launch
-      semantic data (entities: launch, milestone, task; measures: blocker count,
-      slip rate, readiness trajectory).
-- [ ] Capture the **Ontology ID** and put it in `.env` as `FABRIC_ONTOLOGY_ID`.
-- [ ] Sanity-check the ontology answers "what is a normal blocker count for this
-      phase?" before wiring an agent to it.
+Commands:
+```bash
+python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --dry-run
+python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --apply
+```
 
-### C. Build the autonomous agent (Copilot Studio, browser)
-- [ ] **Create the Business Skill in Dataverse.** Load
-      `business-skills/ep11-anomaly-escalation.md` into the agent's Dataverse env
-      as a `skill` record (POST to `/api/data/v9.2/skills` with `name`,
-      `uniquename` = `lc_ep11anomaly`, `description`, `body` = the markdown,
-      `origin` = 0; idempotent-delete any existing row with that uniquename first,
-      exactly as the Ep 9 session created `lc_ep09erpreadiness`). The agent must
-      follow this skill.
-- [ ] Start from the `agents/launch-sentinel/` pattern (triggers, idempotency,
-      `lc_statusupdate` effector). Reuse, do not reinvent.
-- [ ] Add **Tool: Dataverse MCP Server (Preview)** for the live per-launch facts
-      and as the write target for findings.
-- [ ] Add **Tool: Fabric IQ Ontology MCP** with the Workspace ID + Ontology ID
-      from `.env`. Authenticate with Entra ID.
-- [ ] Write the agent Instructions (create `agent-instructions.md` in this folder,
-      mirror the Ep 9 format): role = launch analyst that watches the curve;
-      escalate only when the live Dataverse state diverges from the Fabric IQ norm
-      beyond a threshold; write one `lc_statusupdate` per genuine anomaly; never
-      duplicate an analytical artifact into a Dataverse row.
-- [ ] Set the trigger: a scheduled morning sweep (and/or a "task blocks" event).
+### B. Dataverse trigger write path (done)
+- [x] Implement `trigger_red_health.py` for RED status writes.
+- [x] Validate replication by watching KQL visibility.
 
-### D. Validate the headline result
-- [ ] Run the scheduled sweep with no human prompt.
-- [ ] Dataverse reports the live blocker count; Fabric IQ reports the modeled norm;
-      the agent writes a grounded `lc_statusupdate` only when the live count is a
-      true outlier (for example 8 vs a modeled 2 to 3, a 95th-percentile anomaly).
-- [ ] Confirm idempotency: re-running the sweep does not double-post.
+Command:
+```bash
+python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
+```
 
-## Deliverables this session should produce
+### C. Operations Agent automation (partially done)
+- [x] Script stable API operations (`setup_operations_agent.py`):
+  - list agents
+  - export definition via `getDefinition`
+  - create from saved definition JSON
+  - update definition via `updateDefinition`
+  - render starter template definition from `.env`
+- [x] Export definition JSON and decode parts locally.
+- [ ] One-time portal step: wire Teams action and validate final rule behavior.
 
-1. `episodes/ep-11-dataverse-fabriciq/agent-instructions.md` (paste-ready
-   Instructions, same shape as Ep 9's).
-2. A short script or note documenting how the Workspace ID + Ontology ID were
-   obtained (no GUIDs in committed files; reference `.env`).
-3. A "Build status" line in `README.md` recording what was built and validated.
+Commands:
+```bash
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --list
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <agent-id>
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --create --definition operations_agent_schema.json
+```
 
-## Guardrails
+### D. Final episode proof
+- [x] Run RED trigger and confirm Dataverse to KQL timing.
+- [ ] Capture proof points:
+  - Dataverse write timestamp
+  - KQL visibility timestamp
+  - Operations Agent run or Teams alert evidence
+- [x] Add timing summary to `README.md`.
 
-- No em-dashes in committed prose. No real env URLs / tenant IDs / GUIDs / capacity
-  IDs / connection strings in any committed file (placeholders only; actuals live
-  in the gitignored `.env`).
-- Honor the "complement, not duplicate" rule: learned KPI baselines and cross-launch
-  trends stay in Fabric IQ, never copied into Dataverse rows.
+## Notes and constraints
 
-## Risks / gating
-
-- **Biggest gate:** Fabric IQ availability and how it attaches to a Copilot Studio
-  agent at record time (tool vs knowledge vs MCP). Confirm the current path early;
-  if Fabric IQ ontology creation is not yet available in the tenant, this episode
-  stays a spec until it is.
-- **Baseline credibility:** without enough historical launches, the anomaly beat is
-  not believable. Seed generously.
-
-## Hand-off / coordination with the other sessions
-
-- Ep 11 shares the `lc_` launch model with the other episodes but adds a separate
-  Fabric substrate. If you seed historical launches, coordinate with whoever owns
-  the shared Dataverse env so seeds do not collide, or use your own env.
-- This is the heaviest build; expect to deliver the ontology + agent over more than
-  one pass. Land the scriptable parts (Workspace ID resolution, Dataverse-to-Fabric
-  link, historical seed) first so the browser steps are pure wiring.
+- In `eppcdemo1fno`, `lc_health` values are:
+  - Green: `10600601`
+  - Yellow: `10600602`
+  - Red: `10600603`
+- For `lc_statusupdate` launch binding, use:
+  - `lc_launchid@odata.bind` (not `lc_Launch@odata.bind`)
+- Keep real IDs and URLs in `.env` only. Do not commit environment identifiers.

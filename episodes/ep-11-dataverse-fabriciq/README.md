@@ -10,8 +10,11 @@
 - 6 external Delta tables over Fabric Link lakehouse (4 Dataverse + 2 F&O tables)
 - `VendorEnrichment` native KQL table seeded (V0001/V0002/V0003 with names + risk scores)
 - 3 KQL functions deployed: `fn_live_red_updates`, `fn_vendor_risk_for_blocker`, `fn_blocker_pattern_history`
+- Historical baseline seeded: 5 `EP11-HIST-*` launches, 60 tasks, 5 baseline status snapshots
+- `lc_vendorwork` updated with realistic V0001/V0002/V0003 financial and due-date values
 - **E2E data flow verified**: Dataverse write → Fabric Link → KQL eventhouse in **58s** (lag=65s from createdon)
-- Next: create Fabric Operations Agent (one portal step required; see `SKILL.md`)
+- `setup_operations_agent.py` added to automate list/export/create for Operations Agent definitions
+- Remaining gap: Teams action wiring in Operations Agent designer (portal connection step; see `plan.md`)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Fabric IQ (semantic data layer over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Autonomous agent runtime (event + recurrence triggers) · ⭐ Reasoning over governed analytics, not just rows
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
@@ -21,7 +24,7 @@
 
 > **Building this episode?** Follow `plan.md` in this folder. It is the
 > self-contained build runbook for a dedicated CLI session: prerequisites, the
-> Fabric IQ ontology steps, the autonomous-agent wiring (reusing
+> eventhouse + Operations Agent wiring, the autonomous-agent wiring (reusing
 > `agents/launch-sentinel/`), and the headline validation. This is the heaviest
 > Season 2 build; land the scriptable parts first, then the browser wiring. Runs in
 > parallel with Ep 9 and Ep 10.
@@ -182,27 +185,30 @@ python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 3
 
 **Verified result:** Two vendor-linked RED health updates appeared in KQL in 58 seconds.
 
-### Step 3: Operations Agent (portal step required)
+### Step 3: Operations Agent (mostly scriptable now)
 
-The Fabric Operations Agent REST API is in Preview. The `OperationsAgentV1.json`
-payload schema is undocumented — you must create one in the Fabric portal first
-to get the structure, then use `GET /getDefinition` to extract the JSON.
+The Fabric Operations Agent REST API is in Preview. The definition format is now
+captured and scriptable in this repo.
 
-**Portal steps** (one-time, to get the JSON schema):
-1. Open the LaunchControl workspace in Fabric portal
-2. **+ New item** → search "Operations Agent" → create with name `LaunchControlOpsAgent`
-3. In the portal, add a rule: "When a new item appears in lc_statusupdate where
-   lc_health equals 10600603 (Red), run a Teams notification with vendor context"
-4. After saving, call:
-   ```
-   GET https://api.fabric.microsoft.com/v1/workspaces/{wsId}/operationsAgents/{agentId}/getDefinition
-   ```
-   to extract the `OperationsAgentV1.json` schema.
-5. Document it in `operations_agent_schema.json` in this folder.
-6. Run `python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --apply`
-   to script the remaining rules.
+Script support:
+```bash
+# List agents in workspace
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --list
 
-Note the Operations Agent ID in `.env` as `FABRIC_OPS_AGENT_ID`.
+# Export a definition JSON (+ decoded parts folder)
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <agent-id> --definition episodes/ep-11-dataverse-fabriciq/operations_agent_schema.json
+
+# Render a starter definition from env values
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --render-template --definition episodes/ep-11-dataverse-fabriciq/operations_agent_template.json
+
+# Update an existing agent from definition JSON
+python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --update --agent-id <agent-id> --definition episodes/ep-11-dataverse-fabriciq/operations_agent_schema.json
+```
+
+One-time portal work still needed: wire the final Teams action and confirm rule
+behavior in the Operations Agent designer.
+
+Use `.env` for workspace/agent IDs; do not commit tenant-specific IDs.
 
 ### Step 4: Full E2E validation
 
