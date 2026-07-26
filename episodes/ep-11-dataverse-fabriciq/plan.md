@@ -37,6 +37,9 @@ In progress:
 Blocked:
 - Final Teams action wiring for Operations Agent requires portal connection details
   not exposed through current scripted endpoints.
+- Data Activator connector path may fail with tenant policy restrictions in this
+  tenant. PAC/governance API cannot override when connector enablement configs are
+  disabled (`DlpConnectorEnablementConfigurationsNotAllowedForTenant`).
 
 ## Prerequisites and local config
 
@@ -92,6 +95,7 @@ Commands:
 python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --list
 python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <agent-id>
 python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --create --definition operations_agent_schema.json
+python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
 ```
 
 ### D. Final episode proof

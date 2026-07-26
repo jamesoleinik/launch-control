@@ -203,10 +203,17 @@ python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --render-temp
 
 # Update an existing agent from definition JSON
 python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --update --agent-id <agent-id> --definition episodes/ep-11-dataverse-fabriciq/operations_agent_schema.json
+
+# Diagnose Data Activator DLP blocks in this tenant
+python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
 ```
 
-One-time portal work still needed: wire the final Teams action and confirm rule
-behavior in the Operations Agent designer.
+Known tenant caveat: if Power Automate action setup fails with a
+`shared_dataactivator` policy error, the connector path is blocked by tenant policy.
+Use a Fabric item action path, or request a PPAC tenant admin policy change.
+
+One-time portal work still needed: finalize action wiring and confirm rule behavior
+in the Operations Agent designer.
 
 Use `.env` for workspace/agent IDs; do not commit tenant-specific IDs.
 

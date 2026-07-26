@@ -24,6 +24,7 @@ import argparse
 import base64
 import json
 import os
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -39,11 +40,32 @@ DEFAULT_EXPORT_PATH = "operations_agent_schema.json"
 
 
 def _get_bearer_token() -> str:
-    """Acquire a Fabric API token with AzureCliCredential."""
-    from azure.identity import AzureCliCredential
+    """Acquire a Fabric API token via AzureCliCredential, with az fallback."""
+    try:
+        from azure.identity import AzureCliCredential
 
-    cred = AzureCliCredential(process_timeout=60)
-    return cred.get_token("https://api.fabric.microsoft.com/.default").token
+        cred = AzureCliCredential(process_timeout=60)
+        return cred.get_token("https://api.fabric.microsoft.com/.default").token
+    except Exception:
+        proc = subprocess.run(
+            [
+                "az",
+                "account",
+                "get-access-token",
+                "--resource",
+                "https://api.fabric.microsoft.com",
+                "--query",
+                "accessToken",
+                "-o",
+                "tsv",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        token = proc.stdout.strip()
+        if proc.returncode != 0 or not token:
+            raise RuntimeError(f"Could not acquire Fabric token: {proc.stderr.strip()}")
+        return token
 
 
 def _fabric_request(
