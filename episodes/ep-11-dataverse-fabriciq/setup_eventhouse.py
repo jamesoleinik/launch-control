@@ -1,4 +1,15 @@
 """
+setup_eventhouse.py  --  ARCHIVED (superseded by setup_lakehouse_tables.py)
+
+This script was used to set up the Fabric eventhouse + KQL database for Ep 11.
+The architecture was simplified: the Eventhouse is no longer used. The Fabric
+Data Agent now queries the Lakehouse SQL analytics endpoint directly.
+
+See setup_lakehouse_tables.py for the current setup script.
+Retained for reference in case the KQL/Eventhouse path is revisited.
+---
+Original docstring below:
+
 setup_eventhouse.py  --  Ep 11 Fabric eventhouse + KQL database setup.
 
 Creates (or verifies) external Delta tables over the Dataverse Fabric Link
@@ -128,6 +139,30 @@ VENDOR_ENRICHMENT_SCHEMA = (
 )
 
 # ---------------------------------------------------------------------------
+# ExternalVendorRisk — third-party market and financial intelligence.
+# Source: fictional "ProcureIQ" procurement risk platform.
+# This data does NOT live in Dataverse or F&O; Fabric is the only place
+# it is queryable alongside live launch and vendor transaction data.
+# V0004/V0005 are vendors known to the risk platform but not yet in any
+# live Dataverse launch — they demonstrate that Fabric holds data
+# Dataverse does not.
+# ---------------------------------------------------------------------------
+EXTERNAL_VENDOR_RISK_ROWS = [
+    # accountnum, vendor_name,               credit_rating, financial_health_score, market_risk_tier, diversity_certified, risk_source,  last_updated
+    ("V0001", "Acme Translations Inc.",      "C",           38.0,  "High",     False, "ProcureIQ", "2025-06-01T00:00:00Z"),
+    ("V0002", "GlobalTech Licensing Ltd.",   "A",           82.0,  "Low",      True,  "ProcureIQ", "2025-06-01T00:00:00Z"),
+    ("V0003", "SwiftLogix Freight Co.",      "B+",          65.0,  "Medium",   False, "ProcureIQ", "2025-06-01T00:00:00Z"),
+    ("V0004", "Pacific Rim Components Ltd.", "B",           71.0,  "Medium",   True,  "ProcureIQ", "2025-06-01T00:00:00Z"),
+    ("V0005", "Nexus Cloud Services Inc.",   "C-",          29.0,  "Critical", False, "ProcureIQ", "2025-06-01T00:00:00Z"),
+]
+
+EXTERNAL_VENDOR_RISK_SCHEMA = (
+    "accountnum:string, vendor_name:string, credit_rating:string, "
+    "financial_health_score:real, market_risk_tier:string, "
+    "diversity_certified:bool, risk_source:string, last_updated:datetime"
+)
+
+# ---------------------------------------------------------------------------
 # KQL functions used by Operations Agent rule queries
 # ---------------------------------------------------------------------------
 KQL_FUNCTIONS = [
@@ -154,11 +189,51 @@ KQL_FUNCTIONS = [
     | join kind=leftouter (
         VendorEnrichment
     ) on $left.lc_vendorref == $right.accountnum
+    | join kind=leftouter (
+        ExternalVendorRisk
+        | project accountnum, credit_rating, financial_health_score, market_risk_tier, diversity_certified
+    ) on $left.lc_vendorref == $right.accountnum
     | project lc_name, lc_vendorref, vendor_name, category, risk_tier,
               on_time_pct, open_disputes, open_balance_usd, overdue_count,
-              lc_committedamount, lc_invoicedamount, lc_duedate
+              lc_committedamount, lc_invoicedamount, lc_duedate,
+              credit_rating, financial_health_score, market_risk_tier, diversity_certified
 }""",
-        "doc": "Given a task name fragment, returns vendor financial + performance context.",
+        "doc": "Given a task name fragment, returns vendor financial + performance + external market context.",
+    },
+    {
+        "name": "fn_vendor_360_risk",
+        "body": """(vendor_account:string) {
+    VendorEnrichment
+    | where accountnum == vendor_account
+    | join kind=leftouter (
+        ExternalVendorRisk
+        | where accountnum == vendor_account
+        | project accountnum, credit_rating, financial_health_score,
+                  market_risk_tier, diversity_certified, risk_source, last_updated
+    ) on accountnum
+    | join kind=leftouter (
+        fno_vendtransopen
+        | where (IsDelete == false or isnull(IsDelete))
+        | where accountnum == vendor_account
+        | summarize open_balance_usd=sum(amountmst), overdue_count=count() by accountnum
+    ) on accountnum
+    | join kind=leftouter (
+        fno_vendtable
+        | where (IsDelete == false or isnull(IsDelete))
+        | where accountnum == vendor_account
+        | project accountnum, blocked, creditmax, paymtermid
+    ) on accountnum
+    | project
+        accountnum, vendor_name, category,
+        // Internal performance (VendorEnrichment)
+        on_time_pct, open_disputes, risk_tier,
+        // External market intelligence (ExternalVendorRisk / ProcureIQ)
+        credit_rating, financial_health_score, market_risk_tier,
+        diversity_certified, risk_source, last_updated,
+        // F&O ERP context
+        open_balance_usd, overdue_count, blocked, creditmax, paymtermid
+}""",
+        "doc": "360-degree vendor risk: internal performance + external market intel (ProcureIQ) + F&O ERP data.",
     },
     {
         "name": "fn_blocker_pattern_history",
@@ -307,7 +382,40 @@ def main() -> int:
     else:
         ok &= _run_mgmt(client, KQL_DB, ingest_cmd, dry_run, "ingest VendorEnrichment rows")
 
-    # 3. KQL functions
+    # 3. ExternalVendorRisk native table + ingestion
+    print()
+    print("=== ExternalVendorRisk table (ProcureIQ external intelligence) ===")
+    create_evr_cmd = f".create-merge table ExternalVendorRisk ({EXTERNAL_VENDOR_RISK_SCHEMA})"
+    ok &= _run_mgmt(client, KQL_DB, create_evr_cmd, dry_run, "create ExternalVendorRisk table")
+
+    evr_mapping_cmd = (
+        ".create-or-alter table ExternalVendorRisk ingestion csv mapping 'ExternalVendorRiskCSV' "
+        "'[{\"Column\":\"accountnum\",\"Ordinal\":0},{\"Column\":\"vendor_name\",\"Ordinal\":1},"
+        "{\"Column\":\"credit_rating\",\"Ordinal\":2},{\"Column\":\"financial_health_score\",\"Ordinal\":3},"
+        "{\"Column\":\"market_risk_tier\",\"Ordinal\":4},{\"Column\":\"diversity_certified\",\"Ordinal\":5},"
+        "{\"Column\":\"risk_source\",\"Ordinal\":6},{\"Column\":\"last_updated\",\"Ordinal\":7}]'"
+    )
+    ok &= _run_mgmt(client, KQL_DB, evr_mapping_cmd, dry_run, "ExternalVendorRisk CSV mapping")
+
+    evr_inline_data = "\n".join(
+        f"{r[0]},{r[1]},{r[2]},{r[3]},{r[4]},{str(r[5]).lower()},{r[6]},{r[7]}"
+        for r in EXTERNAL_VENDOR_RISK_ROWS
+    )
+    evr_ingest_cmd = f".ingest inline into table ExternalVendorRisk <|\n{evr_inline_data}"
+    if not dry_run and client:
+        try:
+            r_check = client.execute(KQL_DB, "ExternalVendorRisk | summarize n=count() | project n")
+            existing = list(r_check.primary_results[0])[0][0] if r_check.primary_results[0] else 0
+            if existing >= len(EXTERNAL_VENDOR_RISK_ROWS):
+                print(f"[SKIP] ingest ExternalVendorRisk rows (already has {existing} rows)")
+            else:
+                ok &= _run_mgmt(client, KQL_DB, evr_ingest_cmd, dry_run, "ingest ExternalVendorRisk rows")
+        except Exception:
+            ok &= _run_mgmt(client, KQL_DB, evr_ingest_cmd, dry_run, "ingest ExternalVendorRisk rows")
+    else:
+        ok &= _run_mgmt(client, KQL_DB, evr_ingest_cmd, dry_run, "ingest ExternalVendorRisk rows")
+
+    # 4. KQL functions
     print()
     print("=== KQL functions ===")
     for fn in KQL_FUNCTIONS:
@@ -317,7 +425,7 @@ def main() -> int:
         )
         ok &= _run_mgmt(client, KQL_DB, cmd, dry_run, f"function {fn['name']}")
 
-    # 4. Verify
+    # 5. Verify
     if not dry_run and client:
         print()
         print("=== Verification ===")

@@ -22,26 +22,25 @@ Completed:
 - `setup_eventhouse.py` created and applied:
   - external Delta tables: `lc_statusupdate`, `lc_task`, `lc_launch`, `lc_vendorwork`,
     `fno_vendtable`, `fno_vendtransopen`
-  - native table: `VendorEnrichment` seeded with V0001, V0002, V0003
-  - functions: `fn_live_red_updates`, `fn_vendor_risk_for_blocker`,
-    `fn_blocker_pattern_history`
+  - native tables: `VendorEnrichment` (internal performance), `ExternalVendorRisk` (ProcureIQ market intel)
+  - functions: `fn_live_red_updates`, `fn_vendor_risk_for_blocker` (updated with ExternalVendorRisk),
+    `fn_blocker_pattern_history`, `fn_vendor_360_risk` (new: full 360 risk profile)
 - `show_replication_latency.py` created for latency distribution output.
 - Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
 - `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
 - E2E write-path validated with `trigger_red_health.py`:
   - Dataverse RED writes replicated and queryable in KQL in about 58s.
+- `analyst_agent_instructions.md` created for Plane 2 agent.
+- `setup_fabric_data_agent.py` created for portal documentation + verification.
+
+**Pivoted (Operations Agent dead end):**
+- Fabric Operations Agent PA flow action stuck on "Waiting for flow to be saved" (portal bug).
+- Replaced with two Copilot Studio agents + Fabric Data Agent (connected agent pattern).
+- `setup_operations_agent.py` and Operations Agent JSON artifacts retained for reference.
 
 In progress:
-- Operations Agent rule wiring in Fabric portal, then definition capture.
-
-Blocked:
-- Final Teams action wiring for Operations Agent requires portal connection details
-  not exposed through current scripted endpoints.
-- Data Activator connector path may fail with tenant policy restrictions in this
-  tenant. PAC/governance API cannot override when connector enablement configs are
-  disabled (`DlpConnectorEnablementConfigurationsNotAllowedForTenant`).
- - Operations Agent public REST surface in this tenant does not expose run/start
-   endpoints for scripted activation; final live-fire remains portal-driven.
+- Fabric Data Agent creation in portal (Step C below).
+- Launch Analyst agent creation in Copilot Studio (Step D below).
 
 ## Prerequisites and local config
 
@@ -62,10 +61,17 @@ Blocked:
 
 ### A. KQL substrate (done)
 - [x] Create eventhouse and KQL database.
-- [x] Create external Delta tables with impersonation URI form:
-  `h@'abfss://<WorkspaceName>@onelake.dfs.fabric.microsoft.com/<Lakehouse>.Lakehouse/Tables/<table>;impersonate'`
-- [x] Seed native `VendorEnrichment` table.
-- [x] Create KQL helper functions.
+- [x] Create external Delta tables with impersonation URI form.
+- [x] Seed native `VendorEnrichment` table (internal performance).
+- [x] Seed native `ExternalVendorRisk` table (ProcureIQ external market intelligence).
+  - V0001-V0003: match vendors in live launches, with differentiated risk profiles.
+  - V0004 (Pacific Rim Components): medium risk, in external DB but not in any Dataverse launch.
+  - V0005 (Nexus Cloud Services): critical risk, in external DB but not in any Dataverse launch.
+- [x] Create KQL helper functions:
+  - `fn_live_red_updates` — all live RED updates
+  - `fn_vendor_risk_for_blocker(task_name)` — vendor context for blocked task (updated: now includes ExternalVendorRisk)
+  - `fn_blocker_pattern_history` — cross-launch RED baseline
+  - `fn_vendor_360_risk(vendor_account)` — NEW: full 360-degree vendor risk profile
 
 Commands:
 ```bash
@@ -82,47 +88,66 @@ Command:
 python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
 ```
 
-### C. Operations Agent automation (partially done)
-- [x] Script stable API operations (`setup_operations_agent.py`):
-  - list agents
-  - export definition via `getDefinition`
-  - create from saved definition JSON
-  - update definition via `updateDefinition`
-  - render starter template definition from `.env`
-- [x] Export definition JSON and decode parts locally.
-- [ ] One-time portal step: wire Teams action and validate final rule behavior.
+### C. Fabric Data Agent (portal step)
+- [ ] Create a Fabric Data Agent in the LaunchControl workspace over LaunchControlEH KQL database.
+- [ ] Paste instructions from `setup_fabric_data_agent.py --instructions`.
+- [ ] Add table descriptions and function hints.
+- [ ] Publish the agent endpoint.
+- [ ] Run `setup_fabric_data_agent.py --verify` to capture and export the agent config.
 
-Commands:
+Command (generates instructions to paste into portal):
 ```bash
-python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --list
-python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <agent-id>
-python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --create --definition operations_agent_schema.json
-python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
+python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
+python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --verify
 ```
 
-### D. Final episode proof
+### D. Launch Analyst Copilot Studio agent (portal step)
+- [ ] Create "Launch Analyst" agent in Copilot Studio.
+- [ ] Add the Fabric Data Agent as a connected agent (Knowledge > Connected agents).
+- [ ] Create the "Analyze RED launch" topic from `analyst_agent_instructions.md`.
+- [ ] Add Teams "Post message" action for escalation.
+- [ ] Publish the agent.
+- [ ] Note the agent HTTP endpoint for Plane 1 wiring.
+
+Reference: `episodes/ep-11-dataverse-fabriciq/analyst_agent_instructions.md`
+
+### E. Wire Plane 1 to Plane 2 (portal step)
+- [ ] In Plane 1 agent (Launch Control agent), add a Power Automate flow action after RED write:
+  - Flow input: `launch_id`
+  - Flow calls the Launch Analyst agent's HTTP endpoint.
+- [ ] Test agent-to-agent handoff: write RED via Plane 1, confirm Plane 2 escalates.
+
+### F. Final episode proof
 - [x] Run RED trigger and confirm Dataverse to KQL timing.
 - [ ] Capture proof points:
   - Dataverse write timestamp
-  - KQL visibility timestamp
-  - Operations Agent run or Teams alert evidence
+  - KQL visibility timestamp (target: <60s)
+  - Fabric Data Agent query result showing 360-degree vendor risk
+  - Teams alert evidence from Launch Analyst agent
 - [x] Add timing summary to `README.md`.
 
-### E. Policy/tenant diagnostics (done)
-- [x] Add diagnostic script for Data Activator policy behavior:
-  - `episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py`
-- [x] Verify tenant response:
-  - connector override API returns `DlpConnectorEnablementConfigurationsNotAllowedForTenant`
-- [x] Document practical alternatives:
-  - Fabric item action path
-  - PPAC admin policy change
+### G. Policy/tenant diagnostics (done, archived)
+- [x] `diagnose_dataactivator_policy.py` — documents Operations Agent DLP blocker.
+- [x] `setup_operations_agent.py` — automation for Operations Agent (retained for reference).
+
+## The "why Fabric" narrative
+
+The episode answer to "why does this need Fabric?" is:
+
+1. **V0004 and V0005 exist only in ExternalVendorRisk.** Fabric holds risk intelligence
+   about vendors the operational system (Dataverse) hasn't engaged yet. An alert about
+   Nexus Cloud Services (V0005, Critical market risk) would be invisible to Dataverse alone.
+2. **fn_vendor_360_risk joins 4 sources** — VendorEnrichment (internal ops), ExternalVendorRisk
+   (ProcureIQ market intel), fno_vendtransopen (ERP open balance), fno_vendtable (ERP master).
+   None of these would be natural Dataverse rows under the boundary rule.
+3. **Cross-launch anomaly detection** via fn_blocker_pattern_history. The question "is this
+   launch's RED rate an outlier?" requires aggregating across all historical launches — a
+   semantic pattern, not a per-row Dataverse query.
 
 ## Notes and constraints
 
 - In `eppcdemo1fno`, `lc_health` values are:
-  - Green: `10600601`
-  - Yellow: `10600602`
-  - Red: `10600603`
-- For `lc_statusupdate` launch binding, use:
-  - `lc_launchid@odata.bind` (not `lc_Launch@odata.bind`)
+  - Green: `10600601`  |  Yellow: `10600602`  |  Red: `10600603`
+- For `lc_statusupdate` launch binding, use `lc_launchid@odata.bind`
+- Fabric Data Agent and connected agents are preview features (2025). Expect portal UI changes.
 - Keep real IDs and URLs in `.env` only. Do not commit environment identifiers.

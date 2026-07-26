@@ -1,17 +1,17 @@
 """
 trigger_red_health.py  --  Ep 11 E2E trigger: write lc_statusupdate health=RED
-                            to Dataverse, then watch for it in the KQL eventhouse.
+                            to Dataverse, then wait for Fabric Link replication.
 
 Demonstrates the two-plane architecture:
   Studio agent writes lc_statusupdate (health=RED)
   → Fabric Link replicates to OneLake (~11s median latency)
-  → Eventhouse external Delta table makes it queryable in KQL
-  → Operations Agent rule would fire here
+  → Lakehouse SQL endpoint makes it queryable by the Fabric Data Agent
+  → Launch Analyst agent detects it and escalates to Teams
 
 Usage:
     python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply
     python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --dry-run
-    python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 120
+    python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
 """
 
 from __future__ import annotations
@@ -106,63 +106,17 @@ def delete_status_update(base: str, tok: str, record_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# KQL watch
+# KQL watch  (ARCHIVED: Eventhouse removed in favour of Lakehouse SQL endpoint)
+# Kept for reference; --watch flag now uses a simple timed wait instead.
 # ---------------------------------------------------------------------------
 
-def watch_kql(cluster_uri: str, kql_db: str, record_ids: list[str],
-              timeout_secs: int) -> None:
-    """Poll KQL external table until the written records appear, or timeout."""
-    from azure.identity import AzureCliCredential
-    from azure.kusto.data import KustoClient, KustoConnectionStringBuilder
-
-    cred = AzureCliCredential()
-    tok = cred.get_token(f"{cluster_uri}/.default").token
-    kcsb = KustoConnectionStringBuilder.with_token_provider(cluster_uri, lambda: tok)
-    client = KustoClient(kcsb)
-
-    ids_csv = ", ".join(f"'{rid}'" for rid in record_ids)
-    kql = (
-        f"lc_statusupdate\n"
-        f"| where lc_statusupdateid in ({ids_csv})\n"
-        f"| project lc_title, lc_health, SinkCreatedOn, createdon"
-    )
-
-    print(f"\nWatching KQL for {len(record_ids)} record(s)... (timeout {timeout_secs}s)")
-    start = time.time()
-    poll_interval = 5
-    found = []
-
-    while time.time() - start < timeout_secs:
-        elapsed = int(time.time() - start)
-        try:
-            r = client.execute(kql_db, kql)
-            rows = list(r.primary_results[0])
-            if rows:
-                for row in rows:
-                    title  = row[0]
-                    health = row[1]
-                    sink   = row[2]
-                    cron   = row[3]
-                    lag    = None
-                    if sink and cron:
-                        try:
-                            lag = int((sink - cron).total_seconds())
-                        except Exception:
-                            pass
-                    lag_str = f"{lag}s" if lag is not None else "?"
-                    found.append(title)
-                    print(f"  [{elapsed:3d}s] FOUND: '{title}' | health={health} | lag={lag_str}")
-                if len(found) >= len(record_ids):
-                    print(f"\n✓ All {len(record_ids)} records visible in KQL eventhouse after {elapsed}s")
-                    break
-        except Exception as e:
-            print(f"  [{elapsed:3d}s] KQL poll error: {e}")
-
-        time.sleep(poll_interval)
-    else:
-        print(f"\n✗ Timeout after {timeout_secs}s. Only {len(found)}/{len(record_ids)} records visible.")
-
-    client.close()
+def _timed_wait(seconds: int) -> None:
+    """Simple countdown while Fabric Link replicates."""
+    print(f"\nWaiting {seconds}s for Fabric Link replication (~11s median)...")
+    for remaining in range(seconds, 0, -10):
+        print(f"  {remaining}s remaining...")
+        time.sleep(min(10, remaining))
+    print("  Done. Records should now be visible in the Lakehouse SQL endpoint.")
 
 
 # ---------------------------------------------------------------------------
@@ -173,8 +127,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Ep 11 E2E trigger: write RED health updates.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--apply", action="store_true")
-    parser.add_argument("--watch", type=int, default=0,
-                        help="After writing, watch KQL for N seconds (0 = skip)")
+    parser.add_argument("--wait", type=int, default=0,
+                        help="After writing, wait N seconds for Fabric Link replication (0 = skip)")
     parser.add_argument("--cleanup", action="store_true",
                         help="Delete written records after KQL watch (demo cleanup)")
     args = parser.parse_args()
@@ -187,8 +141,6 @@ def main() -> int:
 
     auth.load_env("ep-11-dataverse-fabriciq")
     base = os.environ["DATAVERSE_URL"].rstrip("/")
-    cluster_uri = os.environ.get("FABRIC_KQL_CLUSTER_URI", "")
-    kql_db = os.environ.get("FABRIC_KQL_DATABASE_NAME", "LaunchControlEH")
 
     print(f"Dataverse: {base}")
     print(f"Mode     : {'DRY RUN' if dry_run else 'APPLY'}")
@@ -233,10 +185,10 @@ def main() -> int:
         return 1
 
     print(f"\nWrote {len(written_ids)} RED health status update(s) to Dataverse.")
-    print("These will replicate to Fabric eventhouse via Fabric Link (~11s median).")
+    print("These will replicate to the Fabric Lakehouse via Fabric Link (~11s median).")
 
-    if args.watch > 0 and cluster_uri:
-        watch_kql(cluster_uri, kql_db, written_ids, args.watch)
+    if args.wait > 0:
+        _timed_wait(args.wait)
 
     if args.cleanup and written_ids:
         print("\nCleaning up demo records...")
