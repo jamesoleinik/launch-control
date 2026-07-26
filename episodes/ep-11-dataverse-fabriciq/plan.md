@@ -40,6 +40,8 @@ Blocked:
 - Data Activator connector path may fail with tenant policy restrictions in this
   tenant. PAC/governance API cannot override when connector enablement configs are
   disabled (`DlpConnectorEnablementConfigurationsNotAllowedForTenant`).
+ - Operations Agent public REST surface in this tenant does not expose run/start
+   endpoints for scripted activation; final live-fire remains portal-driven.
 
 ## Prerequisites and local config
 
@@ -105,6 +107,15 @@ python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
   - KQL visibility timestamp
   - Operations Agent run or Teams alert evidence
 - [x] Add timing summary to `README.md`.
+
+### E. Policy/tenant diagnostics (done)
+- [x] Add diagnostic script for Data Activator policy behavior:
+  - `episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py`
+- [x] Verify tenant response:
+  - connector override API returns `DlpConnectorEnablementConfigurationsNotAllowedForTenant`
+- [x] Document practical alternatives:
+  - Fabric item action path
+  - PPAC admin policy change
 
 ## Notes and constraints
 

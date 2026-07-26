@@ -211,6 +211,8 @@ python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
 Known tenant caveat: if Power Automate action setup fails with a
 `shared_dataactivator` policy error, the connector path is blocked by tenant policy.
 Use a Fabric item action path, or request a PPAC tenant admin policy change.
+Run `python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py`
+to validate the tenant behavior from CLI before spending time in flow wiring.
 
 One-time portal work still needed: finalize action wiring and confirm rule behavior
 in the Operations Agent designer.
