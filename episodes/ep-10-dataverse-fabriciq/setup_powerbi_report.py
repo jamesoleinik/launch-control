@@ -1,14 +1,17 @@
 """
 setup_powerbi_report.py  --  Ep 10 Power BI + Fabric IQ consumption layer (Plane 2).
 
-The Power BI Direct Lake semantic model and report must be built in the Fabric
-portal / Power BI, but the semantic layer they sit on (the SQL views) can be
-applied from here. This script:
+The Power BI Direct Lake semantic model and the report used to sit only in the
+Fabric portal by hand. This script builds the semantic layer (the SQL views) AND
+publishes the Direct Lake semantic model programmatically via the Fabric REST
+API. This script:
   1. Prints the report + Fabric IQ build steps (--instructions).
   2. Prints the semantic-layer SQL (--print-views).
   3. Applies semantic_views.sql to the Lakehouse SQL analytics endpoint
      (--apply-views), idempotent (every view is CREATE OR ALTER).
-  4. Lists the Power BI semantic models / reports in the workspace (--verify).
+  4. Publishes the Direct Lake semantic model over the views (--create-model),
+     idempotent (updateDefinition when a model of the same name exists).
+  5. Lists the Power BI semantic models / reports in the workspace (--verify).
 
 This path needs NO Fabric Data Agent (which is capacity-gated). Power BI Direct
 Lake and the Fabric IQ Copilot plugin both run on trial capacity.
@@ -18,6 +21,8 @@ Usage:
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --print-views
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views --dry-run
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views
+    python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model --dry-run
+    python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --verify
 
 Prerequisites for --apply-views:
@@ -32,31 +37,46 @@ Auth:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
 import struct
 import sys
+import time
+import urllib.error
 import urllib.request
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.auth import load_env  # noqa: E402
+from scripts.auth import load_env, get_credential  # noqa: E402
 
 FABRIC_API = "https://api.fabric.microsoft.com/v1"
 VIEWS_FILE = Path(__file__).with_name("semantic_views.sql")
 SPEC_FILE = Path(__file__).with_name("powerbi_report_spec.md")
 
+MODEL_NAME = "Launch Control 360"
+
+# The semantic-layer views the Direct Lake model binds to (in apply order).
+MODEL_VIEWS = [
+    "vw_launch_health",
+    "vw_vendor_360",
+    "vw_launch_vendor_exposure",
+    "vw_vendor_enrichment",
+    "vw_vendor_risk",
+    "vw_red_status_feed",
+    "vw_watchlist_vendors",
+]
+
 
 def _fabric_token() -> str:
-    from azure.identity import AzureCliCredential
-    return AzureCliCredential().get_token("https://api.fabric.microsoft.com/.default").token
+    return get_credential().get_token("https://api.fabric.microsoft.com/.default").token
 
 
 def _sql_token() -> bytes:
     """AAD access token packed for the ODBC SQL_COPT_SS_ACCESS_TOKEN attribute."""
-    from azure.identity import AzureCliCredential
-    raw = AzureCliCredential().get_token("https://database.windows.net/.default").token
+    raw = get_credential().get_token("https://database.windows.net/.default").token
     enc = raw.encode("utf-16-le")
     return struct.pack("<i", len(enc)) + enc
 
@@ -68,6 +88,67 @@ def _api_get(path: str, token: str) -> dict:
     )
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read())
+
+
+def _api_post(path: str, token: str, body: dict) -> tuple[int, dict, bytes]:
+    data = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        f"{FABRIC_API}{path}",
+        data=data,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=180) as r:
+            return r.status, dict(r.headers), r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers), e.read()
+
+
+def _poll_lro(location: str, token: str) -> tuple[int, bytes]:
+    """Poll a Fabric long-running-operation URL until it stops returning 202."""
+    for _ in range(60):
+        req = urllib.request.Request(location, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            if r.status == 202:
+                time.sleep(int(dict(r.headers).get("Retry-After", "3") or "3"))
+                continue
+            return r.status, r.read()
+    return 408, b"LRO polling timed out"
+
+
+def _sql_connection():
+    """Open a pyodbc connection to the Lakehouse SQL analytics endpoint (AAD token)."""
+    import pyodbc
+
+    server = _resolve_sql_endpoint(_fabric_token())
+    database = os.environ.get("FABRIC_LAKEHOUSE_NAME", "")
+    conn_str = (
+        "Driver={ODBC Driver 18 for SQL Server};"
+        f"Server={server};Database={database};"
+        "Encrypt=yes;TrustServerCertificate=no;"
+    )
+    SQL_COPT_SS_ACCESS_TOKEN = 1256
+    return pyodbc.connect(conn_str, attrs_before={SQL_COPT_SS_ACCESS_TOKEN: _sql_token()}), server, database
+
+
+def _map_sql_type(sql_type: str, col_name: str) -> tuple[str, str]:
+    """Map an INFORMATION_SCHEMA data type to a (TMSL dataType, summarizeBy)."""
+    t = sql_type.lower()
+    if t in ("varchar", "nvarchar", "char", "nchar", "text", "ntext", "uniqueidentifier"):
+        return "string", "none"
+    if t in ("bigint", "int", "smallint", "tinyint"):
+        summ = "none" if re.search(r"pct|score|rating|id$", col_name.lower()) else "sum"
+        return "int64", summ
+    if t in ("decimal", "numeric", "money", "smallmoney"):
+        return "decimal", "none" if "pct" in col_name.lower() else "sum"
+    if t in ("float", "real"):
+        return "double", "none" if re.search(r"pct|score", col_name.lower()) else "sum"
+    if t == "bit":
+        return "boolean", "none"
+    if t in ("date", "datetime", "datetime2", "smalldatetime", "datetimeoffset", "time"):
+        return "dateTime", "none"
+    return "string", "none"
 
 
 def _resolve_sql_endpoint(token: str) -> str:
@@ -152,6 +233,152 @@ def cmd_apply_views(dry_run: bool) -> int:
     return 0
 
 
+def _build_model_bim(server: str, database: str, tables_meta: dict[str, list[tuple[str, str]]]) -> dict:
+    """Build a Direct Lake TMSL (model.bim) document over the semantic views."""
+    tables = []
+    for view, cols in tables_meta.items():
+        tmsl_cols = []
+        for name, sql_type in cols:
+            data_type, summarize_by = _map_sql_type(sql_type, name)
+            tmsl_cols.append({
+                "name": name,
+                "dataType": data_type,
+                "sourceColumn": name,
+                "summarizeBy": summarize_by,
+                "lineageTag": str(uuid.uuid4()),
+            })
+        tables.append({
+            "name": view,
+            "lineageTag": str(uuid.uuid4()),
+            "columns": tmsl_cols,
+            "partitions": [{
+                "name": view,
+                "mode": "directLake",
+                "source": {
+                    "type": "entity",
+                    "entityName": view,
+                    "expressionSource": "DatabaseQuery",
+                    "schemaName": "dbo",
+                },
+            }],
+        })
+
+    m_expr = (
+        "let\n"
+        f'    database = Sql.Database("{server}", "{database}")\n'
+        "in\n"
+        "    database"
+    )
+    return {
+        "name": MODEL_NAME,
+        "compatibilityLevel": 1604,
+        "model": {
+            "culture": "en-US",
+            "defaultPowerBIDataSourceVersion": "powerBI_V3",
+            "sourceQueryCulture": "en-US",
+            "dataAccessOptions": {
+                "legacyRedirects": True,
+                "returnErrorValuesAsNull": True,
+            },
+            "expressions": [{
+                "name": "DatabaseQuery",
+                "kind": "m",
+                "expression": m_expr,
+                "lineageTag": str(uuid.uuid4()),
+                "annotations": [{"name": "PBI_IncludeFutureArtifacts", "value": "False"}],
+            }],
+            "tables": tables,
+            "annotations": [
+                {"name": "PBI_QueryOrder", "value": json.dumps(["DatabaseQuery"])},
+                {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
+            ],
+        },
+    }
+
+
+def _b64(text: str) -> str:
+    return base64.b64encode(text.encode("utf-8")).decode("ascii")
+
+
+def cmd_create_model(dry_run: bool) -> int:
+    load_env()
+    try:
+        import pyodbc  # noqa: F401
+    except ImportError:
+        print("[ERR] pyodbc not installed. `pip install pyodbc` (plus ODBC Driver 18).")
+        return 2
+
+    # Introspect the live view columns so the model matches the applied views.
+    conn, server, database = _sql_connection()
+    cur = conn.cursor()
+    tables_meta: dict[str, list[tuple[str, str]]] = {}
+    for view in MODEL_VIEWS:
+        cur.execute(
+            "SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_NAME = ? ORDER BY ORDINAL_POSITION", view)
+        cols = [(r[0], r[1]) for r in cur.fetchall()]
+        if not cols:
+            print(f"[ERR] view '{view}' not found. Run --apply-views first.")
+            return 1
+        tables_meta[view] = cols
+    conn.close()
+
+    model_bim = _build_model_bim(server, database, tables_meta)
+    pbism = {"version": "4.0", "settings": {}}
+
+    total_cols = sum(len(c) for c in tables_meta.values())
+    print(f"Semantic model '{MODEL_NAME}': {len(tables_meta)} tables, {total_cols} columns "
+          f"(Direct Lake over {database}).")
+
+    if dry_run:
+        print(json.dumps(model_bim, indent=2))
+        print("\n[DRY RUN] model not published.")
+        return 0
+
+    parts = [
+        {"path": "model.bim", "payload": _b64(json.dumps(model_bim)), "payloadType": "InlineBase64"},
+        {"path": "definition.pbism", "payload": _b64(json.dumps(pbism)), "payloadType": "InlineBase64"},
+    ]
+
+    token = _fabric_token()
+    ws_id = os.environ["FABRIC_WORKSPACE_ID"]
+
+    # Idempotent: update the definition if a model of this name already exists.
+    existing = _api_get(f"/workspaces/{ws_id}/semanticModels", token).get("value", [])
+    match = next((it for it in existing if it.get("displayName") == MODEL_NAME), None)
+
+    if match:
+        model_id = match["id"]
+        print(f"Updating existing semantic model definition [{model_id}] ...")
+        status, headers, payload = _api_post(
+            f"/workspaces/{ws_id}/semanticModels/{model_id}/updateDefinition",
+            token, {"definition": {"parts": parts}})
+    else:
+        print("Creating new semantic model ...")
+        status, headers, payload = _api_post(
+            f"/workspaces/{ws_id}/semanticModels",
+            token, {"displayName": MODEL_NAME, "definition": {"parts": parts}})
+
+    if status == 202 and headers.get("Location"):
+        print("  operation accepted, polling ...")
+        status, payload = _poll_lro(headers["Location"], token)
+
+    if status in (200, 201):
+        try:
+            info = json.loads(payload) if payload else {}
+        except json.JSONDecodeError:
+            info = {}
+        model_id = info.get("id", match["id"] if match else "(see --verify)")
+        print(f"[OK] semantic model published: {MODEL_NAME} [{model_id}]")
+        print("Next: enable the Fabric IQ / Copilot plugin in Copilot pointed at this "
+              "model (UI toggle, the only non-scriptable step), then build the report "
+              "with --instructions.")
+        return 0
+
+    print(f"[ERR] publish failed (HTTP {status}): {payload.decode('utf-8', 'replace')[:800]}")
+    return 1
+
+
 def cmd_verify() -> int:
     load_env()
     token = _fabric_token()
@@ -172,14 +399,17 @@ def main() -> int:
     ap.add_argument("--instructions", action="store_true", help="Print report + Fabric IQ build steps.")
     ap.add_argument("--print-views", action="store_true", help="Print semantic_views.sql.")
     ap.add_argument("--apply-views", action="store_true", help="Apply semantic views to the SQL endpoint.")
+    ap.add_argument("--create-model", action="store_true", help="Publish the Direct Lake semantic model over the views.")
     ap.add_argument("--verify", action="store_true", help="List Power BI semantic models / reports.")
-    ap.add_argument("--dry-run", action="store_true", help="Preview only (with --apply-views).")
+    ap.add_argument("--dry-run", action="store_true", help="Preview only (with --apply-views / --create-model).")
     args = ap.parse_args()
 
     if args.print_views:
         return cmd_print_views()
     if args.apply_views:
         return cmd_apply_views(args.dry_run)
+    if args.create_model:
+        return cmd_create_model(args.dry_run)
     if args.verify:
         return cmd_verify()
     return cmd_instructions()

@@ -29,32 +29,39 @@ Built on `semantic_views.sql` (applied to the Lakehouse SQL analytics endpoint):
 
 The tri-source story the user asked for lives in `vw_launch_vendor_exposure`:
 **launch data (Dataverse) + invoice state (F&O) + vendor risk (Lakehouse
-supplementary)** joined on `accountnum` in a single fact.
+supplementary)**. Dataverse work items carry `lc_vendorname`, so this fact joins
+to vendor risk on `vendor_name`; F&O open-invoice exposure per vendor rolls up in
+`vw_vendor_360` (keyed on `accountnum`).
 
 ---
 
 ## Semantic model (Direct Lake)
 
-Create a **Direct Lake** semantic model in the LaunchControl workspace directly
-on the Lakehouse SQL endpoint (New semantic model → pick the five views).
+Published programmatically by `setup_powerbi_report.py --create-model` (Fabric
+REST, TMSL Direct Lake over all seven views). It can also be built by hand: New
+semantic model on the Lakehouse SQL endpoint, pick the views.
 
 **Star shape:**
 
 - Fact: `vw_launch_vendor_exposure` (launch x vendor exposure)
 - Fact: `vw_red_status_feed` (RED events)
-- Dimension: `vw_launch_health` (launch, keyed on `lc_launchid` / `launch_code`)
-- Dimension: `vw_vendor_360` (vendor, keyed on `accountnum`)
+- Dimension: `vw_launch_health` (launch, keyed on `launch_name`)
+- Dimension: `vw_vendor_360` (vendor, keyed on `accountnum`; `vendor_name` for joins)
 
 **Relationships:**
 
-- `vw_launch_vendor_exposure[lc_launchid]` → `vw_launch_health[lc_launchid]` (many-to-one)
-- `vw_launch_vendor_exposure[accountnum]` → `vw_vendor_360[accountnum]` (many-to-one)
-- `vw_red_status_feed[launch_code]` → `vw_launch_health[launch_code]` (many-to-one)
+- `vw_launch_vendor_exposure[vendor_name]` → `vw_vendor_360[vendor_name]` (many-to-one)
+- `vw_red_status_feed[launch_name]` → `vw_launch_health[launch_name]` (many-to-one)
+
+Note: `vw_launch_vendor_exposure` carries `launch_code` (e.g. `WIDGET-Q3`) while
+`vw_launch_health` is keyed on the launch display name (e.g. `Q3 Widget Launch`),
+so there is no direct code-to-name relationship in the live data; exposure relates
+to launches through the vendor dimension.
 
 ### DAX measures
 
 ```dax
-Total Open ERP Exposure = SUM(vw_launch_vendor_exposure[erp_open_balance_usd])
+Total Open ERP Exposure = SUM(vw_vendor_360[open_balance_usd])
 Dataverse Invoiced      = SUM(vw_launch_vendor_exposure[dataverse_invoiced_amount])
 RED Updates             = SUM(vw_launch_health[red_count])
 RED Rate %              = AVERAGE(vw_launch_health[red_pct])

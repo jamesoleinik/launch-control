@@ -23,18 +23,30 @@ Completed:
 - Track Changes enabled on `lc_*` tables.
 - Fabric Link active from Dataverse env to LaunchControl workspace.
 - LaunchControl Lakehouse active over Fabric Link; SQL analytics endpoint reachable.
-- `setup_lakehouse_tables.py` created and applied:
-  - Fabric Link Delta tables (Dataverse): `lc_statusupdate`, `lc_task`, `lc_launch`, `lc_vendorwork`
-  - Fabric Link Delta tables (F&O ERP): `fno_vendtable`, `fno_vendtransopen`
-  - supplementary native tables: `VendorEnrichment` (internal performance), `ExternalVendorRisk` (ProcureIQ market intel)
+- Live Fabric Link table set (verified against the SQL endpoint):
+  - Dataverse mirror: `lc_launch`, `lc_task`, `lc_statusupdate`, `lc_vendorwork`,
+    `lc_milestone`, `lc_teammember`.
+  - F&O ERP mirror: `vendtable` (vendor master), `vendtransopen` (open invoices).
+    Note: the live tables are `vendtable` / `vendtransopen`, not `fno_*`.
+  - Vendor enrichment / ProcureIQ risk are no longer native tables (lost with a
+    recreated lakehouse); they are now inlined as `vw_vendor_enrichment` /
+    `vw_vendor_risk` VALUES-views in `semantic_views.sql` for portability.
+- Fabric Link completeness check: `lc_erpsignal` (3 rows, ChangeTrackingEnabled)
+  is NOT in the Link's selected tables. To add it: maker portal > the table >
+  Analyze > Link to Microsoft Fabric > Manage tables. Not currently required by
+  the Power BI model; fold it in once added.
 - Eventhouse + KQL path (eventhouse `LaunchControlEH`, `fn_live_red_updates`,
   `fn_vendor_360_risk`, etc.) evaluated then archived in `setup_eventhouse.py`;
-  the 4-way vendor-360 join now runs as T-SQL in the Launch Analyst agent.
+  the 4-way vendor-360 join now runs as T-SQL in the semantic views.
 - `show_replication_latency.py` created for latency distribution output.
 - Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
 - `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
 - E2E write-path validated with `trigger_red_health.py`:
   - Dataverse RED writes replicated and queryable via the Lakehouse SQL endpoint in about 58s.
+- `semantic_views.sql` applied live (7 views, all return rows).
+- Direct Lake semantic model `Launch Control 360` published programmatically via
+  `setup_powerbi_report.py --create-model` (Fabric REST, TMSL); confirmed
+  queryable end-to-end with a DAX `executeQueries` call.
 - `analyst_agent_instructions.md` created for Plane 2 agent.
 - `setup_fabric_data_agent.py` created for portal documentation + verification.
 
@@ -115,7 +127,7 @@ python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 3
 - [x] Author `semantic_views.sql`: `vw_launch_health`, `vw_vendor_360`,
       `vw_launch_vendor_exposure` (the tri-source launch x invoice x vendor fact),
       `vw_red_status_feed`, `vw_watchlist_vendors`.
-- [ ] Apply the views to the Lakehouse SQL analytics endpoint.
+- [x] Apply the views to the Lakehouse SQL analytics endpoint.
 
 Commands:
 ```bash
@@ -125,18 +137,27 @@ python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views
 ```
 (or paste `semantic_views.sql` into the Fabric SQL query editor.)
 
-### D. Power BI Direct Lake semantic model + report (portal step)
-- [ ] Create a Direct Lake semantic model in the LaunchControl workspace over the
-      five views. Add relationships and DAX measures from `powerbi_report_spec.md`.
+### D. Power BI Direct Lake semantic model + report
+- [x] Publish a Direct Lake semantic model (`Launch Control 360`) over the seven
+      views, programmatically via the Fabric REST API (TMSL). Idempotent
+      (updateDefinition if it already exists).
+- [ ] Add report relationships and DAX measures from `powerbi_report_spec.md`.
 - [ ] Build the "Launch Control 360" report: Launch Health, Vendor 360,
       Launch x Vendor Exposure, Blind spots.
-- [ ] Publish the semantic model + report to the workspace.
-- [ ] Run `setup_powerbi_report.py --verify` to list/confirm the published items.
+- [x] Confirm the model is queryable (DAX `executeQueries` returns rows).
+
+Commands:
+```bash
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --verify
+```
 
 Reference: `episodes/ep-10-dataverse-fabriciq/powerbi_report_spec.md`
 
 ### E. Fabric IQ in Copilot (portal step)
 - [ ] Enable the Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server).
+      This is the only non-scriptable step (UI toggle).
 - [ ] Point it at the "Launch Control 360" semantic model in the LaunchControl workspace.
 - [ ] Confirm natural-language answers, e.g. "Which launch's RED rate is most
       anomalous vs. the median?" and "Open ERP invoice exposure for EP11-DEMO-01?".
@@ -151,8 +172,8 @@ Reference: `episodes/ep-10-dataverse-fabriciq/powerbi_report_spec.md`
 - [x] Add timing summary to `README.md`.
 
 ### G. Policy/tenant diagnostics (done, archived)
-- [x] `diagnose_dataactivator_policy.py` — documents Operations Agent DLP blocker.
-- [x] `setup_operations_agent.py` — automation for Operations Agent (retained for reference).
+- [x] `diagnose_dataactivator_policy.py`: documents Operations Agent DLP blocker.
+- [x] `setup_operations_agent.py`: automation for Operations Agent (retained for reference).
 
 ## Optional upgrade: Fabric Data Agent connected-agent path (needs F/P capacity)
 
@@ -179,11 +200,12 @@ The episode answer to "why does this need Fabric?" is:
 1. **V0004 and V0005 exist only in ExternalVendorRisk.** Fabric holds risk intelligence
    about vendors the operational system (Dataverse) hasn't engaged yet. An alert about
    Nexus Cloud Services (V0005, Critical market risk) would be invisible to Dataverse alone.
-2. **fn_vendor_360_risk joins 4 sources** — VendorEnrichment (internal ops), ExternalVendorRisk
-   (ProcureIQ market intel), fno_vendtransopen (ERP open balance), fno_vendtable (ERP master).
+2. **The vendor-360 view joins 4 sources**: `vw_vendor_enrichment` (internal ops),
+   `vw_vendor_risk` (ProcureIQ market intel), `vendtransopen` (ERP open balance),
+   `vendtable` (ERP master).
    None of these would be natural Dataverse rows under the boundary rule.
-3. **Cross-launch anomaly detection** via fn_blocker_pattern_history. The question "is this
-   launch's RED rate an outlier?" requires aggregating across all historical launches — a
+3. **Cross-launch anomaly detection** via `vw_launch_health`. The question "is this
+   launch's RED rate an outlier?" requires aggregating across all historical launches: a
    semantic pattern, not a per-row Dataverse query.
 
 ## Notes and constraints
