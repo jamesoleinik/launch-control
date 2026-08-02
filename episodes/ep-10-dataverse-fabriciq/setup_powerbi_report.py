@@ -273,6 +273,33 @@ def _build_model_bim(server: str, database: str, tables_meta: dict[str, list[tup
         "in\n"
         "    database"
     )
+
+    # Relationships that make the sources visibly come together (many -> one).
+    # Dimensions: vw_vendor_360 (vendor), vw_launch_health (launch).
+    def _rel(from_table, from_col, to_table, to_col):
+        return {
+            "name": str(uuid.uuid4()),
+            "fromTable": from_table,
+            "fromColumn": from_col,
+            "toTable": to_table,
+            "toColumn": to_col,
+            "crossFilteringBehavior": "oneDirection",
+        }
+
+    present = set(tables_meta)
+    wanted = [
+        ("vw_launch_vendor_exposure", "vendor_name", "vw_vendor_360", "vendor_name"),
+        ("vw_launch_vendor_exposure", "launch_name", "vw_launch_health", "launch_name"),
+        ("vw_red_status_feed", "launch_name", "vw_launch_health", "launch_name"),
+        ("vw_watchlist_vendors", "accountnum", "vw_vendor_360", "accountnum"),
+    ]
+    relationships = []
+    for ft, fc, tt, tc in wanted:
+        fcols = {c for c, _ in tables_meta.get(ft, [])}
+        tcols = {c for c, _ in tables_meta.get(tt, [])}
+        if ft in present and tt in present and fc in fcols and tc in tcols:
+            relationships.append(_rel(ft, fc, tt, tc))
+
     return {
         "name": MODEL_NAME,
         "compatibilityLevel": 1604,
@@ -292,6 +319,7 @@ def _build_model_bim(server: str, database: str, tables_meta: dict[str, list[tup
                 "annotations": [{"name": "PBI_IncludeFutureArtifacts", "value": "False"}],
             }],
             "tables": tables,
+            "relationships": relationships,
             "annotations": [
                 {"name": "PBI_QueryOrder", "value": json.dumps(["DatabaseQuery"])},
                 {"name": "__PBI_TimeIntelligenceEnabled", "value": "0"},
@@ -383,6 +411,55 @@ def cmd_create_model(dry_run: bool) -> int:
     return 1
 
 
+def _matrix(entity, row_cols, value_specs, x, y, w, h) -> dict:
+    """A pivotTable (matrix) grouping row_cols with aggregated value_specs=(prop, fn)."""
+    src = "q"
+    selects, row_proj, val_proj = [], [], []
+    for c in row_cols:
+        selects.append({**_col_ref(src, c), "Name": f"{entity}.{c}"})
+        row_proj.append({"queryRef": f"{entity}.{c}"})
+    for prop, fn in value_specs:
+        name = _fn_name(entity, prop, fn)
+        selects.append({**_agg_ref(src, prop, fn), "Name": name})
+        val_proj.append({"queryRef": name})
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "pivotTable",
+            "projections": {"Rows": row_proj, "Values": val_proj},
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": selects,
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+def _textbox(text, x, y, w, h) -> dict:
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "textbox",
+            "objects": {"general": [{"properties": {"paragraphs": [
+                {"textRuns": [{"value": text}]}]}}]},
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+_FN = {0: "Sum", 1: "Avg", 2: "Min", 3: "Max", 4: "Count", 5: "CountNonNull"}
+
+
+def _fn_name(entity: str, prop: str, fn: int) -> str:
+    return f"{_FN.get(fn, 'Sum')}({entity}.{prop})"
+
+
 def _col_ref(src: str, prop: str) -> dict:
     return {"Column": {"Expression": {"SourceRef": {"Source": src}}, "Property": prop}}
 
@@ -398,7 +475,7 @@ def _container(x, y, w, h, config: dict) -> dict:
 
 def _card(entity, prop, x, y, w, h, fn=0) -> dict:
     src = "q"
-    name = f"{'Sum' if fn == 0 else 'Avg'}({entity}.{prop})"
+    name = _fn_name(entity, prop, fn)
     cfg = {
         "name": str(uuid.uuid4()),
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
@@ -418,7 +495,7 @@ def _card(entity, prop, x, y, w, h, fn=0) -> dict:
 
 def _bar(entity, category, value, x, y, w, h, fn=1) -> dict:
     src = "q"
-    valname = f"{'Sum' if fn == 0 else 'Avg'}({entity}.{value})"
+    valname = _fn_name(entity, value, fn)
     catname = f"{entity}.{category}"
     cfg = {
         "name": str(uuid.uuid4()),
@@ -437,6 +514,45 @@ def _bar(entity, category, value, x, y, w, h, fn=1) -> dict:
                     {**_agg_ref(src, value, fn), "Name": valname},
                 ],
             },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+def _stacked_bar(entity, category, values, colors, x, y, w, h) -> dict:
+    """Horizontal stacked bar: one bar per category with multiple summed measures.
+
+    Used for the RAG (red/amber/green) health mix per launch, with fixed colors.
+    """
+    src = "q"
+    catname = f"{entity}.{category}"
+    selects = [{**_col_ref(src, category), "Name": catname}]
+    y_proj, data_points = [], []
+    for val, color in zip(values, colors):
+        vn = _fn_name(entity, val, 0)
+        selects.append({**_agg_ref(src, val, 0), "Name": vn})
+        y_proj.append({"queryRef": vn})
+        data_points.append({
+            "selector": {"metadata": vn},
+            "properties": {"fill": {"solid": {"color": {"expr": {
+                "Literal": {"Value": f"'{color}'"}}}}}},
+        })
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "stackedBarChart",
+            "projections": {
+                "Category": [{"queryRef": catname}],
+                "Y": y_proj,
+            },
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": selects,
+            },
+            "objects": {"dataPoint": data_points},
             "drillFilterOtherVisuals": True,
         },
     }
@@ -480,15 +596,23 @@ def _section(display_name: str, containers: list[dict]) -> dict:
 
 
 def _build_report_json() -> dict:
-    """The 'Launch Control 360' report: 4 pages with real visuals over the model."""
+    """The 'Launch Control 360' report: 5 pages with real visuals over the model."""
     sections = [
         _section("Launch Health", [
-            _card("vw_launch_health", "red_count", 20, 20, 200, 140, fn=0),
-            _card("vw_launch_health", "total_updates", 240, 20, 200, 140, fn=0),
-            _bar("vw_launch_health", "launch_name", "red_pct", 20, 180, 620, 320, fn=1),
+            _textbox("Launch health overview: RED / AMBER / GREEN status mix across "
+                     "every active launch, rolled up from Dataverse status updates.",
+                     20, 12, 1240, 44),
+            _card("vw_launch_health", "launch_name", 20, 66, 220, 120, fn=4),
+            _card("vw_launch_health", "red_count", 250, 66, 220, 120, fn=0),
+            _card("vw_launch_health", "amber_count", 480, 66, 220, 120, fn=0),
+            _card("vw_launch_health", "total_updates", 710, 66, 220, 120, fn=0),
+            _stacked_bar("vw_launch_health", "launch_name",
+                         ["red_count", "amber_count", "green_count"],
+                         ["#D64550", "#E8A33D", "#4E9F3D"],
+                         20, 206, 760, 474),
             _table("vw_launch_health",
                    ["launch_name", "red_count", "amber_count", "green_count", "red_pct"],
-                   660, 20, 600, 480),
+                   800, 206, 460, 474),
         ]),
         _section("Vendor 360", [
             _card("vw_vendor_360", "open_balance_usd", 20, 20, 220, 140, fn=0),
@@ -500,10 +624,24 @@ def _build_report_json() -> dict:
         ]),
         _section("Launch x Vendor Exposure", [
             _table("vw_launch_vendor_exposure",
-                   ["launch_code", "vendor_name", "dataverse_invoiced_amount",
+                   ["launch_name", "vendor_name", "dataverse_invoiced_amount",
                     "dataverse_committed_amount", "internal_risk_tier",
                     "market_risk_tier"],
                    20, 20, 1240, 660),
+        ]),
+        _section("Cross-Source 360", [
+            _textbox("Cross-source 360: one matrix unifying Dataverse launch/work, "
+                     "internal delivery ops, and ProcureIQ market risk, with the F&O "
+                     "ERP vendor ledger alongside.", 20, 10, 1240, 50),
+            _matrix("vw_launch_vendor_exposure",
+                    ["launch_name", "vendor_name"],
+                    [("dataverse_invoiced_amount", 0), ("financial_health_score", 1),
+                     ("on_time_pct", 1)],
+                    20, 70, 760, 610),
+            _table("vw_vendor_360",
+                   ["vendor_name", "erp_credit_limit", "open_balance_usd",
+                    "overdue_count", "market_risk_tier"],
+                   800, 70, 460, 610),
         ]),
         _section("Blind Spots", [
             _table("vw_watchlist_vendors",

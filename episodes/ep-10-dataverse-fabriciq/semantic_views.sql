@@ -24,13 +24,15 @@
 
 -- ---------------------------------------------------------------------------
 -- vw_vendor_enrichment  --  internal delivery performance (was VendorEnrichment).
+-- Vendor names align with the Dataverse lc_vendorwork vendors so the cross-source
+-- joins light up; accountnum aligns with the F&O vendtable master (V0001-V0003).
 -- ---------------------------------------------------------------------------
 CREATE OR ALTER VIEW vw_vendor_enrichment AS
 SELECT accountnum, vendor_name, category, on_time_pct, open_disputes, risk_tier
 FROM (VALUES
-    ('V0001', 'Acme Translations Inc.',   'Localization',       CAST(0.61 AS float), 2, 'High'),
-    ('V0002', 'GlobalTech Licensing Ltd.','Software Licensing', CAST(0.88 AS float), 0, 'Low'),
-    ('V0003', 'SwiftLogix Freight Co.',   'Logistics',          CAST(0.74 AS float), 1, 'Medium')
+    ('V0001', 'Contoso Supply Co',      'Components',   CAST(0.61 AS float), 2, 'High'),
+    ('V0002', 'Fabrikam Media',         'Creative',     CAST(0.88 AS float), 0, 'Low'),
+    ('V0003', 'SwiftLogix Freight Co.', 'Logistics',    CAST(0.74 AS float), 1, 'Medium')
 ) AS t(accountnum, vendor_name, category, on_time_pct, open_disputes, risk_tier);
 GO
 
@@ -42,13 +44,30 @@ CREATE OR ALTER VIEW vw_vendor_risk AS
 SELECT accountnum, vendor_name, credit_rating, financial_health_score,
        market_risk_tier, diversity_certified, risk_source
 FROM (VALUES
-    ('V0001', 'Acme Translations Inc.',    'C',  CAST(38.0 AS float), 'High',     0, 'ProcureIQ'),
-    ('V0002', 'GlobalTech Licensing Ltd.', 'A',  CAST(82.0 AS float), 'Low',      1, 'ProcureIQ'),
-    ('V0003', 'SwiftLogix Freight Co.',    'B+', CAST(65.0 AS float), 'Medium',   0, 'ProcureIQ'),
-    ('V0004', 'Pacific Rim Components Ltd.','B',  CAST(71.0 AS float), 'Medium',   1, 'ProcureIQ'),
+    ('V0001', 'Contoso Supply Co',        'C',  CAST(38.0 AS float), 'High',     0, 'ProcureIQ'),
+    ('V0002', 'Fabrikam Media',           'A',  CAST(82.0 AS float), 'Low',      1, 'ProcureIQ'),
+    ('V0003', 'SwiftLogix Freight Co.',   'B+', CAST(65.0 AS float), 'Medium',   0, 'ProcureIQ'),
+    ('V0004', 'Pacific Rim Components Ltd.','B', CAST(71.0 AS float), 'Medium',   1, 'ProcureIQ'),
     ('V0005', 'Nexus Cloud Services Inc.', 'C-', CAST(29.0 AS float), 'Critical', 0, 'ProcureIQ')
 ) AS t(accountnum, vendor_name, credit_rating, financial_health_score,
        market_risk_tier, diversity_certified, risk_source);
+GO
+
+-- ---------------------------------------------------------------------------
+-- vw_launch_code_map  --  bridges the lc_vendorwork short launch code to the
+-- launch display name used everywhere else, so vendor exposure relates to the
+-- launch dimension (vw_launch_health).
+-- ---------------------------------------------------------------------------
+CREATE OR ALTER VIEW vw_launch_code_map AS
+SELECT launch_code, launch_name
+FROM (VALUES
+    ('WIDGET-Q3',     'Q3 Widget Launch'),
+    ('API-Q2',        'Q2 API Platform Upgrade'),
+    ('WHSE-Q3',       'Q3 Warehouse Consolidation'),
+    ('VPORTAL-Q2',    'Q2 Vendor Portal Cutover'),
+    ('COMPLIANCE-Q3', 'Q3 Compliance Reporting'),
+    ('PRICING-Q1',    'Q1 Pricing Refresh')
+) AS t(launch_code, launch_name);
 GO
 
 -- ---------------------------------------------------------------------------
@@ -117,6 +136,7 @@ GO
 CREATE OR ALTER VIEW vw_launch_vendor_exposure AS
 SELECT
     vw.lc_launchcode                                AS launch_code,
+    lcm.launch_name                                 AS launch_name,
     vw.lc_vendorname                                AS vendor_name,
     vw.lc_invoicedamount                            AS dataverse_invoiced_amount,
     vw.lc_committedamount                           AS dataverse_committed_amount,
@@ -126,8 +146,9 @@ SELECT
     evr.financial_health_score,
     evr.market_risk_tier
 FROM lc_vendorwork vw
-LEFT JOIN vw_vendor_enrichment ve ON vw.lc_vendorname = ve.vendor_name
-LEFT JOIN vw_vendor_risk evr       ON vw.lc_vendorname = evr.vendor_name
+LEFT JOIN vw_launch_code_map lcm    ON vw.lc_launchcode = lcm.launch_code
+LEFT JOIN vw_vendor_enrichment ve   ON vw.lc_vendorname = ve.vendor_name
+LEFT JOIN vw_vendor_risk evr        ON vw.lc_vendorname = evr.vendor_name
 WHERE (vw.IsDelete = 0 OR vw.IsDelete IS NULL);
 GO
 
