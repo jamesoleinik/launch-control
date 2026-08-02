@@ -1,35 +1,38 @@
 # Ep 10 build plan: Dataverse + Fabric Operations Agent
 
-This runbook reflects the current architecture choice: eventhouse + KQL (not
-Fabric ontology). It tracks what is already built and what remains to finish the
-episode.
+This runbook reflects the current architecture choice: the Lakehouse SQL
+analytics endpoint queried directly by a Fabric Data Agent (the Eventhouse + KQL
+path was evaluated and archived in `setup_eventhouse.py`). It tracks what is
+already built and what remains to finish the episode.
 
 ## One-line goal
 
 Use two AI planes:
 1. Copilot Studio agent writes `lc_statusupdate` in Dataverse when launch risk is high.
-2. Fabric Operations Agent detects RED updates in KQL, enriches with vendor context,
-   and sends an escalation.
+2. Fabric Data Agent answers over the Lakehouse SQL endpoint, enriches with vendor
+   context, and the Launch Analyst agent sends an escalation.
 
-The bridge is low-latency Fabric Link (Dataverse to OneLake to KQL external Delta).
+The bridge is low-latency Fabric Link (Dataverse to OneLake Lakehouse Delta,
+queried via the SQL analytics endpoint).
 
 ## Status now
 
 Completed:
 - Track Changes enabled on `lc_*` tables.
 - Fabric Link active from Dataverse env to LaunchControl workspace.
-- Eventhouse `LaunchControlEH` and KQL database provisioned.
-- `setup_eventhouse.py` created and applied:
-  - external Delta tables: `lc_statusupdate`, `lc_task`, `lc_launch`, `lc_vendorwork`,
-    `fno_vendtable`, `fno_vendtransopen`
-  - native tables: `VendorEnrichment` (internal performance), `ExternalVendorRisk` (ProcureIQ market intel)
-  - functions: `fn_live_red_updates`, `fn_vendor_risk_for_blocker` (updated with ExternalVendorRisk),
-    `fn_blocker_pattern_history`, `fn_vendor_360_risk` (new: full 360 risk profile)
+- LaunchControl Lakehouse active over Fabric Link; SQL analytics endpoint reachable.
+- `setup_lakehouse_tables.py` created and applied:
+  - Fabric Link Delta tables (Dataverse): `lc_statusupdate`, `lc_task`, `lc_launch`, `lc_vendorwork`
+  - Fabric Link Delta tables (F&O ERP): `fno_vendtable`, `fno_vendtransopen`
+  - supplementary native tables: `VendorEnrichment` (internal performance), `ExternalVendorRisk` (ProcureIQ market intel)
+- Eventhouse + KQL path (eventhouse `LaunchControlEH`, `fn_live_red_updates`,
+  `fn_vendor_360_risk`, etc.) evaluated then archived in `setup_eventhouse.py`;
+  the 4-way vendor-360 join now runs as T-SQL in the Launch Analyst agent.
 - `show_replication_latency.py` created for latency distribution output.
 - Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
 - `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
 - E2E write-path validated with `trigger_red_health.py`:
-  - Dataverse RED writes replicated and queryable in KQL in about 58s.
+  - Dataverse RED writes replicated and queryable via the Lakehouse SQL endpoint in about 58s.
 - `analyst_agent_instructions.md` created for Plane 2 agent.
 - `setup_fabric_data_agent.py` created for portal documentation + verification.
 
@@ -65,9 +68,9 @@ Immediate fallback while on trial:
    - `DATAVERSE_URL`
    - `FABRIC_WORKSPACE_ID`
    - `FABRIC_WORKSPACE_NAME`
+   - `FABRIC_LAKEHOUSE_ID`
    - `FABRIC_LAKEHOUSE_NAME`
-   - `FABRIC_KQL_CLUSTER_URI`
-   - `FABRIC_KQL_DATABASE_NAME`
+   - (the archived Eventhouse path also uses `FABRIC_KQL_CLUSTER_URI` / `FABRIC_KQL_DATABASE_NAME`)
 3. Select env:
    - PowerShell: `$env:LC_ENV = "ep-10-dataverse-fabriciq"`
 4. Set encoding:
@@ -75,29 +78,29 @@ Immediate fallback while on trial:
 
 ## Build checklist
 
-### A. KQL substrate (done)
-- [x] Create eventhouse and KQL database.
-- [x] Create external Delta tables with impersonation URI form.
+### A. Lakehouse substrate (done)
+- [x] Confirm Fabric Link Lakehouse + SQL analytics endpoint (Eventhouse path archived).
+- [x] Create/verify the Fabric Link Delta tables over the Lakehouse.
 - [x] Seed native `VendorEnrichment` table (internal performance).
 - [x] Seed native `ExternalVendorRisk` table (ProcureIQ external market intelligence).
   - V0001-V0003: match vendors in live launches, with differentiated risk profiles.
   - V0004 (Pacific Rim Components): medium risk, in external DB but not in any Dataverse launch.
   - V0005 (Nexus Cloud Services): critical risk, in external DB but not in any Dataverse launch.
-- [x] Create KQL helper functions:
-  - `fn_live_red_updates` — all live RED updates
-  - `fn_vendor_risk_for_blocker(task_name)` — vendor context for blocked task (updated: now includes ExternalVendorRisk)
-  - `fn_blocker_pattern_history` — cross-launch RED baseline
-  - `fn_vendor_360_risk(vendor_account)` — NEW: full 360-degree vendor risk profile
+- [x] Seed supplementary native tables via `setup_lakehouse_tables.py`.
+- [x] Express the analytics as T-SQL over the Lakehouse SQL endpoint (in the Launch
+      Analyst agent): live RED updates, per-blocker vendor context, cross-launch RED
+      baseline, and the full 360-degree vendor risk join. (KQL-function equivalents
+      are archived in `setup_eventhouse.py`.)
 
 Commands:
 ```bash
-python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --dry-run
-python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --apply
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
 ```
 
 ### B. Dataverse trigger write path (done)
 - [x] Implement `trigger_red_health.py` for RED status writes.
-- [x] Validate replication by watching KQL visibility.
+- [x] Validate replication by watching Lakehouse SQL visibility.
 
 Command:
 ```bash
@@ -105,7 +108,7 @@ python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 3
 ```
 
 ### C. Fabric Data Agent (portal step)
-- [ ] Create a Fabric Data Agent in the LaunchControl workspace over LaunchControlEH KQL database.
+- [ ] Create a Fabric Data Agent in the LaunchControl workspace over the LaunchControl Lakehouse SQL endpoint.
 - [ ] Paste instructions from `setup_fabric_data_agent.py --instructions`.
 - [ ] Add table descriptions and function hints.
 - [ ] Publish the agent endpoint.
@@ -134,10 +137,10 @@ Reference: `episodes/ep-10-dataverse-fabriciq/analyst_agent_instructions.md`
 - [ ] Test agent-to-agent handoff: write RED via Plane 1, confirm Plane 2 escalates.
 
 ### F. Final episode proof
-- [x] Run RED trigger and confirm Dataverse to KQL timing.
+- [x] Run RED trigger and confirm Dataverse to Lakehouse SQL timing.
 - [ ] Capture proof points:
   - Dataverse write timestamp
-  - KQL visibility timestamp (target: <60s)
+  - Lakehouse SQL visibility timestamp (target: <60s)
   - Fabric Data Agent query result showing 360-degree vendor risk
   - Teams alert evidence from Launch Analyst agent
 - [x] Add timing summary to `README.md`.
