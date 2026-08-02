@@ -1,16 +1,18 @@
-# Ep 10 build plan: Dataverse + Fabric Operations Agent
+# Ep 10 build plan: Dataverse + Fabric IQ
 
-This runbook reflects the current architecture choice: the Lakehouse SQL
-analytics endpoint queried directly by a Fabric Data Agent (the Eventhouse + KQL
-path was evaluated and archived in `setup_eventhouse.py`). It tracks what is
-already built and what remains to finish the episode.
+This runbook reflects the current architecture choice: a Power BI Direct Lake
+semantic model over the Lakehouse SQL analytics endpoint, consumed through a
+report and the Fabric IQ Copilot plugin (the Fabric Data Agent path is a paid-
+capacity upgrade; the Eventhouse + KQL path was evaluated and archived in
+`setup_eventhouse.py`). It tracks what is already built and what remains.
 
 ## One-line goal
 
 Use two AI planes:
 1. Copilot Studio agent writes `lc_statusupdate` in Dataverse when launch risk is high.
-2. Fabric Data Agent answers over the Lakehouse SQL endpoint, enriches with vendor
-   context, and the Launch Analyst agent sends an escalation.
+2. A Power BI Direct Lake semantic model over the Lakehouse SQL endpoint unifies
+   launch, F&O invoice, and vendor-risk data; the report and the Fabric IQ Copilot
+   plugin surface it for questions and escalation review.
 
 The bridge is low-latency Fabric Link (Dataverse to OneLake Lakehouse Delta,
 queried via the SQL analytics endpoint).
@@ -54,12 +56,14 @@ Blocked:
   most capacity-gated features unless explicitly footnoted. Fabric Data Agent is
   capacity-gated and currently unavailable in this trial workspace.
 
-Immediate fallback while on trial:
-- Keep the Lakehouse data model work (already automated) and complete the demo
-  using direct Lakehouse SQL queries + Copilot Studio logic, without a Fabric Data
-  Agent connected-agent dependency.
-- Re-enable the full Plane 2 connected-agent path after moving the workspace to a
-  supported paid capacity (F SKU or P SKU).
+Chosen path while on trial (no capacity blocker):
+- Consume the Lakehouse through a **Power BI Direct Lake semantic model** + report
+  ("Launch Control 360") and the **Fabric IQ** Copilot plugin, instead of a Fabric
+  Data Agent. Power BI Direct Lake and Fabric IQ run on trial capacity. The unified
+  three-source data (Dataverse launches + F&O invoices + vendor intel) is exposed by
+  `semantic_views.sql`. Build steps: sections C-F below and `powerbi_report_spec.md`.
+- The Fabric Data Agent + Launch Analyst connected-agent path (sections H-J) remains
+  documented as the upgrade once the workspace moves to a paid F/P SKU.
 
 ## Prerequisites and local config
 
@@ -107,47 +111,66 @@ Command:
 python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
 ```
 
-### C. Fabric Data Agent (portal step)
-- [ ] Create a Fabric Data Agent in the LaunchControl workspace over the LaunchControl Lakehouse SQL endpoint.
-- [ ] Paste instructions from `setup_fabric_data_agent.py --instructions`.
-- [ ] Add table descriptions and function hints.
-- [ ] Publish the agent endpoint.
-- [ ] Run `setup_fabric_data_agent.py --verify` to capture and export the agent config.
+### C. Semantic views over the Lakehouse (done)
+- [x] Author `semantic_views.sql`: `vw_launch_health`, `vw_vendor_360`,
+      `vw_launch_vendor_exposure` (the tri-source launch x invoice x vendor fact),
+      `vw_red_status_feed`, `vw_watchlist_vendors`.
+- [ ] Apply the views to the Lakehouse SQL analytics endpoint.
 
-Command (generates instructions to paste into portal):
+Commands:
 ```bash
-python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
-python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --verify
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --print-views
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views
 ```
+(or paste `semantic_views.sql` into the Fabric SQL query editor.)
 
-### D. Launch Analyst Copilot Studio agent (portal step)
-- [ ] Create "Launch Analyst" agent in Copilot Studio.
-- [ ] Add the Fabric Data Agent as a connected agent (Knowledge > Connected agents).
-- [ ] Create the "Analyze RED launch" topic from `analyst_agent_instructions.md`.
-- [ ] Add Teams "Post message" action for escalation.
-- [ ] Publish the agent.
-- [ ] Note the agent HTTP endpoint for Plane 1 wiring.
+### D. Power BI Direct Lake semantic model + report (portal step)
+- [ ] Create a Direct Lake semantic model in the LaunchControl workspace over the
+      five views. Add relationships and DAX measures from `powerbi_report_spec.md`.
+- [ ] Build the "Launch Control 360" report: Launch Health, Vendor 360,
+      Launch x Vendor Exposure, Blind spots.
+- [ ] Publish the semantic model + report to the workspace.
+- [ ] Run `setup_powerbi_report.py --verify` to list/confirm the published items.
 
-Reference: `episodes/ep-10-dataverse-fabriciq/analyst_agent_instructions.md`
+Reference: `episodes/ep-10-dataverse-fabriciq/powerbi_report_spec.md`
 
-### E. Wire Plane 1 to Plane 2 (portal step)
-- [ ] In Plane 1 agent (Launch Control agent), add a Power Automate flow action after RED write:
-  - Flow input: `launch_id`
-  - Flow calls the Launch Analyst agent's HTTP endpoint.
-- [ ] Test agent-to-agent handoff: write RED via Plane 1, confirm Plane 2 escalates.
+### E. Fabric IQ in Copilot (portal step)
+- [ ] Enable the Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server).
+- [ ] Point it at the "Launch Control 360" semantic model in the LaunchControl workspace.
+- [ ] Confirm natural-language answers, e.g. "Which launch's RED rate is most
+      anomalous vs. the median?" and "Open ERP invoice exposure for EP11-DEMO-01?".
 
 ### F. Final episode proof
 - [x] Run RED trigger and confirm Dataverse to Lakehouse SQL timing.
 - [ ] Capture proof points:
   - Dataverse write timestamp
   - Lakehouse SQL visibility timestamp (target: <60s)
-  - Fabric Data Agent query result showing 360-degree vendor risk
-  - Teams alert evidence from Launch Analyst agent
+  - Power BI report refresh showing the new RED update + vendor exposure
+  - Fabric IQ answer in Copilot reflecting the same launch
 - [x] Add timing summary to `README.md`.
 
 ### G. Policy/tenant diagnostics (done, archived)
 - [x] `diagnose_dataactivator_policy.py` — documents Operations Agent DLP blocker.
 - [x] `setup_operations_agent.py` — automation for Operations Agent (retained for reference).
+
+## Optional upgrade: Fabric Data Agent connected-agent path (needs F/P capacity)
+
+Blocked on trial capacity; enable after the workspace moves to a paid F or P SKU.
+Reads the same Lakehouse, so no data rework is needed.
+
+### H. Fabric Data Agent (portal step)
+- [ ] Create a Fabric Data Agent in the LaunchControl workspace over the Lakehouse SQL endpoint.
+- [ ] Paste instructions from `setup_fabric_data_agent.py --instructions`; add table hints; publish.
+- [ ] Run `setup_fabric_data_agent.py --verify` to capture and export the agent config.
+
+### I. Launch Analyst Copilot Studio agent (portal step)
+- [ ] Create "Launch Analyst" agent; add the Fabric Data Agent as a connected agent.
+- [ ] Create the "Analyze RED launch" topic from `analyst_agent_instructions.md`; add Teams action; publish.
+
+### J. Wire Plane 1 to Plane 2 (portal step)
+- [ ] In Plane 1, add a Power Automate flow (input `launch_id`) that calls the Launch Analyst endpoint after a RED write.
+- [ ] Test agent-to-agent handoff end to end.
 
 ## The "why Fabric" narrative
 

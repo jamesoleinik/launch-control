@@ -1,6 +1,6 @@
 # Episode 10: Dataverse + Fabric IQ (two-plane AI architecture)
 
-**Status:** 🛠️ In Build (Phase 5: Fabric Data Agent + Launch Analyst agent) · 🎬 Not yet recorded
+**Status:** 🛠️ In Build (Phase 5: Power BI semantic model + Fabric IQ consumption) · 🎬 Not yet recorded
 **Build status (this pass):**
 - Track Changes ENABLED on all 7 `lc_*` tables (confirmed 2026-07-21)
 - Fabric Link (low-latency sync) active: eppcdemo1fno → LaunchControl workspace
@@ -14,17 +14,18 @@
 - Historical baseline seeded: 5 `EP11-HIST-*` launches, 60 tasks, 5 baseline status snapshots
 - `lc_vendorwork` updated with realistic V0001/V0002/V0003 financial and due-date values
 - **E2E data flow verified**: Dataverse write → Fabric Link → KQL eventhouse in **58s** (lag=65s from createdon)
-- **Architecture pivot**: Fabric Operations Agent replaced by Copilot Studio "Launch Analyst" agent + Fabric Data Agent (connected agent pattern); see pivot note below
-- Next portal steps: create Fabric Data Agent over LaunchControlEH, create Launch Analyst CS agent
+- **Architecture pivot**: Fabric Data Agent (capacity-gated: needs F/P SKU) replaced for the trial-capacity build by a **Power BI Direct Lake semantic model** over the Lakehouse, consumed via a Power BI report and the **Fabric IQ** Copilot plugin; see `powerbi_report_spec.md`. The Data Agent path remains documented as the F/P-capacity upgrade.
+- Next steps: apply `semantic_views.sql`, build the Direct Lake model + Launch Control 360 report, wire Fabric IQ in Copilot
 **Season:** 2 (Dataverse, Better Together)
-**Features:** ⭐ Fabric IQ (semantic data layer over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Fabric Data Agent (natural language over KQL) · ⭐ Connected agents (Copilot Studio + Fabric AI)
+**Features:** ⭐ Fabric IQ (semantic data layer + Copilot plugin over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Power BI Direct Lake semantic model (over the Lakehouse SQL endpoint) · ⭐ Fabric Data Agent (optional upgrade on F/P capacity)
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
 **Coding agent:** Copilot Studio (two agents: Launch Control + Launch Analyst)
-**Runtime:** Copilot Studio × 2 + Dataverse MCP + Fabric Data Agent + KQL Eventhouse
+**Runtime:** Copilot Studio (Plane 1) + Dataverse MCP + Fabric Link + Lakehouse SQL + Power BI Direct Lake + Fabric IQ (Plane 2)
 
 > **Building this episode?** Follow `plan.md` in this folder. It is the
-> self-contained build runbook: prerequisites, Lakehouse table setup,
-> Fabric Data Agent creation, Launch Analyst agent wiring, and E2E validation.
+> self-contained build runbook: prerequisites, Lakehouse table setup, semantic
+> views (`semantic_views.sql`), the Power BI Direct Lake model + report, and the
+> Fabric IQ Copilot wiring (`powerbi_report_spec.md`), plus E2E validation.
 
 ---
 
@@ -65,30 +66,32 @@ User prompt
     |                         V0004/V0005 exist HERE but NOT in Dataverse
     |
     v
-[Fabric Data Agent: LaunchControl Fabric Data Agent]
-    |  Natural language → T-SQL over the Lakehouse SQL endpoint
-    |  Connected agent endpoint (published from LaunchControl workspace)
+[Semantic layer: semantic_views.sql over the Lakehouse SQL endpoint]
+    |    vw_launch_health, vw_vendor_360, vw_launch_vendor_exposure,
+    |    vw_red_status_feed, vw_watchlist_vendors
     |
     v
-[Plane 2: Copilot Studio "Launch Analyst" agent]
-    |  Receives launch_id from Plane 1
-    |  Calls Fabric Data Agent 3×:
-    |    1. "RED updates for this launch in last 24h?"
-    |    2. "360-degree vendor risk for [vendor]?"
-    |    3. "Is this RED rate anomalous vs. other launches?"
-    v
-Teams alert: "EP11-DEMO-01: Acme Translations (V0001) — credit C, health 38/100,
-              High market risk (ProcureIQ). 61% on-time, 2 open disputes.
-              RED rate 42% vs. 12% median across comparable launches."
+[Plane 2: Power BI Direct Lake semantic model - "Launch Control 360"]
+    |    Star model over the five views + DAX measures
+    |    (RED Rate vs Median, Total Open ERP Exposure, High-Risk Vendors)
+    |
+    +--> Power BI report: Launch Health / Vendor 360 /
+    |    Launch x Vendor Exposure / Blind spots
+    |
+    +--> Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server):
+         "Which launch's RED rate is most anomalous vs. the median?"
+         "Open ERP invoice exposure for vendors on EP11-DEMO-01?"
+         "Which high-risk ProcureIQ vendors have no active launch work?"
 ```
 
 The bridge is **low-latency Fabric Link** (2026 feature). Benchmarked:
 median **11s**, P95 **48s**, all rows within 5 minutes under load.
 E2E confirmed: Dataverse write → Lakehouse queryable in **~58s**.
 
-The key multi-source story: the Fabric Data Agent can answer questions that no
-single system could — joining live Dataverse status, F&O ERP exposure, internal
-delivery history, AND external ProcureIQ risk signals in one query.
+The key multi-source story: the semantic model answers questions that no single
+system could, joining live Dataverse status, F&O ERP invoice exposure, internal
+delivery history, AND external ProcureIQ risk signals in one Direct Lake model,
+reachable from a Power BI report or from Fabric IQ in Copilot.
 
 > **Architecture note:** We evaluated using a Fabric Eventhouse (KQL database)
 > as an additional layer but opted for simplicity: the Lakehouse SQL analytics
