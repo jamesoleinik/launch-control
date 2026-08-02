@@ -11,7 +11,9 @@ API. This script:
      (--apply-views), idempotent (every view is CREATE OR ALTER).
   4. Publishes the Direct Lake semantic model over the views (--create-model),
      idempotent (updateDefinition when a model of the same name exists).
-  5. Lists the Power BI semantic models / reports in the workspace (--verify).
+  5. Publishes a 4-page report bound to that model (--create-report), also
+     idempotent.
+  6. Lists the Power BI semantic models / reports in the workspace (--verify).
 
 This path needs NO Fabric Data Agent (which is capacity-gated). Power BI Direct
 Lake and the Fabric IQ Copilot plugin both run on trial capacity.
@@ -23,6 +25,7 @@ Usage:
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model --dry-run
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model
+    python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-report
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --verify
 
 Prerequisites for --apply-views:
@@ -57,6 +60,7 @@ VIEWS_FILE = Path(__file__).with_name("semantic_views.sql")
 SPEC_FILE = Path(__file__).with_name("powerbi_report_spec.md")
 
 MODEL_NAME = "Launch Control 360"
+REPORT_NAME = "Launch Control 360"
 
 # The semantic-layer views the Direct Lake model binds to (in apply order).
 MODEL_VIEWS = [
@@ -379,6 +383,230 @@ def cmd_create_model(dry_run: bool) -> int:
     return 1
 
 
+def _col_ref(src: str, prop: str) -> dict:
+    return {"Column": {"Expression": {"SourceRef": {"Source": src}}, "Property": prop}}
+
+
+def _agg_ref(src: str, prop: str, fn: int = 0) -> dict:
+    return {"Aggregation": {"Expression": _col_ref(src, prop), "Function": fn}}
+
+
+def _container(x, y, w, h, config: dict) -> dict:
+    return {"x": x, "y": y, "z": 0, "width": w, "height": h,
+            "config": json.dumps(config), "filters": "[]"}
+
+
+def _card(entity, prop, x, y, w, h, fn=0) -> dict:
+    src = "q"
+    name = f"{'Sum' if fn == 0 else 'Avg'}({entity}.{prop})"
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "card",
+            "projections": {"Values": [{"queryRef": name}]},
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": [{**_agg_ref(src, prop, fn), "Name": name}],
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+def _bar(entity, category, value, x, y, w, h, fn=1) -> dict:
+    src = "q"
+    valname = f"{'Sum' if fn == 0 else 'Avg'}({entity}.{value})"
+    catname = f"{entity}.{category}"
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "clusteredBarChart",
+            "projections": {
+                "Category": [{"queryRef": catname}],
+                "Y": [{"queryRef": valname}],
+            },
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": [
+                    {**_col_ref(src, category), "Name": catname},
+                    {**_agg_ref(src, value, fn), "Name": valname},
+                ],
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+def _table(entity, cols, x, y, w, h) -> dict:
+    src = "q"
+    selects, projections = [], []
+    for c in cols:
+        selects.append({**_col_ref(src, c), "Name": f"{entity}.{c}"})
+        projections.append({"queryRef": f"{entity}.{c}"})
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "tableEx",
+            "projections": {"Values": projections},
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": selects,
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
+def _section(display_name: str, containers: list[dict]) -> dict:
+    return {
+        "name": str(uuid.uuid4()),
+        "displayName": display_name,
+        "displayOption": 1,
+        "width": 1280,
+        "height": 720,
+        "config": "{}",
+        "filters": "[]",
+        "visualContainers": containers,
+    }
+
+
+def _build_report_json() -> dict:
+    """The 'Launch Control 360' report: 4 pages with real visuals over the model."""
+    sections = [
+        _section("Launch Health", [
+            _card("vw_launch_health", "red_count", 20, 20, 200, 140, fn=0),
+            _card("vw_launch_health", "total_updates", 240, 20, 200, 140, fn=0),
+            _bar("vw_launch_health", "launch_name", "red_pct", 20, 180, 620, 320, fn=1),
+            _table("vw_launch_health",
+                   ["launch_name", "red_count", "amber_count", "green_count", "red_pct"],
+                   660, 20, 600, 480),
+        ]),
+        _section("Vendor 360", [
+            _card("vw_vendor_360", "open_balance_usd", 20, 20, 220, 140, fn=0),
+            _card("vw_vendor_360", "overdue_count", 260, 20, 200, 140, fn=0),
+            _table("vw_vendor_360",
+                   ["vendor_name", "market_risk_tier", "credit_rating",
+                    "financial_health_score", "open_balance_usd", "overdue_count"],
+                   20, 180, 1240, 500),
+        ]),
+        _section("Launch x Vendor Exposure", [
+            _table("vw_launch_vendor_exposure",
+                   ["launch_code", "vendor_name", "dataverse_invoiced_amount",
+                    "dataverse_committed_amount", "internal_risk_tier",
+                    "market_risk_tier"],
+                   20, 20, 1240, 660),
+        ]),
+        _section("Blind Spots", [
+            _table("vw_watchlist_vendors",
+                   ["accountnum", "vendor_name", "credit_rating",
+                    "financial_health_score", "market_risk_tier"],
+                   20, 20, 1240, 660),
+        ]),
+    ]
+    return {
+        "config": json.dumps({
+            "version": "5.43",
+            "themeCollection": {"baseTheme": {"name": "CY24SU02"}},
+            "activeSectionIndex": 0,
+            "defaultDrillFilterOtherVisuals": True,
+        }),
+        "layoutOptimization": 0,
+        "sections": sections,
+    }
+
+
+def _build_pbir(ws_name: str, model_id: str) -> dict:
+    conn = (
+        f"Data Source=powerbi://api.powerbi.com/v1.0/myorg/{ws_name};"
+        f"Initial Catalog={MODEL_NAME};Integrated Security=ClaimsToken"
+    )
+    return {
+        "version": "4.0",
+        "datasetReference": {
+            "byConnection": {
+                "connectionString": conn,
+                "pbiServiceModelId": None,
+                "pbiModelVirtualServerName": "sobe_wowvirtualserver",
+                "pbiModelDatabaseName": model_id,
+                "name": "EntityDataSource",
+                "connectionType": "pbiServiceXmlaStyleLive",
+            }
+        },
+    }
+
+
+def cmd_create_report(dry_run: bool) -> int:
+    load_env()
+    token = _fabric_token()
+    ws_id = os.environ["FABRIC_WORKSPACE_ID"]
+    ws_name = os.environ.get("FABRIC_WORKSPACE_NAME", "LaunchControl")
+
+    models = _api_get(f"/workspaces/{ws_id}/semanticModels", token).get("value", [])
+    model = next((m for m in models if m.get("displayName") == MODEL_NAME), None)
+    if not model:
+        print(f"[ERR] semantic model '{MODEL_NAME}' not found. Run --create-model first.")
+        return 1
+    model_id = model["id"]
+
+    report_json = _build_report_json()
+    pbir = _build_pbir(ws_name, model_id)
+    print(f"Report '{REPORT_NAME}': {len(report_json['sections'])} pages, "
+          f"bound to model [{model_id}].")
+
+    if dry_run:
+        print(json.dumps(report_json, indent=2)[:2000])
+        print("\n[DRY RUN] report not published.")
+        return 0
+
+    parts = [
+        {"path": "definition.pbir", "payload": _b64(json.dumps(pbir)), "payloadType": "InlineBase64"},
+        {"path": "report.json", "payload": _b64(json.dumps(report_json)), "payloadType": "InlineBase64"},
+    ]
+
+    existing = _api_get(f"/workspaces/{ws_id}/reports", token).get("value", [])
+    match = next((it for it in existing if it.get("displayName") == REPORT_NAME), None)
+
+    if match:
+        rid = match["id"]
+        print(f"Updating existing report definition [{rid}] ...")
+        status, headers, payload = _api_post(
+            f"/workspaces/{ws_id}/reports/{rid}/updateDefinition",
+            token, {"definition": {"parts": parts}})
+    else:
+        print("Creating new report ...")
+        status, headers, payload = _api_post(
+            f"/workspaces/{ws_id}/reports",
+            token, {"displayName": REPORT_NAME, "definition": {"parts": parts}})
+
+    if status == 202 and headers.get("Location"):
+        print("  operation accepted, polling ...")
+        status, payload = _poll_lro(headers["Location"], token)
+
+    if status in (200, 201):
+        try:
+            info = json.loads(payload) if payload else {}
+        except json.JSONDecodeError:
+            info = {}
+        rid = info.get("id", match["id"] if match else None)
+        print(f"[OK] report published: {REPORT_NAME} [{rid or '(see --verify)'}]")
+        if rid:
+            print(f"Open: https://app.powerbi.com/groups/{ws_id}/reports/{rid}")
+        return 0
+
+    print(f"[ERR] report publish failed (HTTP {status}): "
+          f"{payload.decode('utf-8', 'replace')[:1000]}")
+    return 1
+
+
 def cmd_verify() -> int:
     load_env()
     token = _fabric_token()
@@ -400,8 +628,9 @@ def main() -> int:
     ap.add_argument("--print-views", action="store_true", help="Print semantic_views.sql.")
     ap.add_argument("--apply-views", action="store_true", help="Apply semantic views to the SQL endpoint.")
     ap.add_argument("--create-model", action="store_true", help="Publish the Direct Lake semantic model over the views.")
+    ap.add_argument("--create-report", action="store_true", help="Publish the 4-page report bound to the model.")
     ap.add_argument("--verify", action="store_true", help="List Power BI semantic models / reports.")
-    ap.add_argument("--dry-run", action="store_true", help="Preview only (with --apply-views / --create-model).")
+    ap.add_argument("--dry-run", action="store_true", help="Preview only (with --apply-views / --create-model / --create-report).")
     args = ap.parse_args()
 
     if args.print_views:
@@ -410,6 +639,8 @@ def main() -> int:
         return cmd_apply_views(args.dry_run)
     if args.create_model:
         return cmd_create_model(args.dry_run)
+    if args.create_report:
+        return cmd_create_report(args.dry_run)
     if args.verify:
         return cmd_verify()
     return cmd_instructions()

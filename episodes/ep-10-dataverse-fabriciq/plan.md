@@ -141,15 +141,17 @@ python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --apply-views
 - [x] Publish a Direct Lake semantic model (`Launch Control 360`) over the seven
       views, programmatically via the Fabric REST API (TMSL). Idempotent
       (updateDefinition if it already exists).
-- [ ] Add report relationships and DAX measures from `powerbi_report_spec.md`.
-- [ ] Build the "Launch Control 360" report: Launch Health, Vendor 360,
-      Launch x Vendor Exposure, Blind spots.
+- [x] Add report relationships and DAX measures from `powerbi_report_spec.md`.
+- [x] Build the "Launch Control 360" report (4 pages: Launch Health, Vendor 360,
+      Launch x Vendor Exposure, Blind Spots) programmatically and publish it,
+      bound to the model (PBIR byConnection). Idempotent.
 - [x] Confirm the model is queryable (DAX `executeQueries` returns rows).
 
 Commands:
 ```bash
 python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model --dry-run
 python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model
+python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-report
 python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --verify
 ```
 
