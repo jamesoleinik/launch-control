@@ -90,8 +90,8 @@ native cannot reach:
 | Agent | Source | Answer it uniquely gives |
 |---|---|---|
 | **Native Copilot** | Dataverse only | the facts: status, owners, blocked tasks |
-| **Web IQ (Ep 10)** | + live web | the CDN vendor had an outage; the security blocker maps to a live CVE |
-| **Fabric IQ (Ep 11)** | + semantic baseline | 8 blockers is a statistical outlier for this phase |
+| **Web IQ (Ep 11)** | + live web | the CDN vendor had an outage; the security blocker maps to a live CVE |
+| **Fabric IQ (Ep 10)** | + semantic baseline | 8 blockers is a statistical outlier for this phase |
 | **Foundry IQ (Ep 12)** | + federated docs | the cited security standard and vendor SLA behind the judgment |
 
 The point: **reach and depth are a spectrum, not a choice.** Native Copilot gives

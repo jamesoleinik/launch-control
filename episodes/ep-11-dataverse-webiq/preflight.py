@@ -1,11 +1,11 @@
-"""Ep 10 preflight: verify the Web IQ MCP substrate is recording-ready.
+"""Ep 11 preflight: verify the Web IQ MCP substrate is recording-ready.
 
 Read-only. Exits non-zero if the agent's external-signal source is not reachable
 or the required `web` tool is not entitled to the key.
 
 Run:
-    # PowerShell: $env:LC_ENV = "ep-10-dataverse-webiq"
-    python episodes/ep-10-dataverse-webiq/preflight.py
+    # PowerShell: $env:LC_ENV = "ep-11-dataverse-webiq"
+    python episodes/ep-11-dataverse-webiq/preflight.py
 """
 
 import sys
@@ -20,7 +20,7 @@ NICE_TO_HAVE = {"news", "browse", "videos", "images"}
 
 def main():
     try:
-        client = WebIqClient(env_name="ep-10-dataverse-webiq")
+        client = WebIqClient(env_name="ep-11-dataverse-webiq")
     except WebIqError as exc:
         print(f"FAIL: {exc}")
         return 1
@@ -55,7 +55,7 @@ def main():
         print(f"FAIL: live web() query failed ({exc})")
         return 1
 
-    print("\nPreflight passed: Ep 10 external substrate is recording-ready.")
+    print("\nPreflight passed: Ep 11 external substrate is recording-ready.")
     return 0
 
 

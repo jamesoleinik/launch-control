@@ -1,4 +1,4 @@
-# Episode 11: Dataverse + Fabric IQ (two-plane AI architecture)
+# Episode 10: Dataverse + Fabric IQ (two-plane AI architecture)
 
 **Status:** 🛠️ In Build (Phase 5: Fabric Data Agent + Launch Analyst agent) · 🎬 Not yet recorded
 **Build status (this pass):**
@@ -39,8 +39,8 @@ inside, but reaches **up a level**: from individual rows to the **semantic
 meaning** of the data across sources — and introduces a second AI agent that
 lives in Fabric, triggered by the first.
 
-> **Sequencing note (Season 2):** This is Episode 11. For launch announcements,
-> we may present this Fabric-first story ahead of Episode 10 to spotlight the
+> **Sequencing note (Season 2):** This is Episode 10. For launch announcements,
+> we may present this Fabric-first story ahead of Episode 11 to spotlight the
 > low-latency Fabric Link / Lakehouse experience.
 
 ## The two-plane architecture
@@ -128,7 +128,7 @@ appear in an operational record.
 > **Local config.** Copy `.env.example` to `.env` (gitignored), fill in your values.
 > Key vars: `FABRIC_WORKSPACE_ID`, `FABRIC_WORKSPACE_NAME`, `FABRIC_LAKEHOUSE_NAME`,
 > `FABRIC_LAKEHOUSE_ID`, `DATAVERSE_URL`.
-> Select with `LC_ENV=ep-11-dataverse-fabriciq`.
+> Select with `LC_ENV=ep-10-dataverse-fabriciq`.
 
 > **Replication latency (measured, eppcdemo1fno, 2026-07-21):**
 >
@@ -142,9 +142,9 @@ appear in an operational record.
 ### Step 1: Seed Lakehouse supplementary tables
 
 ```bash
-python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
-python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --apply
-python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --verify
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --verify
 ```
 
 This writes two Delta tables directly to OneLake alongside the Fabric Link tables:
@@ -157,7 +157,7 @@ Prerequisites: `pip install pandas pyarrow deltalake azure-identity`
 ### Step 2: Trigger test (Dataverse write path)
 
 ```bash
-python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
+python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
 ```
 
 Writes two RED status updates to Dataverse and waits 60s for Fabric Link replication.
@@ -166,10 +166,10 @@ Writes two RED status updates to Dataverse and waits 60s for Fabric Link replica
 
 ```bash
 # Get instructions + table descriptions to paste into the portal:
-python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
+python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
 
 # After creation, verify and export the agent config:
-python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --verify
+python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --verify
 ```
 
 Portal steps: Fabric workspace > "+ New item" > "AI agent" > LaunchControl Lakehouse
@@ -177,7 +177,7 @@ Portal steps: Fabric workspace > "+ New item" > "AI agent" > LaunchControl Lakeh
 
 ### Step 4: Create the Launch Analyst Copilot Studio agent (portal step)
 
-Reference: `episodes/ep-11-dataverse-fabriciq/analyst_agent_instructions.md`
+Reference: `episodes/ep-10-dataverse-fabriciq/analyst_agent_instructions.md`
 
 Portal steps:
 1. Create "Launch Analyst" agent in Copilot Studio.
@@ -195,7 +195,7 @@ In the Launch Control agent (Plane 1), add a PA flow action after the RED status
 ### Step 6: E2E validation
 
 ```bash
-python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
+python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
 ```
 
 Then in Copilot Studio, call the Launch Analyst agent: "Analyze this launch: EP11-DEMO-01."
@@ -214,7 +214,7 @@ blocked by a Fabric portal UI bug (PA flow action stuck on "Waiting for flow to 
 ### Step 4: Full E2E validation
 
 ```bash
-python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
+python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
 ```
 
 Observe:
@@ -225,8 +225,8 @@ Observe:
 
 ## Cross-references
 
-- **`episodes/archive/ep-10-autonomous-agents/`** and `agents/launch-sentinel/`:
+- **`episodes/archive/ep-11-autonomous-agents/`** and `agents/launch-sentinel/`:
   the autonomous runtime this episode reuses.
-- **Ep 10:** the Web IQ agent (external signal); this is the internal-semantic counterpart.
+- **Ep 11:** the Web IQ agent (external signal); this is the internal-semantic counterpart.
 - **Ep 13** (convergence): the Fabric IQ agent runs alongside Web IQ and Foundry
   IQ on one launch.

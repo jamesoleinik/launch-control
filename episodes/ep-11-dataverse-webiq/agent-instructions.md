@@ -1,4 +1,4 @@
-# Ep 10 agent: Outside-In Launch Coordinator
+# Ep 11 agent: Outside-In Launch Coordinator
 
 Paste the block below into the Instructions box of the Copilot Studio agent shell that has two tools attached: Microsoft Dataverse MCP Server (Preview) and Web IQ MCP Server. No other configuration is required for the headline demo.
 

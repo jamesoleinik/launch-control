@@ -1,11 +1,11 @@
 """
-Diagnose why Data Activator flow actions fail in Ep 11.
+Diagnose why Data Activator flow actions fail in Ep 10.
 
 This script uses pac + BAP APIs to verify whether Data Activator can be enabled
 via connector-governance controls in the current tenant.
 
 Usage:
-    python episodes/ep-11-dataverse-fabriciq/diagnose_dataactivator_policy.py
+    python episodes/ep-10-dataverse-fabriciq/diagnose_dataactivator_policy.py
 """
 
 from __future__ import annotations

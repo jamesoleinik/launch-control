@@ -116,9 +116,9 @@ Action: Review launch readiness and vendor SLA. Consider escalating to program o
 
 1. **Seed the Lakehouse supplementary tables**
    ```bash
-   python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
-   python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --apply
-   python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --verify
+   python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
+   python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
+   python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --verify
    ```
 
 2. **Create the Fabric Data Agent**
@@ -151,7 +151,7 @@ Action: Review launch readiness and vendor SLA. Consider escalating to program o
 
 7. **Test E2E**
    ```bash
-   python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
+   python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
    ```
    Then call the Launch Analyst: "Analyze this launch: EP11-DEMO-01."
    Confirm the Teams escalation appears in the Launch Risk channel.

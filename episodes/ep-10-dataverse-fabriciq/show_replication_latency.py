@@ -1,5 +1,5 @@
 """
-show_replication_latency.py  --  Ep 11 Fabric Link latency distribution chart.
+show_replication_latency.py  --  Ep 10 Fabric Link latency distribution chart.
 
 Queries the LaunchControl Fabric SQL endpoint for the replication benchmark
 results (SinkCreatedOn - createdon) and renders an ASCII bar chart plus key
@@ -7,7 +7,7 @@ stats to stdout.  Requires the Fabric SQL endpoint to be reachable and an
 az CLI login.
 
 Usage:
-    python episodes/ep-11-dataverse-fabriciq/show_replication_latency.py
+    python episodes/ep-10-dataverse-fabriciq/show_replication_latency.py
 
 The data shown is from the 2026-07-21 benchmark: 2,863 lc_statusupdate rows
 created under sustained load, all replicated within 5 minutes.

@@ -49,9 +49,9 @@ class WebIqClient:
         self._id = 0
         if not self.api_key:
             raise WebIqError(
-                "WEBIQ_API_KEY is not set. Copy episodes/ep-10-dataverse-webiq/"
+                "WEBIQ_API_KEY is not set. Copy episodes/ep-11-dataverse-webiq/"
                 ".env.example to .env, add your key, and select it with "
-                "LC_ENV=ep-10-dataverse-webiq.")
+                "LC_ENV=ep-11-dataverse-webiq.")
 
     def _rpc(self, method, params=None):
         self._id += 1

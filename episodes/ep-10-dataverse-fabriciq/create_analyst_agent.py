@@ -1,6 +1,6 @@
 """
 create_analyst_agent.py  --  Creates the Launch Analyst Copilot Studio agent
-via the Dataverse bot entity API. This is Plane 2 of the Ep 11 architecture.
+via the Dataverse bot entity API. This is Plane 2 of the Ep 10 architecture.
 
 Creates a bot record with:
   - Display name: "Launch Analyst"
@@ -14,9 +14,9 @@ Remaining portal steps after running this:
   4. Add Teams "Post message" action
 
 Usage:
-    python episodes/ep-11-dataverse-fabriciq/create_analyst_agent.py --apply
-    python episodes/ep-11-dataverse-fabriciq/create_analyst_agent.py --dry-run
-    python episodes/ep-11-dataverse-fabriciq/create_analyst_agent.py --status
+    python episodes/ep-10-dataverse-fabriciq/create_analyst_agent.py --apply
+    python episodes/ep-10-dataverse-fabriciq/create_analyst_agent.py --dry-run
+    python episodes/ep-10-dataverse-fabriciq/create_analyst_agent.py --status
 """
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ from scripts.auth import load_env  # noqa: E402
 AGENT_SCHEMA_NAME = "cr555_launchanalystagent"
 AGENT_DISPLAY_NAME = "Launch Analyst"
 AGENT_DESCRIPTION = (
-    "Plane 2 analytics agent for Episode 11. Receives a RED launch flag from "
+    "Plane 2 analytics agent for Episode 10. Receives a RED launch flag from "
     "Plane 1 (Launch Control agent), calls the Fabric Data Agent for cross-source "
     "vendor risk + anomaly analysis, and posts a Teams escalation."
 )
@@ -164,9 +164,9 @@ def main() -> int:
     parser.add_argument("--status", action="store_true")
     args = parser.parse_args()
 
-    load_env("ep-11-dataverse-fabriciq")
+    load_env("ep-10-dataverse-fabriciq")
     base = os.environ["DATAVERSE_URL"].rstrip("/")
-    tok = __import__("scripts.auth", fromlist=["get_token"]).get_token("ep-11-dataverse-fabriciq")
+    tok = __import__("scripts.auth", fromlist=["get_token"]).get_token("ep-10-dataverse-fabriciq")
 
     if args.status:
         return cmd_status(base, tok)

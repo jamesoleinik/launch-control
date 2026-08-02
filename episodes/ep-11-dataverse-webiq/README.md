@@ -1,8 +1,8 @@
-# Episode 10: Dataverse + Web IQ (the outside-in agent)
+# Episode 11: Dataverse + Web IQ (the outside-in agent)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
 
-**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-10-dataverse-webiq/.env and re-run preflight (2026-06-28)
+**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-11-dataverse-webiq/.env and re-run preflight (2026-06-28)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Copilot Studio agent in the new unified builder (model picker, Tools, Knowledge, Memory) · ⭐ Dataverse MCP Server (internal state) · ⭐ Web IQ MCP Server (live external signal) · ⭐ Two MCP servers composed in one agent
 **Layer:** 🟣 Layer 3 (the conversational surface), reaching data that does not live in the tenant at all
@@ -13,8 +13,8 @@
 > **Building this episode?** Follow `plan.md` in this folder. It is the
 > self-contained build runbook for a dedicated CLI session: prerequisites, the
 > scriptable checks (already-tested code), the Copilot Studio agent steps, and the
-> headline validation. Ep 10 is the most self-contained of the Season 2 builds
-> and can run fully in parallel with Ep 9 and Ep 11.
+> headline validation. Ep 11 is the most self-contained of the Season 2 builds
+> and can run fully in parallel with Ep 9 and Ep 10.
 
 ---
 
@@ -24,7 +24,7 @@
 > would never put in Dataverse: the live web. It connects what is happening inside
 > the launch to what is happening outside it, in one breath."*
 
-> **Sequencing note (Season 2):** This is still Episode 10. For some release beats,
+> **Sequencing note (Season 2):** This is still Episode 11. For some release beats,
 > we may present the Fabric IQ story first, then return to this outside-in Web IQ beat.
 
 The F&O episode joined Dataverse to the other half of the business. This episode
@@ -90,7 +90,7 @@ the web does not know your launch has a CDN milestone. The agent is the join.
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
 > fill in your values (including `WEBIQ_API_KEY`), and select it with
-> `LC_ENV=ep-10-dataverse-webiq`. Never commit a real Web IQ key.
+> `LC_ENV=ep-11-dataverse-webiq`. Never commit a real Web IQ key.
 
 1. **Create the agent**, give it the outside-in instructions (role: connect
    internal launch blockers to live external signal; always cite the source;
@@ -146,10 +146,10 @@ a real key.
 | `fuse_external_signal.py` | The outside-in demo: joins each internal launch blocker with live Web IQ signal and prints a citable briefing. Runs on a bundled sample by default, or `--dataverse` to read live blocked tasks. |
 
 ```bash
-# PowerShell: $env:LC_ENV = "ep-10-dataverse-webiq"
-python episodes/ep-10-dataverse-webiq/preflight.py
-python episodes/ep-10-dataverse-webiq/fuse_external_signal.py
-python episodes/ep-10-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
+# PowerShell: $env:LC_ENV = "ep-11-dataverse-webiq"
+python episodes/ep-11-dataverse-webiq/preflight.py
+python episodes/ep-11-dataverse-webiq/fuse_external_signal.py
+python episodes/ep-11-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
 ```
 
 The same `web` / `news` calls and the same fusion prompt then drop straight into

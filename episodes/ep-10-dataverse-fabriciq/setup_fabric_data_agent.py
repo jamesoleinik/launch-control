@@ -1,6 +1,6 @@
 """
 setup_fabric_data_agent.py  --  Documents and verifies the Fabric Data Agent
-configuration for Episode 11.
+configuration for Episode 10.
 
 The Fabric Data Agent (preview) must be created in the Fabric portal. This script:
   1. Prints starter instructions to paste into the Fabric Data Agent portal.
@@ -16,13 +16,13 @@ KQL Eventhouse). It queries T-SQL against these tables:
 
 Usage:
     # Print portal setup instructions and schema hints:
-    python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
+    python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
 
     # List Fabric items in workspace (find the agent item ID):
-    python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --list
+    python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --list
 
     # Verify the agent exists and export its config:
-    python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --verify
+    python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --verify
 
 Portal creation steps (one-time, cannot be scripted):
     1. Go to https://fabric.microsoft.com and open the LaunchControl workspace.
@@ -281,7 +281,7 @@ def cmd_verify(workspace_id: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Document and verify the Fabric Data Agent for Episode 11."
+        description="Document and verify the Fabric Data Agent for Episode 10."
     )
     parser.add_argument("--instructions", action="store_true",
                         help="Print portal setup instructions and schema hints")
@@ -295,7 +295,7 @@ def main() -> int:
         cmd_instructions()
         return 0
 
-    load_env("ep-11-dataverse-fabriciq")
+    load_env("ep-10-dataverse-fabriciq")
     global WORKSPACE_ID
     WORKSPACE_ID = os.environ.get("FABRIC_WORKSPACE_ID", "")
     if not WORKSPACE_ID and (args.list or args.verify):

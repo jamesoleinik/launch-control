@@ -1,5 +1,5 @@
 """
-trigger_red_health.py  --  Ep 11 E2E trigger: write lc_statusupdate health=RED
+trigger_red_health.py  --  Ep 10 E2E trigger: write lc_statusupdate health=RED
                             to Dataverse, then wait for Fabric Link replication.
 
 Demonstrates the two-plane architecture:
@@ -9,9 +9,9 @@ Demonstrates the two-plane architecture:
   → Launch Analyst agent detects it and escalates to Teams
 
 Usage:
-    python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply
-    python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --dry-run
-    python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
+    python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply
+    python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --dry-run
+    python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --wait 60
 """
 
 from __future__ import annotations
@@ -124,7 +124,7 @@ def _timed_wait(seconds: int) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Ep 11 E2E trigger: write RED health updates.")
+    parser = argparse.ArgumentParser(description="Ep 10 E2E trigger: write RED health updates.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--wait", type=int, default=0,
@@ -139,7 +139,7 @@ def main() -> int:
 
     dry_run = not args.apply
 
-    auth.load_env("ep-11-dataverse-fabriciq")
+    auth.load_env("ep-10-dataverse-fabriciq")
     base = os.environ["DATAVERSE_URL"].rstrip("/")
 
     print(f"Dataverse: {base}")
@@ -153,7 +153,7 @@ def main() -> int:
         print("  (health=3 = RED)")
         return 0
 
-    tok = auth.get_token("ep-11-dataverse-fabriciq")
+    tok = auth.get_token("ep-10-dataverse-fabriciq")
 
     # Get a launch ID to associate updates with
     launch_id = _get_first_launch_id(base, tok)
@@ -192,7 +192,7 @@ def main() -> int:
 
     if args.cleanup and written_ids:
         print("\nCleaning up demo records...")
-        tok2 = auth.get_token("ep-11-dataverse-fabriciq")
+        tok2 = auth.get_token("ep-10-dataverse-fabriciq")
         for record_id in written_ids:
             try:
                 delete_status_update(base, tok2, record_id)

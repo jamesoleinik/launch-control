@@ -1,5 +1,5 @@
 """
-setup_operations_agent.py -- Ep 11 Operations Agent automation helper.
+setup_operations_agent.py -- Ep 10 Operations Agent automation helper.
 
 The Operations Agent REST API schema is not fully documented. This script automates
 the parts that are stable today:
@@ -8,14 +8,14 @@ the parts that are stable today:
 3. create an agent from a captured definition JSON
 
 Usage:
-    python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --list
-    python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <id>
-    python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --create --definition operations_agent_schema.json
-    python episodes/ep-11-dataverse-fabriciq/setup_operations_agent.py --update --agent-id <id> --definition operations_agent_schema.json
+    python episodes/ep-10-dataverse-fabriciq/setup_operations_agent.py --list
+    python episodes/ep-10-dataverse-fabriciq/setup_operations_agent.py --export --agent-id <id>
+    python episodes/ep-10-dataverse-fabriciq/setup_operations_agent.py --create --definition operations_agent_schema.json
+    python episodes/ep-10-dataverse-fabriciq/setup_operations_agent.py --update --agent-id <id> --definition operations_agent_schema.json
 
 Prerequisites:
     - az login
-    - LC_ENV=ep-11-dataverse-fabriciq or call with a valid .env
+    - LC_ENV=ep-10-dataverse-fabriciq or call with a valid .env
 """
 
 from __future__ import annotations
@@ -225,7 +225,7 @@ def render_template(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Ep 11 Operations Agent setup helper.")
+    parser = argparse.ArgumentParser(description="Ep 10 Operations Agent setup helper.")
     parser.add_argument("--list", action="store_true", help="List Operations Agents in workspace")
     parser.add_argument("--export", action="store_true", help="Export agent definition from getDefinition")
     parser.add_argument("--create", action="store_true", help="Create Operations Agent from definition file")
@@ -252,7 +252,7 @@ def main() -> int:
     if sum(bool(x) for x in selected) != 1:
         parser.error("Choose exactly one action: --list, --export, --create, --update, or --render-template")
 
-    load_env("ep-11-dataverse-fabriciq")
+    load_env("ep-10-dataverse-fabriciq")
     workspace_id = os.environ.get("FABRIC_WORKSPACE_ID", "").strip()
     kql_database_id = os.environ.get("FABRIC_KQL_DATABASE_ID", "").strip()
     if not workspace_id:

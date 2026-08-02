@@ -1,7 +1,7 @@
 """
 setup_eventhouse.py  --  ARCHIVED (superseded by setup_lakehouse_tables.py)
 
-This script was used to set up the Fabric eventhouse + KQL database for Ep 11.
+This script was used to set up the Fabric eventhouse + KQL database for Ep 10.
 The architecture was simplified: the Eventhouse is no longer used. The Fabric
 Data Agent now queries the Lakehouse SQL analytics endpoint directly.
 
@@ -10,7 +10,7 @@ Retained for reference in case the KQL/Eventhouse path is revisited.
 ---
 Original docstring below:
 
-setup_eventhouse.py  --  Ep 11 Fabric eventhouse + KQL database setup.
+setup_eventhouse.py  --  Ep 10 Fabric eventhouse + KQL database setup.
 
 Creates (or verifies) external Delta tables over the Dataverse Fabric Link
 lakehouse, ingests the VendorEnrichment lookup table, and creates KQL
@@ -18,10 +18,10 @@ functions used by the Operations Agent rules.
 
 Usage:
     # Dry-run (print commands, no changes):
-    python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --dry-run
+    python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --dry-run
 
     # Apply (idempotent):
-    python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --apply
+    python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --apply
 
 Prerequisites:
     pip install azure-kusto-data azure-kusto-ingest
@@ -299,7 +299,7 @@ def _onelake_uri(ws_name: str, lh_name: str, tbl: str) -> str:
 # ---------------------------------------------------------------------------
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Set up Ep 11 KQL database.")
+    parser = argparse.ArgumentParser(description="Set up Ep 10 KQL database.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()
@@ -310,7 +310,7 @@ def main() -> int:
     dry_run = not args.apply
 
     # Load env
-    load_env("ep-11-dataverse-fabriciq")
+    load_env("ep-10-dataverse-fabriciq")
     global WORKSPACE_ID, LAKEHOUSE_ID, CLUSTER_URI, INGEST_URI, KQL_DB
     WORKSPACE_ID    = os.environ.get("FABRIC_WORKSPACE_ID", "")
     LAKEHOUSE_ID    = os.environ.get("FABRIC_LAKEHOUSE_ID", "")

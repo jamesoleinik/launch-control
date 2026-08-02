@@ -1,5 +1,5 @@
 """
-setup_lakehouse_tables.py  --  Ep 11 Fabric Lakehouse supplementary table setup.
+setup_lakehouse_tables.py  --  Ep 10 Fabric Lakehouse supplementary table setup.
 
 Seeds VendorEnrichment and ExternalVendorRisk as managed Delta tables in the
 Fabric Lakehouse. Uploads CSV files to the Lakehouse Files section via OneLake
@@ -19,13 +19,13 @@ Architecture:
 
 Usage:
     # Dry-run (print what would be written):
-    python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
+    python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
 
     # Apply (idempotent: uploads CSVs and registers tables):
-    python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --apply
+    python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
 
     # Verify tables are visible in Lakehouse SQL endpoint:
-    python episodes/ep-11-dataverse-fabriciq/setup_lakehouse_tables.py --verify
+    python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --verify
 
 Prerequisites:
     pip install azure-storage-file-datalake azure-identity pandas
@@ -257,13 +257,13 @@ def cmd_verify() -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Seed Lakehouse supplementary tables for Episode 11.")
+    parser = argparse.ArgumentParser(description="Seed Lakehouse supplementary tables for Episode 10.")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
 
-    load_env("ep-11-dataverse-fabriciq")
+    load_env("ep-10-dataverse-fabriciq")
     global WS_NAME, WS_ID, LH_NAME, LH_ID
     WS_NAME = os.environ.get("FABRIC_WORKSPACE_NAME", "LaunchControl")
     WS_ID   = os.environ.get("FABRIC_WORKSPACE_ID", "")

@@ -744,7 +744,7 @@ column and row security carry over to the launch view and model-driven form.
 
 - **Ep 4:** virtual entities (the federation pattern this episode extends to ERP).
 - **Ep 8:** security model that must also govern ERP-sourced data.
-- **Ep 10 to 12:** the intelligence pairings (Web IQ, Fabric IQ, Foundry IQ) that follow this operational pairing.
+- **Ep 10 to 12:** the intelligence pairings (Fabric IQ, Web IQ, Foundry IQ) that follow this operational pairing.
 
 
 ## Appendix A: optional preambles (one-time environment setup)

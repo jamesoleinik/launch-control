@@ -1,6 +1,6 @@
-"""Ep 10 outside-in demo: fuse internal launch blockers with live Web IQ signal.
+"""Ep 11 outside-in demo: fuse internal launch blockers with live Web IQ signal.
 
-This proves the Episode 10 thesis in code before it is wired into the Copilot
+This proves the Episode 11 thesis in code before it is wired into the Copilot
 Studio agent: an internal blocker in Dataverse is far more actionable when joined
 with what the outside world (web / news) already knows about it.
 
@@ -9,9 +9,9 @@ env, no record IDs) so it works without Dataverse credentials. Pass --dataverse
 to read live blocked tasks from the launch environment instead.
 
 Run:
-    # PowerShell: $env:LC_ENV = "ep-10-dataverse-webiq"
-    python episodes/ep-10-dataverse-webiq/fuse_external_signal.py
-    python episodes/ep-10-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
+    # PowerShell: $env:LC_ENV = "ep-11-dataverse-webiq"
+    python episodes/ep-11-dataverse-webiq/fuse_external_signal.py
+    python episodes/ep-11-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
 """
 
 import argparse
@@ -53,7 +53,7 @@ def to_query(title):
 def fetch_dataverse_blockers(max_items):
     """Best-effort live read of blocked tasks from the launch environment."""
     import auth
-    auth.load_env(os.environ.get("LC_ENV", "ep-10-dataverse-webiq"))
+    auth.load_env(os.environ.get("LC_ENV", "ep-11-dataverse-webiq"))
     base = os.environ["DATAVERSE_URL"].rstrip("/")
     token = auth.get_token(os.environ.get("LC_ENV"))
 
@@ -124,7 +124,7 @@ def main():
     args = ap.parse_args()
 
     try:
-        client = WebIqClient(env_name="ep-10-dataverse-webiq")
+        client = WebIqClient(env_name="ep-11-dataverse-webiq")
     except WebIqError as exc:
         print(f"FAIL: {exc}")
         return 1

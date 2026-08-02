@@ -17,7 +17,7 @@ The closer. Two parts. Part 1 is the **orchestra montage**: every capability bui
 
 Fourteen episodes have argued *"this is real, look at this slice."* Ep 15 closes the loop with two assertions:
 
-1. **The slices are one system.** When the gen page (Ep 13), the autonomous Sentinel (Ep 11), the M365 Copilot grounding (Ep 13), and the management plane (Ep 14) all light up against the same record, the audience sees the platform, not fourteen feature demos.
+1. **The slices are one system.** When the gen page (Ep 13), the autonomous Sentinel (Ep 10), the M365 Copilot grounding (Ep 13), and the management plane (Ep 14) all light up against the same record, the audience sees the platform, not fourteen feature demos.
 2. **It's all in your hands now.** The repo isn't a marketing artifact. It's a runnable system. Cloning it gives you the same launch-control rig in your env in minutes. The CTA isn't *"go read the docs"*; it's *"go clone the repo."*
 
 ## Pre-record state — "perfect launch week"

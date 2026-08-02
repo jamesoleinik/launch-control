@@ -1,4 +1,4 @@
-# Ep 11 build plan: Dataverse + Fabric Operations Agent
+# Ep 10 build plan: Dataverse + Fabric Operations Agent
 
 This runbook reflects the current architecture choice: eventhouse + KQL (not
 Fabric ontology). It tracks what is already built and what remains to finish the
@@ -42,6 +42,22 @@ In progress:
 - Fabric Data Agent creation in portal (Step C below).
 - Launch Analyst agent creation in Copilot Studio (Step D below).
 
+Blocked:
+- Fabric Data Agent creation is blocked on this workspace because it is on a trial
+  capacity. The create dialog returns: "Can't create data agents in this
+  workspace. An admin needs to change the SKU type for your organization's Fabric
+  capacity."
+- Per Microsoft Fabric feature parity guidance, trial capacities don't support
+  most capacity-gated features unless explicitly footnoted. Fabric Data Agent is
+  capacity-gated and currently unavailable in this trial workspace.
+
+Immediate fallback while on trial:
+- Keep the Lakehouse data model work (already automated) and complete the demo
+  using direct Lakehouse SQL queries + Copilot Studio logic, without a Fabric Data
+  Agent connected-agent dependency.
+- Re-enable the full Plane 2 connected-agent path after moving the workspace to a
+  supported paid capacity (F SKU or P SKU).
+
 ## Prerequisites and local config
 
 1. Copy `.env.example` to `.env` (gitignored) in this folder.
@@ -53,7 +69,7 @@ In progress:
    - `FABRIC_KQL_CLUSTER_URI`
    - `FABRIC_KQL_DATABASE_NAME`
 3. Select env:
-   - PowerShell: `$env:LC_ENV = "ep-11-dataverse-fabriciq"`
+   - PowerShell: `$env:LC_ENV = "ep-10-dataverse-fabriciq"`
 4. Set encoding:
    - PowerShell: `$env:PYTHONIOENCODING = "utf-8"`
 
@@ -75,8 +91,8 @@ In progress:
 
 Commands:
 ```bash
-python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --dry-run
-python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --apply
+python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_eventhouse.py --apply
 ```
 
 ### B. Dataverse trigger write path (done)
@@ -85,7 +101,7 @@ python episodes/ep-11-dataverse-fabriciq/setup_eventhouse.py --apply
 
 Command:
 ```bash
-python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
+python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
 ```
 
 ### C. Fabric Data Agent (portal step)
@@ -97,8 +113,8 @@ python episodes/ep-11-dataverse-fabriciq/trigger_red_health.py --apply --watch 3
 
 Command (generates instructions to paste into portal):
 ```bash
-python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
-python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --verify
+python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --instructions
+python episodes/ep-10-dataverse-fabriciq/setup_fabric_data_agent.py --verify
 ```
 
 ### D. Launch Analyst Copilot Studio agent (portal step)
@@ -109,7 +125,7 @@ python episodes/ep-11-dataverse-fabriciq/setup_fabric_data_agent.py --verify
 - [ ] Publish the agent.
 - [ ] Note the agent HTTP endpoint for Plane 1 wiring.
 
-Reference: `episodes/ep-11-dataverse-fabriciq/analyst_agent_instructions.md`
+Reference: `episodes/ep-10-dataverse-fabriciq/analyst_agent_instructions.md`
 
 ### E. Wire Plane 1 to Plane 2 (portal step)
 - [ ] In Plane 1 agent (Launch Control agent), add a Power Automate flow action after RED write:
