@@ -242,6 +242,14 @@ the 1000-record aggregate smooths those into the distribution above. The takeawa
 the demo: a RED status write is queryable in the report in well under two minutes,
 typically under one.
 
+> **These numbers are a favourable sample, not a guarantee.** This probe writes
+> small, narrow `lc_statusupdate` rows against a modest data model on one tenant, so
+> the latencies here are near the low end of what Fabric Link can do. Wider tables,
+> more columns and relationships, larger initial payloads, more selected tables, and
+> higher write volume all push replication slower, and cross-region or busier
+> capacities add more still. Treat median ~46s as a best-case reference point for this
+> setup and measure your own environment rather than quoting these figures as an SLA.
+
 ## Section 3 · The semantic model and report, from a coding agent (no DAX)
 
 Section 3 builds the entire consumption layer programmatically: the T-SQL views that
