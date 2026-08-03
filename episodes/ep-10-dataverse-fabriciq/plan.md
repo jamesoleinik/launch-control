@@ -57,7 +57,7 @@ Completed:
 - `measure_sync_latency.py` (Section 2 deliverable) backfills tagged status
   records, polls the OneLake mirror with a fresh connection per cycle, and outputs
   the write -> OneLake latency distribution (stats + histogram PNG + CSV). It
-  supersedes the earlier `show_replication_latency.py` probe.
+  replaces the earlier ad-hoc latency query script.
 - Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
 - `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
 - E2E write-path validated with `trigger_red_health.py`:

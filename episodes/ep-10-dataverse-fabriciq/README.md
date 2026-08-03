@@ -306,6 +306,8 @@ bug. Retained for the F/P-capacity upgrade path:
 
 - `setup_fabric_data_agent.py` - Fabric Data Agent portal documentation + verify
 - `analyst_agent_instructions.md` - Launch Analyst connected-agent instructions
+- `create_analyst_agent.py` - creates the Launch Analyst Copilot Studio agent
+  (connected-agent path; needs the Fabric Data Agent first)
 - `setup_operations_agent.py`, `operations_agent_*.json` - Operations Agent exports
 - `setup_eventhouse.py` - KQL Eventhouse path (evaluated, then archived in favour
   of the Lakehouse SQL endpoint)
