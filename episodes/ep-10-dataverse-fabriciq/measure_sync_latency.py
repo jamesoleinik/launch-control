@@ -233,13 +233,15 @@ def _summary(latencies: list[float]) -> None:
     print(f"  max              : {max(latencies):.1f}s")
 
 
-def _save_outputs(latencies: list[float], out_png: Path, out_csv: Path) -> None:
-    if not latencies:
+def _save_outputs(rows: list[tuple[int, float]], out_png: Path, out_csv: Path) -> None:
+    if not rows:
         print("\nNo latencies measured (no records detected); skipping CSV/PNG.")
         return
-    out_csv.write_text("token_index,latency_seconds\n" +
-                       "\n".join(f"{i},{v:.3f}" for i, v in enumerate(latencies)),
-                       encoding="utf-8")
+    latencies = [lat for _, lat in rows]
+    out_csv.write_text(
+        "batch,record_index,latency_seconds\n" +
+        "\n".join(f"{b},{i},{lat:.3f}" for i, (b, lat) in enumerate(rows)),
+        encoding="utf-8")
     print(f"\nWrote raw latencies: {out_csv}")
     try:
         import matplotlib
@@ -270,6 +272,9 @@ def main() -> int:
     ap.add_argument("--cleanup", action="store_true", help="delete all probe records")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--count", type=int, default=100)
+    ap.add_argument("--batches", type=int, default=1,
+                    help="repeat the write+measure cycle this many times; each "
+                         "batch lands in its own replication window")
     ap.add_argument("--timeout", type=float, default=900.0, help="max seconds to poll")
     ap.add_argument("--poll", type=float, default=2.0, help="poll interval seconds")
     ap.add_argument("--out", default=str(Path(__file__).with_name("sync_latency_hist.png")))
@@ -283,9 +288,11 @@ def main() -> int:
     base = os.environ["DATAVERSE_URL"].rstrip("/")
 
     if args.dry_run:
-        print(f"[DRY RUN] would write {args.count} tagged status updates to {base}, "
-              f"poll the Lakehouse SQL analytics endpoint every {args.poll:g}s up to "
-              f"{args.timeout:g}s, then emit latency stats + {args.out}.")
+        total = args.count * args.batches
+        print(f"[DRY RUN] would write {args.batches} batch(es) of {args.count} "
+              f"({total} total) tagged status updates to {base}, poll the Lakehouse "
+              f"SQL analytics endpoint every {args.poll:g}s up to {args.timeout:g}s "
+              f"per batch, then emit combined latency stats + {args.out}.")
         return 0
 
     tok = auth.get_token(os.environ.get("LC_ENV", "ep-10-dataverse-fabriciq"))
@@ -295,16 +302,24 @@ def main() -> int:
         print(f"Deleted {_cleanup(base, tok)} record(s).")
         return 0
 
-    print(f"Writing {args.count} probe records to Dataverse ...")
-    write_times = _write_batch(base, tok, args.count)
-    latencies_map = _poll_latencies(write_times, args.timeout, args.poll)
-    latencies = list(latencies_map.values())
+    rows: list[tuple[int, float]] = []
+    for b in range(args.batches):
+        label = f"batch {b + 1}/{args.batches}" if args.batches > 1 else "batch"
+        print(f"\n--- {label}: writing {args.count} probe records to Dataverse ---")
+        write_times = _write_batch(base, tok, args.count)
+        latencies_map = _poll_latencies(write_times, args.timeout, args.poll)
+        got = list(latencies_map.values())
+        rows.extend((b, lat) for lat in got)
+        if args.batches > 1 and got:
+            print(f"  {label}: {len(got)}/{args.count} measured, "
+                  f"median {statistics.median(got):.1f}s")
 
+    latencies = [lat for _, lat in rows]
     _summary(latencies)
     _ascii_hist(latencies)
     out_png = Path(args.out)
     out_csv = out_png.with_suffix(".csv")
-    _save_outputs(latencies, out_png, out_csv)
+    _save_outputs(rows, out_png, out_csv)
 
     print("\nTip: re-run with --cleanup to remove the probe records when done.")
     return 0

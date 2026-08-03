@@ -4,7 +4,7 @@ trigger_red_health.py  --  Ep 10 E2E trigger: write lc_statusupdate health=RED
 
 Demonstrates the two-plane architecture:
   Studio agent writes lc_statusupdate (health=RED)
-  → Fabric Link replicates to OneLake (~11s median latency)
+  → Fabric Link replicates to OneLake (~46s median latency measured)
   → Lakehouse SQL endpoint makes it queryable by the Fabric Data Agent
   → Launch Analyst agent detects it and escalates to Teams
 
@@ -112,7 +112,7 @@ def delete_status_update(base: str, tok: str, record_id: str) -> None:
 
 def _timed_wait(seconds: int) -> None:
     """Simple countdown while Fabric Link replicates."""
-    print(f"\nWaiting {seconds}s for Fabric Link replication (~11s median)...")
+    print(f"\nWaiting {seconds}s for Fabric Link replication (~46s median)...")
     for remaining in range(seconds, 0, -10):
         print(f"  {remaining}s remaining...")
         time.sleep(min(10, remaining))
@@ -185,7 +185,7 @@ def main() -> int:
         return 1
 
     print(f"\nWrote {len(written_ids)} RED health status update(s) to Dataverse.")
-    print("These will replicate to the Fabric Lakehouse via Fabric Link (~11s median).")
+    print("These will replicate to the Fabric Lakehouse via Fabric Link (~46s median).")
 
     if args.wait > 0:
         _timed_wait(args.wait)

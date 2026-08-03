@@ -99,7 +99,7 @@ User prompt
 [Plane 1: Copilot Studio "Launch Control" agent]
     |  Dataverse MCP: writes lc_statusupdate (health=RED=10600603)
     |
-    v  low-latency Fabric Link (median ~11s)
+    v  low-latency Fabric Link (measured median ~46s over 1000 writes)
 [LaunchControl Dataverse Fabric Link Lakehouse - SQL analytics endpoint]
     |
     |  Dataverse mirror tables:
@@ -302,17 +302,26 @@ python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --apply --count
 python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --cleanup
 ```
 
-Representative distribution:
+```bash
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --apply --count 100 --batches 10
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --cleanup
+```
+
+Measured over 1000 records (10 batches of 100, each backfilled in its own
+replication window) against `eppcdemo1fno`:
 
 | Metric | Value |
 |--------|-------|
-| Median | ~11 seconds |
-| P95 | ~48 seconds |
-| E2E (write -> Lakehouse SQL) | ~58 seconds |
-| Cold-start / large batch first sync | up to several minutes |
+| Min | 12.0 seconds |
+| Median | 45.7 seconds |
+| Mean | 45.8 seconds |
+| P95 | 65.6 seconds |
+| Max | 73.8 seconds |
 
-Records written close together replicate in the same Fabric Link micro-batch, so
-a single backfill run's latencies cluster tightly around that batch's cycle time.
+The distribution is roughly bell-shaped and centered in the 38-63s range. Records
+written close together within a single batch replicate in the same Fabric Link
+micro-batch, so per-batch medians vary (here 25-58s) around the tenant's cycle
+time; the 1000-record aggregate smooths those into the distribution above.
 
 ## Pre-record checklist
 

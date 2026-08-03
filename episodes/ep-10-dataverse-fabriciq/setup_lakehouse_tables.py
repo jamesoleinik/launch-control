@@ -8,7 +8,7 @@ them as managed Delta tables in the Lakehouse SQL analytics endpoint.
 
 Architecture:
     Dataverse (lc_* tables)  +  F&O (fno_* tables)
-           ↓ Fabric Link (low-latency, ~11s median)
+           ↓ Fabric Link (low-latency, ~46s median measured)
     Lakehouse (Delta Parquet on OneLake)
            + VendorEnrichment    (seeded by this script)
            + ExternalVendorRisk  (seeded by this script)

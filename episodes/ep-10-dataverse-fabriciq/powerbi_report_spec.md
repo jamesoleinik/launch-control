@@ -107,7 +107,8 @@ Fabric IQ → MCP servers → Power BI / Power BI (FabricAIHub)):
    - "Which high-risk ProcureIQ vendors have no active launch work?"
 
 Fabric IQ answers over the published semantic model, so the "latest" is whatever
-Direct Lake reads from the Lakehouse (fed by low-latency Fabric Link, ~11s median).
+Direct Lake reads from the Lakehouse (fed by low-latency Fabric Link, ~46s median
+measured over 1000 writes).
 
 ---
 
