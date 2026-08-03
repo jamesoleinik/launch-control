@@ -115,3 +115,5 @@ episodes/ep-10-dataverse-fabriciq/operations_agent_schema.json
 episodes/ep-10-dataverse-fabriciq/operations_agent_schema.parts/
 episodes/ep-10-dataverse-fabriciq/operations_agent_template.json
 episodes/ep-10-dataverse-fabriciq/operations_agent_direct_message.json
+episodes/ep-10-dataverse-fabriciq/sync_latency_hist.png
+episodes/ep-10-dataverse-fabriciq/sync_latency_hist.csv
