@@ -542,7 +542,7 @@ def _stacked_bar(entity, category, values, colors, x, y, w, h) -> dict:
         "name": str(uuid.uuid4()),
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
         "singleVisual": {
-            "visualType": "stackedBarChart",
+            "visualType": "barChart",
             "projections": {
                 "Category": [{"queryRef": catname}],
                 "Y": y_proj,
@@ -602,9 +602,9 @@ def _build_report_json() -> dict:
             _textbox("Launch health overview: RED / AMBER / GREEN status mix across "
                      "every active launch, rolled up from Dataverse status updates.",
                      20, 12, 1240, 44),
-            _card("vw_launch_health", "launch_name", 20, 66, 220, 120, fn=4),
-            _card("vw_launch_health", "red_count", 250, 66, 220, 120, fn=0),
-            _card("vw_launch_health", "amber_count", 480, 66, 220, 120, fn=0),
+            _card("vw_launch_health", "red_count", 20, 66, 220, 120, fn=0),
+            _card("vw_launch_health", "amber_count", 250, 66, 220, 120, fn=0),
+            _card("vw_launch_health", "green_count", 480, 66, 220, 120, fn=0),
             _card("vw_launch_health", "total_updates", 710, 66, 220, 120, fn=0),
             _stacked_bar("vw_launch_health", "launch_name",
                          ["red_count", "amber_count", "green_count"],
