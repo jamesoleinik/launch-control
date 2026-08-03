@@ -64,38 +64,29 @@ Neither plane produces that alone. Dataverse does not hold the ERP ledger or the
 market risk; the report does not hold the live transactional write. The semantic
 model is the join.
 
-## The two-plane architecture
+## The architecture to date (through Episode 10)
 
-```
-User prompt
-    |
-[Plane 1: Copilot Studio "Launch Control" agent]
-    |  Dataverse MCP: writes lc_statusupdate (health=RED=10600603)
-    |
-    v  low-latency Fabric Link (measured median ~46s over 1000 writes, Section 2)
-[LaunchControl Dataverse Fabric Link Lakehouse - SQL analytics endpoint]
-    |
-    |  Dataverse mirror tables:
-    |    lc_launch, lc_task, lc_statusupdate, lc_vendorwork, lc_milestone,
-    |    lc_teammember
-    |  F&O ERP mirror tables:
-    |    vendtable (vendor master), vendtransopen (open invoices)
-    |
-    v
-[Semantic layer: semantic_views.sql]
-    |    vw_launch_health, vw_launch_scorecard, vw_vendor_360,
-    |    vw_launch_vendor_exposure, vw_red_status_feed, vw_watchlist_vendors,
-    |    vw_vendor_enrichment, vw_vendor_risk  (the enrichment dataset),
-    |    vw_launch_code_map  (bridge: launch code -> launch name)
-    |
-    v
-[Plane 2: Power BI Direct Lake semantic model "Launch Control 360"]
-    |    8 tables + relationships (fact -> dimension) + DAX measures
-    |
-    +--> Power BI report (3 pages): Launch 360 / Vendor List / Vendor 360
-    |
-    +--> Fabric IQ plugin in Microsoft 365 Copilot Cowork (grounds on the report)
-```
+The high-level view of everything built across the series so far, with this
+episode's additions highlighted. **Plane 1** is the Dataverse system of record and
+its F&O ERP extension (Episodes 1-9), served by the earlier-episode building blocks
+on the side rails (the MCP server, Business Skills, custom connectors, ingestion,
+security, and the Cowork plugin). **Plane 2 (highlighted orange) is new in this
+episode:** Fabric Link mirrors the launch and vendor tables to OneLake, the semantic
+views fuse them with the enrichment dataset, and a Direct Lake model surfaces the
+join in a Power BI report and in Fabric IQ for Microsoft 365 Copilot Cowork.
+
+![Launch Control architecture to date: Plane 1 Dataverse plus F&O (Episodes 1-9) and the new Episode 10 Fabric IQ plane (Fabric Link, Lakehouse, semantic views, Direct Lake model, Power BI report, Fabric IQ in Cowork), highlighted in orange](assets/launch-control-architecture.png)
+
+> The editable source is `assets/launch-control-architecture.excalidraw` (open it at
+> `https://aka.ms/excalidraw`); regenerate the PNG with
+> `python assets/_gen_architecture.py`.
+
+The runtime path in Episode 10 is the vertical spine: a Copilot Studio agent writes
+`lc_statusupdate` (health = RED = 10600603) to Dataverse, Fabric Link replicates it
+to the Lakehouse SQL analytics endpoint (measured median ~46s over 1000 writes,
+Section 2), the semantic views fuse it with internal performance, ProcureIQ risk, and
+the F&O ledger, and the Direct Lake model `Launch Control 360` answers a click in the
+report or a prompt in Cowork.
 
 ## The build: four sections
 
