@@ -1,17 +1,17 @@
-# Launch Control 360: Power BI report + Fabric IQ consumption (Plane 2)
+# Launch Control 360: Power BI report + Fabric consumption (the analytical layer)
 
-**Role in episode:** Plane 2, the consumption layer. Instead of a capacity-gated
+**Role in episode:** the analytical consumption layer. Instead of a capacity-gated
 Fabric Data Agent, launch health is consumed through a **Power BI Direct Lake
 semantic model** over the Lakehouse, surfaced two ways:
 
 1. A **Power BI report** ("Launch Control 360") for the visual walk-through.
-2. The **Fabric IQ** Copilot plugin ("Turn Power BI data into insights"), which
+2. The **Fabric data plugin** ("Turn Power BI data into insights"), which
    lets you ask natural-language questions over the *same* semantic model from
    inside Microsoft 365 Copilot / cowork, with no separate agent to build or publish.
 
 > Why the pivot: Fabric Data Agents require a paid F/P SKU. Power BI semantic
-> models and Direct Lake run on trial capacity, and Fabric IQ consumes them
-> directly. Same unified data, same three sources, no capacity blocker.
+> models and Direct Lake run on trial capacity, and the Fabric data plugin consumes
+> them directly. Same unified data, same three sources, no capacity blocker.
 
 ---
 
@@ -93,12 +93,12 @@ Overdue Invoices        = SUM(vw_vendor_360[overdue_count])
 
 ---
 
-## Fabric IQ in Copilot (cowork access)
+## Fabric in Copilot (cowork access)
 
-Once the semantic model is published, wire the **Fabric IQ** plugin (screenshot:
-Fabric IQ → MCP servers → Power BI / Power BI (FabricAIHub)):
+Once the semantic model is published, wire the **Fabric** plugin (screenshot:
+Fabric → MCP servers → Power BI / Power BI (FabricAIHub)):
 
-1. In Copilot, enable the **Fabric IQ** agent/plugin.
+1. In Copilot, enable the **Fabric** agent/plugin.
 2. Point its Power BI MCP server at the **Launch Control 360** semantic model in
    the LaunchControl workspace.
 3. Ask in natural language, e.g.:
@@ -106,7 +106,7 @@ Fabric IQ → MCP servers → Power BI / Power BI (FabricAIHub)):
    - "Show open ERP invoice exposure for vendors on launch EP11-DEMO-01."
    - "Which high-risk ProcureIQ vendors have no active launch work?"
 
-Fabric IQ answers over the published semantic model, so the "latest" is whatever
+Fabric answers over the published semantic model, so the "latest" is whatever
 Direct Lake reads from the Lakehouse (fed by low-latency Fabric Link, ~46s median
 measured over 1000 writes).
 
@@ -119,13 +119,13 @@ measured over 1000 writes).
    (or paste `semantic_views.sql` into the Lakehouse SQL query editor).
 3. New semantic model (Direct Lake) on the five views; add relationships + DAX above.
 4. Build the four report pages; publish to the LaunchControl workspace.
-5. Enable Fabric IQ in Copilot and connect it to the semantic model.
+5. Enable Fabric in Copilot and connect it to the semantic model.
 6. Validate: run `trigger_red_health.py --apply --wait 60`, then confirm the new
-   RED update appears in the report and in a Fabric IQ answer.
+   RED update appears in the report and in a Fabric answer.
 
 ## Relationship to the Fabric Data Agent path
 
 The connected-agent path (`analyst_agent_instructions.md`,
 `setup_fabric_data_agent.py`) remains documented as the **upgrade** for when the
 workspace moves to F/P capacity. Both paths read the same Lakehouse; this Power
-BI + Fabric IQ path is the capacity-free way to ship the episode today.
+BI + Fabric path is the capacity-free way to ship the episode today.

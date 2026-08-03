@@ -3,7 +3,7 @@
 -- These T-SQL views run in the LaunchControl Dataverse Fabric Link lakehouse SQL
 -- analytics endpoint. They are the "pulled together" semantic layer that a Power
 -- BI Direct Lake semantic model consumes. The report (Launch Control 360) and the
--- Fabric IQ Copilot plugin both read the model built on these views, so no Fabric
+-- Fabric data plugin both read the model built on these views, so no Fabric
 -- Data Agent (capacity-gated) is required.
 --
 -- Grounded in the LIVE schema (verified against the SQL endpoint):

@@ -134,9 +134,9 @@ Link, the semantic model, and the report.
 2. **Python prerequisites:** `pip install pyodbc azure-identity` plus the **ODBC
    Driver 18 for SQL Server** (the probe and the view-apply step connect to the
    Lakehouse SQL analytics endpoint over TDS).
-3. **Dataverse MCP server** (for the Plane 1 write in the headline demo): register
-   it once with the `dv-connect` skill, exactly as in Episode 9. It is not required
-   to build the report, only to demo the live RED write on camera.
+3. **Dataverse MCP server** (for the live Dataverse write in the headline demo):
+   register it once with the `dv-connect` skill, exactly as in Episode 9. It is not
+   required to build the report, only to demo the live RED write on camera.
 
 The section-by-section build below assumes this is done.
 

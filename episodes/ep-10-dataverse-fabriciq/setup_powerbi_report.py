@@ -1,11 +1,11 @@
 """
-setup_powerbi_report.py  --  Ep 10 Power BI + Fabric IQ consumption layer (Plane 2).
+setup_powerbi_report.py  --  Ep 10 Power BI + Fabric consumption layer (Plane 2).
 
 The Power BI Direct Lake semantic model and the report used to sit only in the
 Fabric portal by hand. This script builds the semantic layer (the SQL views) AND
 publishes the Direct Lake semantic model programmatically via the Fabric REST
 API. This script:
-  1. Prints the report + Fabric IQ build steps (--instructions).
+  1. Prints the report + Fabric build steps (--instructions).
   2. Prints the semantic-layer SQL (--print-views).
   3. Applies semantic_views.sql to the Lakehouse SQL analytics endpoint
      (--apply-views), idempotent (every view is CREATE OR ALTER).
@@ -16,7 +16,7 @@ API. This script:
   6. Lists the Power BI semantic models / reports in the workspace (--verify).
 
 This path needs NO Fabric Data Agent (which is capacity-gated). Power BI Direct
-Lake and the Fabric IQ Copilot plugin both run on trial capacity.
+Lake and the Fabric data plugin both run on trial capacity.
 
 Usage:
     python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --instructions
@@ -403,7 +403,7 @@ def cmd_create_model(dry_run: bool) -> int:
             info = {}
         model_id = info.get("id", match["id"] if match else "(see --verify)")
         print(f"[OK] semantic model published: {MODEL_NAME} [{model_id}]")
-        print("Next: enable the Fabric IQ / Copilot plugin in Copilot pointed at this "
+        print("Next: enable the Fabric data plugin in Copilot pointed at this "
               "model (UI toggle, the only non-scriptable step), then build the report "
               "with --instructions.")
         return 0
@@ -804,7 +804,7 @@ def cmd_verify() -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--instructions", action="store_true", help="Print report + Fabric IQ build steps.")
+    ap.add_argument("--instructions", action="store_true", help="Print report + Fabric build steps.")
     ap.add_argument("--print-views", action="store_true", help="Print semantic_views.sql.")
     ap.add_argument("--apply-views", action="store_true", help="Apply semantic views to the SQL endpoint.")
     ap.add_argument("--create-model", action="store_true", help="Publish the Direct Lake semantic model over the views.")

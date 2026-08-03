@@ -61,7 +61,7 @@ ONELAKE_HOST = "onelake.dfs.fabric.microsoft.com"
 STAGING_PATH = "Files/supplemental"  # CSV staging area in the Lakehouse Files section
 
 # ---------------------------------------------------------------------------
-# VendorEnrichment — internal vendor performance data.
+# VendorEnrichment - internal vendor performance data.
 # ---------------------------------------------------------------------------
 VENDOR_ENRICHMENT_HEADER = "accountnum,vendor_name,category,on_time_pct,open_disputes,risk_tier"
 VENDOR_ENRICHMENT_ROWS = [
@@ -71,7 +71,7 @@ VENDOR_ENRICHMENT_ROWS = [
 ]
 
 # ---------------------------------------------------------------------------
-# ExternalVendorRisk — third-party market and financial intelligence.
+# ExternalVendorRisk - third-party market and financial intelligence.
 # V0004/V0005 are on the ProcureIQ watchlist but not in any Dataverse launch.
 # ---------------------------------------------------------------------------
 EXTERNAL_VENDOR_RISK_HEADER = "accountnum,vendor_name,credit_rating,financial_health_score,market_risk_tier,diversity_certified,risk_source"
@@ -199,7 +199,7 @@ def _poll_load_op(op_url: str, token: str, table_name: str, max_wait: int = 120)
         except Exception as e:
             print(f"  [poll err] {e}")
             break
-    print(f"  [WARN] {table_name} load still running after {max_wait}s — check Fabric portal")
+    print(f"  [WARN] {table_name} load still running after {max_wait}s - check Fabric portal")
 
 
 def cmd_apply(dry_run: bool) -> int:
@@ -247,7 +247,7 @@ def cmd_verify() -> int:
         missing = [n for n in ("VendorEnrichment", "ExternalVendorRisk")
                    if not any(t.get("name") == n for t in tables)]
         if missing:
-            print(f"\nMissing: {missing} — run --apply or wait 1-2 min and retry")
+            print(f"\nMissing: {missing} - run --apply or wait 1-2 min and retry")
         else:
             print("\nAll supplementary tables present and registered.")
     except Exception as e:

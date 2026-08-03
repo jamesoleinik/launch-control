@@ -122,7 +122,7 @@ EXTERNAL_TABLES = [
 ]
 
 # ---------------------------------------------------------------------------
-# VendorEnrichment — ingested directly into KQL (not from lakehouse).
+# VendorEnrichment - ingested directly into KQL (not from lakehouse).
 # Adds human-readable vendor names and performance scores that aren't
 # available in the F&O DirPartyTable (not linked to Fabric in this env).
 # ---------------------------------------------------------------------------
@@ -139,12 +139,12 @@ VENDOR_ENRICHMENT_SCHEMA = (
 )
 
 # ---------------------------------------------------------------------------
-# ExternalVendorRisk — third-party market and financial intelligence.
+# ExternalVendorRisk - third-party market and financial intelligence.
 # Source: fictional "ProcureIQ" procurement risk platform.
 # This data does NOT live in Dataverse or F&O; Fabric is the only place
 # it is queryable alongside live launch and vendor transaction data.
 # V0004/V0005 are vendors known to the risk platform but not yet in any
-# live Dataverse launch — they demonstrate that Fabric holds data
+# live Dataverse launch - they demonstrate that Fabric holds data
 # Dataverse does not.
 # ---------------------------------------------------------------------------
 EXTERNAL_VENDOR_RISK_ROWS = [

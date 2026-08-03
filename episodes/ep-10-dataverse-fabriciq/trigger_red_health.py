@@ -43,7 +43,7 @@ HEALTH_RED   = 10600603
 # ---------------------------------------------------------------------------
 DEMO_UPDATES = [
     {
-        "lc_title": "Localization vendor SLA breach — RED",
+        "lc_title": "Localization vendor SLA breach - RED",
         "lc_summary": (
             "Acme Translations (V0001) missed the Q3 strings deadline by 3 days. "
             "61% on-time rate with 2 open disputes. Launch date impact: HIGH."
@@ -51,7 +51,7 @@ DEMO_UPDATES = [
         "lc_health": HEALTH_RED,
     },
     {
-        "lc_title": "Logistics partner ship-window blocked — RED",
+        "lc_title": "Logistics partner ship-window blocked - RED",
         "lc_summary": (
             "SwiftLogix (V0003) unable to confirm freight window due to carrier capacity. "
             "74% on-time, 1 open dispute. Physical launch material at risk."
@@ -160,7 +160,7 @@ def main() -> int:
     if launch_id:
         print(f"Using launch ID: {launch_id}")
     else:
-        print("No launch found — writing status updates without launch association")
+        print("No launch found - writing status updates without launch association")
 
     written_ids = []
     for update in DEMO_UPDATES:
