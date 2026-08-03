@@ -65,6 +65,7 @@ REPORT_NAME = "Launch Control 360"
 # The semantic-layer views the Direct Lake model binds to (in apply order).
 MODEL_VIEWS = [
     "vw_launch_health",
+    "vw_launch_scorecard",
     "vw_vendor_360",
     "vw_launch_vendor_exposure",
     "vw_vendor_enrichment",
@@ -453,6 +454,27 @@ def _textbox(text, x, y, w, h) -> dict:
     return _container(x, y, w, h, cfg)
 
 
+def _slicer(entity, field, x, y, w, h) -> dict:
+    """A single-column slicer, used to filter a page to one vendor."""
+    src = "q"
+    name = f"{entity}.{field}"
+    cfg = {
+        "name": str(uuid.uuid4()),
+        "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
+        "singleVisual": {
+            "visualType": "slicer",
+            "projections": {"Values": [{"queryRef": name}]},
+            "prototypeQuery": {
+                "Version": 2,
+                "From": [{"Name": src, "Entity": entity, "Type": 0}],
+                "Select": [{**_col_ref(src, field), "Name": name}],
+            },
+            "drillFilterOtherVisuals": True,
+        },
+    }
+    return _container(x, y, w, h, cfg)
+
+
 _FN = {0: "Sum", 1: "Avg", 2: "Min", 3: "Max", 4: "Count", 5: "CountNonNull"}
 
 
@@ -559,23 +581,29 @@ def _stacked_bar(entity, category, values, colors, x, y, w, h) -> dict:
     return _container(x, y, w, h, cfg)
 
 
-def _table(entity, cols, x, y, w, h) -> dict:
+def _table(entity, cols, x, y, w, h, order_by=None, order_desc=True) -> dict:
     src = "q"
     selects, projections = [], []
     for c in cols:
         selects.append({**_col_ref(src, c), "Name": f"{entity}.{c}"})
         projections.append({"queryRef": f"{entity}.{c}"})
+    proto = {
+        "Version": 2,
+        "From": [{"Name": src, "Entity": entity, "Type": 0}],
+        "Select": selects,
+    }
+    if order_by:
+        proto["OrderBy"] = [{
+            "Direction": 2 if order_desc else 1,
+            "Expression": _col_ref(src, order_by),
+        }]
     cfg = {
         "name": str(uuid.uuid4()),
         "layouts": [{"id": 0, "position": {"x": x, "y": y, "z": 0, "width": w, "height": h}}],
         "singleVisual": {
             "visualType": "tableEx",
             "projections": {"Values": projections},
-            "prototypeQuery": {
-                "Version": 2,
-                "From": [{"Name": src, "Entity": entity, "Type": 0}],
-                "Select": selects,
-            },
+            "prototypeQuery": proto,
             "drillFilterOtherVisuals": True,
         },
     }
@@ -596,58 +624,72 @@ def _section(display_name: str, containers: list[dict]) -> dict:
 
 
 def _build_report_json() -> dict:
-    """The 'Launch Control 360' report: 5 pages with real visuals over the model."""
+    """The 'Launch Control 360' report: 3 focused pages over the model.
+
+    Page 1 (Launch 360): every launch, ranked by risk, with the next action.
+    Page 2 (Vendor List): the whole vendor roster plus the blind-spot vendors.
+    Page 3 (Vendor 360): a single-vendor deep dive, driven by a vendor slicer.
+    """
     sections = [
-        _section("Launch Health", [
-            _textbox("Launch health overview: RED / AMBER / GREEN status mix across "
-                     "every active launch, rolled up from Dataverse status updates.",
-                     20, 12, 1240, 44),
-            _card("vw_launch_health", "red_count", 20, 66, 220, 120, fn=0),
-            _card("vw_launch_health", "amber_count", 250, 66, 220, 120, fn=0),
-            _card("vw_launch_health", "green_count", 480, 66, 220, 120, fn=0),
-            _card("vw_launch_health", "total_updates", 710, 66, 220, 120, fn=0),
+        _section("Launch 360", [
+            _textbox("Launches ranked worst-first. Each row says what is wrong, "
+                     "who is driving it, how much is exposed, and the next action. "
+                     "Start at the top.", 20, 12, 1240, 44),
+            _card("vw_launch_scorecard", "is_red", 20, 66, 290, 110, fn=0),
+            _card("vw_launch_scorecard", "red_exposure_usd", 320, 66, 290, 110, fn=0),
+            _card("vw_launch_scorecard", "is_at_risk", 620, 66, 290, 110, fn=0),
+            _card("vw_launch_scorecard", "open_red_updates", 920, 66, 290, 110, fn=0),
+            _table("vw_launch_scorecard",
+                   ["launch_name", "risk_band", "current_health", "top_risk_vendor",
+                    "top_vendor_market_risk", "vendor_exposure_usd",
+                    "recommended_action", "risk_score"],
+                   20, 190, 1240, 300, order_by="risk_score", order_desc=True),
             _stacked_bar("vw_launch_health", "launch_name",
                          ["red_count", "amber_count", "green_count"],
                          ["#D64550", "#E8A33D", "#4E9F3D"],
-                         20, 206, 760, 474),
-            _table("vw_launch_health",
-                   ["launch_name", "red_count", "amber_count", "green_count", "red_pct"],
-                   800, 206, 460, 474),
+                         20, 500, 620, 196),
+            _bar("vw_launch_scorecard", "launch_name", "risk_score",
+                 660, 500, 600, 196, fn=0),
         ]),
-        _section("Vendor 360", [
-            _card("vw_vendor_360", "open_balance_usd", 20, 20, 220, 140, fn=0),
-            _card("vw_vendor_360", "overdue_count", 260, 20, 200, 140, fn=0),
+        _section("Vendor List", [
+            _textbox("Every vendor across the portfolio: internal delivery "
+                     "performance, ProcureIQ market risk, and the F&O open-invoice "
+                     "ledger in one row. The lower table is the blind spot: risk "
+                     "vendors with no F&O master record.", 20, 12, 1240, 44),
+            _card("vw_vendor_360", "open_balance_usd", 20, 66, 290, 110, fn=0),
+            _card("vw_vendor_360", "overdue_count", 320, 66, 290, 110, fn=0),
+            _card("vw_vendor_360", "financial_health_score", 620, 66, 290, 110, fn=1),
             _table("vw_vendor_360",
-                   ["vendor_name", "market_risk_tier", "credit_rating",
-                    "financial_health_score", "open_balance_usd", "overdue_count"],
-                   20, 180, 1240, 500),
-        ]),
-        _section("Launch x Vendor Exposure", [
-            _table("vw_launch_vendor_exposure",
-                   ["launch_name", "vendor_name", "dataverse_invoiced_amount",
-                    "dataverse_committed_amount", "internal_risk_tier",
-                    "market_risk_tier"],
-                   20, 20, 1240, 660),
-        ]),
-        _section("Cross-Source 360", [
-            _textbox("Cross-source 360: one matrix unifying Dataverse launch/work, "
-                     "internal delivery ops, and ProcureIQ market risk, with the F&O "
-                     "ERP vendor ledger alongside.", 20, 10, 1240, 50),
-            _matrix("vw_launch_vendor_exposure",
-                    ["launch_name", "vendor_name"],
-                    [("dataverse_invoiced_amount", 0), ("financial_health_score", 1),
-                     ("on_time_pct", 1)],
-                    20, 70, 760, 610),
-            _table("vw_vendor_360",
-                   ["vendor_name", "erp_credit_limit", "open_balance_usd",
-                    "overdue_count", "market_risk_tier"],
-                   800, 70, 460, 610),
-        ]),
-        _section("Blind Spots", [
+                   ["vendor_name", "category", "on_time_pct", "internal_risk_tier",
+                    "market_risk_tier", "credit_rating", "financial_health_score",
+                    "open_balance_usd", "overdue_count"],
+                   20, 190, 1240, 320),
+            _textbox("Blind spots: ProcureIQ risk vendors with no F&O master record.",
+                     20, 520, 1240, 30),
             _table("vw_watchlist_vendors",
                    ["accountnum", "vendor_name", "credit_rating",
                     "financial_health_score", "market_risk_tier"],
-                   20, 20, 1240, 660),
+                   20, 552, 1240, 144),
+        ]),
+        _section("Vendor 360", [
+            _textbox("Single-vendor deep dive. Pick a vendor in the slicer to focus "
+                     "the whole page on that vendor.", 20, 12, 980, 44),
+            _slicer("vw_vendor_360", "vendor_name", 20, 66, 280, 620),
+            _card("vw_vendor_360", "financial_health_score", 320, 66, 220, 110, fn=1),
+            _card("vw_vendor_360", "on_time_pct", 560, 66, 220, 110, fn=1),
+            _card("vw_vendor_360", "open_balance_usd", 800, 66, 210, 110, fn=0),
+            _card("vw_vendor_360", "overdue_count", 1030, 66, 210, 110, fn=0),
+            _table("vw_vendor_360",
+                   ["vendor_name", "category", "internal_risk_tier",
+                    "market_risk_tier", "credit_rating", "financial_health_score",
+                    "erp_credit_limit", "open_balance_usd"],
+                   320, 190, 920, 150),
+            _textbox("Launches exposed to this vendor:", 320, 356, 920, 30),
+            _table("vw_launch_vendor_exposure",
+                   ["launch_name", "dataverse_invoiced_amount",
+                    "dataverse_committed_amount", "internal_risk_tier",
+                    "market_risk_tier"],
+                   320, 388, 920, 298),
         ]),
     ]
     return {

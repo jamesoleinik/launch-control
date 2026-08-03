@@ -185,3 +185,118 @@ WHERE NOT EXISTS (
     SELECT 1 FROM vendtable vt WHERE vt.accountnum = evr.accountnum
 );
 GO
+
+-- ---------------------------------------------------------------------------
+-- vw_launch_scorecard  --  the decision view: ONE ranked row per launch that
+-- answers "what do I do about my launches today?". It fuses the CURRENT health
+-- (the latest status update, not a count), the reason text behind it, the
+-- riskiest vendor on the launch (ProcureIQ market risk), the Dataverse invoiced
+-- exposure, a composite risk_score to sort by, and a plain-language next action.
+-- This is what makes the report a launch-management tool rather than a status
+-- tally.
+-- ---------------------------------------------------------------------------
+CREATE OR ALTER VIEW vw_launch_scorecard AS
+WITH latest AS (
+    SELECT
+        su.lc_launchidname                          AS launch_name,
+        su.lc_health,
+        REPLACE(su.lc_title, '[LC360] ', '')        AS latest_title,
+        REPLACE(su.lc_summary, '[LC360] ', '')      AS latest_summary,
+        su.lc_postedat,
+        ROW_NUMBER() OVER (PARTITION BY su.lc_launchidname
+                           ORDER BY su.lc_postedat DESC, su.createdon DESC) AS rn
+    FROM lc_statusupdate su
+    WHERE (su.IsDelete = 0 OR su.IsDelete IS NULL)
+      AND su.lc_launchidname IS NOT NULL
+),
+exposure AS (
+    SELECT
+        launch_name,
+        SUM(dataverse_invoiced_amount)              AS vendor_exposure_usd,
+        SUM(dataverse_committed_amount)             AS vendor_committed_usd,
+        MAX(CASE market_risk_tier WHEN 'Critical' THEN 4 WHEN 'High' THEN 3
+                                  WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1
+                                  ELSE 0 END)        AS worst_market_risk_rank
+    FROM vw_launch_vendor_exposure
+    WHERE launch_name IS NOT NULL
+    GROUP BY launch_name
+),
+topvendor AS (
+    SELECT
+        launch_name, vendor_name, market_risk_tier,
+        ROW_NUMBER() OVER (PARTITION BY launch_name
+            ORDER BY CASE market_risk_tier WHEN 'Critical' THEN 4 WHEN 'High' THEN 3
+                                           WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1
+                                           ELSE 0 END DESC,
+                     dataverse_invoiced_amount DESC)  AS rn
+    FROM vw_launch_vendor_exposure
+    WHERE launch_name IS NOT NULL
+),
+base AS (
+    SELECT
+        h.launch_name,
+        l.lc_health                                 AS latest_health_code,
+        CASE l.lc_health WHEN 10600603 THEN 'RED' WHEN 10600602 THEN 'AMBER'
+                         WHEN 10600601 THEN 'GREEN' ELSE 'UNSET' END AS current_health,
+        h.red_count                                 AS open_red_updates,
+        l.latest_title,
+        l.latest_summary,
+        l.lc_postedat                               AS latest_update_at,
+        tv.vendor_name                              AS top_risk_vendor,
+        tv.market_risk_tier                         AS top_vendor_market_risk,
+        COALESCE(e.vendor_exposure_usd, 0)          AS vendor_exposure_usd,
+        COALESCE(e.vendor_committed_usd, 0)         AS vendor_committed_usd,
+        COALESCE(e.worst_market_risk_rank, 0)       AS worst_market_risk_rank
+    FROM vw_launch_health h
+    LEFT JOIN latest    l  ON h.launch_name = l.launch_name AND l.rn = 1
+    LEFT JOIN exposure  e  ON h.launch_name = e.launch_name
+    LEFT JOIN topvendor tv ON h.launch_name = tv.launch_name AND tv.rn = 1
+)
+SELECT
+    launch_name,
+    current_health,
+    open_red_updates,
+    latest_title                                    AS latest_update_title,
+    latest_summary                                  AS latest_update_summary,
+    latest_update_at,
+    top_risk_vendor,
+    top_vendor_market_risk,
+    vendor_exposure_usd,
+    vendor_committed_usd,
+    CASE WHEN latest_health_code = 10600603 THEN 50
+         WHEN latest_health_code = 10600602 THEN 25 ELSE 0 END
+      + open_red_updates * 5
+      + worst_market_risk_rank * 10
+      + CASE WHEN vendor_exposure_usd > 50000 THEN 15
+             WHEN vendor_exposure_usd > 20000 THEN 8 ELSE 0 END      AS risk_score,
+    CASE
+        WHEN latest_health_code = 10600603 THEN 'Critical'
+        WHEN latest_health_code = 10600602 AND worst_market_risk_rank >= 3 THEN 'High'
+        WHEN latest_health_code = 10600602 THEN 'Medium'
+        WHEN worst_market_risk_rank >= 3 THEN 'Watch'
+        ELSE 'On track'
+    END                                                              AS risk_band,
+    CASE WHEN latest_health_code = 10600603 THEN 1 ELSE 0 END        AS is_red,
+    CASE WHEN latest_health_code IN (10600603, 10600602) THEN 1 ELSE 0 END AS is_at_risk,
+    CASE WHEN latest_health_code = 10600603 THEN vendor_exposure_usd
+         ELSE 0 END                                                  AS red_exposure_usd,
+    CASE
+        WHEN latest_health_code = 10600603 AND worst_market_risk_rank >= 3
+            THEN 'Escalate now: RED status and high-risk vendor '
+                 + COALESCE(top_risk_vendor, '(none)') + '. '
+                 + COALESCE(latest_title, '')
+        WHEN latest_health_code = 10600603
+            THEN 'Work the RED blocker: ' + COALESCE(latest_title, '')
+        WHEN latest_health_code = 10600602 AND worst_market_risk_rank >= 3
+            THEN 'Watch vendor risk (' + COALESCE(top_risk_vendor, '(none)')
+                 + ') before it turns RED'
+        WHEN latest_health_code = 10600602
+            THEN 'Trending AMBER: ' + COALESCE(latest_title, '')
+        WHEN worst_market_risk_rank >= 3
+            THEN 'On GREEN, but ' + COALESCE(top_risk_vendor, '(none)')
+                 + ' is a high-risk vendor. Keep the exposure under watch.'
+        ELSE 'On track. No action needed.'
+    END                                                              AS recommended_action
+FROM base;
+GO
+

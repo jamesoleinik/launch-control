@@ -1,7 +1,7 @@
 # Episode 10: Dataverse + Fabric IQ (two-plane AI architecture)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
-**Build status:** Semantic model + 5-page report + demo data built programmatically against the live tenant; Fabric IQ Copilot wiring is the only manual step remaining (2026-08-02)
+**Build status:** Semantic model + 3-page report + demo data built programmatically against the live tenant; Fabric IQ Copilot wiring is the only manual step remaining (2026-08-02)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Fabric IQ (semantic data layer + Copilot plugin over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Power BI Direct Lake semantic model over the Lakehouse SQL endpoint · ⭐ Fabric Data Agent (optional upgrade on F/P capacity)
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
@@ -35,7 +35,8 @@ transact?*
 - **No, it is analytical / cross-entity / multi-source -> Fabric IQ.** Trends
   across all launches, external risk intelligence, ERP financial exposure.
 
-The clearest signal is the **Blind Spots** page: Pacific Rim Components (V0004)
+The clearest signal is the **Vendor List** page's blind-spot table: Pacific Rim
+Components (V0004)
 and Nexus Cloud Services (V0005) exist only in the ProcureIQ risk data. Dataverse
 has never heard of them. Fabric can surface their risk profile before they ever
 appear in an operational record.
@@ -71,7 +72,7 @@ model is the join.
 Everything below the Lakehouse is created programmatically against the live
 tenant. No manual Power BI Desktop authoring.
 
-1. **Semantic layer** (`semantic_views.sql`): 8 T-SQL views on the LaunchControl
+1. **Semantic layer** (`semantic_views.sql`): 9 T-SQL views on the LaunchControl
    Dataverse Fabric Link Lakehouse SQL analytics endpoint. Applied with
    `setup_powerbi_report.py --apply-views` (idempotent, every view is
    `CREATE OR ALTER`).
@@ -80,7 +81,7 @@ tenant. No manual Power BI Desktop authoring.
    `setup_powerbi_report.py --create-model`. Introspects the live view columns,
    builds Direct Lake partitions over each view, and defines the cross-source
    relationships. Idempotent via `updateDefinition`.
-3. **Power BI report** `Launch Control 360`: a 5-page report published via the
+3. **Power BI report** `Launch Control 360`: a 3-page report published via the
    Fabric REST API (PBIR, `definition.pbir` `byConnection`) with
    `setup_powerbi_report.py --create-report`, bound to the model. Idempotent.
 4. **Demo data**: `seed_report_demo.py` writes a varied RED/AMBER/GREEN status
@@ -109,17 +110,16 @@ User prompt
     |
     v
 [Semantic layer: semantic_views.sql]
-    |    vw_launch_health, vw_vendor_360, vw_launch_vendor_exposure,
-    |    vw_red_status_feed, vw_watchlist_vendors,
+    |    vw_launch_health, vw_launch_scorecard, vw_vendor_360,
+    |    vw_launch_vendor_exposure, vw_red_status_feed, vw_watchlist_vendors,
     |    vw_vendor_enrichment, vw_vendor_risk  (inline supplementary data),
     |    vw_launch_code_map  (bridge: launch code -> launch name)
     |
     v
 [Plane 2: Power BI Direct Lake semantic model "Launch Control 360"]
-    |    7 tables + relationships (fact -> dimension) + DAX measures
+    |    8 tables + relationships (fact -> dimension) + DAX measures
     |
-    +--> Power BI report (5 pages): Launch Health / Vendor 360 /
-    |    Launch x Vendor Exposure / Cross-Source 360 / Blind Spots
+    +--> Power BI report (3 pages): Launch 360 / Vendor List / Vendor 360
     |
     +--> Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server):
          "Which launch's RED rate is most anomalous vs. the median?"
@@ -135,6 +135,7 @@ AMBER = 10600602, GREEN = 10600601):
 | View | Grain | Sources unified |
 |------|-------|-----------------|
 | `vw_launch_health` | one row per launch | Dataverse launch + status updates (RED rate roll-up), keyed on `launch_name` |
+| `vw_launch_scorecard` | one row per launch (ranked) | the decision view: current health + latest reason + riskiest vendor + invoiced exposure + `risk_score` + `recommended_action` |
 | `vw_red_status_feed` | one row per RED update | Dataverse status updates |
 | `vw_launch_vendor_exposure` | launch x vendor work item | Dataverse work + internal ops + ProcureIQ risk, plus `launch_name` via the code map |
 | `vw_vendor_360` | one row per vendor | internal perf + ProcureIQ risk + F&O master (`vendtable`) + F&O open balance (`vendtransopen`) |
@@ -158,7 +159,7 @@ Notes on the live data:
 
 ## The Direct Lake model and its relationships
 
-`Launch Control 360` is a Direct Lake model over the 7 analytic views (the code
+`Launch Control 360` is a Direct Lake model over the 8 analytic views (the code
 map is a helper, not a model table). It is a star with two dimensions:
 
 - **Launch dimension:** `vw_launch_health` (keyed on `launch_name`)
@@ -175,20 +176,22 @@ DAX measures (see `powerbi_report_spec.md`) include `RED Rate %`,
 `Median RED Rate %`, `RED Rate vs Median`, `Total Open ERP Exposure`,
 `High-Risk Vendors`, and `Overdue Invoices`.
 
-## The report (5 pages)
+## The report (3 pages)
 
-1. **Launch Health** - executive overview: launch-count / RED / AMBER / total-update
-   KPI cards, a stacked RED / AMBER / GREEN bar per launch (fixed RAG colors), and a
-   launch health table.
-2. **Vendor 360** - open-balance and overdue cards, full vendor risk/exposure
-   table (internal + ProcureIQ + F&O in one row).
-3. **Launch x Vendor Exposure** - Dataverse invoiced/committed per launch x vendor
-   with internal and market risk tiers.
-4. **Cross-Source 360** - a single matrix that unifies Dataverse launch/work,
-   internal delivery ops, and ProcureIQ market risk, with the F&O vendor ledger
-   alongside. This is the "multiple datasets coming together" view.
-5. **Blind Spots** - ProcureIQ watchlist vendors with no F&O master record
-   (the risk Dataverse alone cannot see).
+1. **Launch 360** - the launch decision cockpit. Ranked scorecard
+   (`vw_launch_scorecard`): every launch worst-first with its current health,
+   riskiest vendor, invoiced exposure, `risk_score`, and a plain-language
+   `recommended_action`. KPI cards (RED launches, $ exposure on RED launches,
+   launches needing attention, open RED updates), a stacked RED / AMBER / GREEN
+   bar per launch, and a risk-score bar.
+2. **Vendor List** - the whole vendor roster (`vw_vendor_360`): internal delivery
+   performance, ProcureIQ market risk, and the F&O open-invoice ledger in one row,
+   with portfolio KPI cards. A second table lists the **blind spots**: ProcureIQ
+   risk vendors with no F&O master record (the risk Dataverse alone cannot see).
+3. **Vendor 360** - a single-vendor deep dive driven by a vendor slicer. Pick a
+   vendor to focus the whole page: its health/perf/exposure cards, its full
+   cross-source detail row, and the launches exposed to it (via the model
+   relationship on `vendor_name`).
 
 ## Build steps (reproduce)
 
@@ -212,7 +215,7 @@ python episodes/ep-10-dataverse-fabriciq/seed_report_demo.py --apply
 # 3. Publish the Direct Lake semantic model (with relationships).
 python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-model
 
-# 4. Publish the 5-page report bound to the model.
+# 4. Publish the 3-page report bound to the model.
 python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --create-report
 
 # 5. List the published items (and get their ids for the URL).
@@ -276,8 +279,8 @@ table is **not** in the Link's selected table set:
       confirms the report `datasetId` binds to the model.
 - [ ] Fabric IQ / Copilot plugin enabled and pointed at `Launch Control 360`
       (the one manual step), with two strong on-camera prompts staged.
-- [ ] Confirm the report renders all 5 pages (the Launch Health stacked RAG bar
-      in particular).
+- [ ] Confirm the report renders all 3 pages (the Launch 360 scorecard table and
+      the Vendor 360 slicer in particular).
 
 ## Archived artifacts
 
