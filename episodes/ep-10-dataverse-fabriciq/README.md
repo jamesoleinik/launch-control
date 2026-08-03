@@ -7,7 +7,7 @@
 **Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
 **Coding agent:** Python automation (Fabric REST API: TMSL model + PBIR report) against the live tenant
 **Runtime:** Copilot Studio (Plane 1) + Dataverse MCP + Fabric Link + Lakehouse SQL + Power BI Direct Lake + Fabric IQ (Plane 2)
-**Runtime showcased:** the **programmatic Direct Lake + Fabric IQ** consumption plane (no Power BI Desktop authoring)
+**Runtime showcased:** the **programmatic Direct Lake + Fabric IQ** consumption plane (the coding agent generates the model, relationships, and measures via TMSL/PBIR: no Power BI Desktop authoring and no hand-written DAX)
 
 > **Building this episode?** `plan.md` is the self-contained build runbook.
 > `powerbi_report_spec.md` is the semantic model + report spec. This README
@@ -121,7 +121,7 @@ User prompt
     |
     +--> Power BI report (3 pages): Launch 360 / Vendor List / Vendor 360
     |
-    +--> Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server):
+    +--> Fabric IQ plugin in Microsoft 365 Copilot Cowork (grounds on the report):
          "Which launch's RED rate is most anomalous vs. the median?"
          "Open ERP invoice exposure for vendors on the Q3 Widget Launch?"
          "Which high-risk ProcureIQ vendors have no active launch work?"
@@ -242,11 +242,42 @@ python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --instructions
 python episodes/ep-10-dataverse-fabriciq/seed_report_demo.py --cleanup
 ```
 
-### The one manual step: Fabric IQ in Copilot
+### Section 4: the Fabric Cowork plugin (the one manual step)
 
-Everything else is scriptable. Enabling the Fabric IQ / Copilot plugin (the
-Power BI MCP server) in Microsoft 365 Copilot and pointing it at the
-`Launch Control 360` model is a UI toggle with no supported API.
+Everything below the Lakehouse is scriptable; the consumption surface in Microsoft
+365 Copilot is not. This is the payoff of building a single unified model in
+Section 3: the **Fabric IQ plugin** in **Microsoft 365 Copilot Cowork** grounds a
+chat on **one** Power BI report and the semantic model behind it, and queries it
+**as you** (item permissions and row-level security still apply). Cowork does not
+join across models, so the three-source join has to live inside `Launch Control
+360` already. It does, so Cowork can answer across launches, ERP exposure, and
+vendor risk from that one report, then chain the answer into an email, a document,
+or a scheduled review.
+
+Enablement (Fabric IQ plugin is installed by default in Cowork; no extra F SKU or
+PPU is needed beyond what the report already requires):
+
+1. **Tenant admin** (Fabric admin portal): enable **Share Fabric data with your
+   Microsoft 365 services**, the **cross-region** toggle if your Fabric and M365
+   tenants are in different regions, and **Users can use the Power BI Model Context
+   Protocol server endpoint (preview)**.
+2. **User**: have Cowork access (Microsoft 365 Copilot licensing + usage-based
+   Cowork billing) and at least **Read** on the `Launch Control 360` report and its
+   semantic model.
+3. In Cowork, ground on the report (attach it with the **+** composer control,
+   paste its report link, or reference it by name), then ask.
+
+Demo prompts (each starts grounded on the one report, then chains a skill):
+
+- *"Using Launch Control 360, which launch is most at risk once you factor in the
+  vendors behind it, and why?"*
+- *"For the riskiest launch, draft an email to the launch owner with the vendor,
+  the open ERP exposure, and the recommended action."*
+- *"Which ProcureIQ high-risk vendors have no active launch work? Turn that into a
+  one-page brief."*
+
+Caveat for on-camera: Cowork answers don't cite the source report today, so
+confirm any number in the report before acting on it.
 
 ## Fabric Link completeness
 
@@ -293,8 +324,9 @@ a single backfill run's latencies cluster tightly around that batch's cycle time
       `vw_launch_health` shows a varied RED/AMBER/GREEN mix across all launches.
 - [ ] `--create-model` and `--create-report` both report `[OK]`; `--verify`
       confirms the report `datasetId` binds to the model.
-- [ ] Fabric IQ / Copilot plugin enabled and pointed at `Launch Control 360`
-      (the one manual step), with two strong on-camera prompts staged.
+- [ ] Fabric Cowork tenant settings enabled (Share Fabric data with M365 + Power BI
+      MCP server endpoint preview); Cowork grounded on `Launch Control 360` with two
+      strong on-camera prompts staged (one cross-source question, one chained skill).
 - [ ] Confirm the report renders all 3 pages (the Launch 360 scorecard table and
       the Vendor 360 slicer in particular).
 

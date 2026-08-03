@@ -194,12 +194,28 @@ python episodes/ep-10-dataverse-fabriciq/setup_powerbi_report.py --verify
 
 Reference: `episodes/ep-10-dataverse-fabriciq/powerbi_report_spec.md`
 
-### E. Fabric IQ in Copilot (portal step)
-- [ ] Enable the Fabric IQ plugin in Microsoft 365 Copilot (Power BI MCP server).
-      This is the only non-scriptable step (UI toggle).
-- [ ] Point it at the "Launch Control 360" semantic model in the LaunchControl workspace.
-- [ ] Confirm natural-language answers, e.g. "Which launch's RED rate is most
-      anomalous vs. the median?" and "Open ERP invoice exposure for EP11-DEMO-01?".
+### E. Section 4: Fabric Cowork plugin (portal step)
+
+The one non-scriptable step. The Fabric IQ plugin is installed by default in
+Microsoft 365 Copilot Cowork; it grounds a chat on one Power BI report and the
+semantic model behind it, and queries it as the signed-in user (RLS and item
+permissions apply). Cowork does not join across models, so the cross-source join
+must already live in `Launch Control 360` (built in Section 3). No extra F SKU or
+PPU is required beyond what the report already needs.
+
+- [ ] Tenant admin (Fabric admin portal): enable "Share Fabric data with your
+      Microsoft 365 services", the cross-region toggle if Fabric and M365 are in
+      different regions, and "Users can use the Power BI Model Context Protocol
+      server endpoint (preview)".
+- [ ] User: Cowork access (M365 Copilot licensing + usage-based Cowork billing) and
+      at least Read on the `Launch Control 360` report and its semantic model.
+- [ ] In Cowork, ground on the report (attach via the + composer control, paste its
+      report link, or reference it by name).
+- [ ] Confirm cross-source answers that chain a skill, e.g. "Which launch is most at
+      risk once you factor in the vendors behind it?" then "draft an email to the
+      launch owner with the vendor, the open ERP exposure, and the recommended
+      action." Note: Cowork answers don't cite the source report, so confirm numbers
+      in the report before acting.
 
 ### F. Final episode proof
 - [x] Run RED trigger and confirm Dataverse to Lakehouse SQL timing.
