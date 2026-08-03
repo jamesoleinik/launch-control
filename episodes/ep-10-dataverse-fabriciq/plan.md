@@ -1,18 +1,34 @@
 # Ep 10 build plan: Dataverse + Fabric IQ
 
-This runbook reflects the current architecture choice: a Power BI Direct Lake
-semantic model over the Lakehouse SQL analytics endpoint, consumed through a
-report and the Fabric IQ Copilot plugin (the Fabric Data Agent path is a paid-
-capacity upgrade; the Eventhouse + KQL path was evaluated and archived in
-`setup_eventhouse.py`). It tracks what is already built and what remains.
+This runbook is organized around the episode's four on-camera sections. The
+architecture choice underneath them is a Power BI Direct Lake semantic model over
+the Lakehouse SQL analytics endpoint, consumed through a report and the Fabric IQ
+/ Cowork Copilot plugin (the Fabric Data Agent path is a paid-capacity upgrade,
+archived at the end of this file; the Eventhouse + KQL path was evaluated and
+archived in `setup_eventhouse.py`).
+
+## The four sections (recording arc)
+
+1. **Section 1 - Fabric Link.** Create the fast Dataverse -> OneLake Fabric Link
+   for the launch and vendor tables, and confirm the Lakehouse SQL analytics
+   endpoint is reachable.
+2. **Section 2 - Backfill + measured latency.** Backfill ~100 historical launch
+   status records, measure the write -> OneLake replication latency to the second,
+   and emit a distribution graph. Deliverable: `measure_sync_latency.py`.
+3. **Section 3 - Semantic model + report from a coding agent (no DAX).** Build a
+   Power BI Direct Lake semantic model that joins the launch/project data with an
+   enrichment dataset, show the model, and generate the report entirely from a
+   coding agent. Deliverables: `semantic_views.sql` + `setup_powerbi_report.py`.
+4. **Section 4 - Fabric Cowork plugin.** Enable the Fabric Cowork / IQ plugin and
+   pull data across the joined model directly in Cowork (the one manual step).
 
 ## One-line goal
 
 Use two AI planes:
 1. Copilot Studio agent writes `lc_statusupdate` in Dataverse when launch risk is high.
 2. A Power BI Direct Lake semantic model over the Lakehouse SQL endpoint unifies
-   launch, F&O invoice, and vendor-risk data; the report and the Fabric IQ Copilot
-   plugin surface it for questions and escalation review.
+   launch, F&O invoice, and vendor-risk data; the report and the Fabric IQ / Cowork
+   Copilot plugin surface it for questions and escalation review.
 
 The bridge is low-latency Fabric Link (Dataverse to OneLake Lakehouse Delta,
 queried via the SQL analytics endpoint).
@@ -38,7 +54,10 @@ Completed:
 - Eventhouse + KQL path (eventhouse `LaunchControlEH`, `fn_live_red_updates`,
   `fn_vendor_360_risk`, etc.) evaluated then archived in `setup_eventhouse.py`;
   the 4-way vendor-360 join now runs as T-SQL in the semantic views.
-- `show_replication_latency.py` created for latency distribution output.
+- `measure_sync_latency.py` (Section 2 deliverable) backfills tagged status
+  records, polls the OneLake mirror with a fresh connection per cycle, and outputs
+  the write -> OneLake latency distribution (stats + histogram PNG + CSV). It
+  supersedes the earlier `show_replication_latency.py` probe.
 - Historical baseline seeded: 5 launches (`EP11-HIST-01..05`), 60 tasks, 5 snapshots.
 - `lc_vendorwork` refreshed with realistic values for V0001/V0002/V0003.
 - E2E write-path validated with `trigger_red_health.py`:
@@ -122,6 +141,24 @@ Command:
 ```bash
 python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply --watch 300
 ```
+
+### B2. Section 2: measured backfill + replication-latency distribution (done)
+- [x] `measure_sync_latency.py`: backfill N tagged status records, poll the OneLake
+      mirror with a fresh connection each cycle, and report the write -> OneLake
+      latency distribution (min/median/mean/p95/max), an ASCII histogram, a
+      matplotlib PNG, and a CSV. Idempotent: `--cleanup` removes every probe record.
+- [x] Resolves the SQL analytics endpoint from Fabric REST at runtime (no hardcoded
+      identifiers). Detection escapes the `[` in the `[LCSYNC]` tag (T-SQL LIKE and
+      Dataverse OData both mishandle a literal leading bracket).
+
+Commands:
+```bash
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --dry-run
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --apply --count 100
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --cleanup
+```
+Note: records written close together replicate in the same Fabric Link micro-batch,
+so their measured latencies cluster tightly around the batch cycle time.
 
 ### C. Semantic views over the Lakehouse (done)
 - [x] Author `semantic_views.sql`: `vw_launch_health`, `vw_vendor_360`,

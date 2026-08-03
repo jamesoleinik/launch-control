@@ -260,12 +260,28 @@ table is **not** in the Link's selected table set:
 
 ## Replication latency (measured, eppcdemo1fno)
 
+`measure_sync_latency.py` measures this directly: it backfills tagged status
+records, polls the OneLake mirror with a fresh connection each cycle (a long-lived
+SQL-endpoint session stays pinned to a stale snapshot), and emits the
+write -> OneLake latency distribution as stats plus a histogram (`--out`,
+gitignored PNG + CSV):
+
+```bash
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --apply --count 100
+python episodes/ep-10-dataverse-fabriciq/measure_sync_latency.py --cleanup
+```
+
+Representative distribution:
+
 | Metric | Value |
 |--------|-------|
 | Median | ~11 seconds |
 | P95 | ~48 seconds |
 | E2E (write -> Lakehouse SQL) | ~58 seconds |
 | Cold-start / large batch first sync | up to several minutes |
+
+Records written close together replicate in the same Fabric Link micro-batch, so
+a single backfill run's latencies cluster tightly around that batch's cycle time.
 
 ## Pre-record checklist
 
