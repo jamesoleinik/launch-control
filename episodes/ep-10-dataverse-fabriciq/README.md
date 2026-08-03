@@ -1,11 +1,13 @@
 # Episode 10: Dataverse + Fabric IQ (two-plane AI architecture)
 
-**Status:** Semantic model + report built programmatically. Fabric IQ Copilot wiring is the only manual step remaining. Not yet recorded.
-
+**Status:** ✍️ Draft · 🎬 Not yet recorded
+**Build status:** Semantic model + 5-page report + demo data built programmatically against the live tenant; Fabric IQ Copilot wiring is the only manual step remaining (2026-08-02)
 **Season:** 2 (Dataverse, Better Together)
-**Features:** Fabric IQ (semantic data layer + Copilot plugin over Microsoft Fabric) · Dataverse MCP Server (transactional state) · Power BI Direct Lake semantic model (over the Lakehouse SQL endpoint) · Fabric Data Agent (optional upgrade on F/P capacity)
-**Layer:** Layer 2 (proactive automation) over a semantic data foundation
+**Features:** ⭐ Fabric IQ (semantic data layer + Copilot plugin over Microsoft Fabric) · ⭐ Dataverse MCP Server (transactional state) · ⭐ Power BI Direct Lake semantic model over the Lakehouse SQL endpoint · ⭐ Fabric Data Agent (optional upgrade on F/P capacity)
+**Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
+**Coding agent:** Python automation (Fabric REST API: TMSL model + PBIR report) against the live tenant
 **Runtime:** Copilot Studio (Plane 1) + Dataverse MCP + Fabric Link + Lakehouse SQL + Power BI Direct Lake + Fabric IQ (Plane 2)
+**Runtime showcased:** the **programmatic Direct Lake + Fabric IQ** consumption plane (no Power BI Desktop authoring)
 
 > **Building this episode?** `plan.md` is the self-contained build runbook.
 > `powerbi_report_spec.md` is the semantic model + report spec. This README
@@ -23,6 +25,46 @@ The Web IQ episode reached outside the tenant for live signal. This one stays
 inside but reaches up a level: from individual rows to the semantic meaning of
 the data across sources, surfaced in a Power BI report and in Microsoft 365
 Copilot through the Fabric IQ plugin.
+
+## Why this is a complement, not a duplicate (the design rule)
+
+The boundary test: *would this naturally be a row I query, relate, secure, or
+transact?*
+
+- **Yes -> Dataverse.** The live transactional state of a single launch.
+- **No, it is analytical / cross-entity / multi-source -> Fabric IQ.** Trends
+  across all launches, external risk intelligence, ERP financial exposure.
+
+The clearest signal is the **Blind Spots** page: Pacific Rim Components (V0004)
+and Nexus Cloud Services (V0005) exist only in the ProcureIQ risk data. Dataverse
+has never heard of them. Fabric can surface their risk profile before they ever
+appear in an operational record.
+
+## The surface: a Power BI report and a Fabric IQ plugin
+
+Instead of a chat agent, the consumption surface here is a governed **semantic
+model** with two faces: a Power BI report for the human, and the Fabric IQ plugin
+for Microsoft 365 Copilot. Both read the same Direct Lake model, so the same
+cross-source joins answer a click or a prompt.
+
+### The headline result
+
+> *"Which launch is most at risk once you factor in the vendors behind it?"*
+
+1. **Dataverse (Plane 1)** owns the live state: a Copilot Studio agent writes an
+   `lc_statusupdate` (health = RED) the moment a launch slips.
+2. **Fabric Link** mirrors that row to the Lakehouse in seconds, where the
+   semantic views fuse it with internal delivery performance, ProcureIQ market
+   risk, and the F&O open-invoice ledger.
+3. **The model synthesizes:** the Q3 Widget Launch is not just RED on status; the
+   vendor behind its blocked task (Contoso Supply Co) also carries open ERP
+   exposure and a soft ProcureIQ risk tier. One launch, three sources, one row.
+
+Neither plane produces that alone. Dataverse does not hold the ERP ledger or the
+market risk; the report does not hold the live transactional write. The semantic
+model is the join.
+
+
 
 ## What is built (this pass)
 
@@ -148,20 +190,6 @@ DAX measures (see `powerbi_report_spec.md`) include `RED Rate %`,
 5. **Blind Spots** - ProcureIQ watchlist vendors with no F&O master record
    (the risk Dataverse alone cannot see).
 
-## Why this is a complement, not a duplicate (the design rule)
-
-The boundary test: *would this naturally be a row I query, relate, secure, or
-transact?*
-
-- **Yes -> Dataverse.** The live transactional state of a single launch.
-- **No, it is analytical / cross-entity / multi-source -> Fabric IQ.** Trends
-  across all launches, external risk intelligence, ERP financial exposure.
-
-The clearest signal is the **Blind Spots** page: Pacific Rim Components (V0004)
-and Nexus Cloud Services (V0005) exist only in the ProcureIQ risk data. Dataverse
-has never heard of them. Fabric can surface their risk profile before they ever
-appear in an operational record.
-
 ## Build steps (reproduce)
 
 > **Local config.** Copy `.env.example` to `.env` (gitignored) and fill in your
@@ -236,6 +264,21 @@ table is **not** in the Link's selected table set:
 | E2E (write -> Lakehouse SQL) | ~58 seconds |
 | Cold-start / large batch first sync | up to several minutes |
 
+## Pre-record checklist
+
+- [ ] `az login` as the Fabric-entitled account; `LC_ENV=ep-10-dataverse-fabriciq`
+      and `PYTHONIOENCODING=utf-8` set.
+- [ ] `--apply-views` succeeds against the live Lakehouse SQL endpoint (all 8
+      views `CREATE OR ALTER` clean).
+- [ ] `seed_report_demo.py --apply` run, then allow replication to catch up so
+      `vw_launch_health` shows a varied RED/AMBER/GREEN mix across all launches.
+- [ ] `--create-model` and `--create-report` both report `[OK]`; `--verify`
+      confirms the report `datasetId` binds to the model.
+- [ ] Fabric IQ / Copilot plugin enabled and pointed at `Launch Control 360`
+      (the one manual step), with two strong on-camera prompts staged.
+- [ ] Confirm the report renders all 5 pages (the Launch Health stacked RAG bar
+      in particular).
+
 ## Archived artifacts
 
 These document the original Fabric Data Agent + Operations Agent approach, which
@@ -252,7 +295,11 @@ bug. Retained for the F/P-capacity upgrade path:
 
 ## Cross-references
 
-- **Ep 11:** the Web IQ agent (external signal); this is the internal-semantic
-  counterpart.
+- **Ep 9:** Dataverse + F&O; the `lc_vendorwork` seam and the `vendtable` /
+  `vendtransopen` ERP mirror tables this model reads for financial exposure.
+- **Ep 11:** the Web IQ agent (live external signal); this is the
+  internal-semantic counterpart.
+- **Ep 12:** the Foundry IQ agent (unstructured knowledge); this is the
+  structured-semantic counterpart.
 - **Ep 13** (convergence): the Fabric IQ story runs alongside Web IQ and Foundry
-  IQ on one launch.
+  IQ, with native Copilot, on one launch.
