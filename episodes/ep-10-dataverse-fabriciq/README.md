@@ -1,92 +1,107 @@
-# Episode 10: Dataverse + Fabric IQ (two-plane AI architecture)
+# Episode 10: Dataverse + Fabric (the analytical layer)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
-**Build status:** Fabric Link, latency probe, semantic model, 3-page report, and demo data all built programmatically against the live tenant; the Fabric Cowork grounding (Section 4) is the only maker-portal step (2026-08-02)
+**Build status:** Fabric Link, latency probe, semantic model, 3-page report, and demo data all built programmatically against the live tenant; the Copilot Cowork grounding (Section 4) is the only maker-portal step (2026-08-02)
 **Season:** 2 (Dataverse, Better Together)
-**Features:** ⭐ Fabric IQ (semantic data layer + Copilot plugin over Microsoft Fabric) · ⭐ Dataverse Link to Microsoft Fabric (near-real-time mirror) · ⭐ Power BI Direct Lake semantic model over the Lakehouse SQL endpoint · ⭐ Fabric IQ in Microsoft 365 Copilot Cowork
-**Layer:** 🔵 Layer 2 (proactive automation) over a semantic data foundation
+**Features:** ⭐ Dataverse Link to Microsoft Fabric (near-real-time mirror to OneLake) · ⭐ Analytical enrichment + aggregation views over the Lakehouse SQL endpoint · ⭐ Power BI Direct Lake semantic model (authored from code, no DAX) · ⭐ The Fabric data plugin in Microsoft 365 Copilot Cowork
+**Layer:** 🔵 Layer 2 (proactive automation) over an analytical data foundation
 **Coding agent:** Python automation (Dataverse Web API + Fabric REST API: TMSL model + PBIR report) against the live tenant
-**Runtime showcased:** the **programmatic Direct Lake + Fabric IQ** consumption plane (the coding agent authors the views, model, relationships, and measures via T-SQL / TMSL / PBIR: no Power BI Desktop authoring and no hand-written DAX)
+**Runtime showcased:** the **programmatic Direct Lake analytical layer** (the coding agent authors the enrichment views, model, relationships, and aggregation measures via T-SQL / TMSL / PBIR: no Power BI Desktop authoring and no hand-written DAX)
 
-> **Building this episode?** This README is the follow-along: each section has the
-> exact prompt you give the coding agent (or the maker-portal steps you take) and
-> what you run on screen. `plan.md` is the deeper build runbook and
-> `powerbi_report_spec.md` is the semantic model + report spec.
+> **Building this episode?** This README is the follow-along: each section has a
+> short prompt you give the coding agent (or the maker-portal steps you take) and
+> what you run on screen. Load the `dataverse-fabric-analytics` skill (`SKILL.md`)
+> first: it holds the technical how, so the prompts can stay short. `plan.md` is the
+> deeper runbook and `powerbi_report_spec.md` is the model + report spec.
 
 ---
 
 ## The hook
 
-> *"Dataverse knows the state of this one launch. Fabric IQ knows what 'normal'
-> looks like across every launch we have ever run, and what the external risk
-> data says about the vendors involved. This report reasons over all three."*
+> *"Dataverse tells me the state of this one launch. It can't tell me whether this
+> launch is normal. Fabric can: it holds the history of every launch we have run and
+> the related datasets around them, so I can enrich this launch and roll it up against
+> the whole portfolio, over time."*
 
-The Web IQ episode reached outside the tenant for live signal. This one stays
-inside but reaches up a level: from individual rows to the semantic meaning of
-the data across sources, surfaced in a Power BI report and in Microsoft 365
-Copilot through the Fabric IQ plugin.
+Dataverse is the transactional system of record for a single launch. It is not built
+to answer *is this launch an outlier?* or *what is our RED rate trending across the
+portfolio?* Those are analytical questions: they need related datasets and top-level
+aggregation over history. This episode adds that plane with **Microsoft Fabric**:
+mirror the operational tables to OneLake, enrich them with related sources, and build
+the cross-launch and historical aggregation metrics, surfaced in a Power BI report
+and in Microsoft 365 Copilot Cowork.
 
-## Why this is a complement, not a duplicate (the design rule)
+## Why Fabric, not another Dataverse table (the design rule)
 
-The boundary test: *would this naturally be a row I query, relate, secure, or
+The boundary test: *would this naturally be a single row I query, relate, secure, or
 transact?*
 
-- **Yes -> Dataverse.** The live transactional state of a single launch.
-- **No, it is analytical / cross-entity / multi-source -> Fabric IQ.** Trends
-  across all launches, external risk intelligence, ERP financial exposure.
+- **Yes -> Dataverse.** The live transactional state of one launch.
+- **No, it is cross-record / multi-source / historical aggregation -> Fabric.** RED
+  rate versus the portfolio median, open ERP exposure rolled up per launch, the
+  history of health across every launch, external vendor risk enriched onto the plan.
 
-The clearest signal is the **Vendor List** page's blind-spot table: Pacific Rim
-Components (V0004) and Nexus Cloud Services (V0005) exist only in the ProcureIQ
-risk data. Dataverse has never heard of them. Fabric can surface their risk
+Fabric earns its place two ways. **Enrichment:** it joins the operational tables to
+*related* datasets that do not belong in Dataverse (internal delivery-performance
+history, external market/vendor risk, the F&O open-invoice ledger). **Aggregation:**
+it computes the top-level metrics a transactional row cannot, across every record and
+over time. The clearest signal is the **Vendor List** page's blind-spot table:
+Pacific Rim Components (V0004) and Nexus Cloud Services (V0005) exist only in the
+enriched risk data. Dataverse has never heard of them. Fabric can surface their risk
 profile before they ever appear in an operational record.
 
-## The surface: a Power BI report and a Fabric IQ plugin
+## The surface: a Power BI report and the Fabric plugin in Cowork
 
-Instead of a chat agent, the consumption surface here is a governed **semantic
-model** with two faces: a Power BI report for the human, and the Fabric IQ plugin
-for Microsoft 365 Copilot Cowork. Both read the same Direct Lake model, so the
-same cross-source joins answer a click or a prompt.
+Instead of a chat agent, the consumption surface is a governed **analytical model**
+with two faces: a Power BI report for the human, and the **Fabric data plugin** in
+Microsoft 365 Copilot Cowork. Both read the same Direct Lake model, so the same
+enriched, aggregated metrics answer a click or a prompt.
 
 ### The headline result
 
-> *"Which launch is most at risk once you factor in the vendors behind it?"*
+> *"Which launch is most at risk once you factor in the vendors behind it, and how
+> does its health compare with everything else we have shipped?"*
 
-1. **Dataverse (Plane 1)** owns the live state: a Copilot Studio agent writes an
+1. **Dataverse** owns the live state: a Copilot Studio agent writes an
    `lc_statusupdate` (health = RED) the moment a launch slips.
 2. **Fabric Link** mirrors that row to the Lakehouse in seconds (measured median
-   ~46s, Section 2), where the semantic views fuse it with internal delivery
-   performance, ProcureIQ market risk, and the F&O open-invoice ledger.
-3. **The model synthesizes:** the Q3 Widget Launch is not just RED on status; the
-   vendor behind its blocked task (Contoso Supply Co) also carries open ERP
-   exposure and a soft ProcureIQ risk tier. One launch, three sources, one row.
+   ~46s, Section 2), where the enrichment views fuse it with internal delivery
+   performance, market vendor risk, and the F&O open-invoice ledger, and the
+   aggregation views roll it up against the whole portfolio and its history.
+3. **The model synthesizes:** the Q3 Widget Launch is not just RED today; its RED
+   rate is above the portfolio median, the vendor behind its blocked task carries
+   open ERP exposure and a soft risk tier, and the trend is worsening. One launch,
+   many sources, measured against every launch.
 
-Neither plane produces that alone. Dataverse does not hold the ERP ledger or the
-market risk; the report does not hold the live transactional write. The semantic
-model is the join.
+Dataverse does not compute the portfolio aggregate or hold the enrichment; the report
+does not hold the live transactional write. The analytical model is where they meet.
 
 ## The architecture to date (through Episode 10)
 
 The high-level view of everything built across the series so far, with this
-episode's additions highlighted. **Plane 1** is the Dataverse system of record and
-its F&O ERP extension (Episodes 1-9), served by the earlier-episode building blocks
-on the side rails (the MCP server, Business Skills, custom connectors, ingestion,
-security, and the Cowork plugin). **Plane 2 (highlighted orange) is new in this
-episode:** Fabric Link mirrors the launch and vendor tables to OneLake, the semantic
-views fuse them with the enrichment dataset, and a Direct Lake model surfaces the
-join in a Power BI report and in Fabric IQ for Microsoft 365 Copilot Cowork.
+episode's additions highlighted. It is a platform view: **clients on top**, then
+infrastructure beneath. The access and foundation layers (the MCP server, Business
+Skills, custom connectors, security, ingestion) and the system of record (Dataverse +
+F&O, Episodes 1-9) were built in earlier episodes. **The orange Microsoft Fabric box
+is new in this episode**, and it sits *side by side* with the system of record rather
+than on top of it: Fabric Link mirrors the launch and vendor tables into OneLake, then
+the enrichment + aggregation views and a Direct Lake model turn that mirror into an
+analytical layer, surfaced in a Power BI report and the Fabric data plugin in
+Microsoft 365 Copilot Cowork.
 
-![Launch Control architecture to date: Plane 1 Dataverse plus F&O (Episodes 1-9) and the new Episode 10 Fabric IQ plane (Fabric Link, Lakehouse, semantic views, Direct Lake model, Power BI report, Fabric IQ in Cowork), highlighted in orange](assets/launch-control-architecture.png)
+![Launch Control architecture to date: a platform with clients on top, the earlier-episode access, system-of-record (Dataverse + F&O) and foundation layers, and the new Episode 10 Microsoft Fabric box side by side with the system of record (Fabric Link, Lakehouse, enrichment + aggregation views, Direct Lake model, Power BI report, Fabric data plugin in Cowork) highlighted in orange](assets/launch-control-architecture.png)
 
 > The editable source is `assets/launch-control-architecture.excalidraw` (open it at
 > `https://aka.ms/excalidraw`); regenerate the PNG with
 > `python assets/_gen_architecture.py`.
 
-The runtime path in Episode 10 is the vertical spine: a Copilot Studio agent writes
-`lc_statusupdate` (health = RED = 10600603) to Dataverse, Fabric Link replicates it
-to the Lakehouse SQL analytics endpoint (measured median ~46s over 1000 writes,
-Section 2), the semantic views fuse it with internal performance, ProcureIQ risk, and
-the F&O ledger, and the Direct Lake model `Launch Control 360` answers a click in the
-report or a prompt in Cowork.
+The runtime path in Episode 10: a Copilot Studio agent writes `lc_statusupdate`
+(health = RED = 10600603) to Dataverse, Fabric Link replicates it *across* to the
+Lakehouse SQL analytics endpoint (measured median ~46s over 1000 writes, Section 2),
+the enrichment views fuse it with internal performance, market vendor risk, and the
+F&O ledger while the aggregation views roll it up across the portfolio and its
+history, and the Direct Lake model `Launch Control 360` answers a click in the report
+or a prompt in Cowork.
 
 ## The build: four sections
 
@@ -168,29 +183,16 @@ build.
 
 ### The prompt
 
-Type this into GitHub Copilot CLI:
+Type this into GitHub Copilot CLI (with the `dataverse-fabric-analytics` skill
+loaded):
 
-> *Read the Section 2 part of this episode's README and write me a self-contained*
-> *probe that measures how fast Link to Microsoft Fabric replicates a Dataverse write*
-> *into OneLake. Backfill a batch of tagged `lc_statusupdate` rows through the*
-> *Dataverse Web API, stamp each with its write time, then poll the Lakehouse SQL*
-> *analytics endpoint until each tagged row appears and record the write-to-OneLake*
-> *latency to the second. Support `--count` per batch and `--batches` to repeat so*
-> *each batch lands in its own replication window; print min / median / mean / p95 /*
-> *max plus an ASCII histogram, and save a distribution graph (x-axis = latency*
-> *buckets, y-axis = number of syncs) and a CSV. Make it idempotent: a `--cleanup`*
-> *that deletes every tagged row and a `--dry-run`. Resolve the SQL endpoint and*
-> *lakehouse from config; never hardcode them.*
+> *Build me the latency-probe slice from the dataverse-fabric-analytics skill: a probe*
+> *that measures how fast Fabric Link replicates a Dataverse status write into OneLake,*
+> *and graphs the distribution. Let me run it in batches and clean up after.*
 
-Three gotchas the agent must handle (they are why the probe reconnects and escapes
-the tag), so call them out if it misses them:
-
-- **Reconnect fresh each poll.** A long-lived pyodbc session on the Fabric SQL
-  analytics endpoint stays pinned to a stale snapshot and never sees the new rows.
-- **T-SQL `LIKE` treats `[` as a character class.** The tag `[LCSYNC]` needs
-  `LIKE '![LCSYNC]%' ESCAPE '!'`.
-- **OData `startswith` on a leading `[` returns nothing.** Match the tag with
-  `contains(lc_title,'LCSYNC')` on the Dataverse side.
+The skill carries the details (the tagged-backfill approach, `--count` / `--batches` /
+`--cleanup` / `--dry-run`, and the three replication gotchas: reconnect fresh each
+poll, escape the `[` in the T-SQL tag, and match with `contains(...)` over OData).
 
 ### What the agent produces
 
@@ -241,31 +243,29 @@ typically under one.
 > capacities add more still. Treat median ~46s as a best-case reference point for this
 > setup and measure your own environment rather than quoting these figures as an SLA.
 
-## Section 3 · The semantic model and report, from a coding agent (no DAX)
+## Section 3 · The analytical model and report, from a coding agent (no DAX)
 
-Section 3 builds the entire consumption layer programmatically: the T-SQL views that
-fuse the sources, the Direct Lake semantic model over them, and the 3-page report,
-all via the Fabric REST API. No Power BI Desktop, and no hand-written DAX; the coding
-agent generates the model, relationships, and measures itself.
+Section 3 builds the entire analytical layer programmatically: the T-SQL views that
+enrich and aggregate the sources, the Direct Lake model over them, and the 3-page
+report, all via the Fabric REST API. No Power BI Desktop, and no hand-written DAX; the
+coding agent generates the model, relationships, and aggregation measures itself.
 
 ### The prompt
 
-Type this into GitHub Copilot CLI:
+Type this into GitHub Copilot CLI (with the `dataverse-fabric-analytics` skill
+loaded):
 
-> *Read the Section 3 part of this episode's README and build the whole Power BI*
-> *consumption layer for me programmatically against the live tenant, with no Power BI*
-> *Desktop and no hand-written DAX. First author a set of T-SQL views on the Fabric*
-> *Link Lakehouse SQL endpoint that fuse the Dataverse launch and vendor rows with the*
-> *F&O `vendtable` / `vendtransopen` ERP mirror and an enrichment dataset (internal*
-> *delivery performance + ProcureIQ market risk), keyed so a launch can see the vendors*
-> *behind it and so ProcureIQ-only vendors surface as blind spots. Then generate a*
-> *Direct Lake semantic model over those views via the Fabric REST API (TMSL):*
-> *introspect the live view columns, build a Direct Lake partition per view, define the*
-> *fact-to-dimension relationships, and add the measures (RED rate vs median, open ERP*
-> *exposure, high-risk vendors, overdue invoices). Then generate a 3-page report via*
-> *PBIR bound to that model: a Launch 360 scorecard page, a Vendor List page, and a*
-> *slicer-filtered Vendor 360 page. Make every step idempotent and give me a*
-> *`--verify` that proves the report binds to the model.*
+> *Build the analytics slice from the dataverse-fabric-analytics skill over our Fabric*
+> *Link Lakehouse: enrich the launch and vendor tables with the F&O ledger and the*
+> *related delivery-performance and vendor-risk datasets, roll them up into per-launch*
+> *and portfolio-level aggregation views, then publish the Direct Lake model and a*
+> *3-page Power BI report (a launch scorecard, a vendor list with blind spots, and a*
+> *filtered vendor deep-dive). No Power BI Desktop, no hand-written DAX.*
+
+The skill carries the details (the `CREATE OR ALTER` view set, the Direct Lake
+partitions and relationships, the aggregation measures, the PBIR report shape, and the
+idempotent `--verify`). The specific views and measures this episode ships are listed
+below.
 
 ### What the agent produces
 
@@ -372,11 +372,11 @@ DAX measures (generated by the agent, see `powerbi_report_spec.md`) include
 Verified end to end: a DAX `executeQueries` call against the published model returns
 rows, and the report `datasetId` matches the model (`--verify`).
 
-## Section 4 · The Fabric Cowork plugin (ground Copilot on the report)
+## Section 4 · The Fabric plugin in Cowork (ground Copilot on the report)
 
 Everything below the Lakehouse is scriptable; the consumption surface in Microsoft
 365 Copilot is a maker step. This is the payoff of building a single unified model in
-Section 3: the **Fabric IQ plugin** in **Microsoft 365 Copilot Cowork** grounds a
+Section 3: the **Fabric data plugin** in **Microsoft 365 Copilot Cowork** grounds a
 chat on **one** Power BI report and the semantic model behind it, and queries it **as
 you** (item permissions and row-level security still apply). Cowork does not join
 across models, so the three-source join has to live inside `Launch Control 360`
@@ -386,7 +386,7 @@ review.
 
 ### What the maker does
 
-The Fabric IQ plugin is installed by default in Cowork; no extra F SKU or PPU is
+The Fabric data plugin is installed by default in Cowork; no extra F SKU or PPU is
 needed beyond what the report already requires.
 
 1. **Tenant admin** (Fabric admin portal): enable **Share Fabric data with your
@@ -425,7 +425,7 @@ Each starts grounded on the one report, then chains a skill:
       `seed_report_demo.py --apply` run and replication caught up so `vw_launch_health`
       shows a varied RED/AMBER/GREEN mix; `--create-model` and `--create-report` both
       report `[OK]`; `--verify` confirms the report `datasetId` binds to the model.
-- [ ] Section 4: Fabric Cowork tenant settings enabled; Cowork grounded on
+- [ ] Section 4: Fabric data plugin tenant settings enabled; Cowork grounded on
       `Launch Control 360` with two strong on-camera prompts staged (one cross-source
       question, one chained skill).
 - [ ] Confirm the report renders all 3 pages (the Launch 360 scorecard table and the
@@ -455,5 +455,5 @@ Retained for the F/P-capacity upgrade path:
   counterpart.
 - **Ep 12:** the Foundry IQ agent (unstructured knowledge); this is the
   structured-semantic counterpart.
-- **Ep 13** (convergence): the Fabric IQ story runs alongside Web IQ and Foundry IQ,
-  with native Copilot, on one launch.
+- **Ep 13** (convergence): the Fabric analytical layer runs alongside Web IQ and
+  Foundry IQ, with native Copilot, on one launch.

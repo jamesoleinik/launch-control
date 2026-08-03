@@ -1,8 +1,8 @@
-# Ep 10 build plan: Dataverse + Fabric IQ
+# Ep 10 build plan: Dataverse + Fabric
 
 This runbook is organized around the episode's four on-camera sections. The
 architecture choice underneath them is a Power BI Direct Lake semantic model over
-the Lakehouse SQL analytics endpoint, consumed through a report and the Fabric IQ
+the Lakehouse SQL analytics endpoint, consumed through a report and the Fabric
 / Cowork Copilot plugin (the Fabric Data Agent path is a paid-capacity upgrade,
 archived at the end of this file; the Eventhouse + KQL path was evaluated and
 archived in `setup_eventhouse.py`).
@@ -27,7 +27,7 @@ archived in `setup_eventhouse.py`).
 Use two AI planes:
 1. Copilot Studio agent writes `lc_statusupdate` in Dataverse when launch risk is high.
 2. A Power BI Direct Lake semantic model over the Lakehouse SQL endpoint unifies
-   launch, F&O invoice, and vendor-risk data; the report and the Fabric IQ / Cowork
+   launch, F&O invoice, and vendor-risk data; the report and the Fabric / Cowork
    Copilot plugin surface it for questions and escalation review.
 
 The bridge is low-latency Fabric Link (Dataverse to OneLake Lakehouse Delta,
@@ -89,8 +89,8 @@ Blocked:
 
 Chosen path while on trial (no capacity blocker):
 - Consume the Lakehouse through a **Power BI Direct Lake semantic model** + report
-  ("Launch Control 360") and the **Fabric IQ** Copilot plugin, instead of a Fabric
-  Data Agent. Power BI Direct Lake and Fabric IQ run on trial capacity. The unified
+  ("Launch Control 360") and the **Fabric** Copilot plugin, instead of a Fabric
+  Data Agent. Power BI Direct Lake and Fabric run on trial capacity. The unified
   three-source data (Dataverse launches + F&O invoices + vendor intel) is exposed by
   `semantic_views.sql`. Build steps: sections C-F below and `powerbi_report_spec.md`.
 - The Fabric Data Agent + Launch Analyst connected-agent path (sections H-J) remains
@@ -196,7 +196,7 @@ Reference: `episodes/ep-10-dataverse-fabriciq/powerbi_report_spec.md`
 
 ### E. Section 4: Fabric Cowork plugin (portal step)
 
-The one non-scriptable step. The Fabric IQ plugin is installed by default in
+The one non-scriptable step. The Fabric plugin is installed by default in
 Microsoft 365 Copilot Cowork; it grounds a chat on one Power BI report and the
 semantic model behind it, and queries it as the signed-in user (RLS and item
 permissions apply). Cowork does not join across models, so the cross-source join
@@ -223,7 +223,7 @@ PPU is required beyond what the report already needs.
   - Dataverse write timestamp
   - Lakehouse SQL visibility timestamp (target: <60s)
   - Power BI report refresh showing the new RED update + vendor exposure
-  - Fabric IQ answer in Copilot reflecting the same launch
+  - Fabric answer in Copilot reflecting the same launch
 - [x] Add timing summary to `README.md`.
 
 ### G. Policy/tenant diagnostics (done, archived)
