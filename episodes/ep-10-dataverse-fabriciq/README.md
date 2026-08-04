@@ -147,19 +147,39 @@ replicates the chosen Dataverse tables into the workspace's OneLake as Delta, wi
 SQL analytics endpoint over them, in near real time and with no ETL. This is a maker
 action in the Power Apps portal, not a script.
 
+> **Why this is a first-class product investment.** People run business-critical
+> systems on Dataverse, and they need near-real-time analytics over that data without
+> standing up a pipeline. That is exactly what the two 2026 investments this episode
+> leans on are for: the [Link to Fabric UX refresh](https://www.microsoft.com/en-us/power-platform/blog/2026/07/20/link-to-fabric-ux-refresh/)
+> (Section 1) and [low-latency sync](https://www.microsoft.com/en-us/power-platform/blog/2026/06/09/low-latency-sync/)
+> (Section 2). We built them because getting your operational data into Fabric fast,
+> and with less setup friction, is what customers asked for.
+
 ### What the maker does
 
+This uses the [refreshed Link to Fabric experience](https://www.microsoft.com/en-us/power-platform/blog/2026/07/20/link-to-fabric-ux-refresh/)
+(rolling out worldwide from early August 2026). "Azure Synapse Link for Dataverse" is
+now **Link data**, a single home for every way you move Dataverse data out, with
+Fabric link as the headline path and a redesigned creation wizard.
+
 1. In the **Power Apps maker portal** (`make.powerapps.com`), select the
-   Fabric-entitled environment, then open **Tables** and choose **Analyze -> Link to
-   Microsoft Fabric**.
-2. Pick the target **Fabric workspace** (the one whose ids you put in `.env`).
-3. **Select the tables** to mirror. For this episode: the launch tables
-   `lc_launch`, `lc_task`, `lc_statusupdate`, `lc_vendorwork`, `lc_milestone`,
-   `lc_teammember`, and the F&O mirror tables `vendtable` and `vendtransopen`. Each
-   selected table must have **change tracking** enabled (the portal enables it when
-   you add the table).
-4. **Create the link.** Fabric provisions a Lakehouse in the workspace and does the
-   initial sync; after that, writes replicate continuously.
+   Fabric-entitled environment, then open **Link data** in the left navigation and
+   choose to create a new **Fabric link** (the in-context **Tables -> Analyze ->
+   Analyze in Fabric** entry point still works too).
+2. **Setup Configuration.** Pick the target **Fabric workspace** (the one whose ids
+   you put in `.env`) and choose how to authenticate. **Workspace identity** is the
+   recommended option (it removes the most common setup failure, misconfigured
+   service-principal permissions); organizational account and service principal
+   remain available. Workspace identity is enabled once on the Fabric workspace
+   itself, outside Dataverse.
+3. **Select Tables** to mirror. For this episode: the launch tables `lc_launch`,
+   `lc_task`, `lc_statusupdate`, `lc_vendorwork`, `lc_milestone`, `lc_teammember`,
+   and the F&O mirror tables `vendtable` and `vendtransopen`. Each selected table must
+   have **change tracking** enabled (the portal enables it when you add the table).
+4. **Review & Create.** Confirm the workspace, authentication, and table selections,
+   then create the link. Fabric provisions a Lakehouse in the workspace and does the
+   initial sync; after that, writes replicate continuously. Add or remove tables later
+   from the standalone **Manage tables** command on the top bar.
 
 ### What you verify
 
@@ -171,8 +191,8 @@ watches it land.
 
 > **One table is intentionally left out.** `lc_erpsignal` (change-tracking enabled)
 > is **not** in the Link's selected set; the current model does not need it. To add
-> it later: the maker portal -> the table -> **Analyze -> Link to Microsoft Fabric ->
-> Manage tables**, then fold it into a new view.
+> it later: the maker portal -> **Link data -> Manage tables**, then fold it into a
+> new view.
 
 ## Section 2 · Backfill history and measure the sync latency
 
@@ -180,6 +200,15 @@ Section 2 answers the question the "near real time" claim always raises: *how ne
 It backfills a batch of historical launch-status rows, times how long each takes to
 appear in OneLake to the second, and graphs the distribution. This is a coding-agent
 build.
+
+> **This is where [low-latency sync](https://www.microsoft.com/en-us/power-platform/blog/2026/06/09/low-latency-sync/)
+> shows up.** Low-latency sync is the next-generation Dataverse sync engine: it
+> removes the intermediate CSV hop (data flows straight from the Dataverse database to
+> Delta Parquet), which cuts end-to-end latency for both initial and incremental
+> (delta) sync and improves reliability by removing a whole class of failure points.
+> We invested in it for one reason: customers run business-critical systems on
+> Dataverse and need near-real-time analytics on that data. The probe below is how you
+> measure that freshness for your own environment.
 
 ### The prompt
 
