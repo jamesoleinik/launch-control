@@ -153,3 +153,8 @@ the user needs Cowork access and at least **Read** on the report and model. Grou
 the report (attach with **+**, paste its link, or name it), then ask a cross-source /
 aggregation question and chain the answer into an email, a doc, or a review. Cowork
 answers do not cite the source report today, so confirm numbers before acting.
+
+Whatever you want Cowork to chain must already be a field in the model: if you ask it
+to email an owner, the model needs an owner name and address column (add a small
+dimension view if the operational store has none), or Cowork correctly leaves the
+recipient blank rather than inventing one. Use non-routable demo addresses.
