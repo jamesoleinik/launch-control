@@ -641,7 +641,7 @@ def _build_report_json() -> dict:
             _card("vw_launch_scorecard", "open_red_updates", 920, 66, 290, 110, fn=0),
             _table("vw_launch_scorecard",
                    ["launch_name", "risk_band", "current_health", "top_risk_vendor",
-                    "top_vendor_market_risk", "vendor_exposure_usd",
+                    "top_vendor_market_risk", "vendor_exposure_usd", "launch_owner",
                     "recommended_action", "risk_score"],
                    20, 190, 1240, 300, order_by="risk_score", order_desc=True),
             _stacked_bar("vw_launch_health", "launch_name",
