@@ -71,6 +71,23 @@ FROM (VALUES
 GO
 
 -- ---------------------------------------------------------------------------
+-- vw_launch_owner  --  demo launch-owner dimension (name + email per launch), so
+-- Cowork can resolve the recipient when asked to "email the launch owner." These
+-- are fictional owners on the contoso.com placeholder domain (never a real mailbox).
+-- ---------------------------------------------------------------------------
+CREATE OR ALTER VIEW vw_launch_owner AS
+SELECT launch_name, owner_name, owner_email
+FROM (VALUES
+    ('Q3 Widget Launch',           'Ava Chen',      'ava.chen@contoso.com'),
+    ('Q2 API Platform Upgrade',    'Marcus Reed',   'marcus.reed@contoso.com'),
+    ('Q3 Warehouse Consolidation', 'Priya Nair',    'priya.nair@contoso.com'),
+    ('Q2 Vendor Portal Cutover',   'Diego Alvarez', 'diego.alvarez@contoso.com'),
+    ('Q3 Compliance Reporting',    'Lena Petrov',   'lena.petrov@contoso.com'),
+    ('Q1 Pricing Refresh',         'Sam Okafor',    'sam.okafor@contoso.com')
+) AS t(launch_name, owner_name, owner_email);
+GO
+
+-- ---------------------------------------------------------------------------
 -- vw_launch_health  --  one row per launch: health roll-up + RED rate.
 -- Keyed on lc_launchidname (the launch name carried on each status update), which
 -- is the reliable launch grain in the live data.
@@ -244,6 +261,8 @@ base AS (
         l.lc_postedat                               AS latest_update_at,
         tv.vendor_name                              AS top_risk_vendor,
         tv.market_risk_tier                         AS top_vendor_market_risk,
+        o.owner_name                                AS launch_owner,
+        o.owner_email                               AS launch_owner_email,
         COALESCE(e.vendor_exposure_usd, 0)          AS vendor_exposure_usd,
         COALESCE(e.vendor_committed_usd, 0)         AS vendor_committed_usd,
         COALESCE(e.worst_market_risk_rank, 0)       AS worst_market_risk_rank
@@ -251,6 +270,7 @@ base AS (
     LEFT JOIN latest    l  ON h.launch_name = l.launch_name AND l.rn = 1
     LEFT JOIN exposure  e  ON h.launch_name = e.launch_name
     LEFT JOIN topvendor tv ON h.launch_name = tv.launch_name AND tv.rn = 1
+    LEFT JOIN vw_launch_owner o ON h.launch_name = o.launch_name
 )
 SELECT
     launch_name,
@@ -261,6 +281,8 @@ SELECT
     latest_update_at,
     top_risk_vendor,
     top_vendor_market_risk,
+    launch_owner,
+    launch_owner_email,
     vendor_exposure_usd,
     vendor_committed_usd,
     CASE WHEN latest_health_code = 10600603 THEN 50

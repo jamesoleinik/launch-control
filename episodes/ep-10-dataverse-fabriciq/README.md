@@ -363,7 +363,7 @@ below.
 
 | Artifact | Where it lands |
 |---|---|
-| 9 T-SQL views (`CREATE OR ALTER`, idempotent) | `semantic_views.sql` |
+| 10 T-SQL views (`CREATE OR ALTER`, idempotent) | `semantic_views.sql` |
 | Apply-views + create-model + create-report driver | `setup_powerbi_report.py` |
 | Connected demo data (varied RED/AMBER/GREEN + vendor work) | `seed_report_demo.py` |
 | Model + report spec, measures, gotchas | `powerbi_report_spec.md` |
@@ -398,7 +398,7 @@ AMBER = 10600602, GREEN = 10600601):
 | View | Grain | Sources unified |
 |------|-------|-----------------|
 | `vw_launch_health` | one row per launch | Dataverse launch + status updates (RED rate roll-up), keyed on `launch_name` |
-| `vw_launch_scorecard` | one row per launch (ranked) | the decision view: current health + latest reason + riskiest vendor + invoiced exposure + `risk_score` + `recommended_action` |
+| `vw_launch_scorecard` | one row per launch (ranked) | the decision view: current health + latest reason + riskiest vendor + invoiced exposure + launch owner (name + email) + `risk_score` + `recommended_action` |
 | `vw_red_status_feed` | one row per RED update | Dataverse status updates |
 | `vw_launch_vendor_exposure` | launch x vendor work item | Dataverse work + internal ops + ProcureIQ risk, plus `launch_name` via the code map |
 | `vw_vendor_360` | one row per vendor | internal perf + ProcureIQ risk + F&O master (`vendtable`) + F&O open balance (`vendtransopen`) |
@@ -406,6 +406,7 @@ AMBER = 10600602, GREEN = 10600601):
 | `vw_vendor_enrichment` | one row per vendor | internal delivery performance (the enrichment dataset, inline `VALUES`) |
 | `vw_vendor_risk` | one row per vendor | ProcureIQ market intelligence (the enrichment dataset, inline `VALUES`) |
 | `vw_launch_code_map` | one row per launch | bridge from `lc_vendorwork` launch code to launch display name |
+| `vw_launch_owner` | one row per launch | demo launch-owner dimension (name + email on `contoso.com`) so Cowork can resolve the email recipient |
 
 **The enrichment dataset** is the pair `vw_vendor_enrichment` (internal delivery
 performance) and `vw_vendor_risk` (ProcureIQ market intelligence). These are the
@@ -505,6 +506,10 @@ Each starts grounded on the one report, then chains a skill:
   vendors behind it, and why?"*
 - *"For the riskiest launch, draft an email to the launch owner with the vendor, the
   open ERP exposure, and the recommended action."*
+  The scorecard now carries `launch_owner` + `launch_owner_email` (fictional owners on
+  `contoso.com`), so Cowork resolves the **To:** recipient instead of leaving a
+  `[Launch owner]` placeholder. The addresses are non-routable demo values, so nothing
+  actually sends.
 - *"Which ProcureIQ high-risk vendors have no active launch work? Turn that into a
   one-page brief."*
 
