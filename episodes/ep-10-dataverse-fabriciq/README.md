@@ -460,22 +460,6 @@ Each starts grounded on the one report, then chains a skill:
 - [ ] Confirm the report renders all 3 pages (the Launch 360 scorecard table and the
       Vendor 360 slicer in particular).
 
-## Archived artifacts
-
-These document the original Fabric Data Agent + Operations Agent approach, which was
-capacity-gated (Data Agent needs an F/P SKU) and blocked by a Fabric portal UI bug.
-Retained for the F/P-capacity upgrade path:
-
-- `setup_fabric_data_agent.py` - Fabric Data Agent portal documentation + verify
-- `analyst_agent_instructions.md` - Launch Analyst connected-agent instructions
-- `create_analyst_agent.py` - creates the Launch Analyst Copilot Studio agent
-  (connected-agent path; needs the Fabric Data Agent first)
-- `setup_operations_agent.py`, `operations_agent_*.json` - Operations Agent exports
-- `setup_eventhouse.py` - KQL Eventhouse path (evaluated, then archived in favour of
-  the Lakehouse SQL endpoint)
-- `diagnose_dataactivator_policy.py` - DLP diagnostic for the shared_dataactivator
-  blocker
-
 ## Cross-references
 
 - **Ep 9:** Dataverse + F&O; the `lc_vendorwork` seam and the `vendtable` /

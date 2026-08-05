@@ -8,14 +8,12 @@ them as managed Delta tables in the Lakehouse SQL analytics endpoint.
 
 Architecture:
     Dataverse (lc_* tables)  +  F&O (fno_* tables)
-           ↓ Fabric Link (low-latency, ~46s median measured)
+           ↓ Fabric Link (low-latency sync)
     Lakehouse (Delta Parquet on OneLake)
            + VendorEnrichment    (seeded by this script)
            + ExternalVendorRisk  (seeded by this script)
            ↓ SQL analytics endpoint
-    Fabric Data Agent  →  natural-language queries
-           ↓ connected agent
-    Launch Analyst (Copilot Studio)  →  Teams alert
+    Direct Lake semantic model + Power BI report (no DAX authored by hand)
 
 Usage:
     # Dry-run (print what would be written):

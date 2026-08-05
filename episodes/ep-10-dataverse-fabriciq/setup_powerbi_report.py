@@ -1,5 +1,5 @@
 """
-setup_powerbi_report.py  --  Ep 10 Power BI + Fabric consumption layer (Plane 2).
+setup_powerbi_report.py  --  Ep 10 Power BI + Fabric consumption layer.
 
 The Power BI Direct Lake semantic model and the report used to sit only in the
 Fabric portal by hand. This script builds the semantic layer (the SQL views) AND

@@ -2,11 +2,10 @@
 trigger_red_health.py  --  Ep 10 E2E trigger: write lc_statusupdate health=RED
                             to Dataverse, then wait for Fabric Link replication.
 
-Demonstrates the two-plane architecture:
+Demonstrates the write-to-analytics path:
   Studio agent writes lc_statusupdate (health=RED)
-  → Fabric Link replicates to OneLake (~46s median latency measured)
-  → Lakehouse SQL endpoint makes it queryable by the Fabric Data Agent
-  → Launch Analyst agent detects it and escalates to Teams
+  → Fabric Link replicates to OneLake (low-latency sync)
+  → Lakehouse SQL endpoint makes it queryable by the Direct Lake model and report
 
 Usage:
     python episodes/ep-10-dataverse-fabriciq/trigger_red_health.py --apply
@@ -39,7 +38,7 @@ HEALTH_AMBER = 10600602
 HEALTH_RED   = 10600603
 
 # ---------------------------------------------------------------------------
-# Demo payload  (title + summary chosen to show vendor context in KQL join)
+# Demo payload  (title + summary chosen to show vendor context in the report)
 # ---------------------------------------------------------------------------
 DEMO_UPDATES = [
     {
@@ -106,8 +105,7 @@ def delete_status_update(base: str, tok: str, record_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# KQL watch  (ARCHIVED: Eventhouse removed in favour of Lakehouse SQL endpoint)
-# Kept for reference; --watch flag now uses a simple timed wait instead.
+# Replication wait: --watch/--wait uses a simple timed wait for Fabric Link.
 # ---------------------------------------------------------------------------
 
 def _timed_wait(seconds: int) -> None:
@@ -130,7 +128,7 @@ def main() -> int:
     parser.add_argument("--wait", type=int, default=0,
                         help="After writing, wait N seconds for Fabric Link replication (0 = skip)")
     parser.add_argument("--cleanup", action="store_true",
-                        help="Delete written records after KQL watch (demo cleanup)")
+                        help="Delete written records after the wait (demo cleanup)")
     args = parser.parse_args()
 
     if not args.dry_run and not args.apply:

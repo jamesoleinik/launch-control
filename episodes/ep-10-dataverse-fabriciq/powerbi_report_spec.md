@@ -122,10 +122,3 @@ measured over 1000 writes).
 5. Enable Fabric in Copilot and connect it to the semantic model.
 6. Validate: run `trigger_red_health.py --apply --wait 60`, then confirm the new
    RED update appears in the report and in a Fabric answer.
-
-## Relationship to the Fabric Data Agent path
-
-The connected-agent path (`analyst_agent_instructions.md`,
-`setup_fabric_data_agent.py`) remains documented as the **upgrade** for when the
-workspace moves to F/P capacity. Both paths read the same Lakehouse; this Power
-BI + Fabric path is the capacity-free way to ship the episode today.
