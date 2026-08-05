@@ -491,6 +491,12 @@ needed beyond what the report already requires.
 3. In **Cowork**, ground on the report: attach it with the **+** composer control,
    paste its report link, or reference it by name. Then ask.
 
+![Microsoft 365 Copilot Cowork, Customize tab: the Microsoft-built Fabric IQ agent toggled on, described as "Turn Power BI data into insights that build knowledge and guide decisions," with its two Power BI MCP servers (Power BI, and Power BI via the Fabric AI hub) that let it explore reports and semantic models](assets/fabric-iq-cowork.png)
+
+> **What this shows.** The Fabric data plugin surfaces in Cowork as the **Fabric IQ**
+> agent under **Customize**. Its Power BI MCP servers are how Cowork reaches the
+> `Launch Control 360` semantic model and report to answer grounded questions.
+
 ### The demo prompts
 
 Each starts grounded on the one report, then chains a skill:
