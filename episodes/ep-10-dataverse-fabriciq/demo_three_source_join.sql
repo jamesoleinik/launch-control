@@ -6,26 +6,20 @@
 -- with column prefixes so the source of every field is obvious on screen:
 --   [dv_]  Dataverse   -> lc_vendorwork            (launch vendor work items)
 --   [fno_] F&O mirror  -> vendtable + vendtransopen (vendor master + open invoices)
---   [ext_] External    -> ProcureIQ market-risk intel (inlined below)
+--   [ext_] External    -> ExternalVendorRisk (ProcureIQ market-risk intel)
 --
--- The two mirrored tables (Dataverse + F&O) are real Delta tables Spark reads
--- directly. The external ProcureIQ feed is synthetic, so it is inlined as a
--- VALUES CTE here: that keeps the demo self-contained (no views, no seeding) and
--- makes the "join another dataset to get a risk profile" story explicit. It is
--- the bridge that connects Dataverse (by vendor_name) to F&O (by accountnum).
+-- All three are real Delta tables Spark reads directly. The two mirrored tables
+-- (Dataverse + F&O) arrive by Fabric Link; the external ProcureIQ feed is seeded
+-- as a managed Delta table by setup_lakehouse_tables.py (--apply). ExternalVendorRisk
+-- is the bridge that connects Dataverse (by vendor_name) to F&O (by accountnum).
 --
 -- Running this on the T-SQL SQL analytics endpoint instead? Swap current_date()
--- for CAST(GETDATE() AS date), and you can replace the ext_procureiq CTE with a
--- join to the vw_vendor_risk view (created by --apply-views).
+-- for CAST(GETDATE() AS date). ExternalVendorRisk resolves the same way there, or
+-- you can join the vw_vendor_risk view (created by --apply-views).
 -- ===========================================================================
-WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed
-    SELECT * FROM VALUES
-        ('V0001', 'Contoso Supply Co',          'C',  38.0, 'High'),
-        ('V0002', 'Fabrikam Media',             'A',  82.0, 'Low'),
-        ('V0003', 'SwiftLogix Freight Co.',     'B+', 65.0, 'Medium'),
-        ('V0004', 'Pacific Rim Components Ltd.', 'B',  71.0, 'Medium'),
-        ('V0005', 'Nexus Cloud Services Inc.',  'C-', 29.0, 'Critical')
-    AS t(accountnum, vendor_name, credit_rating, financial_health_score, market_risk_tier)
+WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed (managed Delta table)
+    SELECT accountnum, vendor_name, credit_rating, financial_health_score, market_risk_tier
+    FROM ExternalVendorRisk
 ),
 fno_open AS (                    -- source #2: aggregate F&O open invoices to the vendor grain
     SELECT accountnum,

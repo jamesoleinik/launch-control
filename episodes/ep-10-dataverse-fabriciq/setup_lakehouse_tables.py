@@ -2,9 +2,11 @@
 setup_lakehouse_tables.py  --  Ep 10 Fabric Lakehouse supplementary table setup.
 
 Seeds VendorEnrichment and ExternalVendorRisk as managed Delta tables in the
-Fabric Lakehouse. Uploads CSV files to the Lakehouse Files section via OneLake
-ADLS Gen2, then calls the Fabric REST API table-load endpoint to register
-them as managed Delta tables in the Lakehouse SQL analytics endpoint.
+Fabric Lakehouse. Writes the Delta tables directly to the OneLake Tables/
+section via the deltalake writer (no Spark job), so it is not subject to the
+Fabric Spark compute rate limit that the REST table-load API hits under
+capacity contention. The tables then appear in the Lakehouse SQL analytics
+endpoint and are visible to Spark SQL joins.
 
 Architecture:
     Dataverse (lc_* tables)  +  F&O (fno_* tables)
@@ -19,14 +21,14 @@ Usage:
     # Dry-run (print what would be written):
     python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
 
-    # Apply (idempotent: uploads CSVs and registers tables):
+    # Apply (idempotent: writes/overwrites the Delta tables):
     python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
 
     # Verify tables are visible in Lakehouse SQL endpoint:
     python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --verify
 
 Prerequisites:
-    pip install azure-storage-file-datalake azure-identity pandas
+    pip install deltalake pyarrow pandas azure-identity
 
 Auth:
     Uses AzureCliCredential (az login).
@@ -56,15 +58,14 @@ LH_ID   = ""
 
 FABRIC_API = "https://api.fabric.microsoft.com/v1"
 ONELAKE_HOST = "onelake.dfs.fabric.microsoft.com"
-STAGING_PATH = "Files/supplemental"  # CSV staging area in the Lakehouse Files section
 
 # ---------------------------------------------------------------------------
 # VendorEnrichment - internal vendor performance data.
 # ---------------------------------------------------------------------------
 VENDOR_ENRICHMENT_HEADER = "accountnum,vendor_name,category,on_time_pct,open_disputes,risk_tier"
 VENDOR_ENRICHMENT_ROWS = [
-    "V0001,Acme Translations Inc.,Localization,0.61,2,High",
-    "V0002,GlobalTech Licensing Ltd.,Software Licensing,0.88,0,Low",
+    "V0001,Contoso Supply Co,Components,0.61,2,High",
+    "V0002,Fabrikam Media,Creative,0.88,0,Low",
     "V0003,SwiftLogix Freight Co.,Logistics,0.74,1,Medium",
 ]
 
@@ -74,23 +75,101 @@ VENDOR_ENRICHMENT_ROWS = [
 # ---------------------------------------------------------------------------
 EXTERNAL_VENDOR_RISK_HEADER = "accountnum,vendor_name,credit_rating,financial_health_score,market_risk_tier,diversity_certified,risk_source"
 EXTERNAL_VENDOR_RISK_ROWS = [
-    "V0001,Acme Translations Inc.,C,38.0,High,false,ProcureIQ",
-    "V0002,GlobalTech Licensing Ltd.,A,82.0,Low,true,ProcureIQ",
+    "V0001,Contoso Supply Co,C,38.0,High,false,ProcureIQ",
+    "V0002,Fabrikam Media,A,82.0,Low,true,ProcureIQ",
     "V0003,SwiftLogix Freight Co.,B+,65.0,Medium,false,ProcureIQ",
     "V0004,Pacific Rim Components Ltd.,B,71.0,Medium,true,ProcureIQ",
     "V0005,Nexus Cloud Services Inc.,C-,29.0,Critical,false,ProcureIQ",
 ]
 
+# Per-column casts so the Delta table lands with real numeric/boolean types
+# (not everything-as-string), which the Direct Lake model and Spark join rely on.
+def _as_bool(v: str) -> bool:
+    return str(v).strip().lower() in ("true", "1", "yes")
+
+VENDOR_ENRICHMENT_TYPES = {
+    "accountnum": str, "vendor_name": str, "category": str,
+    "on_time_pct": float, "open_disputes": int, "risk_tier": str,
+}
+EXTERNAL_VENDOR_RISK_TYPES = {
+    "accountnum": str, "vendor_name": str, "credit_rating": str,
+    "financial_health_score": float, "market_risk_tier": str,
+    "diversity_certified": _as_bool, "risk_source": str,
+}
+
 TABLES = {
     "VendorEnrichment": {
         "header": VENDOR_ENRICHMENT_HEADER,
         "rows": VENDOR_ENRICHMENT_ROWS,
+        "types": VENDOR_ENRICHMENT_TYPES,
     },
     "ExternalVendorRisk": {
         "header": EXTERNAL_VENDOR_RISK_HEADER,
         "rows": EXTERNAL_VENDOR_RISK_ROWS,
+        "types": EXTERNAL_VENDOR_RISK_TYPES,
     },
 }
+
+
+def _build_dataframe(tbl: dict):
+    """Parse header + CSV rows into a typed pandas DataFrame."""
+    import pandas as pd
+
+    cols = tbl["header"].split(",")
+    types = tbl["types"]
+    records = []
+    for row in tbl["rows"]:
+        values = row.split(",")
+        rec = {}
+        for col, raw in zip(cols, values):
+            cast = types.get(col, str)
+            rec[col] = cast(raw)
+        records.append(rec)
+    df = pd.DataFrame.from_records(records, columns=cols)
+    for col, cast in types.items():
+        if cast is int:
+            df[col] = df[col].astype("int64")
+        elif cast is float:
+            df[col] = df[col].astype("float64")
+        elif cast is _as_bool:
+            df[col] = df[col].astype("bool")
+        else:
+            df[col] = df[col].astype("string")
+    return df
+
+
+def _write_delta(table_name: str, tbl: dict, storage_token: str, dry_run: bool) -> bool:
+    """Write a managed Delta table directly to OneLake Tables/<name> (no Spark).
+
+    Uses the deltalake writer against the OneLake ADLS Gen2 endpoint, so it is
+    not subject to the Fabric Spark compute rate limit that the REST table-load
+    API hits under capacity contention.
+    """
+    df = _build_dataframe(tbl)
+    if dry_run:
+        print(f"  [DRY RUN] write Delta table Tables/{table_name} ({len(df)} rows, "
+              f"cols={list(df.columns)})")
+        return True
+    try:
+        from deltalake import write_deltalake
+
+        table_uri = (
+            f"abfss://{WS_NAME}@{ONELAKE_HOST}/"
+            f"{LH_NAME}.Lakehouse/Tables/{table_name}"
+        )
+        storage_options = {
+            "bearer_token": storage_token,
+            "use_fabric_endpoint": "true",
+        }
+        write_deltalake(
+            table_uri, df, mode="overwrite",
+            schema_mode="overwrite", storage_options=storage_options,
+        )
+        print(f"  [OK] wrote Delta table Tables/{table_name} ({len(df)} rows)")
+        return True
+    except Exception as e:
+        print(f"  [ERR] write Delta {table_name}: {e}")
+        return False
 
 
 def _get_fabric_token() -> str:
@@ -103,125 +182,22 @@ def _get_storage_token() -> str:
     return AzureCliCredential().get_token("https://storage.azure.com/.default").token
 
 
-def _upload_csv(table_name: str, csv_content: str, storage_token: str, dry_run: bool) -> bool:
-    """Upload CSV to Lakehouse Files/supplemental/<table>.csv via ADLS Gen2."""
-    if dry_run:
-        print(f"  [DRY RUN] upload {STAGING_PATH}/{table_name}.csv ({len(csv_content)} bytes)")
-        return True
-    try:
-        from azure.storage.filedatalake import DataLakeServiceClient
-        from azure.core.credentials import AccessToken
-        import time as _time
-
-        class _StaticCred:
-            def get_token(self, *_scopes, **_kw):
-                return AccessToken(storage_token, int(_time.time()) + 3600)
-
-        svc = DataLakeServiceClient(
-            account_url=f"https://{ONELAKE_HOST}",
-            credential=_StaticCred(),
-        )
-        fs = svc.get_file_system_client(file_system=WS_NAME)
-        path = f"{LH_NAME}.Lakehouse/{STAGING_PATH}/{table_name}.csv"
-        fc = fs.get_file_client(path)
-        data = csv_content.encode("utf-8")
-        fc.upload_data(data, overwrite=True)
-        print(f"  [OK] uploaded {STAGING_PATH}/{table_name}.csv")
-        return True
-    except Exception as e:
-        print(f"  [ERR] upload {table_name}: {e}")
-        return False
-
-
-def _load_table(table_name: str, fabric_token: str, dry_run: bool) -> bool:
-    """Call Fabric table-load API to create a managed Delta table from the CSV."""
-    if dry_run:
-        print(f"  [DRY RUN] load table {table_name} from {STAGING_PATH}/{table_name}.csv")
-        return True
-    url = f"{FABRIC_API}/workspaces/{WS_ID}/lakehouses/{LH_ID}/tables/{table_name}/load"
-    body = json.dumps({
-        "relativePath": f"{STAGING_PATH}/{table_name}.csv",
-        "pathType": "File",
-        "mode": "Overwrite",
-        "recursive": False,
-        "formatOptions": {
-            "format": "Csv",
-            "header": True,
-            "delimiter": ","
-        }
-    }).encode()
-    req = urllib.request.Request(url, data=body, method="POST", headers={
-        "Authorization": f"Bearer {fabric_token}",
-        "Content-Type": "application/json",
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=60) as r:
-            status = r.status
-            op_location = r.headers.get("Location") or r.headers.get("x-ms-operation-id")
-            print(f"  [OK] load {table_name}: HTTP {status} (async)")
-            if op_location:
-                _poll_load_op(op_location, fabric_token, table_name)
-            return True
-    except urllib.error.HTTPError as e:
-        msg = e.read().decode()[:300]
-        if "already exists" in msg.lower() or "conflict" in msg.lower():
-            print(f"  [SKIP] {table_name} already registered")
-            return True
-        print(f"  [ERR] load {table_name}: HTTP {e.code} {msg}")
-        return False
-    except Exception as e:
-        print(f"  [ERR] load {table_name}: {e}")
-        return False
-
-
-def _poll_load_op(op_url: str, token: str, table_name: str, max_wait: int = 120) -> None:
-    """Poll a Fabric async operation until it completes or times out."""
-    # op_url may be just an ID; try constructing the full URL
-    if not op_url.startswith("http"):
-        op_url = f"{FABRIC_API}/operations/{op_url}"
-    start = time.time()
-    while time.time() - start < max_wait:
-        time.sleep(5)
-        req = urllib.request.Request(op_url, headers={"Authorization": f"Bearer {token}"})
-        try:
-            with urllib.request.urlopen(req, timeout=30) as r:
-                op = json.loads(r.read())
-            state = op.get("status", op.get("Status", "?"))
-            print(f"  [poll] {table_name} load: {state}")
-            if state.lower() in ("succeeded", "completed", "done"):
-                print(f"  [OK] {table_name} load completed")
-                return
-            if state.lower() in ("failed", "error"):
-                print(f"  [ERR] {table_name} load failed: {op}")
-                return
-        except Exception as e:
-            print(f"  [poll err] {e}")
-            break
-    print(f"  [WARN] {table_name} load still running after {max_wait}s - check Fabric portal")
-
-
 def cmd_apply(dry_run: bool) -> int:
     if not dry_run and not all([WS_NAME, WS_ID, LH_NAME, LH_ID]):
         print("ERROR: Set FABRIC_WORKSPACE_NAME, FABRIC_WORKSPACE_ID, FABRIC_LAKEHOUSE_NAME, FABRIC_LAKEHOUSE_ID in .env")
         return 1
 
     storage_token = "" if dry_run else _get_storage_token()
-    fabric_token = "" if dry_run else _get_fabric_token()
 
     ok = True
     for table_name, tbl in TABLES.items():
         print(f"\n=== {table_name} ===")
-        csv_content = tbl["header"] + "\n" + "\n".join(tbl["rows"])
         print(f"  Rows: {len(tbl['rows'])}")
-
-        ok &= _upload_csv(table_name, csv_content, storage_token, dry_run)
-        if not dry_run:
-            time.sleep(2)  # brief pause before load
-        ok &= _load_table(table_name, fabric_token, dry_run)
+        ok &= _write_delta(table_name, tbl, storage_token, dry_run)
 
     if not dry_run and ok:
-        print("\nTables registered. Allow 1-2 minutes for the Lakehouse SQL endpoint")
-        print("to reflect them, then run --verify or refresh the Lakehouse in Fabric portal.")
+        print("\nTables written to OneLake. Allow 1-2 minutes for the Lakehouse SQL")
+        print("endpoint to reflect them, then run --verify or refresh the Lakehouse.")
 
     return 0 if ok else 1
 

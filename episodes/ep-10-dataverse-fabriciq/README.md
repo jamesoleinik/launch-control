@@ -196,22 +196,20 @@ watches it land.
 
 ### Quick proof: three sources, one query
 
-Before building the model, show the payoff in a single query. Open a **New Spark SQL
-query** on the Lakehouse and run
+Before building the model, show the payoff in a single query. First seed the external
+feed as a real Lakehouse table with
+[`setup_lakehouse_tables.py`](setup_lakehouse_tables.py) `--apply` (writes the
+`ExternalVendorRisk` and `VendorEnrichment` managed Delta tables). Then open a **New
+Spark SQL query** on the Lakehouse and run
 [`demo_three_source_join.sql`](demo_three_source_join.sql). It joins the Dataverse
 launch work items, the F&O vendor master and open invoices, and an external ProcureIQ
 market-risk feed into one grid, with `dv_` / `fno_` / `ext_` column prefixes so the
 source of every field is obvious:
 
 ```sql
-WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed
-    SELECT * FROM VALUES
-        ('V0001', 'Contoso Supply Co',          'C',  38.0, 'High'),
-        ('V0002', 'Fabrikam Media',             'A',  82.0, 'Low'),
-        ('V0003', 'SwiftLogix Freight Co.',     'B+', 65.0, 'Medium'),
-        ('V0004', 'Pacific Rim Components Ltd.', 'B',  71.0, 'Medium'),
-        ('V0005', 'Nexus Cloud Services Inc.',  'C-', 29.0, 'Critical')
-    AS t(accountnum, vendor_name, credit_rating, financial_health_score, market_risk_tier)
+WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed (managed Delta table)
+    SELECT accountnum, vendor_name, credit_rating, financial_health_score, market_risk_tier
+    FROM ExternalVendorRisk
 ),
 fno_open AS (                    -- source #2: aggregate F&O open invoices to the vendor grain
     SELECT accountnum,
@@ -249,13 +247,14 @@ ORDER BY
 ```
 
 The Dataverse and F&O tables are real mirrored Delta tables; the ProcureIQ feed is
-synthetic, so it is inlined as a `VALUES` CTE to keep the query self-contained (no
-views, no seeding). That feed is also the bridge that connects Dataverse (by vendor
-name) to F&O (by account number). Note `SUM(amountmst) * -1`: F&O stores vendor open
-transactions as negative liabilities, so the sign is flipped to read as the amount
-owed. On the T-SQL SQL analytics endpoint, swap `current_date()` for
-`CAST(GETDATE() AS date)` and you can join the `vw_vendor_risk` view instead of the
-inline feed.
+synthetic but is seeded as a real managed Delta table (`ExternalVendorRisk`) by
+[`setup_lakehouse_tables.py`](setup_lakehouse_tables.py) `--apply`, so all three
+sources in the join are real Lakehouse tables. That feed is also the bridge that
+connects Dataverse (by vendor name) to F&O (by account number). Note
+`SUM(amountmst) * -1`: F&O stores vendor open transactions as negative liabilities,
+so the sign is flipped to read as the amount owed. On the T-SQL SQL analytics
+endpoint, swap `current_date()` for `CAST(GETDATE() AS date)`; `ExternalVendorRisk`
+resolves there too, or you can join the `vw_vendor_risk` view instead.
 
 ## Section 2 · Backfill history and measure the sync latency
 
