@@ -29,7 +29,7 @@ WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk fe
 ),
 fno_open AS (                    -- source #2: aggregate F&O open invoices to the vendor grain
     SELECT accountnum,
-           SUM(amountmst)                                              AS open_balance_usd,
+           SUM(amountmst) * -1                                         AS open_balance_usd,
            COUNT(*)                                                    AS open_invoice_count,
            SUM(CASE WHEN duedate < current_date() THEN 1 ELSE 0 END)   AS overdue_count
     FROM vendtransopen
@@ -43,7 +43,7 @@ SELECT
     -- F&O mirror (source #2: the ERP vendor + money owed)
     vt.accountnum                 AS fno_account_num,
     vt.blocked                    AS fno_blocked,
-    vt.creditmax                  AS fno_credit_limit,
+    COALESCE(f.open_invoice_count, 0) AS fno_open_invoices,
     COALESCE(f.open_balance_usd, 0)   AS fno_open_balance_usd,
     COALESCE(f.overdue_count, 0)      AS fno_overdue_invoices,
     -- External ProcureIQ (source #3: the risk profile the launch data can't see)
