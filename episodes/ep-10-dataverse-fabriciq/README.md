@@ -204,7 +204,20 @@ Spark SQL query** on the Lakehouse and run
 [`demo_three_source_join.sql`](demo_three_source_join.sql). It joins the Dataverse
 launch work items, the F&O vendor master and open invoices, and an external ProcureIQ
 market-risk feed into one grid, with `dv_` / `fno_` / `ext_` column prefixes so the
-source of every field is obvious:
+source of every field is obvious.
+
+**The prompt** (type into GitHub Copilot CLI with the `dataverse-fabric-analytics`
+skill loaded):
+
+> *Seed the external ProcureIQ vendor-risk feed as a managed Delta table in our Fabric*
+> *Link Lakehouse, then write me one Spark SQL query that joins three sources into a*
+> *single grid: the launch vendor work from Dataverse (lc_vendorwork), the vendor master*
+> *and open invoices from the F&O mirror (vendtable and vendtransopen), and that external*
+> *risk feed. Prefix every column with dv_, fno_, or ext_ so the source of each field is*
+> *obvious, and order the rows by market risk.*
+
+That produces [`setup_lakehouse_tables.py`](setup_lakehouse_tables.py) (the seeder) and
+[`demo_three_source_join.sql`](demo_three_source_join.sql) (the query):
 
 ```sql
 WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed (managed Delta table)
