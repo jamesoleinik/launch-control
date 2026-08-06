@@ -43,8 +43,8 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [7](episodes/ep-07-scout-autopilot/)      | Microsoft Scout 🟡            | The Dataverse MCP face-lift (16 tools, `search_data`) driven by an always-on Scout Autopilot agent on a schedule |
 | [8](episodes/ep-08-security/)             | Roles & Reach                 | Four flat roles (Member / Owner / Viewer / Admin) over Eps 1-5 data + tools: same query, four lenses |
 | [9](episodes/ep-09-dataverse-fno/)        | Dataverse + F&O               | CRM and ERP on one platform; the launch record gains budget and supply signal |
-| [10](episodes/ep-10-dataverse-webiq/)     | Dataverse + Web IQ            | Outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
-| [11](episodes/ep-11-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
+| [10](episodes/ep-10-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
+| [11](episodes/ep-11-dataverse-webiq/)     | Dataverse + Web IQ            | Outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
 | [12](episodes/ep-12-dataverse-foundryiq/) | Dataverse + Foundry IQ        | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
 | [13](episodes/ep-13-convergence/)         | Convergence                   | Native M365 Copilot (Dataverse intelligence / Work IQ) plus the three IQ agents, on one launch |
 | [14](episodes/ep-14-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven: capacity, audit, cleanup, blast-radius |
@@ -85,8 +85,8 @@ launch-control/
 ├── business-skills/           # Launch readiness, escalation, status rules
 ├── data/knowledge/            # Sanitized KB articles for RAG
 ├── agents/
-│   ├── launch-coordinator/    # Declarative Copilot Studio agent (archived; absorbed into Ep 10)
-│   ├── launch-sentinel/       # Autonomous agent runtime (Ep 11 Fabric IQ)
+│   ├── launch-coordinator/    # Declarative Copilot Studio agent (archived; absorbed into Ep 11)
+│   ├── launch-sentinel/       # Autonomous agent runtime (Ep 10 Fabric IQ)
 │   ├── launch-coordinator-py/ # Code-first agent runtime (Ep 12 Foundry IQ)
 │   └── agent-flows/           # Agent flow configurations
 ├── apps/launch-command-center/# Generative Power Apps page (folds into Ep 13 convergence)

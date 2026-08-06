@@ -10,6 +10,10 @@ a365.config.json
 # Ingest temp payloads
 scripts/cli/.tmp-*.json
 
+# Build artifacts and env-specific value files (may contain env URLs / oauth reference ids)
+.build/
+artifacts/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -105,3 +109,11 @@ tmp/cowork-template-extracted/
 
 # ERP MCP device-flow token cache (local only)
 episodes/ep-09-dataverse-fno/.erp_token_cache.json
+
+# Ep 10 local Operations Agent exports (contain environment-specific IDs)
+episodes/ep-10-dataverse-fabriciq/operations_agent_schema.json
+episodes/ep-10-dataverse-fabriciq/operations_agent_schema.parts/
+episodes/ep-10-dataverse-fabriciq/operations_agent_template.json
+episodes/ep-10-dataverse-fabriciq/operations_agent_direct_message.json
+episodes/ep-10-dataverse-fabriciq/sync_latency_hist.png
+episodes/ep-10-dataverse-fabriciq/sync_latency_hist.csv

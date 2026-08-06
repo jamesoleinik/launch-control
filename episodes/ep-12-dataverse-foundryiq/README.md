@@ -92,7 +92,7 @@ IQ. Neither answers well alone, and nothing lives in both places.
 
 - **`episodes/archive/ep-11-code-first-agent/`** and
   `agents/launch-coordinator-py/`: the code-first runtime this episode reuses.
-- **Ep 11:** the Fabric IQ agent (semantic structured data); this is the
+- **Ep 10:** the Fabric IQ agent (semantic structured data); this is the
   unstructured-knowledge counterpart.
 - **Ep 13** (convergence): the Foundry IQ agent runs alongside Web IQ and Fabric
   IQ, with native Copilot, on one launch.

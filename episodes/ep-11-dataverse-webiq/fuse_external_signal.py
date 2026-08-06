@@ -1,6 +1,6 @@
-"""Ep 10 outside-in demo: fuse internal launch blockers with live Web IQ signal.
+"""Ep 11 outside-in demo: fuse internal launch blockers with live Web IQ signal.
 
-This proves the Episode 10 thesis in code before it is wired into the Copilot
+This proves the Episode 11 thesis in code before it is wired into the Copilot
 Studio agent: an internal blocker in Dataverse is far more actionable when joined
 with what the outside world (web / news) already knows about it.
 
@@ -9,9 +9,9 @@ env, no record IDs) so it works without Dataverse credentials. Pass --dataverse
 to read live blocked tasks from the launch environment instead.
 
 Run:
-    # PowerShell: $env:LC_ENV = "ep-10-dataverse-webiq"
-    python episodes/ep-10-dataverse-webiq/fuse_external_signal.py
-    python episodes/ep-10-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
+    # PowerShell: $env:LC_ENV = "ep-11-dataverse-webiq"
+    python episodes/ep-11-dataverse-webiq/fuse_external_signal.py
+    python episodes/ep-11-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
 """
 
 import argparse
@@ -53,21 +53,34 @@ def to_query(title):
 def fetch_dataverse_blockers(max_items):
     """Best-effort live read of blocked tasks from the launch environment."""
     import auth
-    auth.load_env(os.environ.get("LC_ENV", "ep-10-dataverse-webiq"))
+    auth.load_env(os.environ.get("LC_ENV", "ep-11-dataverse-webiq"))
     base = os.environ["DATAVERSE_URL"].rstrip("/")
     token = auth.get_token(os.environ.get("LC_ENV"))
-    q = ("lc_tasks?$select=lc_title,lc_blockerreason&"
-         "$filter=lc_isblocked eq true&$top=%d" % max_items)
-    url = base + "/api/data/v9.2/" + urllib.parse.quote(q, safe="?=&$")
-    req = urllib.request.Request(url, headers={
-        "Authorization": "Bearer " + token,
-        "Accept": "application/json",
-        "OData-MaxVersion": "4.0", "OData-Version": "4.0",
-    })
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        rows = json.load(resp).get("value", [])
-    return [{"title": r.get("lc_title", ""), "category": "",
-             "blockerreason": r.get("lc_blockerreason", "")} for r in rows]
+
+    # Environment schemas differ slightly. Try the historical shape first,
+    # then fall back to the current status-choice shape.
+    queries = [
+        "lc_tasks?$select=lc_title,lc_blockerreason&$filter=lc_isblocked eq true&$top=%d",
+        "lc_tasks?$select=lc_title,lc_taskstatus&$filter=lc_taskstatus eq 10600303&$top=%d",
+    ]
+    last_exc = None
+    for tmpl in queries:
+        try:
+            q = tmpl % max_items
+            url = base + "/api/data/v9.2/" + urllib.parse.quote(q, safe="?=&$")
+            req = urllib.request.Request(url, headers={
+                "Authorization": "Bearer " + token,
+                "Accept": "application/json",
+                "OData-MaxVersion": "4.0", "OData-Version": "4.0",
+            })
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                rows = json.load(resp).get("value", [])
+            return [{"title": r.get("lc_title", ""), "category": "",
+                     "blockerreason": r.get("lc_blockerreason", "")} for r in rows]
+        except Exception as exc:
+            last_exc = exc
+            continue
+    raise last_exc
 
 
 def briefing(client, blockers, per_blocker=2):
@@ -106,13 +119,46 @@ def main():
                     help="Max blockers to process (default 3).")
     ap.add_argument("--results", type=int, default=2,
                     help="External results per blocker (default 2).")
+    ap.add_argument("--demo", action="store_true",
+                    help="Show available Web IQ tools and run sample queries for the first blocker.")
     args = ap.parse_args()
 
     try:
-        client = WebIqClient(env_name="ep-10-dataverse-webiq")
+        client = WebIqClient(env_name="ep-11-dataverse-webiq")
     except WebIqError as exc:
         print(f"FAIL: {exc}")
         return 1
+
+    # Demo mode: list tools and run sample queries to showcase Web IQ capabilities
+    if args.demo:
+        print("Initializing Web IQ demo...")
+        try:
+            info = client.initialize().get("serverInfo", {})
+            print("Server:", info.get("name"), info.get("version"))
+        except Exception:
+            pass
+        tools = client.tool_names()
+        print("Available Web IQ tools:", ", ".join([t for t in tools if t]))
+        sample_query = to_query(SAMPLE_BLOCKERS[0]["title"]) if SAMPLE_BLOCKERS else "popular news"
+        print(f"\nSample query: {sample_query}\n")
+        if "news" in tools:
+            print("-- news results --")
+            try:
+                for n in client.news(sample_query, max_results=2):
+                    print(f" - {n.get('title')}\n   {n.get('url')}")
+            except Exception as exc:
+                print(f"  news call failed: {exc}")
+        if "web" in tools:
+            print("-- web results --")
+            try:
+                for w in client.web(sample_query, max_results=2):
+                    print(f" - {w.get('title')}\n   {w.get('url')}")
+            except Exception as exc:
+                print(f"  web call failed: {exc}")
+        if "browse" in tools:
+            print("-- browse available (use for authoritative pages) --")
+        print("\nDemo complete. Use --dataverse to run against live Dataverse blockers or omit to run the bundled sample.")
+        return 0
 
     if args.dataverse:
         try:
