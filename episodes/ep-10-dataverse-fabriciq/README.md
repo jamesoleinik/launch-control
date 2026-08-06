@@ -1,19 +1,5 @@
 # Episode 10: Dataverse + Fabric (the analytical layer)
 
-**Status:** ✍️ Draft · 🎬 Not yet recorded
-**Build status:** Fabric Link, latency probe, semantic model, 3-page report, and demo data all built programmatically against the live tenant; the Copilot Cowork grounding (Section 4) is the only maker-portal step (2026-08-02)
-**Season:** 2 (Dataverse, Better Together)
-**Features:** ⭐ Dataverse Link to Microsoft Fabric (near-real-time mirror to OneLake) · ⭐ Analytical enrichment + aggregation views over the Lakehouse SQL endpoint · ⭐ Power BI Direct Lake semantic model (authored from code, no DAX) · ⭐ The Fabric data plugin in Microsoft 365 Copilot Cowork
-**Layer:** 🔵 Layer 2 (proactive automation) over an analytical data foundation
-**Coding agent:** Python automation (Dataverse Web API + Fabric REST API: TMSL model + PBIR report) against the live tenant
-**Runtime showcased:** the **programmatic Direct Lake analytical layer** (the coding agent authors the enrichment views, model, relationships, and aggregation measures via T-SQL / TMSL / PBIR: no Power BI Desktop authoring and no hand-written DAX)
-
-> **Building this episode?** This README is the follow-along: each section has a
-> short prompt you give the coding agent (or the maker-portal steps you take) and
-> what you run on screen. Load the `dataverse-fabric-analytics` skill (`SKILL.md`)
-> first: it holds the technical how, so the prompts can stay short. `plan.md` is the
-> deeper runbook and `powerbi_report_spec.md` is the model + report spec.
-
 ---
 
 ## The hook
