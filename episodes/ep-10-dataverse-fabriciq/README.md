@@ -199,7 +199,9 @@ watches it land.
 Before building the model, show the payoff in a single query. First seed the external
 feed as a real Lakehouse table with
 [`setup_lakehouse_tables.py`](setup_lakehouse_tables.py) `--apply` (writes the
-`ExternalVendorRisk` and `VendorEnrichment` managed Delta tables). Then open a **New
+`ExternalVendorRisk` and `VendorEnrichment` managed Delta tables; see the
+[Appendix](#appendix--seed-the-external-supplementary-tables) for the prompt that
+generates that seeder). Then open a **New
 Spark SQL query** on the Lakehouse and run
 [`demo_three_source_join.sql`](demo_three_source_join.sql). It joins the Dataverse
 launch work items, the F&O vendor master and open invoices, and an external ProcureIQ
@@ -209,15 +211,13 @@ source of every field is obvious.
 **The prompt** (type into GitHub Copilot CLI with the `dataverse-fabric-analytics`
 skill loaded):
 
-> *Seed the external ProcureIQ vendor-risk feed as a managed Delta table in our Fabric*
-> *Link Lakehouse, then write me one Spark SQL query that joins three sources into a*
-> *single grid: the launch vendor work from Dataverse (lc_vendorwork), the vendor master*
-> *and open invoices from the F&O mirror (vendtable and vendtransopen), and that external*
-> *risk feed. Prefix every column with dv_, fno_, or ext_ so the source of each field is*
-> *obvious, and order the rows by market risk.*
+> *Write me one Spark SQL query over our Fabric Link Lakehouse that joins three sources*
+> *into a single grid: the launch vendor work from Dataverse (lc_vendorwork), the vendor*
+> *master and open invoices from the F&O mirror (vendtable and vendtransopen), and the*
+> *external ProcureIQ risk feed (ExternalVendorRisk). Prefix every column with dv_, fno_,*
+> *or ext_ so the source of each field is obvious, and order the rows by market risk.*
 
-That produces [`setup_lakehouse_tables.py`](setup_lakehouse_tables.py) (the seeder) and
-[`demo_three_source_join.sql`](demo_three_source_join.sql) (the query):
+That produces [`demo_three_source_join.sql`](demo_three_source_join.sql):
 
 ```sql
 WITH ext_procureiq AS (          -- source #3: external ProcureIQ market-risk feed (managed Delta table)
@@ -556,3 +556,32 @@ Each starts grounded on the one report, then chains a skill:
   structured-semantic counterpart.
 - **Ep 13** (convergence): the Fabric analytical layer runs alongside Web IQ and
   Foundry IQ, with native Copilot, on one launch.
+
+## Appendix · Seed the external supplementary tables
+
+The three-source query in Section 1 joins an external ProcureIQ risk feed
+(`ExternalVendorRisk`) that lives in neither Dataverse nor F&O. Seed it, and its
+internal `VendorEnrichment` companion, as managed Delta tables in the Lakehouse once
+before running the Section 1 query.
+
+**The prompt** (type into GitHub Copilot CLI with the `dataverse-fabric-analytics`
+skill loaded):
+
+> *Seed our external supplementary vendor data as managed Delta tables in the Fabric*
+> *Link Lakehouse: an ExternalVendorRisk table (ProcureIQ credit rating, financial*
+> *health score, and market-risk tier per vendor) and a VendorEnrichment table (internal*
+> *delivery performance per vendor). Write the Delta tables straight to OneLake so it*
+> *does not depend on Spark compute, and make it idempotent with dry-run, apply, and*
+> *verify modes.*
+
+That produces [`setup_lakehouse_tables.py`](setup_lakehouse_tables.py). Run it once:
+
+```powershell
+$env:PYTHONIOENCODING="utf-8"; $env:LC_ENV="ep-10-dataverse-fabriciq"
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --dry-run
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --apply
+python episodes/ep-10-dataverse-fabriciq/setup_lakehouse_tables.py --verify
+```
+
+Allow about a minute after `--apply` for the Lakehouse SQL analytics endpoint to
+discover the new tables, then `--verify` (or the Section 1 query) will see them.
