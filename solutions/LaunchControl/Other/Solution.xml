@@ -87,6 +87,7 @@
       <RootComponent type="1" schemaName="lc_githubissue" behavior="0" />
       <RootComponent type="1" schemaName="lc_launch" behavior="1" />
       <RootComponent type="1" schemaName="lc_milestone" behavior="1" />
+      <RootComponent type="1" schemaName="lc_qualitygateresult" behavior="0" />
       <RootComponent type="1" schemaName="lc_statusupdate" behavior="1" />
       <RootComponent type="1" schemaName="lc_stg_tracker_a" behavior="0" />
       <RootComponent type="1" schemaName="lc_stg_tracker_b" behavior="0" />
@@ -95,14 +96,21 @@
       <RootComponent type="1" schemaName="lc_stg_tracker_e" behavior="0" />
       <RootComponent type="1" schemaName="lc_task" behavior="1" />
       <RootComponent type="1" schemaName="lc_teammember" behavior="0" />
+      <RootComponent type="1" schemaName="new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" behavior="0" />
+      <RootComponent type="20" id="{f8689149-f697-f111-8075-70a8a5b028cc}" behavior="0" />
+      <RootComponent type="66" schemaName="lc_LaunchControl.LaunchReadiness" behavior="0" />
+      <RootComponent type="29" id="{ae8e29d7-071f-4eec-9ef2-a881a1590d5c}" behavior="0" />
       <RootComponent type="372" id="{4aa5aa10-7f5b-f111-bec7-000d3a5a5baf}" schemaName="new_launch-20control-20-2D-20github-20mcp" behavior="0" />
       <RootComponent type="372" id="{b47e51fe-7e5b-f111-bec7-000d3a5a5a08}" schemaName="new_launch-20control-20-2D-20learn-20mcp" behavior="0" />
       <RootComponent type="401" id="{5b92b771-72b6-4c4a-8767-50db60a8db78}" behavior="0" />
       <RootComponent type="91" id="{df531816-7d5b-f111-bec7-000d3a5a5eea}" schemaName="CalculateLaunchReadiness, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726" behavior="0" />
       <RootComponent type="91" id="{8865112d-8f58-f111-bec7-0022480ad6b2}" schemaName="GitHubIssuesProvider, Version=1.0.0.0, Culture=neutral, PublicKeyToken=728b934a862aaeea" behavior="0" />
+      <RootComponent type="91" id="{01b8578f-419a-f111-b8db-70a8a5b028cc}" schemaName="QualityGateAutomation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726" behavior="0" />
       <RootComponent type="92" id="{3a474075-9058-f111-bec7-00224802b745}" behavior="0" />
       <RootComponent type="92" id="{6c017973-9058-f111-bec6-6045bd0a3ee0}" behavior="0" />
       <RootComponent type="92" id="{70017973-9058-f111-bec6-6045bd0a3ee0}" behavior="0" />
+      <RootComponent type="92" id="{bf5b7a97-419a-f111-b8db-70a8a5b02d15}" behavior="0" />
+      <RootComponent type="92" id="{c7e8bc9d-419a-f111-b8db-70a8a5b02d15}" behavior="0" />
     </RootComponents>
     <MissingDependencies>
       <MissingDependency>
@@ -136,6 +144,10 @@
       <MissingDependency>
         <Required type="2" schemaName="lc_name" displayName="name" parentSchemaName="lc_launch" parentDisplayName="lc_launch" solution="Active" />
         <Dependent type="10" schemaName="lc_launch_lc_task_lc_launchid" displayName="lc_launch_lc_task_lc_launchid" parentSchemaName="lc_launch" parentDisplayName="lc_launch" />
+      </MissingDependency>
+      <MissingDependency>
+        <Required type="2" schemaName="lc_name" displayName="name" parentSchemaName="lc_launch" parentDisplayName="lc_launch" solution="Active" />
+        <Dependent type="10" schemaName="lc_launch_QualityGateResults" displayName="lc_launch_QualityGateResults" parentSchemaName="lc_launch" parentDisplayName="lc_launch" />
       </MissingDependency>
       <MissingDependency>
         <Required type="2" schemaName="lc_name" displayName="name" parentSchemaName="lc_milestone" parentDisplayName="lc_milestone" solution="Active" />

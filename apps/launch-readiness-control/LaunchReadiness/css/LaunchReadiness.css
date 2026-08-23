@@ -1,0 +1,315 @@
+.lc-readiness {
+    --lc-border: #e1e4e8;
+    --lc-muted: #616b77;
+    --lc-surface: #ffffff;
+    background: #f6f8fb;
+    border: 1px solid var(--lc-border);
+    border-radius: 10px;
+    box-sizing: border-box;
+    color: #172033;
+    font-family: "Segoe UI", sans-serif;
+    min-height: 500px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.lc-readiness-panel-title {
+    align-items: center;
+    display: flex;
+}
+
+.lc-readiness-icon {
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 8px;
+    font-weight: 700;
+    height: 15px;
+    justify-content: center;
+    width: 17px;
+}
+
+.lc-icon-danger { color: #d13438; }
+.lc-icon-success { color: #107c10; }
+
+.lc-score-good { color: #6ee7a2; }
+.lc-score-warning { color: #ffd166; }
+.lc-score-danger { color: #ff8a8a; }
+
+.lc-readiness-tabs {
+    background: var(--lc-surface);
+    border-bottom: 1px solid var(--lc-border);
+    display: flex;
+    padding: 0 12px;
+}
+
+.lc-readiness-tab {
+    background: transparent;
+    border: 0;
+    border-bottom: 3px solid transparent;
+    color: var(--lc-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 13px 8px;
+}
+
+.lc-readiness-tab:hover,
+.lc-readiness-tab-active {
+    color: #174ea6;
+}
+
+.lc-readiness-tab-active {
+    border-bottom-color: #1769c2;
+}
+
+.lc-readiness-kpis {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 12px;
+}
+
+.lc-readiness-context {
+    align-items: center;
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--lc-border);
+    color: var(--lc-muted);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 10px;
+    gap: 8px;
+    padding: 9px 12px;
+}
+
+.lc-readiness-kpi {
+    background: var(--lc-surface);
+    border: 1px solid var(--lc-border);
+    border-top: 3px solid #66809e;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    min-height: 64px;
+    padding: 8px 9px;
+}
+
+.lc-readiness-kpi > span {
+    color: var(--lc-muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.lc-readiness-kpi strong {
+    font-size: 19px;
+    line-height: 1.25;
+}
+
+.lc-readiness-kpi small,
+.lc-readiness-row small,
+.lc-readiness-risk small {
+    color: var(--lc-muted);
+    display: block;
+    font-size: 10px;
+}
+
+.lc-tone-danger { border-top-color: #d13438; }
+.lc-tone-warning { border-top-color: #f0a30a; }
+.lc-tone-success { border-top-color: #107c10; }
+
+.lc-readiness-panel {
+    background: var(--lc-surface);
+    border: 1px solid var(--lc-border);
+    border-radius: 7px;
+    margin: 0 12px 12px;
+    padding: 12px;
+}
+
+.lc-readiness-focus {
+    min-height: 125px;
+}
+
+.lc-readiness-panel-title {
+    font-size: 13px;
+    gap: 6px;
+    margin: 0 0 9px;
+}
+
+.lc-readiness-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.lc-readiness-row,
+.lc-readiness-risk {
+    align-items: center;
+    border-top: 1px solid #edf0f4;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    padding-top: 7px;
+}
+
+.lc-readiness-row > div,
+.lc-readiness-risk > div {
+    min-width: 0;
+}
+
+.lc-readiness-row strong,
+.lc-readiness-risk strong {
+    display: block;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lc-readiness-risk {
+    color: #a4262c;
+    justify-content: flex-start;
+}
+
+.lc-readiness-status-summary {
+    align-items: flex-start;
+    border-top: 1px solid #edf0f4;
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 9px;
+}
+
+.lc-readiness-status-summary p {
+    color: #344054;
+    display: -webkit-box;
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.lc-readiness-empty {
+    align-items: center;
+    color: #107c10;
+    display: flex;
+    font-size: 11px;
+    gap: 7px;
+    padding: 14px 0;
+}
+
+.lc-readiness-tab-content {
+    padding-top: 12px;
+}
+
+.lc-readiness-risk-summary {
+    background: #fff8f8;
+    border-left: 3px solid #d13438;
+    margin-top: 12px;
+    padding: 9px 10px;
+}
+
+.lc-readiness-risk-summary strong {
+    font-size: 11px;
+}
+
+.lc-readiness-risk-summary p {
+    color: #5b3436;
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 4px 0 0;
+}
+
+.lc-readiness-quality-hero {
+    align-items: center;
+    background: var(--lc-surface);
+    display: grid;
+    gap: 14px;
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 0 12px;
+    padding: 14px;
+}
+
+.lc-readiness-quality-score {
+    align-items: center;
+    border: 3px solid currentColor;
+    border-radius: 50%;
+    display: flex;
+    font-size: 27px;
+    font-weight: 700;
+    height: 68px;
+    justify-content: center;
+    width: 68px;
+}
+
+.lc-readiness-quality-hero p {
+    color: #344054;
+    display: -webkit-box;
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 7px 0 5px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
+.lc-readiness-quality-hero small {
+    color: var(--lc-muted);
+    font-size: 10px;
+}
+
+.lc-readiness-quality-evidence {
+    color: var(--lc-muted);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 10px;
+    gap: 8px 16px;
+    padding: 10px 14px;
+}
+
+.lc-readiness-quality-pending {
+    align-items: flex-start;
+    background: var(--lc-surface);
+    border: 1px solid var(--lc-border);
+    border-radius: 7px;
+    display: flex;
+    gap: 10px;
+    margin: 0 12px;
+    padding: 18px;
+}
+
+.lc-readiness-quality-pending strong {
+    font-size: 13px;
+}
+
+.lc-readiness-quality-pending p {
+    color: var(--lc-muted);
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 5px 0 0;
+}
+
+.lc-readiness-state {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 40px;
+}
+
+.lc-readiness-error {
+    color: #a4262c;
+}
+
+.lc-readiness-error p {
+    margin: 4px 0;
+}
+
+@media (max-width: 720px) {
+    .lc-readiness-kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

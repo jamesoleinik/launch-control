@@ -27,18 +27,19 @@ The thesis: Dataverse is not an island. Each episode pairs it with another part 
 |---|---|---|
 | [9](ep-09-dataverse-fno/) | Dataverse + F&O | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](ep-10-dataverse-fabriciq/) | Dataverse + Fabric IQ | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
-| [11](ep-11-dataverse-webiq/) | Dataverse + Web IQ | The outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
-| [12](ep-12-dataverse-foundryiq/) | Dataverse + Foundry IQ | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
-| [13](ep-13-convergence/) | Convergence | Native M365 Copilot (Dataverse intelligence / Work IQ) **and** the three IQ agents, on one launch |
+| [11](ep-11-agent-quality-gate/) | Agent Quality Gate | A local Agent 365 worker with its own governed identity runs the launch approval quality gate |
+| [12](ep-12-dataverse-webiq/) | Dataverse + Web IQ | The outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
+| [13](ep-13-dataverse-foundryiq/) | Dataverse + Foundry IQ | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
+| [14](ep-14-convergence/) | Convergence | Native M365 Copilot (Dataverse intelligence / Work IQ) **and** the three IQ agents, on one launch |
 
 ### Season 3: Operate It
 
 | # | Episode | Hero capability |
 |---|---|---|
-| [14](ep-14-agentic-admin/) | Agentic Administration | The management plane is agent-driven: capacity, audit, cleanup, blast-radius |
-| [15](ep-15-full-orchestra/) | Full Orchestra + Your Turn | Every surface firing on one launch + open-source CTA |
+| [15](ep-15-agentic-admin/) | Agentic Administration | The management plane is agent-driven: capacity, audit, cleanup, blast-radius |
+| [16](ep-16-full-orchestra/) | Full Orchestra + Your Turn | Every surface firing on one launch + open-source CTA |
 
-> **Archived Season 1 agent builds.** The original declarative agent, autonomous Sentinel, code-first Python agent, and generative dashboard moved to [`archive/`](archive/). Their capabilities are **absorbed** as the runtimes for Season 2 (Web IQ → new Copilot Studio builder; Fabric IQ → autonomous; Foundry IQ → code-first) and the dashboard folds into the Ep 13 convergence. The code still lives in [`../agents/`](../agents/) and [`../apps/`](../apps/).
+> **Archived Season 1 agent builds.** The original declarative agent, autonomous Sentinel, code-first Python agent, and generative dashboard moved to [`archive/`](archive/). Their capabilities are **absorbed** as the runtimes for Season 2 (Web IQ → new Copilot Studio builder; Fabric IQ → autonomous; Foundry IQ → code-first) and the dashboard folds into the Ep 14 convergence. The code still lives in [`../agents/`](../agents/) and [`../apps/`](../apps/).
 
 ## Layout
 
@@ -57,7 +58,7 @@ Cross-cutting artifacts live in their canonical homes (not duplicated per-episod
 - `business-skills/`: escalation policy, readiness digest, etc.
 - `data/knowledge/`: sanitized KB articles for RAG
 - `datamodel/`: staging + unified table definitions, mappings, sample data
-- `apps/launch-command-center/`: the generative Power Apps page (folds into the Ep 13 convergence)
+- `apps/launch-command-center/`: the generative Power Apps page (folds into the Ep 14 convergence)
 - `plugins/`: server-side plugins
 - `solutions/LaunchControl/`: exported managed solution
 - `scripts/auth.py`, `scripts/python/`: shared utilities

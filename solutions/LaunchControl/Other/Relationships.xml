@@ -1,5 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <EntityRelationships xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <EntityRelationship Name="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" />
+  <EntityRelationship Name="business_unit_lc_qualitygateresult" />
   <EntityRelationship Name="business_unit_lc_stg_tracker_a" />
   <EntityRelationship Name="business_unit_lc_stg_tracker_b" />
   <EntityRelationship Name="business_unit_lc_stg_tracker_c" />
@@ -10,6 +12,7 @@
   <EntityRelationship Name="lc_launch_lc_milestone_lc_launchid" />
   <EntityRelationship Name="lc_launch_lc_statusupdate_lc_launchid" />
   <EntityRelationship Name="lc_launch_lc_task_lc_launchid" />
+  <EntityRelationship Name="lc_launch_QualityGateResults" />
   <EntityRelationship Name="lc_milestone_lc_statusupdate_lc_milestoneid" />
   <EntityRelationship Name="lc_milestone_lc_task_lc_milestoneid" />
   <EntityRelationship Name="lc_stg_tracker_a_lc_task_lc_sourcestagingaid" />
@@ -22,6 +25,8 @@
   <EntityRelationship Name="lc_teammember_lc_milestone_lc_ownerid" />
   <EntityRelationship Name="lc_teammember_lc_statusupdate_lc_authorid" />
   <EntityRelationship Name="lc_teammember_lc_task_lc_assignedtoid" />
+  <EntityRelationship Name="lk_lc_qualitygateresult_createdby" />
+  <EntityRelationship Name="lk_lc_qualitygateresult_modifiedby" />
   <EntityRelationship Name="lk_lc_stg_tracker_a_createdby" />
   <EntityRelationship Name="lk_lc_stg_tracker_a_modifiedby" />
   <EntityRelationship Name="lk_lc_stg_tracker_b_createdby" />
@@ -34,18 +39,26 @@
   <EntityRelationship Name="lk_lc_stg_tracker_e_modifiedby" />
   <EntityRelationship Name="lk_lc_teammember_createdby" />
   <EntityRelationship Name="lk_lc_teammember_modifiedby" />
+  <EntityRelationship Name="lk_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c_activestageid" />
+  <EntityRelationship Name="lk_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c_createdby" />
+  <EntityRelationship Name="lk_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c_modifiedby" />
+  <EntityRelationship Name="lk_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c_processid" />
+  <EntityRelationship Name="organization_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" />
+  <EntityRelationship Name="owner_lc_qualitygateresult" />
   <EntityRelationship Name="owner_lc_stg_tracker_a" />
   <EntityRelationship Name="owner_lc_stg_tracker_b" />
   <EntityRelationship Name="owner_lc_stg_tracker_c" />
   <EntityRelationship Name="owner_lc_stg_tracker_d" />
   <EntityRelationship Name="owner_lc_stg_tracker_e" />
   <EntityRelationship Name="owner_lc_teammember" />
+  <EntityRelationship Name="team_lc_qualitygateresult" />
   <EntityRelationship Name="team_lc_stg_tracker_a" />
   <EntityRelationship Name="team_lc_stg_tracker_b" />
   <EntityRelationship Name="team_lc_stg_tracker_c" />
   <EntityRelationship Name="team_lc_stg_tracker_d" />
   <EntityRelationship Name="team_lc_stg_tracker_e" />
   <EntityRelationship Name="team_lc_teammember" />
+  <EntityRelationship Name="user_lc_qualitygateresult" />
   <EntityRelationship Name="user_lc_stg_tracker_a" />
   <EntityRelationship Name="user_lc_stg_tracker_b" />
   <EntityRelationship Name="user_lc_stg_tracker_c" />

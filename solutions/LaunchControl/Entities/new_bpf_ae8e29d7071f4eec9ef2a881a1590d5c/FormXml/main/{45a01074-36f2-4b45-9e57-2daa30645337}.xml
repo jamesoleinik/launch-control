@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{45a01074-36f2-4b45-9e57-2daa30645337}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{05c26633-428f-46b7-8926-c6616697edaa}" name="StageStep3" locklevel="0" expanded="true" visible="false" labelid="{c8115ea3-072e-4f1f-b729-b3ec1049c102}">
+          <labels>
+            <label description="Draft" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showbar="false" columns="1" id="{3e049172-487e-5544-50d0-c3c12d8a391c}" name="StageStep3_section1" labelid="{709377b5-61c7-45c2-b494-7bac80c6bd40}">
+                  <labels>
+                    <label description="Draft" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{87457c85-826e-49cf-92fb-98ccdcf3693c}" showlabel="true" visible="true" labelid="{08eba634-3d55-47b8-bc15-4a5c003b8393}">
+                        <labels>
+                          <label description="Launch Name " languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_name" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_name" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{23345d12-ee47-417d-a647-d75e70776a34}" showlabel="true" visible="true" labelid="{0ef3bc1e-87b5-4658-a27c-971132791958}">
+                        <labels>
+                          <label description="Target Date" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_targetdate" classid="{5b773807-9fb2-42db-97c3-7a91eff8adff}" datafieldname="lc_targetdate" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab verticallayout="true" id="{a58cfdbe-3071-4953-815f-90052fbd9b3a}" name="StageStep9" locklevel="0" expanded="true" visible="false" labelid="{60fd9298-5faa-4a3a-896c-3a0e6cc5a9bc}">
+          <labels>
+            <label description="Quality Gate" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showbar="false" columns="1" id="{b52625c3-77be-342b-9f6c-31239ac3044f}" name="StageStep9_section1" labelid="{77cd7d83-bc72-41f9-bf19-ed6478932609}">
+                  <labels>
+                    <label description="Quality Gate" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{947ae70f-dbb5-4140-a2e5-e930884b4dd9}" showlabel="true" visible="true" labelid="{1bb37acb-efd3-4162-ae4f-d7a423db0288}">
+                        <labels>
+                          <label description="Quality Gate Status" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_qualitygatestatus" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_qualitygatestatus" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9ad8f055-163a-42e0-a535-8bb1c5901d59}" showlabel="true" visible="true" labelid="{a297a516-68ae-4d0c-8ef3-553162f53710}">
+                        <labels>
+                          <label description="Quality Gate Score" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_qualitygatescore" classid="{c6d124ca-7eda-4a60-aea9-7fb8d318b68f}" datafieldname="lc_qualitygatescore" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{4c3ed179-57e2-4ffe-8645-68e61b8b1211}" showlabel="true" visible="true" labelid="{088ac8c4-5339-4b38-8b83-a5442277d75e}">
+                        <labels>
+                          <label description="Quality Gate Feedback" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_qualitygatefeedback" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_qualitygatefeedback" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{7d456c62-b37d-4c0b-a897-e74de7cad39d}" showlabel="true" visible="true" labelid="{d74da9c5-749d-4df4-a4b2-fb3fbe7db886}">
+                        <labels>
+                          <label description="Quality Gate Evidence" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_qualitygateevidence" classid="{5b773807-9fb2-42db-97c3-7a91eff8adff}" datafieldname="lc_qualitygateevidence" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{e80add43-11b1-4ecb-9b80-b40183e3d3fe}" showlabel="true" visible="true" labelid="{d307ee3e-00c7-4faf-a807-22f21c6c5dd3}">
+                        <labels>
+                          <label description="Quality Gate Checked On" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_qualitygatecheckedon" classid="{5b773807-9fb2-42db-97c3-7a91eff8adff}" datafieldname="lc_qualitygatecheckedon" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab verticallayout="true" id="{bae0c8d0-f45e-44f5-b4ee-e96163baa046}" name="StageStep21" locklevel="0" expanded="true" visible="false" labelid="{2488b5a6-0407-491d-b567-979ab1028fc0}">
+          <labels>
+            <label description="Launch Approval" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showbar="false" columns="1" id="{e6a4f996-776b-3812-a231-eff27f7fa98d}" name="StageStep21_section1" labelid="{19f393c4-c6fb-42f0-90bb-312e1f82d8f0}">
+                  <labels>
+                    <label description="Launch Approval" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{a2d79eb6-ab60-4bc4-a2e3-617393cda52f}" showlabel="true" visible="true" labelid="{448b849e-88e8-4a18-a50d-2a3bc8c82e8d}">
+                        <labels>
+                          <label description="Approval Decision" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_approvaldecision" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_approvaldecision" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1885c992-0cdf-49fc-9d87-fc5930620560}" showlabel="true" visible="true" labelid="{b62b448a-0ded-495d-bb5d-e89ccb404352}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:ownerid" classid="{270bd3db-d9af-4782-9025-509e298dec0a}" datafieldname="ownerid" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab verticallayout="true" id="{b8b7264d-b1c3-4302-b78b-1ff5ca63e1c1}" name="StageStep27" locklevel="0" expanded="true" visible="false" labelid="{b14371d5-ac05-4ab3-9146-ffdf086c2938}">
+          <labels>
+            <label description="Ready To Launch" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showbar="false" columns="1" id="{fcaacaa0-002e-abaf-c6c3-4248ab4448cb}" name="StageStep27_section1" labelid="{9fafd292-f790-4879-80e5-3a3f58a497aa}">
+                  <labels>
+                    <label description="Ready To Launch" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{dc2fb8a7-1eac-4023-9a80-80be0ff383a7}" showlabel="true" visible="true" labelid="{25521173-82ea-4a7c-8294-cc6c31051e11}">
+                        <labels>
+                          <label description="launchstatus" languagecode="1033" />
+                        </labels>
+                        <control id="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c:lc_launchstatus" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_launchstatus" disabled="false" relationship="bpf_lc_launch_new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c" isrequired="true" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

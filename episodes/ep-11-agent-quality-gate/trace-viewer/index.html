@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quality Gate Agent Trace</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #0b1020;
+      color: #eef3ff;
+    }
+    body { margin: 0; min-height: 100vh; }
+    header {
+      padding: 24px 28px 18px;
+      background: linear-gradient(135deg, #142752, #152033);
+      border-bottom: 1px solid #314a75;
+    }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    header p { margin: 0; color: #a9b9d6; }
+    #state {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #27344d;
+      font-weight: 600;
+    }
+    main { padding: 22px 28px; }
+    .empty {
+      padding: 28px;
+      border: 1px dashed #415476;
+      border-radius: 12px;
+      color: #a9b9d6;
+    }
+    .event {
+      position: relative;
+      margin: 0 0 14px 12px;
+      padding: 14px 16px 14px 20px;
+      border-left: 3px solid #6b7f9f;
+      border-radius: 0 10px 10px 0;
+      background: #121b2d;
+      box-shadow: 0 4px 18px #0004;
+    }
+    .event::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: 18px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #6b7f9f;
+    }
+    .event.running { border-color: #5ba5ff; }
+    .event.running::before { background: #5ba5ff; }
+    .event.pass { border-color: #47d18c; }
+    .event.pass::before { background: #47d18c; }
+    .event.denied, .event.error { border-color: #ff6678; }
+    .event.denied::before, .event.error::before { background: #ff6678; }
+    .event.idle { border-color: #f0b84b; }
+    .event.idle::before { background: #f0b84b; }
+    .event.warning { border-color: #f0b84b; }
+    .event.warning::before { background: #f0b84b; }
+    .title { font-size: 16px; font-weight: 650; }
+    .detail {
+      margin-top: 5px;
+      color: #bdc9dd;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    time { display: block; margin-top: 7px; color: #778ba9; font-size: 12px; }
+    .evidence {
+      display: block;
+      margin-top: 12px;
+      max-width: min(760px, 100%);
+      border: 1px solid #415476;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Launch Control Quality Gate Agent</h1>
+    <p>Local Agent User execution trace</p>
+    <div id="state">Waiting for assignment</div>
+  </header>
+  <main id="events"><div class="empty">No events yet. Run the Agent User to begin.</div></main>
+  <script>
+    const eventRoot = document.getElementById("events");
+    const state = document.getElementById("state");
+    const escapeHtml = value => String(value ?? "").replace(
+      /[&<>"']/g,
+      character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        "\"": "&quot;", "'": "&#039;"
+      })[character]
+    );
+    async function refresh() {
+      const response = await fetch("/events", { cache: "no-store" });
+      const events = await response.json();
+      if (!events.length) return;
+      const latest = events[events.length - 1];
+      state.textContent = latest.title;
+      eventRoot.innerHTML = events.slice().reverse().map(event => `
+        <article class="event ${escapeHtml(event.status)}">
+          <div class="title">${escapeHtml(event.title)}</div>
+          ${event.detail ? `<div class="detail">${escapeHtml(event.detail)}</div>` : ""}
+          ${event.attachment ? `<a href="/evidence/${encodeURIComponent(event.attachment)}" target="_blank"><img class="evidence" src="/evidence/${encodeURIComponent(event.attachment)}" alt="Browser evidence"></a>` : ""}
+          <time>${new Date(event.time).toLocaleTimeString()}</time>
+        </article>
+      `).join("");
+    }
+    refresh();
+    setInterval(refresh, 750);
+  </script>
+</body>
+</html>

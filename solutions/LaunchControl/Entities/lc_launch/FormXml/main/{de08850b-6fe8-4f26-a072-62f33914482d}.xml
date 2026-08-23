@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{de08850b-6fe8-4f26-a072-62f33914482d}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form headerdensity="HighWithControls">
+      <tabs>
+        <tab verticallayout="false" id="{7363E795-376C-4316-917C-77D3E0642F9F}" IsUserDefined="1">
+          <labels>
+            <label description="Launch Readiness" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="60%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="1" id="{8239F237-04A3-4995-8C0C-568EA6405441}" height="540">
+                  <labels>
+                    <label description="Launch Readiness" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{2E6321C5-B516-4B11-BD9C-B904E10E6D9D}" showlabel="false" colspan="1" rowspan="1" auto="false">
+                        <labels>
+                          <label description="Launch Readiness Dashboard" languagecode="1033" />
+                        </labels>
+                        <control id="lc_launchreadinessdashboard" uniqueid="{803C7424-F7E2-4F63-BDC9-F8A553313B0B}" classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}" datafieldname="lc_name" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+            <column width="40%">
+              <sections>
+                <section showlabel="false" showbar="false" id="{620c60e2-b6e0-4afa-b8b7-6245d6933ed6}" IsUserDefined="0" height="auto">
+                  <labels>
+                    <label description="Notes" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell showlabel="false" rowspan="15" auto="false" id="{4c0b9958-31d6-4afd-a259-f2ec0d30df84}">
+                        <labels>
+                          <label description="Note Text" languagecode="1033" />
+                        </labels>
+                        <control id="notescontrol" classid="{06375649-c143-495e-a496-c962e5b4488e}">
+                          <parameters>
+                            <DefaultTabId>NotesTab</DefaultTabId>
+                          </parameters>
+                        </control>
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row height="auto" />
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+        <tab verticallayout="true" id="{acf82efd-b7d3-4535-9fd2-ca499fe1618c}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{64a416fa-5564-4dd6-a23a-36d293f91b5f}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{cbdbd60e-789c-49f7-8321-4ca224945ea3}">
+                        <labels>
+                          <label description="name" languagecode="1033" />
+                        </labels>
+                        <control id="lc_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="lc_name" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{6256e245-2b4d-4f9e-8f07-ebb3b945f3d7}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{c0eb3e48-900f-4469-be7b-a36c8541cb3d}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Quality Gate Checked On" languagecode="1033" />
+                        </labels>
+                        <control id="lc_qualitygatecheckedon" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" datafieldname="lc_qualitygatecheckedon" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9b704983-105e-44b4-af1e-58439549646c}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Quality Gate Feedback" languagecode="1033" />
+                        </labels>
+                        <control id="lc_qualitygatefeedback" classid="{E0DECE4B-6FC8-4A8F-A065-082708572369}" datafieldname="lc_qualitygatefeedback" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{41320385-787d-4396-a08e-54da717b37fc}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Quality Gate Evidence" languagecode="1033" />
+                        </labels>
+                        <control id="lc_qualitygateevidence" classid="{71716B6C-711E-476C-8AB8-5D11542BFB47}" datafieldname="lc_qualitygateevidence" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1df82c62-d60c-471d-a96a-5142b83327bc}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Quality Gate Score" languagecode="1033" />
+                        </labels>
+                        <control id="lc_qualitygatescore" classid="{C6D124CA-7EDA-4A60-AEA9-7FB8D318B68F}" datafieldname="lc_qualitygatescore" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{6b35e09b-c388-41be-b48d-4b7f50724b20}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Quality Gate Status" languagecode="1033" />
+                        </labels>
+                        <control id="lc_qualitygatestatus" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="lc_qualitygatestatus" disabled="false" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{d48a1328-9f5d-4f05-8771-f05afc972c24}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{4f3355f6-ba2e-4850-b5f5-ff570563f7f7}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{e06f743d-4a0e-4970-affd-767e84294150}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{5790790d-d4e3-475e-baf8-8ff490f19d74}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{cb59a5f5-f618-4338-969a-cf6613e3ed5c}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{bd645763-756d-4759-9440-a96990cbe0bf}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{7edc3a92-d276-4743-b3ca-148d7ff4861e}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{d5a535a7-6911-4baa-bb59-bc0d54c8d5e6}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <controlDescriptions>
+        <controlDescription forControl="{803C7424-F7E2-4F63-BDC9-F8A553313B0B}">
+          <customControl name="lc_LaunchControl.LaunchReadiness" formFactor="-1">
+            <parameters>
+              <launchName type="SingleLine.Text">lc_name</launchName>
+            </parameters>
+          </customControl>
+          <customControl formFactor="0" name="lc_LaunchControl.LaunchReadiness" />
+          <customControl formFactor="1" name="lc_LaunchControl.LaunchReadiness" />
+          <customControl formFactor="2" name="lc_LaunchControl.LaunchReadiness" />
+        </controlDescription>
+      </controlDescriptions>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

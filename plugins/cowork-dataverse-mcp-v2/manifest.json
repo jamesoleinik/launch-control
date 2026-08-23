@@ -1,0 +1,47 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json",
+  "manifestVersion": "devPreview",
+  "version": "1.3.0",
+  "id": "827b6494-b4ac-4141-8e6a-1a1f9c9db75f",
+  "packageName": "com.jamesoleinik.cowork.launchcontrol.v3",
+  "developer": {
+    "name": "Launch Control",
+    "websiteUrl": "https://github.com/jamesoleinik/launch-control",
+    "privacyUrl": "https://github.com/jamesoleinik/launch-control/privacy",
+    "termsOfUseUrl": "https://github.com/jamesoleinik/launch-control/terms"
+  },
+  "name": {
+    "short": "Dataverse - LaunchControl",
+    "full": "Dataverse MCP for LaunchControl"
+  },
+  "description": {
+    "short": "Query and update Dataverse records in the LaunchControl environment.",
+    "full": "Connects Microsoft 365 Copilot Cowork to the LaunchControl Dataverse environment via the preview Dataverse MCP endpoint (https://org40ae6a46.crm.dynamics.com/api/mcp_preview), which exposes a 3-tool consolidated surface (search / describe / execute) including unbound Custom API invocation (e.g. lc_CalculateLaunchReadiness) to Business Skills like Launch Risk Scout. Users can read, search, create, and update rows in standard and custom Dataverse tables from natural-language prompts, discover table / column logical names for any solution in the env, and execute Custom APIs registered as MCP actions. Authentication uses OAuthPluginVault so each user signs in with their own Dataverse identity and Dataverse security roles enforce data access. This plugin is scoped to a single environment \u2014 install a separate plugin instance per environment."
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "accentColor": "#5C2D91",
+  "agentConnectors": [
+    {
+      "id": "dataverse-launchcontrol",
+      "displayName": "Dataverse LaunchControl",
+      "description": "Access Dataverse tables in the LaunchControl environment.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://org40ae6a46.crm.dynamics.com/api/mcp_preview",
+          "authorization": {
+            "type": "OAuthPluginVault",
+            "referenceId": "__OAUTH_REFERENCE_ID__"
+          }
+        }
+      }
+    }
+  ],
+  "agentSkills": [
+    { "folder": "./skills/dataverse-launchcontrol-business-skills" },
+    { "folder": "./skills/dataverse-launchcontrol-mcp" },
+    { "folder": "./skills/dataverse-launchcontrol-schema" }
+  ]
+}

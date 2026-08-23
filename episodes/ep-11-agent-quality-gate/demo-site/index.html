@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Launch Control Release Candidate</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232563eb'/><path d='M9 22V10h4v8h10v4z' fill='white'/></svg>">
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", sans-serif;
+      background: #07111f;
+      color: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 15% 10%, #123462 0, transparent 34%),
+        linear-gradient(145deg, #07111f, #0f172a 58%, #111827);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 7vw;
+      border-bottom: 1px solid rgba(148, 163, 184, .18);
+    }
+    .brand { font-weight: 750; letter-spacing: .02em; }
+    .badge {
+      padding: 7px 12px;
+      border: 1px solid #2563eb;
+      border-radius: 999px;
+      color: #bfdbfe;
+      background: rgba(37, 99, 235, .16);
+      font-size: 13px;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 56px;
+      align-items: center;
+      min-height: calc(100vh - 82px);
+      padding: 7vw;
+    }
+    h1 {
+      max-width: 760px;
+      margin: 0 0 20px;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .95;
+      letter-spacing: -.05em;
+    }
+    h1 span { color: #60a5fa; }
+    .lead {
+      max-width: 650px;
+      color: #a8b6ca;
+      font-size: 20px;
+      line-height: 1.6;
+    }
+    .card {
+      padding: 28px;
+      border: 1px solid rgba(148, 163, 184, .24);
+      border-radius: 24px;
+      background: rgba(15, 23, 42, .74);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+    }
+    .card h2 { margin-top: 0; }
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(148, 163, 184, .16);
+    }
+    .metric:last-child { border: 0; }
+    .good { color: #4ade80; font-weight: 700; }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: #2563eb;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+    #validation-result {
+      min-height: 22px;
+      margin: 14px 0 0;
+      color: #94a3b8;
+    }
+    #validation-result[data-state="failed"] { color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Launch Control</div>
+    <div class="badge">Release candidate</div>
+  </header>
+  <main>
+    <section>
+      <h1>Ship with <span>confidence.</span></h1>
+      <p class="lead">
+        This release candidate is ready for the governed agent quality gate.
+        Playwright will verify availability, content, and browser health before
+        Dataverse advances the launch.
+      </p>
+    </section>
+    <section class="card" aria-label="Release readiness">
+      <h2>Release readiness</h2>
+      <div class="metric"><span>Build</span><span class="good">Ready</span></div>
+      <div class="metric"><span>Content</span><span class="good">Approved</span></div>
+      <div class="metric"><span>Telemetry</span><span class="good">Connected</span></div>
+      <div class="metric"><span>Quality gate</span><span>Waiting for agent</span></div>
+      <button id="validate-release" type="button">Validate release telemetry</button>
+      <p id="validation-result" data-state="waiting"></p>
+    </section>
+  </main>
+  <script>
+    document.getElementById("validate-release").addEventListener("click", async () => {
+      const result = document.getElementById("validation-result");
+      result.textContent = "Validating production telemetry route...";
+      try {
+        const response = await fetch("/release/telemetry-consent");
+        if (!response.ok) throw new Error(`Telemetry route returned HTTP ${response.status}`);
+        result.dataset.state = "passed";
+        result.textContent = "Telemetry validation passed.";
+      } catch (error) {
+        result.dataset.state = "failed";
+        result.textContent = "Telemetry validation failed. Consent route is unavailable.";
+        console.error("Release telemetry validation failed", error);
+      }
+    });
+  </script>
+</body>
+</html>

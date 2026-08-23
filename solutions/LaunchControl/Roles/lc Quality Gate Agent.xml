@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Role id="{f8689149-f697-f111-8075-70a8a5b028cc}" name="lc Quality Gate Agent" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <IsCustomizable>1</IsCustomizable>
+  <IsAutoAssigned>0</IsAutoAssigned>
+  <RolePrivileges>
+    <RolePrivilege name="prvAppendlc_QualityGateResult" level="Basic" />
+    <RolePrivilege name="prvAppendlc_statusupdate" level="Basic" />
+    <RolePrivilege name="prvAppendlc_task" level="Basic" />
+    <RolePrivilege name="prvAppendNote" level="Basic" />
+    <RolePrivilege name="prvAppendTolc_launch" level="Basic" />
+    <RolePrivilege name="prvCreatelc_QualityGateResult" level="Basic" />
+    <RolePrivilege name="prvCreatelc_statusupdate" level="Basic" />
+    <RolePrivilege name="prvCreatelc_task" level="Basic" />
+    <RolePrivilege name="prvCreateNote" level="Basic" />
+    <RolePrivilege name="prvReadActivity" level="Basic" />
+    <RolePrivilege name="prvReadlc_launch" level="Basic" />
+    <RolePrivilege name="prvReadlc_milestone" level="Basic" />
+    <RolePrivilege name="prvReadlc_QualityGateResult" level="Basic" />
+    <RolePrivilege name="prvReadlc_statusupdate" level="Basic" />
+    <RolePrivilege name="prvReadlc_task" level="Basic" />
+    <RolePrivilege name="prvReadNote" level="Basic" />
+    <RolePrivilege name="prvWriteActivity" level="Basic" />
+    <RolePrivilege name="prvWritelc_QualityGateResult" level="Basic" />
+  </RolePrivileges>
+</Role>

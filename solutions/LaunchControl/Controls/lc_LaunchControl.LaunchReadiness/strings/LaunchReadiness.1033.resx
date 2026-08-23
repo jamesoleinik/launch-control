@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="LaunchReadiness_Display" xml:space="preserve">
+    <value>Launch Readiness Dashboard</value>
+  </data>
+  <data name="LaunchReadiness_Description" xml:space="preserve">
+    <value>Holistic launch readiness signals, risks, and Quality Gate outcome.</value>
+  </data>
+  <data name="LaunchName_Display" xml:space="preserve">
+    <value>Launch Name</value>
+  </data>
+  <data name="LaunchName_Description" xml:space="preserve">
+    <value>The Launch primary name used to host the dashboard control.</value>
+  </data>
+</root>

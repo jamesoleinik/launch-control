@@ -1,8 +1,8 @@
-# Custom Tools — Episode 5
+# Custom Tools: Episode 5
 
 ## Overview
 
-This episode registers custom logic that agents can call — both internal (Dataverse plugins)
+This episode registers custom logic that agents can call: both internal (Dataverse plugins)
 and external (BYO MCP servers). These tools become available to all agents built in Episodes 6-8.
 
 ## Part 1: Custom Dataverse Plugin → Custom Action
@@ -28,7 +28,7 @@ dotnet build --configuration Release
 2. Register the custom action `lc_CalculateLaunchReadiness` in Dataverse:
    - Input: `lc_LaunchName` (string)
    - Output: `lc_ReadinessScore` (int), `lc_ReadinessSummary` (string), `lc_Verdict` (string)
-3. The action is automatically exposed via the MCP server — agents can invoke it
+3. The action is automatically exposed via the MCP server: agents can invoke it
 
 ### Test via MCP
 Once registered, agents can call:
@@ -66,7 +66,7 @@ CloudAppEvents
 
 | Agent Type | Custom Action (internal) | BYO MCP (external) |
 |-----------|------------------------|-------------------|
-| Copilot Studio (Ep 9) | Via MCP Server tool | Via registered MCP connector |
+| Copilot Studio (Ep 12) | Via MCP Server tool | Via registered MCP connector |
 | Autonomous Agent (Ep 10) | Via event-triggered action | Via agent flow MCP step |
-| Claude Code (Ep 11) | Via SDK/Web API | Via MCP client |
-| M365 Copilot (Ep 12) | Via Dataverse Intelligence | Not directly available |
+| Code-first agent (Ep 13) | Via SDK/Web API | Via MCP client |
+| M365 Copilot (Ep 14) | Via Dataverse Intelligence | Not directly available |

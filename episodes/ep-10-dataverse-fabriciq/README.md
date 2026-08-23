@@ -536,11 +536,11 @@ Each starts grounded on the one report, then chains a skill:
 
 - **Ep 9:** Dataverse + F&O; the `lc_vendorwork` seam and the `vendtable` /
   `vendtransopen` ERP mirror tables this model reads for financial exposure.
-- **Ep 11:** the Web IQ agent (live external signal); this is the internal-semantic
+- **Ep 12:** the Web IQ agent (live external signal); this is the internal-semantic
   counterpart.
-- **Ep 12:** the Foundry IQ agent (unstructured knowledge); this is the
+- **Ep 13:** the Foundry IQ agent (unstructured knowledge); this is the
   structured-semantic counterpart.
-- **Ep 13** (convergence): the Fabric analytical layer runs alongside Web IQ and
+- **Ep 14** (convergence): the Fabric analytical layer runs alongside Web IQ and
   Foundry IQ, with native Copilot, on one launch.
 
 ## Appendix · Seed the external supplementary tables

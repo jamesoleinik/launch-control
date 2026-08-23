@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SdkMessageProcessingStep Name="Quality Gate Result: Apply and Advance" SdkMessageProcessingStepId="{c7e8bc9d-419a-f111-b8db-70a8a5b02d15}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SdkMessageId>9ebdbb1b-ea3e-db11-86a7-000a3a5473e8</SdkMessageId>
+  <PluginTypeName>QualityGateAutomation.ApplyQualityGateResultPlugin, QualityGateAutomation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726</PluginTypeName>
+  <PluginTypeId>10abae95-419a-f111-b8db-70a8a5b02ceb</PluginTypeId>
+  <PrimaryEntity>lc_qualitygateresult</PrimaryEntity>
+  <AsyncAutoDelete>0</AsyncAutoDelete>
+  <Description>Validate the agent assignment, project the result to Launch, and advance Passed results to Launch Approval.</Description>
+  <FilteringAttributes></FilteringAttributes>
+  <InvocationSource>1</InvocationSource>
+  <Mode>0</Mode>
+  <Rank>1</Rank>
+  <EventHandlerTypeCode>4602</EventHandlerTypeCode>
+  <Stage>40</Stage>
+  <IsCustomizable>1</IsCustomizable>
+  <IsHidden>0</IsHidden>
+  <SupportedDeployment>0</SupportedDeployment>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <SdkMessageProcessingStepImages />
+</SdkMessageProcessingStep>

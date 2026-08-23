@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PluginAssembly FullName="QualityGateAutomation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726" PluginAssemblyId="01b8578f-419a-f111-b8db-70a8a5b028cc" CustomizationLevel="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Description>Governed assignment and result automation for Episode 11.</Description>
+  <IsolationMode>2</IsolationMode>
+  <SourceType>0</SourceType>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <FileName>/PluginAssemblies/QualityGateAutomation-01B8578F-419A-F111-B8DB-70A8A5B028CC/QualityGateAutomation.dll</FileName>
+  <PluginTypes>
+    <PluginType AssemblyQualifiedName="QualityGateAutomation.ApplyQualityGateResultPlugin, QualityGateAutomation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726" PluginTypeId="10abae95-419a-f111-b8db-70a8a5b02ceb" Name="QualityGateAutomation.ApplyQualityGateResultPlugin">
+      <FriendlyName>ApplyQualityGateResultPlugin</FriendlyName>
+    </PluginType>
+    <PluginType AssemblyQualifiedName="QualityGateAutomation.CreateQualityGateAssignmentPlugin, QualityGateAutomation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a86caf113b947726" PluginTypeId="07abae95-419a-f111-b8db-70a8a5b02ceb" Name="QualityGateAutomation.CreateQualityGateAssignmentPlugin">
+      <FriendlyName>CreateQualityGateAssignmentPlugin</FriendlyName>
+    </PluginType>
+  </PluginTypes>
+</PluginAssembly>

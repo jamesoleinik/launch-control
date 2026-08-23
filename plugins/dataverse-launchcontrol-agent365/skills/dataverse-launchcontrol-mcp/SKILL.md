@@ -6,7 +6,7 @@ description: |
   Dataverse MCP endpoint. The endpoint exposes a three-tool surface
   (search / describe / execute) with a limited SQL subset over standard and
   custom tables. Use this skill to read, search, create, and update rows on
-  lc_* tables — and to answer launch readiness questions per the hard rule
+  lc_* tables: and to answer launch readiness questions per the hard rule
   below.
 
   Trigger phrases:
@@ -27,11 +27,11 @@ metadata:
   version: "1.4"
 ---
 
-# Dataverse MCP — LaunchControl (preview)
+# Dataverse MCP: LaunchControl (preview)
 
 Connects Microsoft 365 Copilot Cowork to the **LaunchControl** Dataverse
 environment via the **preview MCP endpoint** `/api/mcp_preview`.
-Authentication flows through Cowork's `OAuthPluginVault` — each user signs
+Authentication flows through Cowork's `OAuthPluginVault`: each user signs
 in with their own Dataverse identity and Dataverse security roles enforce
 access.
 
@@ -47,23 +47,23 @@ environments, install a separate plugin instance.
 - Business policy questions (status transitions, escalation, briefings) →
   use `dataverse-launchcontrol-business-skills`
 
-## Tool surface — three consolidated tools
+## Tool surface: three consolidated tools
 
 Every operation is routed through one of three tools via a filesystem-style
 path. Do not invent tool names.
 
-- **`search(query)`** — keyword search across the environment. Returns
+- **`search(query)`**: keyword search across the environment. Returns
   paths for table schemas (`tables/<name>`), Business Skills
   (`skills/<name>`), and Custom APIs (`api/<name>`). Use first to discover
   what's available; never hard-code paths.
-- **`describe(path)`** — full details for any path returned by `search`.
-  - `describe("tables/")` — list every table in the env
-  - `describe("tables/<name>")` — full schema (columns, types,
+- **`describe(path)`**: full details for any path returned by `search`.
+  - `describe("tables/")`: list every table in the env
+  - `describe("tables/<name>")`: full schema (columns, types,
     relationships, `$expand` nav properties, example queries). Always call
     before querying when column names are unknown.
-  - `describe("tables/<name>/records/<guid>")` — full single record
-  - `describe("skills/<name>")` — full Business Skill body
-- **`execute(operation, path?, query)`** — perform an operation. The
+  - `describe("tables/<name>/records/<guid>")`: full single record
+  - `describe("skills/<name>")`: full Business Skill body
+- **`execute(operation, path?, query)`**: perform an operation. The
   operation verb is one of `read`, `create`, `update`, `delete`, or one of
   the file ops (`initialize_upload`, `commit_upload`, `download`). For
   `create` / `update` / `delete`, pass `hasUserApproved: true` in the query
@@ -87,15 +87,15 @@ The preview MCP accepts a **limited SQL dialect** over the path
 **Supported**
 
 - `SELECT`, `SELECT TOP n`
-- `FROM <logical_table_name>` — always single table; resolve joins via
+- `FROM <logical_table_name>`: always single table; resolve joins via
   the lookup-flattening idiom below
-- `WHERE` — `=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `IN`, `AND`, `OR`,
+- `WHERE`: `=`, `<>`, `<`, `>`, `<=`, `>=`, `LIKE`, `IN`, `AND`, `OR`,
   `NOT`, `IS NULL`, `IS NOT NULL`
 - `ORDER BY <col> [ASC|DESC]`
 - `GROUP BY` with aggregates `COUNT`, `SUM`, `MIN`, `MAX`, `AVG`
 - `JOIN ... ON` (small, lookup-driven joins only)
 
-**Not supported** — work around with extra queries or use the schema skill's
+**Not supported**: work around with extra queries or use the schema skill's
 `$expand` nav properties on the OData layer (not via this SQL surface):
 
 - Subqueries (`SELECT … WHERE x IN (SELECT …)`)
@@ -123,13 +123,13 @@ WHERE lc_isblocked = true
 ORDER BY modifiedon DESC
 ```
 
-## Hard rule — launch readiness
+## Hard rule: launch readiness
 
 **Readiness for a launch is sourced from exactly two places. Never
 hand-tally milestones or improvise a score.**
 
-1. **`lc_launch.lc_risksummary`** — the AI prompt column on `lc_launch`
-   computed by the prompt registered in Episode 13. Treat its current
+1. **`lc_launch.lc_risksummary`**: the AI prompt column on `lc_launch`
+   computed by the prompt registered in Episode 14. Treat its current
    value as the authoritative narrative for go / no-go, risks, and the
    recommended decision.
 2. **The set of `lc_task` rows where `lc_isblocked = true`** scoped to the
@@ -163,7 +163,7 @@ Then answer:
 - List the blocked tasks underneath as the supporting evidence.
 - If `lc_risksummary` is empty or stale (`modifiedon` older than the most
   recent task / milestone change), say so explicitly and recommend the
-  user trigger a refresh — do **not** substitute a hand-rolled score.
+  user trigger a refresh: do **not** substitute a hand-rolled score.
 
 What you **must not** do:
 

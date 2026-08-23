@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Workflow WorkflowId="{ae8e29d7-071f-4eec-9ef2-a881a1590d5c}" Name="Launch Approval" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <XamlFileName>/Workflows/LaunchApproval-AE8E29D7-071F-4EEC-9EF2-A881A1590D5C.xaml</XamlFileName>
+  <Type>1</Type>
+  <Subprocess>0</Subprocess>
+  <Category>4</Category>
+  <Mode>0</Mode>
+  <Scope>4</Scope>
+  <OnDemand>0</OnDemand>
+  <TriggerOnCreate>1</TriggerOnCreate>
+  <TriggerOnDelete>0</TriggerOnDelete>
+  <AsyncAutodelete>0</AsyncAutodelete>
+  <SyncWorkflowLogOnFailure>0</SyncWorkflowLogOnFailure>
+  <StateCode>1</StateCode>
+  <StatusCode>2</StatusCode>
+  <processorder>100</processorder>
+  <RunAs>1</RunAs>
+  <UniqueName>new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c</UniqueName>
+  <IsTransacted>1</IsTransacted>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <IsCustomizable>1</IsCustomizable>
+  <BusinessProcessType>0</BusinessProcessType>
+  <IsCustomProcessingStepAllowedForOtherPublishers>1</IsCustomProcessingStepAllowedForOtherPublishers>
+  <ProcessTriggerScope>1</ProcessTriggerScope>
+  <ModernFlowType>0</ModernFlowType>
+  <PrimaryEntity>lc_launch</PrimaryEntity>
+  <LocalizedNames>
+    <LocalizedName languagecode="1033" description="Launch Approval" />
+  </LocalizedNames>
+  <labels>
+    <steplabels id="{05c26633-428f-46b7-8926-c6616697edaa}">
+      <label languagecode="1033" description="Draft" />
+    </steplabels>
+    <steplabels id="{87457c85-826e-49cf-92fb-98ccdcf3693c}">
+      <label languagecode="1033" description="Launch Name " />
+    </steplabels>
+    <steplabels id="{23345d12-ee47-417d-a647-d75e70776a34}">
+      <label languagecode="1033" description="Target Date" />
+    </steplabels>
+    <steplabels id="{a58cfdbe-3071-4953-815f-90052fbd9b3a}">
+      <label languagecode="1033" description="Quality Gate" />
+    </steplabels>
+    <steplabels id="{947ae70f-dbb5-4140-a2e5-e930884b4dd9}">
+      <label languagecode="1033" description="Quality Gate Status" />
+    </steplabels>
+    <steplabels id="{9ad8f055-163a-42e0-a535-8bb1c5901d59}">
+      <label languagecode="1033" description="Quality Gate Score" />
+    </steplabels>
+    <steplabels id="{4c3ed179-57e2-4ffe-8645-68e61b8b1211}">
+      <label languagecode="1033" description="Quality Gate Feedback" />
+    </steplabels>
+    <steplabels id="{7d456c62-b37d-4c0b-a897-e74de7cad39d}">
+      <label languagecode="1033" description="Quality Gate Evidence" />
+    </steplabels>
+    <steplabels id="{e80add43-11b1-4ecb-9b80-b40183e3d3fe}">
+      <label languagecode="1033" description="Quality Gate Checked On" />
+    </steplabels>
+    <steplabels id="{bae0c8d0-f45e-44f5-b4ee-e96163baa046}">
+      <label languagecode="1033" description="Launch Approval" />
+    </steplabels>
+    <steplabels id="{a2d79eb6-ab60-4bc4-a2e3-617393cda52f}">
+      <label languagecode="1033" description="Approval Decision" />
+    </steplabels>
+    <steplabels id="{1885c992-0cdf-49fc-9d87-fc5930620560}">
+      <label languagecode="1033" description="Owner" />
+    </steplabels>
+    <steplabels id="{b8b7264d-b1c3-4302-b78b-1ff5ca63e1c1}">
+      <label languagecode="1033" description="Ready To Launch" />
+    </steplabels>
+    <steplabels id="{dc2fb8a7-1eac-4023-9a80-80be0ff383a7}">
+      <label languagecode="1033" description="launchstatus" />
+    </steplabels>
+  </labels>
+</Workflow>
