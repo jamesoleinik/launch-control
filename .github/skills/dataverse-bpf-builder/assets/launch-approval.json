@@ -1,0 +1,46 @@
+{
+  "name": "Launch Approval",
+  "unique_name": "new_bpf_ae8e29d7071f4eec9ef2a881a1590d5c",
+  "table": "lc_launch",
+  "solution": "LaunchControl",
+  "process_order": 100,
+  "security_roles": ["lc Admin", "lc Owner", "lc Member", "lc Viewer"],
+  "app_unique_name": "lc_LaunchControl",
+  "language_code": 1033,
+  "stages": [
+    {
+      "name": "Draft",
+      "category": 4,
+      "steps": [
+        {"label": "Launch Name", "field": "lc_name", "required": true},
+        {"label": "Target Date", "field": "lc_targetdate", "required": true}
+      ]
+    },
+    {
+      "name": "Quality Gate",
+      "category": 5,
+      "steps": [
+        {"label": "Quality Gate Status", "field": "lc_qualitygatestatus", "required": true},
+        {"label": "Quality Gate Score", "field": "lc_qualitygatescore", "required": false},
+        {"label": "Quality Gate Feedback", "field": "lc_qualitygatefeedback", "required": false},
+        {"label": "Quality Gate Evidence", "field": "lc_qualitygateevidence", "required": false},
+        {"label": "Quality Gate Checked On", "field": "lc_qualitygatecheckedon", "required": false}
+      ]
+    },
+    {
+      "name": "Launch Approval",
+      "category": 7,
+      "steps": [
+        {"label": "Approval Decision", "field": "lc_approvaldecision", "required": true},
+        {"label": "Owner", "field": "ownerid", "required": true}
+      ]
+    },
+    {
+      "name": "Ready To Launch",
+      "category": -1,
+      "steps": [
+        {"label": "launchstatus", "field": "lc_launchstatus", "required": true}
+      ]
+    }
+  ]
+}

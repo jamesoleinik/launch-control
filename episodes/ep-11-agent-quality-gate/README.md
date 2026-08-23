@@ -529,8 +529,3 @@ update, and the Launch Readiness PCF live beside the timeline.
 - [`RESEARCH.md`](RESEARCH.md): official preview and identity findings.
 - [`BPF.md`](BPF.md): process and enforcement details.
 - [`SKILL.md`](SKILL.md): implementation and repair runbook.
-
-## Next up
-
-**Episode 12: Dataverse + Web IQ.** The governed internal worker is followed by
-an outside-in agent that combines launch blockers with live web signal.

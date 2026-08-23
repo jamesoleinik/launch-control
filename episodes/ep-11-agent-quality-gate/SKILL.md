@@ -144,11 +144,11 @@ operation. Do not claim that proof unless it has been tested separately.
 Keep this episode skill as a composition and repair runbook. Build or extend
 focused reusable skills instead of turning it into a generic Dataverse skill.
 
-| Decision | Skill | Reusable boundary |
+| Status | Skill | Reusable boundary |
 |---|---|---|
-| Extend | `dataverse-bpf-builder` | Declarative BPF stages, XAML/clientdata generation, activation, backing-table ALM |
-| Create | `dataverse-agentic-user-governance` | Blueprint and identity resolution, Agentic User creation, licensing, Dataverse handoff, OAuth, MCP allowlisting, verification |
-| Create | `dataverse-plugin-deployer` | Build, register, update, verify, trace, and solution-sync Dataverse plug-ins |
-| Create | `dataverse-pcf-deployer` | Build, import, place on forms, publish, and verify PCF controls |
+| Available | `dataverse-bpf-builder` | Declarative BPF stages, XAML/clientdata generation, activation, backing-table ALM |
+| Available | `dataverse-agentic-user-governance` | Blueprint and identity resolution, Agentic User creation, licensing, Dataverse handoff, OAuth, MCP allowlisting, verification |
+| Available | `dataverse-plugin-deployer` | Build, register, update, verify, trace, and solution-sync Dataverse plug-ins |
+| Available | `dataverse-pcf-deployer` | Build, import, place on forms, publish, and verify PCF controls |
 | Extend | Dataverse security guidance | Agentic User roles, assignment-scoped sharing, access revocation, denied-operation probes |
 | Defer | Generic Playwright, integration-test, and Teams-notification skills | Wait for a second workflow to prove a stable reusable abstraction |
