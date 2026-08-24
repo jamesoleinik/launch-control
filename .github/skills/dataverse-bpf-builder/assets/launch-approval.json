@@ -5,7 +5,7 @@
   "solution": "LaunchControl",
   "process_order": 100,
   "security_roles": ["lc Admin", "lc Owner", "lc Member", "lc Viewer"],
-  "app_unique_name": "lc_LaunchControl",
+  "app_unique_name": "lc_LaunchControlQualityGateDemo",
   "language_code": 1033,
   "stages": [
     {

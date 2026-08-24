@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
+from base64 import b64decode
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
@@ -135,6 +137,41 @@ class DataverseClientTests(unittest.TestCase):
         self.assertEqual(
             request.call_args.kwargs["headers"]["Authorization"],
             "Bearer fresh-token",
+        )
+
+    def test_publish_evidence_attaches_screenshot_and_trace(self) -> None:
+        assignment = Assignment(
+            task_id="task-id",
+            launch_id="00000000-0000-0000-0000-000000000002",
+            launch_name="Test Launch",
+            assignment_key="Quality Gate::test",
+        )
+        client = FakeClient([FakeResponse(), FakeResponse()])
+        with tempfile.TemporaryDirectory() as directory:
+            screenshot = Path(directory) / "evidence.png"
+            trace = Path(directory) / "trace.zip"
+            screenshot.write_bytes(b"png")
+            trace.write_bytes(b"zip")
+            client.publish_evidence(
+                assignment,
+                screenshot=screenshot,
+                trace=trace,
+            )
+
+        self.assertEqual(len(client.calls), 2)
+        screenshot_note = client.calls[0][2]
+        trace_note = client.calls[1][2]
+        self.assertIsNotNone(screenshot_note)
+        self.assertIsNotNone(trace_note)
+        assert screenshot_note is not None
+        assert trace_note is not None
+        self.assertEqual(screenshot_note["mimetype"], "image/png")
+        self.assertEqual(b64decode(screenshot_note["documentbody"]), b"png")
+        self.assertEqual(trace_note["mimetype"], "application/zip")
+        self.assertEqual(b64decode(trace_note["documentbody"]), b"zip")
+        self.assertIn(
+            assignment.launch_id,
+            trace_note["objectid_lc_launch@odata.bind"],
         )
 
 

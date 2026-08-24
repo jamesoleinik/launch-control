@@ -10,6 +10,7 @@ from pathlib import Path
 from playwright.sync_api import ConsoleMessage, Page, sync_playwright
 
 from .config import Config
+from .trace_log import trace_event
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class QualityResult:
     score: int
     feedback: str
     evidence: str
+    trace: str = ""
 
 
 def safe_name(value: str) -> str:
@@ -160,7 +162,9 @@ def finish_demo(page: Page, config: Config, passed: bool) -> None:
 def run_quality_check(config: Config, launch_name: str) -> QualityResult:
     config.evidence_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    screenshot = config.evidence_dir / f"{safe_name(launch_name)}-{stamp}.png"
+    artifact_name = f"{safe_name(launch_name)}-{stamp}"
+    screenshot = config.evidence_dir / f"{artifact_name}.png"
+    trace = config.evidence_dir / f"{artifact_name}-trace.zip"
     console_errors: list[str] = []
 
     with sync_playwright() as playwright:
@@ -168,7 +172,9 @@ def run_quality_check(config: Config, launch_name: str) -> QualityResult:
             headless=False if config.demo_mode else config.headless,
             slow_mo=200 if config.demo_mode else 0,
         )
-        page = browser.new_page(viewport={"width": 1440, "height": 900})
+        context = browser.new_context(viewport={"width": 1440, "height": 900})
+        context.tracing.start(screenshots=True, snapshots=True, sources=True)
+        page = context.new_page()
 
         def capture_console(message: ConsoleMessage) -> None:
             if message.type == "error":
@@ -279,6 +285,7 @@ def run_quality_check(config: Config, launch_name: str) -> QualityResult:
         )
         finish_demo(page, config, not failures)
         page.screenshot(path=str(screenshot), full_page=True)
+        context.tracing.stop(path=str(trace))
         browser.close()
 
     if failures:
@@ -287,6 +294,7 @@ def run_quality_check(config: Config, launch_name: str) -> QualityResult:
             score=max(0, 100 - 25 * len(failures)),
             feedback="; ".join(failures),
             evidence=str(screenshot),
+            trace=str(trace),
         )
     return QualityResult(
         outcome="PASSED",
@@ -296,6 +304,7 @@ def run_quality_check(config: Config, launch_name: str) -> QualityResult:
             f"checks passed for {config.quality_gate_url}."
         ),
         evidence=str(screenshot),
+        trace=str(trace),
     )
 
 
@@ -321,7 +330,28 @@ def main() -> int:
             )
         )
         return 0
+    trace_event(
+        config.evidence_dir,
+        status="running",
+        title="Running standalone Playwright quality check",
+        detail=config.quality_gate_url,
+    )
     result = run_quality_check(config, args.launch_name)
+    trace_event(
+        config.evidence_dir,
+        status="pass" if result.outcome == "PASSED" else "warning",
+        title=f"Standalone decision: {result.outcome}",
+        detail=f"Browser score: {result.score}/100. {result.feedback}",
+        attachment=Path(result.evidence).name,
+    )
+    if result.trace:
+        trace_event(
+            config.evidence_dir,
+            status="pass",
+            title="Playwright trace ready",
+            detail="Open the archive with Playwright Trace Viewer.",
+            attachment=Path(result.trace).name,
+        )
     print(json.dumps(asdict(result), indent=2))
     return 0 if result.outcome == "PASSED" else 1
 

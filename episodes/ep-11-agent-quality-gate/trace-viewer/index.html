@@ -78,6 +78,15 @@
       border: 1px solid #415476;
       border-radius: 8px;
     }
+    .artifact {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border: 1px solid #5ba5ff;
+      border-radius: 8px;
+      color: #9dccff;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -97,6 +106,14 @@
         "\"": "&quot;", "'": "&#039;"
       })[character]
     );
+    const renderAttachment = name => {
+      if (!name) return "";
+      const path = `/evidence/${encodeURIComponent(name)}`;
+      if (/\.(png|jpe?g|gif|webp)$/i.test(name)) {
+        return `<a href="${path}" target="_blank"><img class="evidence" src="${path}" alt="Browser evidence"></a>`;
+      }
+      return `<a class="artifact" href="${path}" target="_blank">Open ${escapeHtml(name)}</a>`;
+    };
     async function refresh() {
       const response = await fetch("/events", { cache: "no-store" });
       const events = await response.json();
@@ -107,7 +124,7 @@
         <article class="event ${escapeHtml(event.status)}">
           <div class="title">${escapeHtml(event.title)}</div>
           ${event.detail ? `<div class="detail">${escapeHtml(event.detail)}</div>` : ""}
-          ${event.attachment ? `<a href="/evidence/${encodeURIComponent(event.attachment)}" target="_blank"><img class="evidence" src="/evidence/${encodeURIComponent(event.attachment)}" alt="Browser evidence"></a>` : ""}
+          ${renderAttachment(event.attachment)}
           <time>${new Date(event.time).toLocaleTimeString()}</time>
         </article>
       `).join("");

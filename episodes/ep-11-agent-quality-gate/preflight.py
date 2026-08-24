@@ -193,10 +193,11 @@ def main() -> int:
     }
     who = get_json(api, headers, "/WhoAmI")
     caller = who.get("UserId", "").lower()
+    caller_matches_agent = caller == config.agent_systemuser_id.lower()
     checks.check(
         "Dataverse caller is configured agent user",
-        caller == config.agent_systemuser_id.lower(),
-        caller,
+        caller_matches_agent or args.allow_dev_identity,
+        caller if caller_matches_agent else f"{caller} (development identity)",
     )
 
     table = get_json(
@@ -207,6 +208,18 @@ def main() -> int:
     )["value"]
     checks.check("Quality Gate Result table exists", bool(table))
 
+    agent_user = get_json(
+        api,
+        headers,
+        f"/systemusers({config.agent_systemuser_id})"
+        "?$select=systemmanagedusertype,isdisabled",
+    )
+    checks.check(
+        "Dataverse principal is an enabled agent user",
+        agent_user.get("systemmanagedusertype") == 3
+        and agent_user.get("isdisabled") is False,
+    )
+
     roles = get_json(
         api,
         headers,
@@ -214,11 +227,10 @@ def main() -> int:
         "systemuserroles_association?$select=name",
     )["value"]
     role_names = {row["name"] for row in roles}
+    expected_roles = {"Basic User", ROLE_NAME}
     checks.check(
-        "least-privilege role assigned",
-        ROLE_NAME in role_names
-        and "Basic User" in role_names
-        and "System Administrator" not in role_names,
+        "only approved least-privilege roles are assigned",
+        role_names == expected_roles,
         ", ".join(sorted(role_names)),
     )
 

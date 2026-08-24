@@ -26,12 +26,12 @@ CONTROL_INSTANCE_ID = "lc_launchreadinessdashboard"
 TEXT_CONTROL_CLASS_ID = "{4273EDBD-AC1D-40D3-9FB2-095C621B552D}"
 PACKAGE = (
     ROOT
-    / "obj"
-    / "PowerAppsToolsTemp_lc"
+    / "solution"
     / "bin"
     / "Debug"
-    / "PowerAppsToolsTemp_lc.zip"
+    / "LaunchReadinessControl.zip"
 )
+MANIFEST = ROOT / "LaunchReadiness" / "ControlManifest.Input.xml"
 
 
 class Dataverse:
@@ -86,8 +86,8 @@ class Dataverse:
 def import_control(dv: Dataverse) -> None:
     if not PACKAGE.exists():
         raise FileNotFoundError(
-            f"PCF package not found at {PACKAGE}. Run 'pac pcf push' once to "
-            "build the temporary solution wrapper."
+            f"PCF package not found at {PACKAGE}. Build "
+            "'solution\\LaunchReadinessControl.cdsproj' first."
         )
     job_id = str(uuid.uuid4())
     payload = {
@@ -119,6 +119,8 @@ def import_control(dv: Dataverse) -> None:
             if "<result result=\"failure\"" in str(job.get("data") or ""):
                 raise RuntimeError("PCF solution import failed. Inspect the import job data.")
             print(f"[ok] imported {CONTROL_NAME}")
+            dv.post("/PublishAllXml", {})
+            print("[ok] published imported control customizations")
             return
         time.sleep(3)
     raise TimeoutError(f"PCF import job {job_id} did not complete")
@@ -428,6 +430,7 @@ def form_layout_is_current(dv: Dataverse, form_id: str) -> bool:
 
 
 def verify(dv: Dataverse) -> None:
+    expected_version = ET.parse(MANIFEST).getroot().find("control").get("version")
     control = exactly_one(
         dv.get(
             "/customcontrols?$select=customcontrolid,name,version"
@@ -435,6 +438,11 @@ def verify(dv: Dataverse) -> None:
         ).get("value", []),
         f"{CONTROL_NAME} custom control",
     )
+    if control.get("version") != expected_version:
+        raise RuntimeError(
+            f"{CONTROL_NAME} live version {control.get('version')} does not "
+            f"match source version {expected_version}"
+        )
     form = exactly_one(
         dv.get(
             "/systemforms?$select=formid,name,formxml"

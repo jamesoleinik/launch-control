@@ -57,22 +57,31 @@ two workers that start at the same instant.
 
 1. Run `python setup_dataverse.py --dry-run`.
 2. Run `python setup_dataverse.py --apply`.
-3. Create the BPF and register the Quality Gate plug-in using [BPF.md](BPF.md).
-4. Register the existing runtime with Agent 365 and provision its Entra agent
+3. Create the Launch Approval BPF and register the Quality Gate plug-ins using
+   [BPF.md](BPF.md).
+4. Build and deploy the Launch Readiness PCF from
+   `apps/launch-readiness-control`, then verify that the live version exactly
+   matches the manifest and that the Launch form contains one binding.
+5. Create or update the separate `Launch Control Quality Gate` model-driven
+   app with only the Launches table in navigation. Include the app, site map,
+   table, form, BPF, and PCF in the `LaunchControl` solution.
+6. Register the existing runtime with Agent 365 and provision its Entra agent
    identity.
-5. Confirm the identity tenant matches the Dataverse environment tenant.
-6. Create one Entra Agentic User parented by the Agent Identity.
-7. Add the Agentic User to Dataverse as an agent user.
-8. Assign `Basic User` and `lc Quality Gate Agent`.
-9. Assign Agent 365 plus the Microsoft 365 and Teams entitlement required by
+7. Confirm the identity tenant matches the Dataverse environment tenant.
+8. Create one Entra Agentic User parented by the Agent Identity.
+9. Add the Agentic User to Dataverse as an agent user.
+10. Assign `Basic User` and `lc Quality Gate Agent`.
+11. Assign Agent 365 plus the Microsoft 365 and Teams entitlement required by
    the selected collaboration path.
-10. Run `python configure_teams_notification.py --dry-run`.
-11. Run `python configure_teams_notification.py --apply`.
-12. Run `python configure_teams_notification.py --verify`.
-13. Run `python preflight.py`.
-14. Run `python seed_demo.py --dry-run`.
-15. Run `python seed_demo.py --apply`.
-16. Run `python -m agent.worker --once`.
+12. Run `python configure_teams_notification.py --dry-run`.
+13. Run `python configure_teams_notification.py --apply`.
+14. Run `python configure_teams_notification.py --verify`.
+15. Run strict `python preflight.py`. Do not use `--allow-dev-identity` for a
+    recording proof.
+16. Run `python seed_demo.py --dry-run`, then `python seed_demo.py --apply`.
+17. Start the demo site and trace viewer.
+18. Start `python -m agent.worker --wait-once --wait-timeout-seconds 900` in
+    visual mode before advancing the BPF from Draft to Quality Gate.
 
 ## Authentication
 
@@ -150,5 +159,6 @@ focused reusable skills instead of turning it into a generic Dataverse skill.
 | Available | `dataverse-agentic-user-governance` | Blueprint and identity resolution, Agentic User creation, licensing, Dataverse handoff, OAuth, MCP allowlisting, verification |
 | Available | `dataverse-plugin-deployer` | Build, register, update, verify, trace, and solution-sync Dataverse plug-ins |
 | Available | `dataverse-pcf-deployer` | Build, import, place on forms, publish, and verify PCF controls |
+| Available | `dataverse-model-driven-app-builder` | Focused model-driven apps, minimal navigation, publication, verification, and ALM |
 | Extend | Dataverse security guidance | Agentic User roles, assignment-scoped sharing, access revocation, denied-operation probes |
 | Defer | Generic Playwright, integration-test, and Teams-notification skills | Wait for a second workflow to prove a stable reusable abstraction |

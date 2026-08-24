@@ -16,7 +16,8 @@ editing form XML.
    target table, target form, and unmanaged solution.
 2. Build with the repository's existing `pcf-scripts` command.
 3. Run lint and TypeScript checks through that build.
-4. Package and import the control into the target environment.
+4. Package and import the control through the repository's committed solution
+   wrapper so a clean session does not depend on generated local state.
 5. Resolve exactly one live `customcontrol` by full control name.
 6. Inspect the current model-driven form XML.
 7. Apply an idempotent form transformation that preserves unrelated controls,
@@ -36,6 +37,7 @@ editing form XML.
 - Make placement idempotent and reject duplicate control bindings.
 - Preserve unrelated form sections and controls.
 - Increment the manifest version for every deployable control change.
+- Require the imported live version to equal the manifest version exactly.
 - Do not report success from import alone; verify the live version and form.
 - Do not use a fixed sleep for asynchronous imports. Poll the import job and
   surface failure details.

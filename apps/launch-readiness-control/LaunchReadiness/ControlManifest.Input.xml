@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="LaunchControl" constructor="LaunchReadiness" version="1.5.0" display-name-key="LaunchReadiness_Display" description-key="LaunchReadiness_Description" control-type="virtual">
+  <control namespace="LaunchControl" constructor="LaunchReadiness" version="1.5.1" display-name-key="LaunchReadiness_Display" description-key="LaunchReadiness_Description" control-type="virtual">
     <external-service-usage enabled="false" />
     <property name="launchName" display-name-key="LaunchName_Display" description-key="LaunchName_Description" of-type="SingleLine.Text" usage="bound" required="true" />
     <resources>

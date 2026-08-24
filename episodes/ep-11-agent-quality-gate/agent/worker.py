@@ -151,6 +151,7 @@ def process_assignment(
             )
             browser_result = run_quality_check(config, assignment.launch_name)
             screenshot = Path(browser_result.evidence)
+            playwright_trace = Path(browser_result.trace)
             if screenshot.is_file():
                 log_event(
                     config,
@@ -158,6 +159,14 @@ def process_assignment(
                     "Playwright browser evidence captured",
                     browser_result.feedback,
                     screenshot.name,
+                )
+            if playwright_trace.is_file():
+                log_event(
+                    config,
+                    "pass",
+                    "Playwright trace captured",
+                    "Trace includes browser snapshots, screenshots, and sources.",
+                    playwright_trace.name,
                 )
             result = analyze_readiness(
                 research,
@@ -194,6 +203,29 @@ def process_assignment(
                 f"Evidence-backed score: {result.score}/100",
             )
         screenshot = Path(browser_result.evidence) if "browser_result" in locals() else None
+        playwright_trace = (
+            Path(browser_result.trace)
+            if "browser_result" in locals() and browser_result.trace
+            else None
+        )
+        if (
+            screenshot is not None
+            and screenshot.is_file()
+            and playwright_trace is not None
+            and playwright_trace.is_file()
+        ):
+            client.publish_evidence(
+                assignment,
+                screenshot=screenshot,
+                trace=playwright_trace,
+            )
+            log_event(
+                config,
+                "pass",
+                "Browser evidence published to Launch",
+                "Attached the screenshot and Playwright trace to the timeline.",
+                screenshot.name,
+            )
         if (
             result.outcome in {"FAILED", "NEEDS_REVIEW"}
             and screenshot is not None
@@ -202,14 +234,12 @@ def process_assignment(
             client.publish_remediation(
                 assignment,
                 feedback=result.feedback,
-                screenshot=screenshot,
             )
             log_event(
                 config,
                 "warning",
                 "Remediation published to Launch",
-                "Created a blocked task, Yellow status update, and timeline note with screenshot.",
-                screenshot.name,
+                "Created a blocked task and Yellow status update.",
             )
         result_id = client.create_result(
             assignment,
@@ -258,16 +288,19 @@ def run_once(
     config: Config,
     mailbox: MailboxClient | None = None,
     teams: TeamsNotifier | None = None,
+    *,
+    log_idle: bool = True,
 ) -> int:
     assignments = client.pending_assignments()
     if not assignments:
-        log_event(
-            config,
-            "idle",
-            "No pending Quality Gate assignments",
-            "Agent User cannot access an unassigned Launch.",
-        )
-        print("[idle] no pending Quality Gate assignments")
+        if log_idle:
+            log_event(
+                config,
+                "idle",
+                "No pending Quality Gate assignments",
+                "Agent User cannot access an unassigned Launch.",
+            )
+            print("[idle] no pending Quality Gate assignments")
         return 0
     notifications = mailbox.pending_notifications() if mailbox else []
     message_by_task = {
@@ -287,7 +320,19 @@ def run_once(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--once", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--once", action="store_true")
+    mode.add_argument(
+        "--wait-once",
+        action="store_true",
+        help="Wait for one assignment, process it, then exit.",
+    )
+    parser.add_argument(
+        "--wait-timeout-seconds",
+        type=int,
+        default=900,
+        help="Maximum wait for --wait-once before exiting with status 2.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -335,6 +380,28 @@ def main() -> int:
     if args.once:
         run_once(client, config, mailbox, teams)
         return 0
+    if args.wait_once:
+        if args.wait_timeout_seconds <= 0:
+            parser.error("--wait-timeout-seconds must be positive")
+        deadline = time.monotonic() + args.wait_timeout_seconds
+        print(
+            "[wait] waiting for one Quality Gate assignment "
+            f"(timeout {args.wait_timeout_seconds}s)"
+        )
+        while time.monotonic() < deadline:
+            if run_once(
+                client,
+                config,
+                mailbox,
+                teams,
+                log_idle=False,
+            ):
+                return 0
+            remaining = deadline - time.monotonic()
+            if remaining > 0:
+                time.sleep(min(config.poll_seconds, remaining))
+        print("[timeout] no Quality Gate assignment received")
+        return 2
 
     while True:
         run_once(client, config, mailbox, teams)

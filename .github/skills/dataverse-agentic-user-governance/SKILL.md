@@ -40,6 +40,7 @@ Read all identifiers from ignored environment configuration:
 DATAVERSE_URL
 TENANT_ID
 A365_BLUEPRINT_CLIENT_ID
+A365_BLUEPRINT_CLIENT_SECRET
 A365_AGENT_ID
 A365_AGENT_USER_ID
 QUALITY_GATE_AGENT_SYSTEMUSER_ID
@@ -47,7 +48,9 @@ QUALITY_GATE_AGENT_SYSTEMUSER_ID
 
 Use a certificate, federated credential, or approved token broker in
 production. Permit a short-lived blueprint client secret only for a controlled
-test, and never print it or persist it in committed files.
+test, and never print it or persist it in committed files. A strict recording
+preflight must fail when genuine Agent User OAuth configuration is absent; a
+development Azure CLI or caller-ID fallback is not identity proof.
 
 ## Least-privilege rules
 

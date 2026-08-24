@@ -1,0 +1,18 @@
+{
+  "name": "Launch Control Quality Gate",
+  "unique_name": "lc_LaunchControlQualityGateDemo",
+  "description": "Focused Launch Approval quality gate workspace.",
+  "solution": "LaunchControl",
+  "icon_webresource_name": "msdyn_/Images/AppModule_Default_Icon.png",
+  "area_title": "Launch Control",
+  "group_title": "Quality Gate",
+  "navigation": [
+    {
+      "table": "lc_launch",
+      "label": "Launches"
+    }
+  ],
+  "processes": [
+    "Launch Approval"
+  ]
+}

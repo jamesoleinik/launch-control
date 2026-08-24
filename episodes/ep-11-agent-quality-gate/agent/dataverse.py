@@ -241,7 +241,6 @@ class DataverseClient:
         assignment: Assignment,
         *,
         feedback: str,
-        screenshot: Path,
     ) -> None:
         now = datetime.now(timezone.utc)
         due = (now + timedelta(days=3)).date().isoformat()
@@ -276,21 +275,57 @@ class DataverseClient:
                 "lc_launchid@odata.bind": f"/lc_launchs({assignment.launch_id})",
             },
         )
+
+    def publish_evidence(
+        self,
+        assignment: Assignment,
+        *,
+        screenshot: Path,
+        trace: Path,
+    ) -> None:
+        self._publish_file_note(
+            assignment,
+            path=screenshot,
+            subject="Quality Gate screenshot evidence",
+            note=(
+                "Screenshot captured by the Quality Gate Agent during "
+                "Playwright validation."
+            ),
+            mimetype="image/png",
+        )
+        self._publish_file_note(
+            assignment,
+            path=trace,
+            subject="Quality Gate Playwright trace",
+            note=(
+                "Playwright trace captured by the Quality Gate Agent. Open "
+                "the archive with Playwright Trace Viewer."
+            ),
+            mimetype="application/zip",
+        )
+
+    def _publish_file_note(
+        self,
+        assignment: Assignment,
+        *,
+        path: Path,
+        subject: str,
+        note: str,
+        mimetype: str,
+    ) -> None:
+        if not path.is_file():
+            raise FileNotFoundError(f"Quality Gate evidence is missing: {path}")
         self._request(
             "POST",
             "/annotations",
             {
-                "subject": "Quality Gate browser evidence",
-                "notetext": (
-                    "The Quality Gate Agent found a release telemetry "
-                    "validation failure and recommends returning to Draft. "
-                    f"{feedback[:3000]}"
+                "subject": subject,
+                "notetext": note,
+                "filename": path.name,
+                "mimetype": mimetype,
+                "documentbody": base64.b64encode(path.read_bytes()).decode(
+                    "ascii"
                 ),
-                "filename": screenshot.name,
-                "mimetype": "image/png",
-                "documentbody": base64.b64encode(
-                    screenshot.read_bytes()
-                ).decode("ascii"),
                 "objectid_lc_launch@odata.bind": (
                     f"/lc_launchs({assignment.launch_id})"
                 ),

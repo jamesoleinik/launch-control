@@ -10,14 +10,14 @@ export class LaunchReadiness implements ComponentFramework.ReactControl<IInputs,
     private loading = false;
     private recordId?: string;
     private refreshVersion = 0;
-    private notifyOutputChanged!: () => void;
+    private requestRender!: () => void;
 
     public init(
         context: ComponentFramework.Context<IInputs>,
-        notifyOutputChanged: () => void,
+        _notifyOutputChanged: () => void,
         _state: ComponentFramework.Dictionary
     ): void {
-        this.notifyOutputChanged = notifyOutputChanged;
+        this.requestRender = () => context.factory.requestRender();
         context.mode.trackContainerResize(true);
     }
 
@@ -68,7 +68,7 @@ export class LaunchReadiness implements ComponentFramework.ReactControl<IInputs,
         const requestVersion = ++this.refreshVersion;
         this.loading = true;
         this.error = undefined;
-        this.notifyOutputChanged();
+        this.requestRender();
         void this.loadData(context, recordId, requestVersion);
     }
 
@@ -91,7 +91,7 @@ export class LaunchReadiness implements ComponentFramework.ReactControl<IInputs,
         } finally {
             if (requestVersion === this.refreshVersion) {
                 this.loading = false;
-                this.notifyOutputChanged();
+                this.requestRender();
             }
         }
     }
