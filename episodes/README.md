@@ -19,27 +19,32 @@ The "Launch Control" LinkedIn series: building one project end-to-end, told as a
 | [7](ep-07-scout-autopilot/) | Microsoft Scout 🟡 | The Dataverse MCP face-lift (16 tools, semantic `search_data` over records and attached files) driven by an always-on Scout Autopilot agent on a schedule |
 | [8](ep-08-security/) | Roles & Reach | Security for a headless world: row-level roles **and** column-level data masking, authored from any coding agent (now Cursor) |
 
-### Season 2: Dataverse, Better Together
+### Season 2: Dataverse, Business Apps, and Work IQ
 
-The thesis: Dataverse is not an island. Each episode pairs it with another part of the Microsoft stack: operational state (ERP), external signal (Web IQ), internal analytics semantics (Fabric IQ), federated knowledge (Foundry IQ), then convergence.
+The thesis: Dataverse is not an island. Episodes 12-16 now follow Launch Control into Business Apps in Work IQ surfaces: Copilot Chat and Agent Builder, Cowork, Copilot Studio, Work IQ API and developer tools, and external agents. The former Web IQ, Foundry IQ, Convergence, Agentic Administration, and Full Orchestra beats are preserved as deferred drafts in their episode folders.
 
 | # | Episode | Hero capability |
 |---|---|---|
 | [9](ep-09-dataverse-fno/) | Dataverse + F&O | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](ep-10-dataverse-fabriciq/) | Dataverse + Fabric IQ | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](ep-11-agent-quality-gate/) | Agent Quality Gate | A local Agent 365 worker with its own governed identity runs the launch approval quality gate |
-| [12](ep-12-dataverse-webiq/) | Dataverse + Web IQ | The outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
-| [13](ep-13-dataverse-foundryiq/) | Dataverse + Foundry IQ | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
-| [14](ep-14-convergence/) | Convergence | Native M365 Copilot (Dataverse intelligence / Work IQ) **and** the three IQ agents, on one launch |
+| [12](ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Agent Builder | Validate governed access to Launch Control business context |
+| [13](ep-13-cowork/) | Business Apps in Work IQ: Cowork | Explore business context and approval boundaries in Cowork |
+| [14](ep-14-copilot-studio/) | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
+| [15](ep-15-workiq-api-devtools/) | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
+| [16](ep-16-external-agents/) | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
 
-### Season 3: Operate It
+### Deferred storylines
 
-| # | Episode | Hero capability |
-|---|---|---|
-| [15](ep-15-agentic-admin/) | Agentic Administration | The management plane is agent-driven: capacity, audit, cleanup, blast-radius |
-| [16](ep-16-full-orchestra/) | Full Orchestra + Your Turn | Every surface firing on one launch + open-source CTA |
+The earlier Web IQ, Foundry IQ, convergence, administration, and finale storylines are postponed, not removed. Their README drafts and supporting assets remain in the original folders:
 
-> **Archived Season 1 agent builds.** The original declarative agent, autonomous Sentinel, code-first Python agent, and generative dashboard moved to [`archive/`](archive/). Their capabilities are **absorbed** as the runtimes for Season 2 (Web IQ → new Copilot Studio builder; Fabric IQ → autonomous; Foundry IQ → code-first) and the dashboard folds into the Ep 14 convergence. The code still lives in [`../agents/`](../agents/) and [`../apps/`](../apps/).
+- [Web IQ draft](ep-12-copilot-chat-agent-builder/DEFERRED-DRAFT.md), with its existing plan, instructions, client, and demo code.
+- [Foundry IQ draft](ep-13-cowork/DEFERRED-DRAFT.md).
+- [Convergence draft](ep-14-copilot-studio/DEFERRED-DRAFT.md).
+- [Agentic Administration draft](ep-15-workiq-api-devtools/DEFERRED-DRAFT.md), with capacity, audit, cleanup, and blast-radius assets.
+- [Full Orchestra + Your Turn draft](ep-16-external-agents/DEFERRED-DRAFT.md), with its preflight and orchestra assets.
+
+> **Archived Season 1 agent builds.** The original declarative agent, autonomous Sentinel, code-first Python agent, and generative dashboard moved to [`archive/`](archive/). Their source code remains in [`../agents/`](../agents/) and [`../apps/`](../apps/). The old Ep 12-16 narrative connections are deferred with their episode drafts and are not asserted as part of the new Work IQ arc.
 
 ## Layout
 

@@ -10,8 +10,8 @@ Sets:
   - inserts a fresh 'All gates passed' lc_statusupdate row tagged Ep12Setup::
 
 Use:
-  python episodes/ep-16-full-orchestra/orchestra/setup_launch_week.py --dry-run
-  python episodes/ep-16-full-orchestra/orchestra/setup_launch_week.py --apply
+  python episodes/ep-16-external-agents/orchestra/setup_launch_week.py --dry-run
+  python episodes/ep-16-external-agents/orchestra/setup_launch_week.py --apply
 """
 from __future__ import annotations
 import argparse, os, sys

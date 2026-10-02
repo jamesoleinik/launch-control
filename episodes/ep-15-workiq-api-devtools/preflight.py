@@ -8,7 +8,7 @@ Ep 15 = administration/management plane is agent-driven. Five proof points:
   5. The chat is the audit log
 
 This script verifies the env data and admin API reachability needed for the demo.
-Run: python episodes/ep-15-agentic-admin/preflight.py
+Run: python episodes/ep-15-workiq-api-devtools/preflight.py
 """
 import os, sys
 import requests

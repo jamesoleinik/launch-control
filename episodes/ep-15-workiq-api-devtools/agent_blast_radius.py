@@ -1,4 +1,4 @@
-"""episodes/ep-15-agentic-admin/agent_blast_radius.py
+"""episodes/ep-15-workiq-api-devtools/agent_blast_radius.py
 
 Episode 15 proof point #4: enumerate every agent in this env + what it can touch.
 
@@ -15,9 +15,9 @@ Output sections:
   4. Connector usage roll-up across the env
 
 Use:
-  python episodes/ep-15-agentic-admin/agent_blast_radius.py
-  python episodes/ep-15-agentic-admin/agent_blast_radius.py --json
-  python episodes/ep-15-agentic-admin/agent_blast_radius.py --custom-only
+  python episodes/ep-15-workiq-api-devtools/agent_blast_radius.py
+  python episodes/ep-15-workiq-api-devtools/agent_blast_radius.py --json
+  python episodes/ep-15-workiq-api-devtools/agent_blast_radius.py --custom-only
 """
 from __future__ import annotations
 import argparse, json, os, sys

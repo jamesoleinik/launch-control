@@ -10,9 +10,9 @@ All notable changes to **Launch Control** are documented here, organized by epis
 > | `ep-08` | 8 | `episodes/archive/ep-10-autonomous-agents/` |
 > | `ep-09` | 9 | `episodes/archive/ep-11-code-first-agent/` |
 > | `ep-10` | 10 | `episodes/archive/ep-12-the-dashboard/` |
-> | `ep-11` | 11 | `episodes/ep-14-convergence/` (was `ep-13-copilot-just-knows`) |
-> | `ep-12` | 12 | `episodes/ep-15-agentic-admin/` |
-> | `ep-13` | 13 | `episodes/ep-16-full-orchestra/` |
+> | `ep-11` | 11 | `episodes/ep-14-copilot-studio/` (was `ep-13-copilot-just-knows`) |
+> | `ep-12` | 12 | `episodes/ep-15-workiq-api-devtools/` |
+> | `ep-13` | 13 | `episodes/ep-16-external-agents/` |
 
 > **Better Together restructure (June 2026).** The arc was reframed as a multi-series story (Season 1 Build the Foundation, Season 2 Dataverse Better Together, Season 3 Operate It). Season 2 took over numbers **9 to 13**: ep 9 Dataverse + F&O, ep 10 Dataverse + Web IQ, ep 11 Dataverse + Fabric IQ, ep 12 Dataverse + Foundry IQ, ep 13 Convergence. The original built agent/dashboard episodes (declarative agent, autonomous Sentinel, code-first agent, generative dashboard) were moved to `episodes/archive/` and their capabilities **absorbed** as the runtimes for Season 2. Immutable tags `ep-01..ep-13` are unchanged; only the docs were reorganized. New tags from here use the new numbering.
 >
@@ -22,15 +22,15 @@ Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
 
 ## [ep-13]: Full Orchestra + Your Turn _(now Episode 16)_
 
-- Added `episodes/ep-16-full-orchestra/orchestra/`: six-surface demo runner that exercises MCP, SDK, CLI, declarative agent, autonomous agent, and code-first agent in a single timed sequence.
-- Added `episodes/ep-16-full-orchestra/preflight.py` to validate every surface is recording-ready.
+- Added `episodes/ep-16-external-agents/orchestra/`: six-surface demo runner that exercises MCP, SDK, CLI, declarative agent, autonomous agent, and code-first agent in a single timed sequence.
+- Added `episodes/ep-16-external-agents/preflight.py` to validate every surface is recording-ready.
 - Open-source CTA: SECURITY.md, CODE_OF_CONDUCT.md, issue templates, sensitive-data sweep, per-episode folder restructure, episode tags `ep-01..ep-13`.
 
 ## [ep-12]: Agentic Administration _(now Episode 15)_
 
 - New theme: the **management plane** is agent-driven, not just the data plane.
-- Added `episodes/ep-15-agentic-admin/agent_blast_radius.py`: enumerates every Dataverse object an agent identity can read/write in an environment.
-- Added `episodes/ep-15-agentic-admin/capacity_report.py`: pulls capacity + storage telemetry programmatically (no portal scraping).
+- Added `episodes/ep-15-workiq-api-devtools/agent_blast_radius.py`: enumerates every Dataverse object an agent identity can read/write in an environment.
+- Added `episodes/ep-15-workiq-api-devtools/capacity_report.py`: pulls capacity + storage telemetry programmatically (no portal scraping).
 - Locked runtime: Copilot CLI + `dataverse@awesome-copilot v1.0.0` plugin as the canonical admin surface.
 - Backdated seed data so the audit/cleanup beats have something real to chew on.
 

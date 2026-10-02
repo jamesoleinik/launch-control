@@ -10,8 +10,8 @@ Creates:
 Designed to complete in <5 sec on camera.
 
 Use:
-  python episodes/ep-16-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature"
-  python episodes/ep-16-full-orchestra/orchestra/spin_up_launch.py "Q4 Holiday Feature" --apply
+  python episodes/ep-16-external-agents/orchestra/spin_up_launch.py "Q4 Holiday Feature"
+  python episodes/ep-16-external-agents/orchestra/spin_up_launch.py "Q4 Holiday Feature" --apply
 """
 from __future__ import annotations
 import argparse, os, sys

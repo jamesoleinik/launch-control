@@ -7,7 +7,7 @@ This is the script the dv-admin demo in Ep 15 invokes when the user asks
 "what's burning my capacity?" -- the agent calls it, parses the structured output,
 and presents the headline numbers in chat.
 
-Run: python episodes/ep-15-agentic-admin/capacity_report.py [--tenant-top N]
+Run: python episodes/ep-15-workiq-api-devtools/capacity_report.py [--tenant-top N]
 """
 import os, sys, argparse, json, requests
 from datetime import datetime

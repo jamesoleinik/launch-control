@@ -1,8 +1,18 @@
+# Deferred storyline draft
+
+> This is the preserved pre-resequence draft for this episode number. The active Business Apps in Work IQ preview is in [README.md](README.md). This material is deferred, not validated for the new arc. Original supporting files remain in this episode folder.
+>
+> The historical feature descriptions, endpoints, commands, sample results, and build-status note below are retained as part of the former Web IQ storyline. They are not evidence for the active Work IQ episode and must be re-verified before reuse.
+
+> Supporting Web IQ assets retained here include [the build plan](plan.md), [`agent-instructions.md`](agent-instructions.md), [`webiq_client.py`](webiq_client.py), [`preflight.py`](preflight.py), [`fuse_external_signal.py`](fuse_external_signal.py), and the evaluation CSV files. These belong to the deferred Web IQ storyline.
+
+---
+
 # Episode 12: Dataverse + Web IQ (the outside-in agent)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
 
-**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-12-dataverse-webiq/.env and re-run preflight (2026-06-28)
+**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-12-copilot-chat-agent-builder/.env and re-run preflight (2026-06-28)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Copilot Studio agent in the new unified builder (model picker, Tools, Knowledge, Memory) · ⭐ Dataverse MCP Server (internal state) · ⭐ Web IQ MCP Server (live external signal) · ⭐ Two MCP servers composed in one agent
 **Layer:** 🟣 Layer 3 (the conversational surface), reaching data that does not live in the tenant at all
@@ -90,7 +100,7 @@ the web does not know your launch has a CDN milestone. The agent is the join.
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
 > fill in your values (including `WEBIQ_API_KEY`), and select it with
-> `LC_ENV=ep-12-dataverse-webiq`. Never commit a real Web IQ key.
+> `LC_ENV=ep-12-copilot-chat-agent-builder`. Never commit a real Web IQ key.
 
 1. **Create the agent**, give it the outside-in instructions (role: connect
    internal launch blockers to live external signal; always cite the source;
@@ -146,10 +156,10 @@ a real key.
 | `fuse_external_signal.py` | The outside-in demo: joins each internal launch blocker with live Web IQ signal and prints a citable briefing. Runs on a bundled sample by default, or `--dataverse` to read live blocked tasks. |
 
 ```bash
-# PowerShell: $env:LC_ENV = "ep-12-dataverse-webiq"
-python episodes/ep-12-dataverse-webiq/preflight.py
-python episodes/ep-12-dataverse-webiq/fuse_external_signal.py
-python episodes/ep-12-dataverse-webiq/fuse_external_signal.py --dataverse --max 5
+# PowerShell: $env:LC_ENV = "ep-12-copilot-chat-agent-builder"
+python episodes/ep-12-copilot-chat-agent-builder/preflight.py
+python episodes/ep-12-copilot-chat-agent-builder/fuse_external_signal.py
+python episodes/ep-12-copilot-chat-agent-builder/fuse_external_signal.py --dataverse --max 5
 ```
 
 The same `web` / `news` calls and the same fusion prompt then drop straight into

@@ -8,7 +8,7 @@ Ep 16 = the 'Full Orchestra + Your Turn' closer. Six checks:
   5. No 'Q4 Holiday Feature' launch exists yet (the teaser must create it on camera)
   6. OSS readiness files present at repo root: LICENSE, README.md, CHANGELOG.md, .env.example
 
-Run: python episodes/ep-16-full-orchestra/preflight.py
+Run: python episodes/ep-16-external-agents/preflight.py
 """
 from __future__ import annotations
 import importlib, os, subprocess, sys

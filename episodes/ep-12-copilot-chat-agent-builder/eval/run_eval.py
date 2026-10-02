@@ -20,7 +20,7 @@ from pathlib import Path
 
 # Allow repository scripts to be imported (auth, etc.) like the episode code does
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(_REPO_ROOT / 'episodes' / 'ep-12-dataverse-webiq'))
+sys.path.insert(0, str(_REPO_ROOT / 'episodes' / 'ep-12-copilot-chat-agent-builder'))
 sys.path.insert(0, str(_REPO_ROOT / 'scripts'))
 
 try:
@@ -49,7 +49,7 @@ def fetch_dataverse_blockers(max_items=5):
         import auth
     except Exception:
         raise RuntimeError('scripts.auth module not found; ensure scripts/ is on PYTHONPATH')
-    auth.load_env(os.environ.get('LC_ENV', 'ep-12-dataverse-webiq'))
+    auth.load_env(os.environ.get('LC_ENV', 'ep-12-copilot-chat-agent-builder'))
     base = os.environ.get('DATAVERSE_URL')
     if not base:
         raise RuntimeError('DATAVERSE_URL not set in environment')
@@ -235,7 +235,7 @@ def main():
         sys.exit(2)
 
     try:
-        client = WebIqClient(env_name=os.environ.get('LC_ENV', 'ep-12-dataverse-webiq'))
+        client = WebIqClient(env_name=os.environ.get('LC_ENV', 'ep-12-copilot-chat-agent-builder'))
     except WebIqError as exc:
         print(f'Web IQ client failed to initialize: {exc}')
         sys.exit(2)

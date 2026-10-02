@@ -45,11 +45,11 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [9](episodes/ep-09-dataverse-fno/)        | Dataverse + F&O               | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](episodes/ep-10-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](episodes/ep-11-agent-quality-gate/)  | Agent Quality Gate            | A governed Agent 365 worker with its own identity executes a launch approval gate |
-| [12](episodes/ep-12-dataverse-webiq/)     | Dataverse + Web IQ            | Outside-in agent (new Copilot Studio builder); internal blockers fused with live web/news/CVE signal |
-| [13](episodes/ep-13-dataverse-foundryiq/) | Dataverse + Foundry IQ        | Code-first agent grounded in federated, cited knowledge (Foundry IQ over Azure AI Search) |
-| [14](episodes/ep-14-convergence/)         | Convergence                   | Native M365 Copilot (Dataverse intelligence / Work IQ) plus the three IQ agents, on one launch |
-| [15](episodes/ep-15-agentic-admin/)       | Agentic Administration        | The management plane is agent-driven: capacity, audit, cleanup, blast-radius |
-| [16](episodes/ep-16-full-orchestra/)      | Full Orchestra + Your Turn    | Six surfaces in 60 seconds + open-source CTA |
+| [12](episodes/ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Agent Builder | Validate governed access to Launch Control business context |
+| [13](episodes/ep-13-cowork/)                    | Business Apps in Work IQ: Cowork | Explore business context and approval boundaries in Cowork |
+| [14](episodes/ep-14-copilot-studio/)            | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
+| [15](episodes/ep-15-workiq-api-devtools/)       | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
+| [16](episodes/ep-16-external-agents/)           | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
 
 Each episode is also tagged in git: `git checkout ep-08` to see the repo as it was at that episode's ship. The original Season 1 agent builds (declarative agent, autonomous Sentinel, code-first Python agent, generative dashboard) moved to [`episodes/archive/`](episodes/archive/) and are absorbed as the Season 2 runtimes; see [`episodes/README.md`](episodes/README.md) for the full multi-season arc.
 

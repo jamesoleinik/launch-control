@@ -1,3 +1,9 @@
+# Deferred storyline draft
+
+> This is the preserved pre-resequence draft for this episode number. The active Business Apps in Work IQ preview is in [README.md](README.md). This material is deferred, not validated for the new arc. Original supporting files remain in this episode folder.
+
+---
+
 # Episode 13: Dataverse + Foundry IQ (structured state meets federated knowledge)
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded

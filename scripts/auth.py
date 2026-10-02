@@ -29,6 +29,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+_LEGACY_EPISODE_ENV_NAMES = {
+    "ep-12-dataverse-webiq": "ep-12-copilot-chat-agent-builder",
+    "ep-13-dataverse-foundryiq": "ep-13-cowork",
+    "ep-14-convergence": "ep-14-copilot-studio",
+    "ep-15-agentic-admin": "ep-15-workiq-api-devtools",
+    "ep-16-full-orchestra": "ep-16-external-agents",
+}
 
 
 def _resolve_env_file(env_name):
@@ -40,10 +47,11 @@ def _resolve_env_file(env_name):
     if not env_name:
         return None
     candidate = Path(env_name)
+    episode_slug = _LEGACY_EPISODE_ENV_NAMES.get(env_name, env_name)
     options = [
         candidate,                                   # direct path to an env file
         candidate / ".env",                          # a directory holding a .env
-        REPO_ROOT / "episodes" / env_name / ".env",  # an episode slug
+        REPO_ROOT / "episodes" / episode_slug / ".env",  # an episode slug
         REPO_ROOT / f".env.{env_name}",              # root-level .env.<name>
     ]
     for path in options:

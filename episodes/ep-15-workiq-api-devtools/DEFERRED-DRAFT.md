@@ -1,3 +1,9 @@
+# Deferred storyline draft
+
+> This is the preserved pre-resequence Agentic Administration storyline, not the active Episode 15. The active Business Apps in Work IQ preview is in [README.md](README.md). Historical claims, live figures, prerequisites, commands, and environment states below have not been re-verified for the current arc or environment. Review the scripts and obtain approval before running anything that reads or changes an environment. Original supporting files remain in this episode folder.
+
+---
+
 # Episode 15: Agentic Administration
 
 **Status:** ✅ Built · 🎬 Not yet recorded
@@ -33,7 +39,7 @@ Agent reads the current setting, shows the diff, asks for confirm, applies. The 
 > *"What's burning capacity in this environment?"*
 > *"Which environments in my tenant are closest to their limits?"*
 
-Agent calls `episodes/ep-15-agentic-admin/capacity_report.py`, parses the structured output, presents the headline numbers. Three pools (Database, File, Log), per-environment + tenant-wide top-N.
+Agent calls `episodes/ep-15-workiq-api-devtools/capacity_report.py`, parses the structured output, presents the headline numbers. Three pools (Database, File, Log), per-environment + tenant-wide top-N.
 
 **Live data we'll see on camera (verified by preflight):**
 
@@ -67,7 +73,7 @@ Agents have spread through the campaign: the Copilot Studio agent (now Ep 12, th
 
 The pitch: *"Before I approve the next agent into production, what's the surface area of the ones I already have?"*
 
-For the recording, the agent calls `episodes/ep-15-agentic-admin/agent_blast_radius.py`, which reads four Dataverse tables: `bot`, `botcomponent`, `workflow`, `connectionreference`: and emits a per-agent inventory: actions (MCP-backed flagged), generative-orchestration on/off, external triggers, knowledge sources, plus a tenant-wide connector-usage roll-up.
+For the recording, the agent calls `episodes/ep-15-workiq-api-devtools/agent_blast_radius.py`, which reads four Dataverse tables: `bot`, `botcomponent`, `workflow`, `connectionreference`: and emits a per-agent inventory: actions (MCP-backed flagged), generative-orchestration on/off, external triggers, knowledge sources, plus a tenant-wide connector-usage roll-up.
 
 **Live data we'll see on camera (verified by preflight):** 3 custom agents in this env: **Launch Coordinator**, **Launch Sentinel**, plus the `Test` agent. Each one's MCP wiring, triggers, and gen-orchestration status are right there in the output. Sentinel's `Daily Trigger` + `When a task is blocked` make explicit what was implicit in Ep 9. Plus 31 pre-built Sales/Service template agents that any admin would also need to govern (collapsed by default with `--custom-only`).
 
@@ -122,7 +128,7 @@ Caption: *"Same admin actions. Less navigation. Audit trail by default."*
 Run before camera turns on:
 
 ```bash
-python episodes/ep-15-agentic-admin/preflight.py
+python episodes/ep-15-workiq-api-devtools/preflight.py
 ```
 
 Six checks. All green at time of writing:
@@ -142,11 +148,11 @@ Manual checks (not scripted):
 
 | Path | Role |
 |---|---|
-| `episodes/ep-15-agentic-admin/README.md` | This document |
-| `episodes/ep-15-agentic-admin/preflight.py` | 6-check preflight harness |
+| `episodes/ep-15-workiq-api-devtools/README.md` | This document |
+| `episodes/ep-15-workiq-api-devtools/preflight.py` | 6-check preflight harness |
 | `scripts/python/seed_pre_q1_status_updates.py` | Backdated cleanup-target seeder |
-| `episodes/ep-15-agentic-admin/capacity_report.py` | Capacity beat (#2): env + tenant-top |
-| `episodes/ep-15-agentic-admin/agent_blast_radius.py` | Agent governance beat (#4): per-agent inventory |
+| `episodes/ep-15-workiq-api-devtools/capacity_report.py` | Capacity beat (#2): env + tenant-top |
+| `episodes/ep-15-workiq-api-devtools/agent_blast_radius.py` | Agent governance beat (#4): per-agent inventory |
 
 No solution components. No new tables, columns, plugins, or actions. The only env mutation is 12 backdated status updates the demo deletes on camera.
 

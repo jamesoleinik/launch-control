@@ -1,3 +1,9 @@
+# Deferred storyline draft
+
+> This is the preserved pre-resequence draft for this episode number. The active Business Apps in Work IQ preview is in [README.md](README.md). This material is deferred, not validated for the new arc. Original supporting files remain in this episode folder.
+
+---
+
 # Episode 14: Convergence (native Copilot and the three IQ agents, together)
 
 **Status:** ✍️ Reworked draft (Season 2 finale) · 🎬 Not yet recorded

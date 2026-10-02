@@ -11,8 +11,8 @@ Files
 
 Usage
 
-1. Ensure episodes/ep-12-dataverse-webiq/.env exists and contains WEBIQ_API_KEY, DATAVERSE_URL, TENANT_ID. Select the env with LC_ENV=ep-12-dataverse-webiq.
-2. Run: $env:LC_ENV='ep-12-dataverse-webiq'; $env:PYTHONIOENCODING='utf-8'; python .\episodes\ep-12-dataverse-webiq\eval\run_eval.py
+1. Ensure episodes/ep-12-copilot-chat-agent-builder/.env exists and contains WEBIQ_API_KEY, DATAVERSE_URL, TENANT_ID. Select the env with LC_ENV=ep-12-copilot-chat-agent-builder.
+2. Run: $env:LC_ENV='ep-12-copilot-chat-agent-builder'; $env:PYTHONIOENCODING='utf-8'; python .\episodes\ep-12-copilot-chat-agent-builder\eval\run_eval.py
 
 Notes & guardrails
 
