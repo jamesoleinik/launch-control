@@ -141,6 +141,14 @@ or access grant has occurred. Private sharing still needs the destination and
 named reviewers. See [the timed narration](voiceover-script.md) and
 [the recording handoff](demo-arc.md#recording).
 
+The original under-two-minute requirement also has a separate
+[LinkedIn voiceover](linkedin-voiceover-script.md) and a **1:37** local video
+excerpt, with silent and synthetic-voice editions plus subtitles. The excerpt
+clearly discloses that earlier catch-up turns are omitted. It retains the
+entire readiness response wait and does not replace the full demo.
+Its narration fit, subtitle synchronization, full-file decoding, exact duration,
+and source-video fidelity are verified. No LinkedIn post has been made.
+
 ### Prompt
 
 > Help me set up a Launch Readiness Checker for the Launch Control demo. First

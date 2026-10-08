@@ -169,6 +169,9 @@ not the repository. No upload or sharing permission has been granted.
 | Silent backup | `ep12-workiq-backup.mp4` | 6:06, title slides and value panel |
 | Timing preview | `ep12-workiq-backup-voiced.mp4` | Built-in synthetic voice, not presenter narration |
 | Read-along subtitles | `ep12-workiq-backup.voiceover.srt` | Matches the timed voiceover |
+| Short silent excerpt | `ep12-linkedin-backup.mp4` | 1:37, below the original two-minute target |
+| Short timing preview | `ep12-linkedin-backup-voiced.mp4` | Synthetic voice, full included readiness wait |
+| Short subtitles | `ep12-linkedin-backup.voiceover.srt` | Matches the short voiceover |
 | Review evidence | `raw-contact-sheet.png`, `edition-contact-sheet.png`, `edition-verification.json` | Private visual samples and automated checks |
 
 The backup labels the run as recorded draft Preview with simulated data.
@@ -193,6 +196,15 @@ Contact sheets and selected full-size frames have been inspected. Full
 presenter playback/review remains pending, as do an approved private destination
 and named reviewers. Automated decoding and sampled inspection are not a
 claim that every frame has received human review.
+
+The [short LinkedIn narration](linkedin-voiceover-script.md) accompanies a
+separate excerpt, not an accelerated version of the full chat. It omits the
+earlier catch-up and status turns as whole turns, with that omission disclosed
+in the title, footer and narration. The readiness prompt and its complete wait
+remain contiguous at original speed. The resulting video is exactly 97 seconds
+with six chapters; full decoding and narration/SRT checks passed. Demo-region
+SSIM is 0.998853 outside the closing transition. The full demo is unchanged.
+Publication to LinkedIn is not part of this local artifact creation.
 
 - Capture a single, visible application window rather than the full desktop.
   Keep the same window visible throughout. Do not minimize it or switch the
