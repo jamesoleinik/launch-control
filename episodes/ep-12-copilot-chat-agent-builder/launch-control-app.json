@@ -1,0 +1,17 @@
+{
+  "name": "Launch Control Demo",
+  "unique_name": "lc_Episode12LaunchControl",
+  "description": "Fictional Q3 Widget Launch demo app for Episode 12.",
+  "solution": "LaunchControl",
+  "icon_webresource_name": "msdyn_/Images/AppModule_Default_Icon.png",
+  "area_title": "Launch Control",
+  "group_title": "Launches",
+  "navigation": [
+    {
+      "table": "lc_launch",
+      "label": "Launches",
+      "form": "Information",
+      "view": "Active lc_launchs"
+    }
+  ]
+}

@@ -53,5 +53,5 @@ The earlier Foundry IQ story remains in [DEFERRED-DRAFT.md](DEFERRED-DRAFT.md). 
 
 ## Cross-references
 
-- [Episode 12: Copilot Chat + Agent Builder](../ep-12-copilot-chat-agent-builder/README.md)
+- [Episode 12: Enablement + Declarative Agent](../ep-12-copilot-chat-agent-builder/README.md)
 - [Episode 14: Copilot Studio](../ep-14-copilot-studio/README.md)

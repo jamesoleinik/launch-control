@@ -21,14 +21,14 @@ The "Launch Control" LinkedIn series: building one project end-to-end, told as a
 
 ### Season 2: Dataverse, Business Apps, and Work IQ
 
-The thesis: Dataverse is not an island. Episodes 12-16 now follow Launch Control into Business Apps in Work IQ surfaces: Copilot Chat and Agent Builder, Cowork, Copilot Studio, Work IQ API and developer tools, and external agents. The former Web IQ, Foundry IQ, Convergence, Agentic Administration, and Full Orchestra beats are preserved as deferred drafts in their episode folders.
+The thesis: Dataverse is not an island. Episode 12 starts with environment enablement, app selection, and a declarative agent in Microsoft 365 Copilot. Episodes 13-16 explore Cowork, Copilot Studio, Work IQ API and developer tools, and external agents. The Studio build belongs to Episode 14, not a second build inside Episode 12. The former Web IQ, Foundry IQ, Convergence, Agentic Administration, and Full Orchestra beats are preserved as deferred drafts in their episode folders.
 
 | # | Episode | Hero capability |
 |---|---|---|
 | [9](ep-09-dataverse-fno/) | Dataverse + F&O | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](ep-10-dataverse-fabriciq/) | Dataverse + Fabric IQ | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](ep-11-agent-quality-gate/) | Agent Quality Gate | A local Agent 365 worker with its own governed identity runs the launch approval quality gate |
-| [12](ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Agent Builder | Validate governed access to Launch Control business context |
+| [12](ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Enablement + Declarative Agent | Enable the environment, select the app, and extend Microsoft 365 Copilot |
 | [13](ep-13-cowork/) | Business Apps in Work IQ: Cowork | Explore business context and approval boundaries in Cowork |
 | [14](ep-14-copilot-studio/) | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
 | [15](ep-15-workiq-api-devtools/) | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |

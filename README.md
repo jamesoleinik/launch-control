@@ -45,7 +45,7 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [9](episodes/ep-09-dataverse-fno/)        | Dataverse + F&O               | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](episodes/ep-10-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](episodes/ep-11-agent-quality-gate/)  | Agent Quality Gate            | A governed Agent 365 worker with its own identity executes a launch approval gate |
-| [12](episodes/ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Agent Builder | Validate governed access to Launch Control business context |
+| [12](episodes/ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Enablement + Declarative Agent | Enable the environment, select the app, and extend Microsoft 365 Copilot |
 | [13](episodes/ep-13-cowork/)                    | Business Apps in Work IQ: Cowork | Explore business context and approval boundaries in Cowork |
 | [14](episodes/ep-14-copilot-studio/)            | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
 | [15](episodes/ep-15-workiq-api-devtools/)       | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |

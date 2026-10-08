@@ -11,13 +11,23 @@
 
 ## Why this matters
 
-Copilot Studio is a distinct authoring and runtime surface. A connection available in Chat, Cowork, a coding-agent host, or another tenant does not prove Studio has the same tools, identity, permissions, or behavior.
+[Episode 12](../ep-12-copilot-chat-agent-builder/README.md) introduces environment enablement, app selection, and a declarative agent using Microsoft 365 Copilot's orchestration. This episode explores the Studio experience and why a maker might need more control over integrations, multi-step logic, deployment, and lifecycle.
+
+Verify the actual agent type and configuration rather than inferring runtime solely from the authoring portal. A connection available in Chat, Cowork, a coding-agent host, or another tenant does not prove Studio has the same tools, identity, permissions, or behavior.
 
 This episode validates the smallest useful Studio experience first: a bounded read against an approved Launch Control record. Background triggers, schedules, writes, and publication each require separate verification and authorization.
 
 ## Core demo
 
 Build or configure a Studio assistant for one approved Launch Control read. Show the source connection, the returned evidence, and an answer that distinguishes a recommendation from a stored business decision. If the source route cannot be verified, present the blocker rather than a simulated answer.
+
+Compare this configuration briefly with Episode 12's knowledge-only declarative agent. Do not rebuild the entire enablement sequence or claim that a simple Studio preview demonstrates every advanced capability.
+
+## Existing rehearsal, not a completed episode
+
+An earlier Episode 12 attempt produced an unpublished Work IQ-only Studio draft and genuine read-only recordings. Its [rehearsal record](studio-rehearsal.md), original timed scripts, and Studio-specific instructions are retained here. Those videos are superseded for Episode 12; they have not been relabeled as declarative-agent footage or a finished Episode 14.
+
+The model-driven app and environment setup can inform this build, but the Studio agent must be revalidated before a new recording. The prior run did not publish an agent, write records, or demonstrate background execution.
 
 ## Prompt for a coding agent
 
@@ -51,5 +61,6 @@ The earlier Convergence story remains preserved in [DEFERRED-DRAFT.md](DEFERRED-
 
 ## Cross-references
 
+- [Episode 12: Enablement + Declarative Agent](../ep-12-copilot-chat-agent-builder/README.md)
 - [Episode 13: Cowork](../ep-13-cowork/README.md)
 - [Episode 15: Developer Tools](../ep-15-workiq-api-devtools/README.md)

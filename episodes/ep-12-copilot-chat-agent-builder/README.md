@@ -1,250 +1,204 @@
-# Episode 12: Business Apps in Work IQ: Copilot Chat + Agent Builder
+# Episode 12: Business Apps in Work IQ: Enablement + Declarative Agent
 
-> *Can a launch team ask a simple question in Copilot, get an answer grounded
-> in its business records, and see the same evidence back in the app?*
+> *Our launch data already lives in a business app. How do I make it useful
+> in Microsoft 365 Copilot without building a separate agent runtime?*
 
-**Status:** Build and rehearse in an isolated demo environment. Verify current
-product availability and supported connections before recording.
+**Status:** Revised episode specification. Environment enablement and the
+model-driven app were verified earlier; the declarative-agent configuration,
+end-to-end answer, and replacement recording still need live verification.
 **Season:** Business Apps in Work IQ
-**Hero surfaces:** Launch Control, Copilot Chat, and Agent Builder
-**Result target:** Build a recording-ready Launch view, verify the agent's
-answer against source data, and show any approved follow-up work in the app.
+**Hero surfaces:** Microsoft 365 admin center, Power Platform admin center,
+Launch Control, and Agent Builder in Microsoft 365 Copilot.
+**Result target:** Enable the environment, select the app as business
+knowledge, and ask a focused declarative agent for launch evidence.
 
-## The build: four sections
-
-Use the existing Launch Readiness PCF and model-driven form as the business
-surface. Configure the supported Copilot route only after verifying it in the
-target tenant. Keep user prompts natural; put routing and safety requirements
-in agent instructions and business skills.
+## The arc
 
 ```text
-Section 1  Business app  -> Build and verify the Launch view and activity feed
-Section 2  Agent          -> Ground a focused Agent Builder experience
-Section 3  Rehearsal      -> Ask ordinary questions and verify source evidence
-Section 4  Recording      -> Return to the same launch and show the result
+Enable the pilot and environment
+  -> Verify the app and select it as knowledge
+  -> Configure a declarative agent in Microsoft 365 Copilot
+  -> Ask one launch question and compare the source
+  -> Explain when to choose Copilot Studio in Episode 14
 ```
 
-## Section 1: Build the business app
+This is an agent episode, not a workflow episode. The core demonstration is
+read-only. No follow-up writes, schedules, custom MCP tools, or Studio build
+are needed. Keep the social video under two minutes by showing one question,
+not by speeding up its response.
 
-The Launch main form already places the Launch Readiness PCF beside the
-Dataverse timeline. This episode adds an **Activity** view to the PCF for the
-latest saved Launch status updates. It displays only persisted update fields;
-it does not infer which client or agent authored them.
+## Declarative agent now, Copilot Studio later
 
-### Prompt
+| Question | Episode 12 | Episode 14 |
+|---|---|---|
+| What do we build? | A focused declarative agent in Agent Builder | A Studio agent with an explicitly verified source/tool configuration |
+| Who handles orchestration here? | Microsoft 365 Copilot's orchestrator, models, and services | The configured Studio experience, verified separately |
+| Why choose it? | Repeatable business questions inside Microsoft 365 Copilot | More control over integrations, multi-step logic, deployment, and lifecycle |
+| What does this episode prove? | Selected business-app knowledge and a source-matched answer | Studio-specific connection and behavior, not inherited proof from Episode 12 |
 
-> I want the Launch page to make the current risks and recent updates easy to
-> show in a demo. Please inspect the existing Launch Readiness control, add a
-> simple activity view for the latest saved updates, and tell me how to build
-> and verify it without changing a live environment.
+These are experience and configuration choices, not a claim that a portal
+name alone determines agent type. Declarative agents can have capabilities
+beyond this episode's knowledge-only configuration. Studio can also support
+simple Q&A. Additional controls and deployment options are reasons to choose
+Studio, not behaviors demonstrated merely by opening its editor.
 
-### Result
+See Microsoft's [Agent Builder and Copilot Studio comparison](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/copilot-studio-experience).
 
-- The PCF builds locally and has an Activity view for recent Launch updates.
-- The existing model-driven form keeps its readiness control and timeline.
-- Live deployment is separately approved and verified in a sandbox.
+## 1. Enable Business Applications in Work IQ
 
-### Run it
+Follow the [pilot quickstart](https://learn.microsoft.com/en-us/power-platform/admin/business-applications-work-iq/quickstart).
+Confirm the pilot account, model-driven app, appropriate administrative roles,
+licensing, consent, and any usage-based billing before changing settings.
+Use the isolated demo environment, not a production environment.
+
+1. In **Microsoft 365 admin center > Copilot > Settings**, open
+   **Business Applications in Work IQ available to Copilot**. Confirm that
+   the intended pilot users are included. Do not broaden the audience for
+   filming. Save only approved changes.
+2. In **Power Platform admin center > Manage**, select the environment,
+   then **Settings > Product > Features**. Turn on **Work IQ** if needed.
+   The earlier sandbox UI labeled it **Turn on Business Applications in
+   Work IQ**. Save only if changed.
+3. If already enabled, show and explain the existing setting. Do not turn
+   it off and back on to manufacture enablement footage.
+
+The environment was already enabled with the user's approval. That does not
+establish the current Microsoft 365 pilot audience or the declarative agent's
+app access. Verify both in the new rehearsal.
+
+## 2. Verify the app and include it as knowledge
+
+The app in this episode is **Launch Control Demo**, with the fictional
+**Q3 Widget Launch** identified by `EP12-DEMO-01`. The model-driven app spec
+is [`launch-control-app.json`](launch-control-app.json).
+
+Verify the published app, its Launch form and view, and the pilot user's
+access. The app's table component must resolve to `lc_launch`, not the generic
+`entity` component. That mapping was repaired and verified previously.
+The custom PCF **Activity** view shows saved status updates; the standard
+Dataverse timeline is not a substitute for those records.
+
+In Agent Builder, include the intended app in **Dynamics 365 and Power Apps
+data** knowledge. This is the app-level setup for the selected route.
+Microsoft documents that omitting an explicit app selection queries all apps
+the user can access. Do not leave that broad default in this demo.
+
+App selection is not a new permission grant. Dataverse security still governs
+access. The current app spec includes only `lc_launch`; rendering related data
+in a PCF does not prove the agent can retrieve those related tables.
+Verify milestone, task, and update access through the selected knowledge route
+before promising a blocker summary. If required records are unavailable,
+stop and review the app's data scope rather than silently querying every app.
+
+### Not the same as App MCP
+
+Power Apps also documents a separate [App MCP and generated declarative-agent package](https://learn.microsoft.com/en-us/power-apps/maker/model-driven-apps/enable-your-app-copilot)
+route: **App MCP > Set up MCP**, save/publish the app, download the generated
+package, and deploy it through Teams or Microsoft 365 administration.
+It can expose interactive grids and forms, including write-capable forms.
+
+That route is **not required for this episode's Agent Builder knowledge
+configuration**. Do not describe it as the Work IQ MCP server or silently
+substitute it for the chosen route. Using it would require a separately
+reviewed configuration, deployment, and demo scope. The embedded Copilot
+pane in a model-driven app is not the enablement step either.
+
+## 3. Configure the declarative agent
+
+Use the documented [Agent Builder knowledge route](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/agent-builder-add-knowledge#dynamics-365-and-power-apps-data).
+The product documentation confirms this capability; it does not prove that
+the target tenant has the same UI or that this app is discoverable there.
+
+1. In **Microsoft 365 Copilot**, choose **New agent**, then
+   **Skip to configure**. Name it **Launch Readiness Checker**.
+2. Add the relevant Dynamics 365 and Power Apps knowledge and explicitly
+   select **Launch Control Demo**. Verify the selected app in **Knowledge**.
+   If the option or app is absent, capture the blocker and stop.
+3. Use [`launch-readiness-agent-instructions.md`](launch-readiness-agent-instructions.md).
+   These instructions use business knowledge, not Studio MCP tool names,
+   SQL snippets, or fixed environment identifiers.
+4. Exclude unrelated web, file, email, Teams, and people sources. Turn on
+   **Only use specified sources** if available. This prioritizes configured
+   sources; it does not block all general AI knowledge or enforce row security.
+5. Test on **Try it**. Keep sharing and publication separate. If showing a
+   saved agent outside Try it, first confirm and approve its intended
+   audience, save it, reopen it, and repeat the test in that exact surface.
+
+Microsoft documents Dataverse **knowledge** as read access without create,
+update, or delete capabilities. This is different from the old Studio
+rehearsal's `do_action` tool, which could also invoke mutations. Do not copy
+that MCP tool configuration into this episode or claim instructions enforce
+a technical read-only policy.
+
+## 4. Rehearse and record the result
+
+Start with the app and a fresh declarative-agent conversation. Ask:
+
+> What's the current status, and what is blocking it?
+
+The instructions identify the prepared launch. Use the broader catch-up and
+readiness questions as off-camera checks, not extra mandatory video beats:
+
+- "Catch me up on the Q3 Widget Launch."
+- "Is the Q3 Widget Launch ready to launch?"
+
+Compare the answer with current source records. An empty gate verdict means
+**no recorded verdict**, not approval and not proof that a review never ran.
+Do not paste the expected answer or old Studio transcript into the agent.
+Test a missing-record question and verify that it does not invent evidence.
+
+Close with the same source record and a brief comparison: this declarative
+agent extends Microsoft 365 Copilot; Episode 14 explores Studio's additional
+configuration and control. Do not present a second Studio build here.
+
+Use [`demo-arc.md`](demo-arc.md) for the shot list, acceptance criteria, and
+capture boundaries. The [narration](voiceover-script.md) and
+[LinkedIn script](linkedin-voiceover-script.md) are provisional until new
+footage supplies measured cue times.
+
+## Developer setup
+
+For a new authorized sandbox, review the target in the ignored root `.env`.
+Preview each change before applying it. Existing prepared environments do not
+need to be rebuilt or reseeded for a read-only take.
 
 ```powershell
-npm run build --prefix apps/launch-readiness-control
-
-# Confirm the target in the ignored root .env before provisioning.
+$env:PYTHONIOENCODING = "utf-8"
+npm run build --prefix apps\launch-readiness-control
 python scripts\build_launchcontrol_schema.py --scope unified --with-lookups --dry-run
-python scripts\build_launchcontrol_schema.py --scope unified --with-lookups
 python scripts\python\seed_ep12_demo.py --dry-run
-python scripts\python\seed_ep12_demo.py --apply
 python .github\skills\dataverse-model-driven-app-builder\scripts\model_app_builder.py `
   --spec episodes\ep-12-copilot-chat-agent-builder\launch-control-app.json --dry-run
-python .github\skills\dataverse-model-driven-app-builder\scripts\model_app_builder.py `
-  --spec episodes\ep-12-copilot-chat-agent-builder\launch-control-app.json --apply
 ```
 
-For sandbox deployment, use the `dataverse-pcf-deployer` skill and the
-existing `apps/launch-readiness-control/deploy.py` helper. Its
-`--import-control` and `--apply-form` options publish changes to the configured
-environment. Confirm the target and review changes before running either.
-The form helper adds the standard Dataverse timeline when the Launch main form
-does not already contain one. The Episode 12 seed is marker-scoped and
-idempotent; do not substitute the older broad seed scripts.
+After approval, the schema command without `--dry-run`, seed `--apply`, and
+app builder `--apply` provision the reviewed changes. Use the
+`dataverse-model-driven-app-builder` and `dataverse-pcf-deployer` skills for
+app/form deployment. Do not use broad seed or cleanup scripts. These helpers
+do not enable Work IQ or create a Microsoft 365 declarative agent.
 
-## Section 2: Build the agent experience
+### Prompt for a coding agent
 
-Direct Dataverse grounding was removed after fresh previews invoked generic
-organization and table-metadata discovery outside the configured demo scope.
-A read-only Copilot Studio workflow now has fixed environment/table selections
-and filters for the demo launch and related records. The workflow appears in
-Copilot Studio as **Respond to the agent and 4 more**. Its four individual
-data actions returned the expected launch, milestones, tasks, and status
-updates, but the workflow response and agent invocation have not been verified.
-The workflow remains an unused draft with no verified end-to-end run.
-The Launch Readiness Checker now has **Work IQ (Preview) only** and remains
-unpublished. Direct Dataverse MCP was removed; its earlier successful reads
-are not evidence for Work IQ.
+> Prepare Episode 12 around Business Applications in Work IQ enablement and
+> a declarative Launch Readiness Checker in Microsoft 365 Copilot. Inspect the
+> existing app and scoped demo data. Verify the pilot and environment settings
+> without toggling already-enabled settings. In Agent Builder, use Dynamics
+> 365 and Power Apps knowledge with the intended app selected explicitly.
+> Test one read-only answer and a missing-data case against source records.
+> Report unavailable options or related tables instead of substituting Studio,
+> a workflow, direct Dataverse MCP, or App MCP. Keep publication and sharing
+> separately approved. Record only the experience actually verified.
 
-The workflow workaround is no longer the chosen implementation. The deliverable
-is the Launch Readiness Checker agent with a verified business-data connection,
-not a workflow. Leave the unused workflow unpublished. Investigate supported
-Work IQ business-app grounding, not direct Dataverse MCP. A saved routing
-instruction starts discovery with `do_action` on `/businessapps/me`.
-A pre-enablement Preview returned HTTP 200 from that discovery call but no matching
-Launch Control app in its results. The agent reported that it could not
-verify launch facts instead of using unrelated results. This verifies the
-discovery invocation and missing-source response, not successful grounding.
-The user subsequently approved and enabled **Turn on Business Applications
-in Work IQ** in the Launch Control sandbox. A fresh admin-center page confirms
-that it, Dataverse intelligence, and supporting search indexing are on.
-This feature can incur Copilot Credit usage; Microsoft 365 admin consent may
-also be required. Repeat discovery after enablement rather than assuming
-this alone resolves app visibility. The first post-enablement Preview now
-discovers the app and retrieves the fictional launch, three milestones,
-four tasks, two updates, and referenced owners through Work IQ environment
-SELECT queries. The answer reports AtRisk and the partner-certification blocker.
-This is Work IQ evidence, not the earlier direct Dataverse MCP test.
+## Existing footage and series links
 
-The app-builder defect is repaired: table components now use the table's own
-OData type and resolved primary-key attribute, and verification compares exact
-metadata IDs rather than table counts. The erroneous generic `entity` component
-was removed from this demo app. App validation, an idempotent rebuild, and the
-exported solution all confirm `lc_launch`; existing navigation, form, and view
-are preserved. Work IQ now exposes the correct app table. Related records are
-still retrieved through Work IQ's matching environment, not another MCP server.
+The existing **6:06 full recording** and **1:37 excerpt** show an unpublished
+Copilot Studio draft using Work IQ MCP. They are **superseded for Episode 12**,
+not declarative-agent evidence. Their original private videos, subtitles,
+and Library ZIP remain unchanged. Their
+[provenance and timed scripts](../ep-14-copilot-studio/studio-rehearsal.md)
+are retained as Episode 14 reference material, not a completed Episode 14.
 
-The saved agent instructions require exact-code and related-record filters,
-task-count reconciliation, and no inferred review history from empty gate
-fields. The three ordinary prompts were rerun in sequence in a fresh draft
-Preview after repair. They correctly report AtRisk, the partner-certification
-blocker, four unfinished tasks (one Blocked, one InProgress, two NotStarted),
-and no recorded gate verdict. Inspected queries use the exact demo code and
-returned launch ID. This verifies draft Preview behavior, not publication or
-the Microsoft 365 `@` picker.
-
-A real read-only draft run has now been recorded using the supplied
-`demo-recording-and-narration` skill. The verified capture is one app window
-cropped to this session's shared browser panel, excluding the chat and address
-bar. Private session artifacts include the 6:53.733 raw take, 5:08 clean
-chaptered cut, and 6:06 backup edition with opening/closing slides, a value
-panel, synthetic-voice timing preview, and read-along subtitles.
-
-The recording preserves every AI response wait. Catch-up took about 106 seconds
-through four seconds of answer stability, the status follow-up about 12 seconds,
-and readiness about 32 seconds. These are observations from one run, not product
-performance claims. The status answer explicitly reused the recent read;
-readiness refreshed the launch/gate fields and identified the related evidence
-as older. Do not present every answer as a fresh retrieval.
-
-Full-file decoding, chapter lengths, slide comparison, panel timing, narration
-fit, and subtitle synchronization passed. Contact sheets and selected full-size
-frames were inspected. Presenter review of the complete video is still pending.
-The agent remains unpublished, no business records were written, and no external
-upload or access grant has occurred. Both review previews and the verified
-`episode12-private-review.zip` package are delivered locally through this
-session's Library. Presenter review is the next human step, not a claim made by
-the automated checks. External sharing would require a destination and named
-reviewers. See [the timed narration](voiceover-script.md) and
-[the recording handoff](demo-arc.md#recording).
-
-The original under-two-minute requirement also has a separate
-[LinkedIn voiceover](linkedin-voiceover-script.md) and a **1:37** local video
-excerpt, with silent and synthetic-voice editions plus subtitles. The excerpt
-clearly discloses that earlier catch-up turns are omitted. It retains the
-entire readiness response wait and does not replace the full demo.
-Its narration fit, subtitle synchronization, full-file decoding, exact duration,
-and source-video fidelity are verified. No LinkedIn post has been made.
-
-### Prompt
-
-> Help me set up a Launch Readiness Checker for the Launch Control demo. First
-> confirm which business data source and operations this tenant actually
-> supports. Use the readiness guidance in this repository, and tell me what
-> still needs configuration before I try it.
-
-### Result
-
-- The agent uses a verified, explicitly scoped business-data connection and
-  approved Launch Control data.
-- Readiness uses the configured authoritative operation, not a guessed score.
-- Optional follow-up work uses the
-  [Launch Follow-up Plan](../../business-skills/launch-follow-up-plan.md):
-  preview exact changes, wait for approval, and read results back.
-- If the target connection or write operation is unavailable, report the
-  blocker and keep the demo read-only.
-
-### Run it
-
-Use [`launch-readiness-agent-instructions.md`](launch-readiness-agent-instructions.md)
-as starting instructions. Keep Work IQ as the sole MCP server, with only
-`do_action`, `get_schema`, `search_paths`, and `fetch` selected for the
-business-app test. Disable broad `ask`, agent delegation discovery, and
-create/update/delete tools. `do_action` is needed for business-app discovery
-but is also capable of writes: this tool selection is not a server-enforced
-read-only boundary. Review action targets and allow only discovery or
-confirmed read operations. Do not publish the agent. Do not paste environment
-URLs, user IDs, or credentials into committed files or recording prompts.
-
-## Section 3: Rehearse the user flow
-
-Start in the model-driven Launch Control app with the fictional **Q3 Widget
-Launch** record. Use a fresh Copilot conversation and simple prompts:
-
-1. **"Catch me up on the Q3 Widget Launch."**
-2. **"What's the current status, and what is blocking it?"**
-3. After the verified data connection is attached, select the readiness agent from
-   the `@` picker, then ask:
-   **"Is the Q3 Widget Launch ready to launch?"**
-4. Open Agent Builder and show the agent's verified business-data connection.
-   Return to the conversation and compare its answer with the Launch record
-   and readiness evidence.
-5. If the separate write path has been confirmed, ask:
-   **"Let's address the open blockers."** Review its exact proposed tasks and
-   status update. Approve only the reviewed plan with:
-   **"Looks good. Go ahead."**
-
-### Pass criteria
-
-- The answer matches current source records and explicitly identifies unknowns.
-- The agent's readiness result comes from the configured authoritative source.
-- Each write, if enabled, was previewed, explicitly approved, and verified by
-  read-back before it is shown as successful.
-- Follow-up work does not change the launch's readiness verdict.
-
-### Stop criteria
-
-Stop if the supported route, source, operation, permission, target record, or
-write effect is unclear. Never simulate a connection or claim an unverified
-write. Use the read-only version if the write path is not supported.
-
-## Section 4: Record the outcome
-
-Return to the same Launch in the app. Refresh the form and open the PCF's
-**Activity** view to show the persisted status updates. If follow-up tasks were
-created, show those records as well. Run the readiness check again and report
-its actual result. The agent must not set the launch to Ready or change its
-readiness decision to make the closing shot look better.
-
-Use the ordered setup, rehearsal, recording, and cleanup instructions in
-[`demo-arc.md`](demo-arc.md). Keep raw captures and recording tools local;
-publish only sanitized, approved materials.
-
-## Pre-record checklist
-
-- [ ] The sandbox, demo account, and fictional Launch record are confirmed.
-- [ ] The Launch Readiness PCF builds and the Activity view renders in the app.
-- [ ] The agent's business-data connection is scoped, read-only, and tested
-      end to end without access outside the approved demo scope.
-- [ ] The readiness answer matches source evidence and reports missing
-      quality-gate results without inventing a score or verdict.
-- [ ] Any write path has separate approval, successful read-back, and cleanup.
-- [ ] No credentials, personal information, tenant identifiers, or unrelated
-      notifications appear in the recording.
-
-## Supporting material
-
-- [Build, rehearse, and record runbook](demo-arc.md)
-- [Agent Builder instructions](launch-readiness-agent-instructions.md)
-- [Launch Follow-up Plan business skill](../../business-skills/launch-follow-up-plan.md)
-- [LinkedIn video script](voiceover-script.md)
-- [Deferred Web IQ storyline](DEFERRED-DRAFT.md), not part of this episode's
-  active demo.
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
 - [Episode 13: Cowork](../ep-13-cowork/README.md)
+- [Episode 14: Copilot Studio](../ep-14-copilot-studio/README.md)
+- [Deferred Web IQ storyline](DEFERRED-DRAFT.md), not the active build.

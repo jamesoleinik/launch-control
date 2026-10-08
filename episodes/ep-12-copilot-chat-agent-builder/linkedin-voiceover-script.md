@@ -1,66 +1,87 @@
-# Episode 12: short LinkedIn voiceover
+# Episode 12 LinkedIn voiceover: from enablement to a declarative agent
 
-**Duration:** 1:37, below the two-minute target.
-**Format:** A clearly labeled excerpt of the full recorded draft conversation,
-not a fresh chat. Earlier catch-up and status turns are omitted as whole turns.
-The included readiness response retains its full original wait.
-**Timing:** Cues use the 1:13 excerpt cut. Add 12 seconds for the opening slide.
-The closing slide holds for 12 seconds. Synthetic audio is a timing preview.
+**Status:** Provisional script and shot budget, not a completed video.
+**Target:** 1:50 including an eight-second opening, a 90-second demo cut,
+and a twelve-second close. Cue times below are targets on that demo cut;
+add eight seconds for the planned edition. Replace them with measured times
+after recording. The actual agent response may require a different edit.
+
+This is the new environment/app/declarative-agent story, not narration for
+the existing 1:37 Studio excerpt. That excerpt and its
+[original narration](../ep-14-copilot-studio/studio-rehearsal-linkedin-voiceover.md)
+remain unchanged historical evidence.
 
 ## The script at a glance
 
+These are provisional shot-budget times, not measured recording cues.
+
 | Section | Script |
 | --- | --- |
-| **Set the stage** (0:00) | I've already asked this agent for a catch-up through Work IQ. This recorded excerpt checks the verdict. The earlier catch-up isn't shown. |
-| **1. Start with the source** (0:12) | I start with the source. The launch still has an open blocker. |
-| **2. Ask about readiness** (0:19) | Now I ask whether the launch is ready. The agent checks the launch and quality-gate fields again. Related evidence comes from the earlier catch-up. I'm keeping the full response wait in this excerpt. The agent's explanation is not a launch approval. There is no recorded verdict. It doesn't invent one. |
-| **3. Show Work IQ** (1:12) | Work IQ is its only tool source. This isn't a workflow. |
-| **4. Compare the source** (1:19) | The source still shows the same prepared updates. |
-| **Close** (1:25) | The agent explains evidence, not approval. All data is simulated. No records were changed. |
+| **Set the stage** (0:00) | My launch data lives in Power Apps. I want answers inside Microsoft 365 Copilot. |
+| **1. Check enablement** (0:08) | First I check Business Applications in Work IQ for my pilot users. Then I check the environment. Work IQ is already enabled here. |
+| **2. Select the app** (0:26) | I select Launch Control as the agent's business knowledge. These sample records were prepared earlier. |
+| **3. Configure the declarative agent** (0:38) | This is a declarative agent. I supply instructions and knowledge. Copilot handles the orchestration. |
+| **4. Ask one question** (0:52) | Now I ask what's blocking the launch. This connection reads business data without changing it. |
+| **5. Verify the answer** (1:27) | I compare the answer with the app. The blocker is evidence, not a launch approval. |
+| **Close** (1:38) | Copilot Studio comes later for more integration and control. Today I extended Copilot with business knowledge. All data is simulated. |
 
 ## Set the stage (over the opening slide)
 
-> I've already asked this agent for a catch-up through Work IQ. This recorded excerpt checks the verdict. The earlier catch-up isn't shown.
+> My launch data lives in Power Apps. I want answers inside Microsoft 365 Copilot.
 
 ## Script
 
-### 1. Start with the source (0:00-0:07)
+### 1. Check enablement (0:00-0:18)
 
-*On screen:* The prepared launch's overview and open blocker.
+*On screen:* Pilot availability in Microsoft 365, then Work IQ enabled in the
+intended Power Platform environment. Do not disable and re-enable for filming.
 
-- **0:00** I start with the source. The launch still has an open blocker.
+- **0:00** First I check Business Applications in Work IQ for my pilot users.
+- **0:09** Then I check the environment. Work IQ is already enabled here.
 
-### 2. Ask about readiness (0:07-1:00)
+### 2. Select the app (0:18-0:30)
 
-*On screen:* The unchanged prompt, "Is the Q3 Widget Launch ready to launch?"
-The agent reads launch/gate fields through Work IQ. Its complete response wait
-is preserved. The final answer is scrolled into view before the result cue.
+*On screen:* Prepared Launch Control record, then that app selected under
+Dynamics 365 and Power Apps knowledge in Agent Builder.
 
-- **0:08** Now I ask whether the launch is ready.
-- **0:18** The agent checks the launch and quality-gate fields again. Related evidence comes from the earlier catch-up.
-- **0:32** I'm keeping the full response wait in this excerpt. The agent's explanation is not a launch approval.
-- **0:54** There is no recorded verdict. It doesn't invent one.
+- **0:18** I select Launch Control as the agent's business knowledge. These sample records were prepared earlier.
 
-### 3. Show Work IQ (1:00-1:07)
+### 3. Configure the declarative agent (0:30-0:44)
 
-*On screen:* Launch Readiness Checker in Build, with Work IQ as its only MCP.
+*On screen:* Launch Readiness Checker instructions in Microsoft 365 Agent
+Builder, not the old Studio agent.
 
-- **1:00** Work IQ is its only tool source. This isn't a workflow.
+- **0:30** This is a declarative agent. I supply instructions and knowledge. Copilot handles the orchestration.
 
-### 4. Compare the source (1:07-1:13)
+### 4. Ask one question (0:44-1:19)
 
-*On screen:* The same prepared updates in Launch Control's custom Activity view.
+*On screen:* Fresh Try it conversation. Ask "What's the current status, and
+what is blocking it?" Keep its real wait. This window is not a latency claim.
 
-- **1:07** The source still shows the same prepared updates.
+- **0:44** Now I ask what's blocking the launch. This connection reads business data without changing it.
+
+### 5. Verify the answer (1:19-1:30)
+
+*On screen:* Completed answer, then matching source records. Use this copy
+only after the declarative-agent result passes the comparison.
+
+- **1:19** I compare the answer with the app. The blocker is evidence, not a launch approval.
 
 ## Close (over the closing slide)
 
-> The agent explains evidence, not approval. All data is simulated. No records were changed.
+> Copilot Studio comes later for more integration and control. Today I extended Copilot with business knowledge. All data is simulated.
 
-## Publication boundary
+## Timing and publication boundary
 
-This is a local review artifact, not a LinkedIn post. Review the complete
-short edition before any separately authorized upload. Do not claim a fresh
-conversation, a published Microsoft 365 experience, or a technically enforced
-read-only connection. The [full demo narration](voiceover-script.md) remains
-available with all three prompts and their original waits.
+At roughly 140 spoken words per minute, this copy leaves room for quiet
+response time. Word count alone does not prove the complete video fits.
+Measure the new run and verify the final file is below 120 seconds.
+
+If the full wait does not fit, shorten setup and narration first. Otherwise
+produce an explicitly labeled result excerpt that omits the interaction and
+retains the full run separately. Do not speed up the response, conceal a cut
+inside the wait, or reuse a Studio answer. Retest and retime after any edits.
+
+Generate narration audio and subtitles only against the new cut. The
+under-two-minute duration, spoken fit, and footage are not yet verified.
+No publication or external upload is authorized by this script.
