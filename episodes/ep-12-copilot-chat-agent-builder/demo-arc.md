@@ -193,8 +193,8 @@ mean absolute error is below 1.4 on a 0-255 scale. Demo-region SSIM is 0.998939
 outside the closing transition, all twenty panel transitions match their
 scheduled frames, and no narration line exceeds its time window.
 Contact sheets and selected full-size frames have been inspected. Full
-presenter playback/review remains pending, as do an approved private destination
-and named reviewers. Automated decoding and sampled inspection are not a
+presenter playback/review remains pending. Any external sharing would need an
+approved private destination and named reviewers. Automated decoding and sampled inspection are not a
 claim that every frame has received human review.
 
 The [short LinkedIn narration](linkedin-voiceover-script.md) accompanies a
@@ -205,6 +205,15 @@ remain contiguous at original speed. The resulting video is exactly 97 seconds
 with six chapters; full decoding and narration/SRT checks passed. Demo-region
 SSIM is 0.998853 outside the closing transition. The full demo is unchanged.
 Publication to LinkedIn is not part of this local artifact creation.
+
+### Local review delivery
+
+Both voiced previews and `episode12-private-review.zip` are attached to this
+session's Library. The ZIP includes both silent editions, both synthetic-voice
+previews, both subtitle files, both narration scripts, and two contact sheets.
+Its ten files were verified byte-for-byte against the reviewed local artifacts.
+This completes the local handoff without an external upload or new access
+grant. Presenter acceptance and any later publication remain human decisions.
 
 - Capture a single, visible application window rather than the full desktop.
   Keep the same window visible throughout. Do not minimize it or switch the

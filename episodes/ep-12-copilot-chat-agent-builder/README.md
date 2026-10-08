@@ -136,9 +136,12 @@ as older. Do not present every answer as a fresh retrieval.
 Full-file decoding, chapter lengths, slide comparison, panel timing, narration
 fit, and subtitle synchronization passed. Contact sheets and selected full-size
 frames were inspected. Presenter review of the complete video is still pending.
-The agent remains unpublished, no business records were written, and no upload
-or access grant has occurred. Private sharing still needs the destination and
-named reviewers. See [the timed narration](voiceover-script.md) and
+The agent remains unpublished, no business records were written, and no external
+upload or access grant has occurred. Both review previews and the verified
+`episode12-private-review.zip` package are delivered locally through this
+session's Library. Presenter review is the next human step, not a claim made by
+the automated checks. External sharing would require a destination and named
+reviewers. See [the timed narration](voiceover-script.md) and
 [the recording handoff](demo-arc.md#recording).
 
 The original under-two-minute requirement also has a separate
