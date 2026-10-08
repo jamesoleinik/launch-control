@@ -3,20 +3,22 @@
 > *Our launch data already lives in a business app. How do I make it useful
 > in Microsoft 365 Copilot without building a separate agent runtime?*
 
-**Status:** Revised episode specification. Environment enablement and the
-model-driven app were verified earlier; the declarative-agent configuration,
-end-to-end answer, and replacement recording still need live verification.
+**Status:** Revised episode specification. Tenant audience, environment
+enablement, and the published app are verified. The app's M365 Copilot setting
+is currently Default and its M365 search model is inactive. App enablement
+and publication await approval; discovery, the declarative-agent answer,
+and the replacement recording remain unverified.
 **Season:** Business Apps in Work IQ
 **Hero surfaces:** Microsoft 365 admin center, Power Platform admin center,
 Launch Control, and Agent Builder in Microsoft 365 Copilot.
-**Result target:** Enable the environment, select the app as business
-knowledge, and ask a focused declarative agent for launch evidence.
+**Result target:** Enable the environment and app indexing, select the app
+as business knowledge, and ask a focused declarative agent for launch evidence.
 
 ## The arc
 
 ```text
 Enable the pilot and environment
-  -> Verify the app and select it as knowledge
+  -> Enable app indexing and select the app as knowledge
   -> Configure a declarative agent in Microsoft 365 Copilot
   -> Ask one launch question and compare the source
   -> Explain when to choose Copilot Studio in Episode 14
@@ -62,11 +64,12 @@ Use the isolated demo environment, not a production environment.
 3. If already enabled, show and explain the existing setting. Do not turn
    it off and back on to manufacture enablement footage.
 
-The environment was already enabled with the user's approval. That does not
-establish the current Microsoft 365 pilot audience or the declarative agent's
-app access. Verify both in the new rehearsal.
+The environment was already enabled with the user's approval. The current
+tenant audience includes All users; leave that existing scope unchanged.
+Neither setting proves the declarative agent can discover this app. Recheck
+the intended user's access in the new rehearsal.
 
-## 2. Verify the app and include it as knowledge
+## 2. Enable the app and include it as knowledge
 
 The app in this episode is **Launch Control Demo**, with the fictional
 **Q3 Widget Launch** identified by `EP12-DEMO-01`. The model-driven app spec
@@ -78,8 +81,24 @@ access. The app's table component must resolve to `lc_launch`, not the generic
 The custom PCF **Activity** view shows saved status updates; the standard
 Dataverse timeline is not a substitute for those records.
 
+Before selecting knowledge, follow the supported
+[app-level M365 Copilot setting](https://learn.microsoft.com/en-us/power-apps/maker/model-driven-apps/add-microsoft-365-copilot#enable-microsoft-365-copilot-in-a-single-model-driven-app):
+
+1. Open **Launch Control Demo** for editing in Power Apps.
+2. Open **Settings > Features > Enable M365 Copilot in model-driven apps**.
+   The live setting explains that enabling it supplies in-app chat and starts
+   indexing app data for queries from Microsoft 365 Copilot experiences.
+3. After approval, set this app to **On**, save the setting, and save/publish
+   the app. Do not enable every app or change unrelated settings.
+4. Reopen the setting and verify persistence, then check discovery in Agent
+   Builder. Saving the app is not proof that indexing or discovery is ready.
+
+The current app is set to **Default**, and its `M365_Primary_model` search
+definition is inactive. This is a diagnostic lead, not confirmed causality.
+Use the supported setting rather than directly activating a search-model row.
+
 In Agent Builder, include the intended app in **Dynamics 365 and Power Apps
-data** knowledge. This is the app-level setup for the selected route.
+data** knowledge. This selection is separate from enabling app indexing.
 Microsoft documents that omitting an explicit app selection queries all apps
 the user can access. Do not leave that broad default in this demo.
 
@@ -100,8 +119,9 @@ It can expose interactive grids and forms, including write-capable forms.
 That route is **not required for this episode's Agent Builder knowledge
 configuration**. Do not describe it as the Work IQ MCP server or silently
 substitute it for the chosen route. Using it would require a separately
-reviewed configuration, deployment, and demo scope. The embedded Copilot
-pane in a model-driven app is not the enablement step either.
+reviewed configuration, deployment, and demo scope. The M365 Copilot app
+setting above also enables embedded chat, but merely opening that chat pane
+does not configure or verify the declarative agent.
 
 ## 3. Configure the declarative agent
 
@@ -182,7 +202,9 @@ do not enable Work IQ or create a Microsoft 365 declarative agent.
 > Prepare Episode 12 around Business Applications in Work IQ enablement and
 > a declarative Launch Readiness Checker in Microsoft 365 Copilot. Inspect the
 > existing app and scoped demo data. Verify the pilot and environment settings
-> without toggling already-enabled settings. In Agent Builder, use Dynamics
+> without toggling already-enabled settings. Verify the app's M365 Copilot
+> indexing setting; obtain approval before changing and publishing it.
+> In Agent Builder, use Dynamics
 > 365 and Power Apps knowledge with the intended app selected explicitly.
 > Test one read-only answer and a missing-data case against source records.
 > Report unavailable options or related tables instead of substituting Studio,

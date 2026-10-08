@@ -19,7 +19,7 @@ These are provisional shot-budget times, not measured recording cues.
 | --- | --- |
 | **Set the stage** (0:00) | My launch data already lives in Power Apps. I want to ask about it inside Microsoft 365 Copilot. |
 | **1. Enable business knowledge** (0:10) | First I check that my pilot users can use Business Applications in Work IQ. Then I check Work IQ in the Power Platform environment. It's already enabled here. I leave that setting on. |
-| **2. Include the intended app** (0:40) | This is Launch Control. The sample records were prepared earlier. I select this app as business knowledge for my agent. Enabling the environment doesn't select the app for me. |
+| **2. Include the intended app** (0:40) | These sample records were prepared earlier. The app's Copilot setting enables indexing. Then I select Launch Control as my agent's business knowledge. App indexing and agent knowledge selection are separate steps. |
 | **3. Build a focused declarative agent** (1:05) | I give the Launch Readiness Checker a clear job: explain recorded status and blockers. This is a declarative agent. I supply instructions and knowledge. Microsoft 365 Copilot handles the orchestration. |
 | **4. Ask and wait for the evidence** (1:30) | Now I ask what's blocking the launch. I haven't pasted the answer into the chat. This knowledge connection provides read access. I'm not adding a workflow or a write tool. |
 | **5. Compare the answer with the app** (2:30) | I compare the answer with the source records. It identifies the blocker without inventing a launch approval. My team can follow the evidence back to the app. |
@@ -41,11 +41,13 @@ Features page. These are configuration checks, not a staged toggle.
 
 ### 2. Include the intended app (0:30-0:55)
 
-*On screen:* Launch Control's published app and prepared launch, then the
-explicitly selected Dynamics 365 and Power Apps knowledge in Agent Builder.
+*On screen:* Launch Control's M365 Copilot app setting, its published app,
+then explicitly selected Dynamics 365 and Power Apps knowledge in Agent
+Builder. Say "enabled" only after the approved setting is saved and published;
+app discovery must also pass before recording.
 
-- **0:30** This is Launch Control. The sample records were prepared earlier.
-- **0:40** I select this app as business knowledge for my agent. Enabling the environment doesn't select the app for me.
+- **0:30** These sample records were prepared earlier. The app's Copilot setting enables indexing.
+- **0:40** Then I select Launch Control as my agent's business knowledge. App indexing and agent knowledge selection are separate steps.
 
 ### 3. Build a focused declarative agent (0:55-1:20)
 

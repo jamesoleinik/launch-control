@@ -19,7 +19,7 @@ These are provisional shot-budget times, not measured recording cues.
 | --- | --- |
 | **Set the stage** (0:00) | My launch data lives in Power Apps. I want answers inside Microsoft 365 Copilot. |
 | **1. Check enablement** (0:08) | First I check Business Applications in Work IQ for my pilot users. Then I check the environment. Work IQ is already enabled here. |
-| **2. Select the app** (0:26) | I select Launch Control as the agent's business knowledge. These sample records were prepared earlier. |
+| **2. Select the app** (0:26) | App indexing is enabled. I select Launch Control as knowledge. These records were prepared earlier. |
 | **3. Configure the declarative agent** (0:38) | This is a declarative agent. I supply instructions and knowledge. Copilot handles the orchestration. |
 | **4. Ask one question** (0:52) | Now I ask what's blocking the launch. This connection reads business data without changing it. |
 | **5. Verify the answer** (1:27) | I compare the answer with the app. The blocker is evidence, not a launch approval. |
@@ -41,10 +41,11 @@ intended Power Platform environment. Do not disable and re-enable for filming.
 
 ### 2. Select the app (0:18-0:30)
 
-*On screen:* Prepared Launch Control record, then that app selected under
-Dynamics 365 and Power Apps knowledge in Agent Builder.
+*On screen:* Launch Control's M365 Copilot app setting, then that app selected
+under Dynamics 365 and Power Apps knowledge in Agent Builder. Use this line
+only after approved app enablement, publication, and discovery are verified.
 
-- **0:18** I select Launch Control as the agent's business knowledge. These sample records were prepared earlier.
+- **0:18** App indexing is enabled. I select Launch Control as knowledge. These records were prepared earlier.
 
 ### 3. Configure the declarative agent (0:30-0:44)
 

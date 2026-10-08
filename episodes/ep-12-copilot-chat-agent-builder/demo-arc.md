@@ -15,7 +15,7 @@ build; only a short comparison belongs here.
 |---|---|---|
 | Open | Title and prepared launch | The question matters because status and blockers live in the app |
 | Enable | Microsoft 365 pilot setting, then environment Features | The intended audience and environment are enabled, not merely an MCP tool attached |
-| Select the app | Published Launch Control app, then its selected Agent Builder knowledge | The intended business app is included explicitly |
+| Enable and select the app | App Settings > Features, published Launch Control app, then selected Agent Builder knowledge | App indexing is enabled and the intended business app is included explicitly |
 | Configure | Agent Builder instructions in Microsoft 365 Copilot | A declarative agent gives a repeatable question a focused purpose |
 | Ask | Fresh Try it conversation and one complete response | An actual answer grounded in the selected business data |
 | Compare and close | Source record, then declarative/Studio comparison | The facts match; Episode 14 adds the Studio-specific build |
@@ -32,7 +32,10 @@ that separate integration route.
    Save only approved changes. An already-enabled setting is a valid shot;
    say it is already enabled instead of staging a toggle.
 3. Verify the pilot can open the intended app and records. Do not use an
-   administrator's successful read as proof of another user's access.
+   administrator's successful read as proof of another user's access. Inspect
+   **Enable M365 Copilot in model-driven apps** in the app's Features settings.
+   Save/publish an approved change to On if needed, then verify persistence.
+   This app-level indexing prerequisite is separate from App MCP.
 4. Verify **Dynamics 365 and Power Apps data** is available in Agent Builder
    and select the intended app explicitly. If absent, record the limitation
    privately and stop this portion of the demo.
@@ -81,6 +84,7 @@ The PCF Activity view, not the empty standard timeline, shows the updates.
 ### Acceptance criteria
 
 - [ ] Pilot audience and environment setting are verified in the current UI.
+- [ ] App-level M365 Copilot indexing is enabled and published.
 - [ ] The selected app appears in Agent Builder knowledge; no all-app default.
 - [ ] The tested agent is declarative and uses the Microsoft 365 experience.
 - [ ] All required related records are available through that selected route.
