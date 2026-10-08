@@ -35,7 +35,10 @@ that separate integration route.
    administrator's successful read as proof of another user's access. Inspect
    **Enable M365 Copilot in model-driven apps** in the app's Features settings.
    Save/publish an approved change to On if needed, then verify persistence.
-   This app-level indexing prerequisite is separate from App MCP.
+   This app-level indexing prerequisite is separate from App MCP. If discovery
+   fails, inspect the associated semantic model's generation state using the
+   README's troubleshooting steps. A running regeneration is not a successful
+   knowledge-source test.
 4. Verify **Dynamics 365 and Power Apps data** is available in Agent Builder
    and select the intended app explicitly. If absent, record the limitation
    privately and stop this portion of the demo.

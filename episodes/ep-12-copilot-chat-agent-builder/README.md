@@ -3,11 +3,12 @@
 > *Our launch data already lives in a business app. How do I make it useful
 > in Microsoft 365 Copilot without building a separate agent runtime?*
 
-**Status:** Revised episode specification. Tenant audience, environment
-enablement, and the published app are verified. The app's M365 Copilot setting
-is currently Default and its M365 search model is inactive. App enablement
-and publication await approval; discovery, the declarative-agent answer,
-and the replacement recording remain unverified.
+**Status:** Tenant audience, environment enablement, and the published app
+are verified. The approved app setting is saved as On, and its M365 search
+model is now active. Agent Builder still does not discover the app.
+The semantic model reports failed generation for `lc_launch`; a supported
+regeneration has been started. A successful generation, declarative-agent
+answer, and replacement recording remain unverified.
 **Season:** Business Apps in Work IQ
 **Hero surfaces:** Microsoft 365 admin center, Power Platform admin center,
 Launch Control, and Agent Builder in Microsoft 365 Copilot.
@@ -93,9 +94,25 @@ Before selecting knowledge, follow the supported
 4. Reopen the setting and verify persistence, then check discovery in Agent
    Builder. Saving the app is not proof that indexing or discovery is ready.
 
-The current app is set to **Default**, and its `M365_Primary_model` search
-definition is inactive. This is a diagnostic lead, not confirmed causality.
+The app was previously set to **Default**, with an inactive
+`M365_Primary_model` search definition. After the approved change and
+publication, the setting persists as **On** and the model is **Active**.
+This fixed model activation, but did not immediately fix app discovery.
 Use the supported setting rather than directly activating a search-model row.
+
+If discovery still fails, inspect **Power Apps > Semantic models (preview)**
+and open the model associated with the app. Its **Configuration** page must
+contain the intended table, not the generic Entity table. In this rehearsal,
+`lc_launch` is present but reports that semantic data could not be generated.
+The supported [Regenerate command](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/regenerate-semantic-model)
+starts a queued job; it does not establish successful generation. Note that
+this command runs across semantic models in the environment, not just the
+model being viewed. Confirm the scope before using it, do not repeatedly
+submit while it is running, and verify the updated timestamp and generated
+content afterward. Microsoft documents initial generation as taking up to
+two hours and incremental changes as typically taking up to 30 minutes in
+the [semantic model overview](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/semantic-model-overview).
+Those are generation timings, not a guarantee of Agent Builder discovery.
 
 In Agent Builder, include the intended app in **Dynamics 365 and Power Apps
 data** knowledge. This selection is separate from enabling app indexing.
