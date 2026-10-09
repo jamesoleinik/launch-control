@@ -6,9 +6,9 @@
 **Status:** Tenant audience, environment enablement, and the published app
 are verified. The approved app setting is saved as On, and its M365 search
 model is now active. Agent Builder still does not discover the app.
-The semantic model reports failed generation for `lc_launch`; a supported
-regeneration has been started. A successful generation, declarative-agent
-answer, and replacement recording remain unverified.
+Semantic generation has succeeded: the model contains 13 items for
+`lc_launch`, including a generated table summary. App discovery,
+the declarative-agent answer, and replacement recording remain unverified.
 **Season:** Business Apps in Work IQ
 **Hero surfaces:** Microsoft 365 admin center, Power Platform admin center,
 Launch Control, and Agent Builder in Microsoft 365 Copilot.
@@ -103,7 +103,7 @@ Use the supported setting rather than directly activating a search-model row.
 If discovery still fails, inspect **Power Apps > Semantic models (preview)**
 and open the model associated with the app. Its **Configuration** page must
 contain the intended table, not the generic Entity table. In this rehearsal,
-`lc_launch` is present but reports that semantic data could not be generated.
+`lc_launch` initially reported that semantic data could not be generated.
 The supported [Regenerate command](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/regenerate-semantic-model)
 starts a queued job; it does not establish successful generation. Note that
 this command runs across semantic models in the environment, not just the
@@ -113,6 +113,10 @@ content afterward. Microsoft documents initial generation as taking up to
 two hours and incremental changes as typically taking up to 30 minutes in
 the [semantic model overview](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/semantic-model-overview).
 Those are generation timings, not a guarantee of Agent Builder discovery.
+The later retry confirmed 13 model items and a generated `lc_launch` summary,
+with the generation error cleared. Agent Builder still returned no matching
+app after a knowledge refresh. Do not regenerate a healthy model merely
+because app discovery remains unavailable.
 
 In Agent Builder, include the intended app in **Dynamics 365 and Power Apps
 data** knowledge. This selection is separate from enabling app indexing.
