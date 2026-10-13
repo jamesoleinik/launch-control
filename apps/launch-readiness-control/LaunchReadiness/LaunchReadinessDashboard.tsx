@@ -21,7 +21,7 @@ export interface LaunchReadinessDashboardProps {
 
 type BadgeColor = "brand" | "danger" | "important" | "informative"
     | "severe" | "subtle" | "success" | "warning";
-type DashboardTab = "overview" | "quality" | "risks";
+type DashboardTab = "overview" | "quality" | "risks" | "activity";
 
 export const LaunchReadinessDashboard: React.FC<LaunchReadinessDashboardProps> = ({
     data,
@@ -89,6 +89,11 @@ export const LaunchReadinessDashboard: React.FC<LaunchReadinessDashboardProps> =
                     label="Quality"
                     onClick={() => setActiveTab("quality")}
                 />
+                <DashboardTabButton
+                    active={activeTab === "activity"}
+                    label="Activity"
+                    onClick={() => setActiveTab("activity")}
+                />
             </nav>
 
             {activeTab === "overview" && (
@@ -108,6 +113,7 @@ export const LaunchReadinessDashboard: React.FC<LaunchReadinessDashboardProps> =
                     officialScore={officialScore}
                 />
             )}
+            {activeTab === "activity" && <ActivityView data={data} />}
         </section>
     );
 };
@@ -283,6 +289,45 @@ const QualityView: React.FC<{
                 </div>
             </div>
         )}
+    </div>
+);
+
+const ActivityView: React.FC<{ data: DashboardData }> = ({ data }) => (
+    <div className="lc-readiness-tab-content">
+        <article className="lc-readiness-panel">
+            <PanelTitle icon={<Icon>i</Icon>} title="Recent launch updates" />
+            {data.statusUpdates.length ? (
+                <ol className="lc-readiness-activity">
+                    {data.statusUpdates.map((update) => {
+                        const health = formatted(update, "lc_health");
+                        return (
+                            <li className="lc-readiness-activity-item" key={update.lc_statusupdateid}>
+                                <span
+                                    className={`lc-readiness-activity-marker lc-activity-${badgeColor(health)}`}
+                                    aria-hidden="true"
+                                />
+                                <div className="lc-readiness-activity-content">
+                                    <div className="lc-readiness-activity-heading">
+                                        <strong>{update.lc_title ?? "Launch update"}</strong>
+                                        <Badge appearance="tint" color={badgeColor(health)}>
+                                            {health}
+                                        </Badge>
+                                    </div>
+                                    {update.lc_postedat && (
+                                        <time dateTime={update.lc_postedat}>
+                                            {formatDateTime(update.lc_postedat)}
+                                        </time>
+                                    )}
+                                    <p>{update.lc_summary ?? "No update details were provided."}</p>
+                                </div>
+                            </li>
+                        );
+                    })}
+                </ol>
+            ) : (
+                <EmptySignal text="No launch updates have been recorded." />
+            )}
+        </article>
     </div>
 );
 

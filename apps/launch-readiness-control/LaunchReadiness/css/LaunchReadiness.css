@@ -300,6 +300,66 @@
     padding: 40px;
 }
 
+.lc-readiness-activity {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lc-readiness-activity-item {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 10px minmax(0, 1fr);
+    padding: 10px 0;
+}
+
+.lc-readiness-activity-item + .lc-readiness-activity-item {
+    border-top: 1px solid #edf0f4;
+}
+
+.lc-readiness-activity-marker {
+    background: #667085;
+    border: 2px solid #d0d5dd;
+    border-radius: 50%;
+    height: 8px;
+    margin-top: 3px;
+    width: 8px;
+}
+
+.lc-readiness-activity-marker.lc-activity-success { background: #107c10; }
+.lc-readiness-activity-marker.lc-activity-warning { background: #f0a30a; }
+.lc-readiness-activity-marker.lc-activity-danger { background: #d13438; }
+
+.lc-readiness-activity-content {
+    min-width: 0;
+}
+
+.lc-readiness-activity-heading {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.lc-readiness-activity-heading strong {
+    font-size: 12px;
+}
+
+.lc-readiness-activity-content time {
+    color: var(--lc-muted);
+    display: block;
+    font-size: 10px;
+    margin-top: 3px;
+}
+
+.lc-readiness-activity-content p {
+    color: #344054;
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 6px 0 0;
+    overflow-wrap: anywhere;
+}
+
 .lc-readiness-error {
     color: #a4262c;
 }

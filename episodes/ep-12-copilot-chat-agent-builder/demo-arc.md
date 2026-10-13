@@ -1,6 +1,8 @@
-# Episode 12 demo arc: enable, select the app, ask
+# Episode 12 demo arc: enable, explain the app, ask, verify
 
 **Production status:** Revised shot list, not a completed recording.
+The updated draft is saved and the glossary-inclusive regeneration is complete.
+Window capture is blocked until a probe matches the intended browser canvas.
 The earlier Studio videos are superseded for this episode. See the
 [Studio rehearsal record](../ep-14-copilot-studio/studio-rehearsal.md).
 
@@ -16,8 +18,9 @@ build; only a short comparison belongs here.
 | Open | Title and prepared launch | The question matters because status and blockers live in the app |
 | Enable | Microsoft 365 pilot setting, then environment Features | The intended audience and environment are enabled, not merely an MCP tool attached |
 | Enable and select the app | App Settings > Features, published Launch Control app, then selected Agent Builder knowledge | App indexing is enabled and the intended business app is included explicitly |
+| Explain the app | Four-table native evidence views/forms, semantic Overview and Glossary | Forms and views expose the evidence; five glossary terms clarify business meaning without embedding answers |
 | Configure | Agent Builder instructions in Microsoft 365 Copilot | A declarative agent gives a repeatable question a focused purpose |
-| Ask | Fresh Try it conversation and one complete response | An actual answer grounded in the selected business data |
+| Ask and follow up | Fresh Preview conversation, status question, then dedicated Tasks-view follow-up | Two actual source-cited responses; do not imply reliable one-shot task retrieval |
 | Compare and close | Source record, then declarative/Studio comparison | The facts match; Episode 14 adds the Studio-specific build |
 
 Do not show an App MCP package download as if it configured Agent Builder's
@@ -42,22 +45,38 @@ that separate integration route.
 4. Verify **Dynamics 365 and Power Apps data** is available in Agent Builder
    and select the intended app explicitly. If absent, record the limitation
    privately and stop this portion of the demo.
-5. Confirm the available related-record scope. The current app spec contains
-   only `lc_launch`; PCF access to tasks and updates does not establish
-   knowledge-source access. Do not broaden to every accessible app to get a
-   better answer.
-6. Apply the [declarative-agent instructions](launch-readiness-agent-instructions.md).
+5. Confirm the four-table scope: `lc_launch`, `lc_milestone`, `lc_task`, and
+   `lc_statusupdate`. Use the dedicated Episode 12 native forms and active
+   views. PCF access alone does not establish knowledge-source access.
+   Customize and publish before regenerating. The latest observed completed
+   model has 62 items, four tables, and five glossary terms. Sample rows are Off.
+   Do not regenerate again merely for filming or broaden to every accessible app.
+6. Use the saved [natural-language instructions](natural-language-instructions.txt).
    Exclude unrelated sources and write-capable tools. Keep the agent's
-   publication and sharing state explicit.
+   publication and sharing state explicit. The existing draft is named
+   Launch Readiness Checker; the experimental business-skill paragraph is removed.
+7. Show the five glossary definitions from the README. Explain the distinction
+   between a recorded risk and an explicitly blocked task, and between business
+   owner, record owner, and assignee. Do not credit glossary terms alone for
+   retrieval improvements.
 
 ## Rehearsal
 
-Use a fresh conversation in the actual Microsoft 365 Agent Builder **Try it**
+Use a fresh conversation in the actual Microsoft 365 Agent Builder **Preview**
 surface. Do not use the existing Studio draft, its transcript, or its timings.
 
-First ask **"What's the current status, and what is blocking it?"** The saved
-instructions identify the fictional launch. Measure from Send until the
-answer stops changing, then compare the answer with current app evidence.
+First ask **"What is the current status of Q3 Widget Launch, and what is
+blocking it?"** Then ask:
+
+> Use the Episode 12 Active Tasks view in Launch Control Demo to list the tasks
+> for Q3 Widget Launch. Show each task's status, blocked flag, recorded blocker
+> reason, assignee, and due date. Cite the source records and identify any fields
+> you cannot retrieve.
+
+Measure each turn from Send until the answer stops changing for four seconds.
+Compare both responses with current app evidence. A starter button fills the
+composer; explicitly click Send. Do not reopen the canvas URL mid-response,
+because doing so resets this preview.
 
 Off camera, also ask **"Catch me up on the Q3 Widget Launch."** and
 **"Is the Q3 Widget Launch ready to launch?"** Test a deliberately nonexistent
@@ -82,26 +101,34 @@ do not insert these facts into the agent's knowledge or instructions.
 The launch name says Q3 while the prepared release window says Q4 2026 with
 a December target. Do not silently correct the record or conceal the
 inconsistency. Empty gate fields do not establish whether a review ever ran.
-The PCF Activity view, not the empty standard timeline, shows the updates.
+The dedicated Status Updates view and form expose the saved updates. The PCF
+Activity view also displays them; the empty standard timeline is not their source.
 
 ### Acceptance criteria
 
-- [ ] Pilot audience and environment setting are verified in the current UI.
-- [ ] App-level M365 Copilot indexing is enabled and published.
-- [ ] The selected app appears in Agent Builder knowledge; no all-app default.
-- [ ] The tested agent is declarative and uses the Microsoft 365 experience.
-- [ ] All required related records are available through that selected route.
-- [ ] The answer agrees with current source records and names its evidence.
-- [ ] Task counts reconcile; missing fields and stale evidence are explicit.
-- [ ] The nonexistent-record check returns an honest limitation.
-- [ ] No write, publication, sharing, or background execution is implied.
+- [x] Pilot audience and environment setting are verified in the current UI.
+- [x] App-level M365 Copilot indexing is enabled and published.
+- [x] The selected app appears in Agent Builder knowledge; no all-app default.
+- [x] The tested agent is declarative and uses the Microsoft 365 experience.
+- [x] Four-table semantics regenerated after the five glossary terms were saved.
+- [x] The two-turn rehearsal returns the launch and all four task records.
+- [x] Explicit blocker fields match the native source form.
+- [x] Task counts reconcile and missing blocker reasons are reported explicitly.
+- [x] The nonexistent-record/source-override check returns an honest limitation.
+- [x] No write, publication, sharing, or background execution is implied.
+- [ ] A new capture probe visibly matches the Episode 12 browser panel.
+- [ ] The actual recorded take passes source comparison and media review.
+
+The latest first turn also retrieved the explicit blocked task, unlike the
+earlier trial. Do not promise repeatable one-shot retrieval. Preserve the
+two-turn demo and disclose the citation/owner-label limitations in the README.
 
 If any criterion fails, report the exact gap. Do not replace the response
 with Studio output, an uploaded answer file, or a narration-only success.
 
 ## Recording
 
-Use the supplied `demo-recording-and-narration` skill. Record one visible
+Use the supplied `demo-recording-and-narration` recording scripts. Record one visible
 application window cropped to the shared browser panel. Rediscover the
 window handle and verify a probe frame before capture; old capture coordinates
 and handles are not reusable evidence. Exclude account details, environment
@@ -111,19 +138,20 @@ Record the ordered beats above and keep an event log. Settings already enabled
 must be described as such. A navigation cut can shorten the setup, but must
 not imply a setting changed when it did not.
 
-Keep the prompt, response wait, and final answer contiguous at original
-speed. Show the complete answer before returning to the source. Record the
-current Activity entries without crediting the declarative agent for creating
+Keep each prompt, response wait, and final answer contiguous at original
+speed. Show both complete answers before returning to the source. Record the
+current saved updates without crediting the declarative agent for creating
 them. No business records should change in this take.
 
 ### Under-two-minute edition
 
 The [LinkedIn narration](linkedin-voiceover-script.md) targets roughly
 110 seconds, but that is a shot budget, not a measured video duration.
-Use one question. If the actual wait exceeds the available time, shorten
-setup/navigation and spoken copy. If it still cannot fit, label a separate
-result excerpt that omits the interaction, rather than accelerating the AI
-or presenting an omitted wait as continuous. Keep the full run separately.
+Plan a clearly labelled **result excerpt from a two-turn Preview conversation**.
+Show completed responses rather than implying both full interactions fit.
+The opening, value panel, and narration must identify the excerpt. Keep the
+full run separately at original speed; never accelerate either response wait
+or present an omitted wait as continuous.
 
 The [main narration](voiceover-script.md) provides the same story with room
 for the complete setup and response. It has no final timestamps until the

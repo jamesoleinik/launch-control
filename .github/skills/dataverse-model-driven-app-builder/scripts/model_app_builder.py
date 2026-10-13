@@ -160,6 +160,8 @@ def resolve(
     dict[str, Any],
     dict[str, str],
     dict[str, str],
+    dict[str, str],
+    dict[str, str],
 ]:
     apps = dv.rows(
         "appmodules?$select=appmoduleid,appmoduleidunique,name,uniquename,"
@@ -182,6 +184,8 @@ def resolve(
     if len(solutions) != 1 or solutions[0].get("ismanaged"):
         raise RuntimeError("The target must be exactly one unmanaged solution")
     entities: dict[str, str] = {}
+    forms: dict[str, str] = {}
+    views: dict[str, str] = {}
     for entry in spec["navigation"]:
         table = entry["table"]
         metadata = dv.request(
@@ -190,6 +194,31 @@ def resolve(
             f"'{quote(table)}')?$select=MetadataId,LogicalName",
         ).json()
         entities[table] = metadata["MetadataId"]
+        if entry.get("form"):
+            form_rows = dv.rows(
+                "systemforms?$select=formid,name,objecttypecode,type"
+                f"&$filter=objecttypecode eq '{quote(table)}' "
+                f"and name eq '{quote(entry['form'])}' and type eq 2"
+            )
+            if len(form_rows) != 1:
+                raise RuntimeError(
+                    f"Expected exactly one main form {entry['form']} for "
+                    f"{table}; found {len(form_rows)}"
+                )
+            forms[table] = form_rows[0]["formid"]
+        if entry.get("view"):
+            view_rows = dv.rows(
+                "savedqueries?$select=savedqueryid,name,returnedtypecode,"
+                "querytype,isdefault"
+                f"&$filter=returnedtypecode eq '{quote(table)}' "
+                f"and name eq '{quote(entry['view'])}'"
+            )
+            if len(view_rows) != 1:
+                raise RuntimeError(
+                    f"Expected exactly one public view {entry['view']} for "
+                    f"{table}; found {len(view_rows)}"
+                )
+            views[table] = view_rows[0]["savedqueryid"]
     workflows: dict[str, str] = {}
     for name in spec.get("processes", []):
         rows = dv.rows(
@@ -208,6 +237,8 @@ def resolve(
         solutions[0],
         entities,
         workflows,
+        forms,
+        views,
     )
 
 
@@ -254,7 +285,7 @@ def ensure_solution_component(
 
 
 def apply(dv: Dataverse, spec: dict[str, Any]) -> None:
-    app, site_map, _, entities, workflows = resolve(dv, spec)
+    app, site_map, _, entities, workflows, forms, views = resolve(dv, spec)
     icon_id = resolve_icon(dv, spec)
     if app:
         dv.request(
@@ -307,9 +338,25 @@ def apply(dv: Dataverse, spec: dict[str, Any]) -> None:
     components: list[dict[str, str]] = [
         {"@odata.id": f"sitemaps({site_map_id})"}
     ]
+    for table, metadata_id in entities.items():
+        metadata = dv.request(
+            "GET",
+            f"EntityDefinitions({metadata_id})?$select=PrimaryIdAttribute",
+        ).json()
+        # The component type must be the table, not the generic entity table.
+        components.append(
+            {
+                "@odata.type": f"Microsoft.Dynamics.CRM.{table}",
+                metadata["PrimaryIdAttribute"]: metadata_id,
+            }
+        )
     components.extend(
-        {"@odata.id": f"entities({metadata_id})"}
-        for metadata_id in entities.values()
+        {"@odata.id": f"systemforms({form_id})"}
+        for form_id in forms.values()
+    )
+    components.extend(
+        {"@odata.id": f"savedqueries({view_id})"}
+        for view_id in views.values()
     )
     components.extend(
         {
@@ -330,6 +377,14 @@ def apply(dv: Dataverse, spec: dict[str, Any]) -> None:
     ensure_solution_component(
         dv, site_map_id, SITEMAP_COMPONENT, spec["solution"]
     )
+    for form_id in forms.values():
+        ensure_solution_component(
+            dv, form_id, 60, spec["solution"]
+        )
+    for view_id in views.values():
+        ensure_solution_component(
+            dv, view_id, 26, spec["solution"]
+        )
     dv.request(
         "POST",
         "PublishXml",
@@ -344,7 +399,7 @@ def apply(dv: Dataverse, spec: dict[str, Any]) -> None:
 
 
 def verify(dv: Dataverse, spec: dict[str, Any]) -> bool:
-    app, site_map, solution, entities, workflows = resolve(dv, spec)
+    app, site_map, solution, entities, workflows, forms, views = resolve(dv, spec)
     checks: list[tuple[str, bool]] = [
         ("app exists", app is not None),
         ("site map exists", site_map is not None),
@@ -365,15 +420,30 @@ def verify(dv: Dataverse, spec: dict[str, Any]) -> bool:
     object_ids = {
         str(row.get("objectid", "")).lower() for row in component_rows
     }
+    solution_object_ids = [
+        app["appmoduleid"],
+        site_map["sitemapid"],
+        *entities.values(),
+        *forms.values(),
+        *views.values(),
+    ]
+    solution_filter = " or ".join(
+        f"objectid eq {object_id}" for object_id in solution_object_ids
+    )
     memberships = dv.rows(
-        "solutioncomponents?$select=objectid,componenttype"
+        "solutioncomponents?$select=objectid,componenttype,rootcomponentbehavior"
         f"&$filter=_solutionid_value eq {solution['solutionid']} "
-        f"and (objectid eq {app['appmoduleid']} "
-        f"or objectid eq {site_map['sitemapid']})"
+        f"and ({solution_filter})"
     )
     member_pairs = {
         (str(row["objectid"]).lower(), row["componenttype"])
         for row in memberships
+    }
+    tables_with_all_subcomponents = {
+        str(row["objectid"]).lower()
+        for row in memberships
+        if row["componenttype"] == 1
+        and row.get("rootcomponentbehavior") == 0
     }
     checks.extend(
         [
@@ -389,13 +459,27 @@ def verify(dv: Dataverse, spec: dict[str, Any]) -> bool:
                 site_map["sitemapid"].lower() in object_ids,
             ),
             (
-                "table components are included",
-                sum(
-                    1
+                "table components match the declared metadata IDs",
+                {
+                    str(row["objectid"]).lower()
                     for row in component_rows
                     if row.get("componenttype") == 1
-                )
-                == len(entities),
+                }
+                == {value.lower() for value in entities.values()},
+            ),
+            (
+                "form components are included",
+                all(
+                    form_id.lower() in object_ids
+                    for form_id in forms.values()
+                ),
+            ),
+            (
+                "view components are included",
+                all(
+                    view_id.lower() in object_ids
+                    for view_id in views.values()
+                ),
             ),
             (
                 "BPF components are included",
@@ -411,6 +495,24 @@ def verify(dv: Dataverse, spec: dict[str, Any]) -> bool:
                 "site map is in solution",
                 (site_map["sitemapid"].lower(), SITEMAP_COMPONENT)
                 in member_pairs,
+            ),
+            (
+                "forms are in solution",
+                all(
+                    (form_id.lower(), 60) in member_pairs
+                    or entities[table].lower()
+                    in tables_with_all_subcomponents
+                    for table, form_id in forms.items()
+                ),
+            ),
+            (
+                "views are in solution",
+                all(
+                    (view_id.lower(), 26) in member_pairs
+                    or entities[table].lower()
+                    in tables_with_all_subcomponents
+                    for table, view_id in views.items()
+                ),
             ),
         ]
     )
@@ -433,7 +535,7 @@ def main() -> int:
     dv = Dataverse(args.env)
     resolve_icon(dv, spec)
     if args.dry_run:
-        app, site_map, _, _, workflows = resolve(dv, spec)
+        app, site_map, _, _, workflows, forms, views = resolve(dv, spec)
         print(
             "[dry-run] "
             + ("update" if app else "create")
@@ -445,6 +547,10 @@ def main() -> int:
             + f" site map with {len(spec['navigation'])} navigation entry"
         )
         print(f"[dry-run] include {len(workflows)} BPF component(s)")
+        print(
+            f"[dry-run] include {len(forms)} main form(s) and "
+            f"{len(views)} public view(s)"
+        )
         print("[dry-run] publish and verify without unrelated navigation")
         return 0
     if args.apply:

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **Launch Control** are documented here, organized by episode. Each entry corresponds to a git tag (`ep-01` through `ep-13`): `git checkout ep-NN` to see the repo as it was at the end of that episode.
+All notable changes to **Launch Control** are documented here, organized by episode. Historical git tags `ep-01` through `ep-13` identify earlier published snapshots; later episodes aren't necessarily tagged.
 
 > **Tag history note (May 2026).** The series was originally a 13-episode arc, and the immutable git tags `ep-01..ep-13` reflect that numbering. One episode was later inserted: Cowork Plugin at position 7. That shifts the arc to 14 visible episodes. Existing tags are **not** renamed (that would rewrite published history); the table below maps each existing tag to the folder that held it.
 >
@@ -19,6 +19,12 @@ All notable changes to **Launch Control** are documented here, organized by epis
 > **Agent identity insertion (August 2026).** Agent Quality Gate was inserted at Episode 11. The then-current Episodes 11 to 15 moved to 12 to 16. Immutable tags and archived episode folders remain unchanged.
 
 Episode docs live in [`episodes/ep-NN-<slug>/README.md`](episodes/README.md).
+
+## [ep-17]: Filter-based Security in Dataverse (Public Preview)
+
+- Added a public-facing episode guide and LinkedIn voice-over for evaluating filter-based row access in an isolated sandbox.
+- Focuses on additive filters for an existing user/team-owned table and explains the distinct tradeoffs of filtered record ownership.
+- Documents preview, non-admin verification, approval, read-back, and rollback boundaries.
 
 ## [ep-13]: Full Orchestra + Your Turn _(now Episode 16)_
 

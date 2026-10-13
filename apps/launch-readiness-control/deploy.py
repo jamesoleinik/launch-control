@@ -20,7 +20,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from auth import get_credential, get_token, load_env  # noqa: E402
 
 CONTROL_NAME = "lc_LaunchControl.LaunchReadiness"
-SOLUTION_NAME = "LaunchControl"
+SOLUTION_NAME = "LaunchReadinessControl"
 FORM_NAME = "Information"
 CONTROL_INSTANCE_ID = "lc_launchreadinessdashboard"
 TEXT_CONTROL_CLASS_ID = "{4273EDBD-AC1D-40D3-9FB2-095C621B552D}"
@@ -341,9 +341,10 @@ def configure_form_layout(root: ET.Element) -> None:
     if timeline_column is None:
         timeline_column = find_control_column(general_tab, "notescontrol")
         if timeline_column is None:
-            raise RuntimeError("Launch timeline column is missing")
-        general_columns.remove(timeline_column)
-        readiness_columns.append(timeline_column)
+            timeline_column = add_timeline_column(readiness_tab)
+        else:
+            general_columns.remove(timeline_column)
+            readiness_columns.append(timeline_column)
 
     pcf_column.set("width", "60%")
     timeline_column.set("width", "40%")
@@ -362,6 +363,52 @@ def configure_form_layout(root: ET.Element) -> None:
     if general_fields is None:
         raise RuntimeError("General fields column is missing")
     general_fields.set("width", "100%")
+
+
+def add_timeline_column(tab: ET.Element) -> ET.Element:
+    columns = tab.find("columns")
+    if columns is None:
+        raise RuntimeError("Launch Readiness tab has no columns collection")
+
+    column = ET.SubElement(columns, "column", {"width": "40%"})
+    sections = ET.SubElement(column, "sections")
+    section = ET.SubElement(
+        sections,
+        "section",
+        {
+            "showlabel": "false",
+            "showbar": "false",
+            "IsUserDefined": "0",
+            "id": guid(),
+            "height": "auto",
+        },
+    )
+    add_label(section, "Notes")
+    rows = ET.SubElement(section, "rows")
+    row = ET.SubElement(rows, "row")
+    cell = ET.SubElement(
+        row,
+        "cell",
+        {
+            "id": guid(),
+            "showlabel": "false",
+            "rowspan": "15",
+            "auto": "false",
+        },
+    )
+    add_label(cell, "Note Text")
+    control = ET.SubElement(
+        cell,
+        "control",
+        {
+            "id": "notescontrol",
+            "classid": "{06375649-C143-495E-A496-C962E5B4488E}",
+        },
+    )
+    parameters = ET.SubElement(control, "parameters")
+    default_tab = ET.SubElement(parameters, "DefaultTabId")
+    default_tab.text = "NotesTab"
+    return column
 
 
 def find_tab(root: ET.Element, label: str) -> ET.Element | None:

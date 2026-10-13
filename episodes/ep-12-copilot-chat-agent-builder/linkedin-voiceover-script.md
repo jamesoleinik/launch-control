@@ -1,88 +1,78 @@
-# Episode 12 LinkedIn voiceover: from enablement to a declarative agent
+# Episode 12 LinkedIn voiceover: a two-turn result excerpt
 
-**Status:** Provisional script and shot budget, not a completed video.
-**Target:** 1:50 including an eight-second opening, a 90-second demo cut,
-and a twelve-second close. Cue times below are targets on that demo cut;
-add eight seconds for the planned edition. Replace them with measured times
-after recording. The actual agent response may require a different edit.
+**Status:** Provisional script, not a completed video. New window capture is
+blocked. **Target:** 1:50: eight-second opening, ninety-second excerpt, and
+twelve-second close. Times below are shot budgets on the excerpt timeline,
+not measured cues. Verify the actual produced file is below 120 seconds.
 
-This is the new environment/app/declarative-agent story, not narration for
-the existing 1:37 Studio excerpt. That excerpt and its
-[original narration](../ep-14-copilot-studio/studio-rehearsal-linkedin-voiceover.md)
-remain unchanged historical evidence.
+Label the opening and result panel **Result excerpt from a two-turn Preview
+conversation**. Omit whole interactions rather than hiding cuts in their waits.
+Keep the full, original-speed run separately. Do not reuse the old Studio clip.
 
 ## The script at a glance
 
-These are provisional shot-budget times, not measured recording cues.
+These are provisional shot budgets, not measured recording cues.
 
 | Section | Script |
 | --- | --- |
-| **Set the stage** (0:00) | My launch data lives in Power Apps. I want answers inside Microsoft 365 Copilot. |
-| **1. Check enablement** (0:08) | First I check Business Applications in Work IQ for my pilot users. Then I check the environment. Work IQ is already enabled here. |
-| **2. Select the app** (0:26) | App indexing is enabled. I select Launch Control as knowledge. These records were prepared earlier. |
-| **3. Configure the declarative agent** (0:38) | This is a declarative agent. I supply instructions and knowledge. Copilot handles the orchestration. |
-| **4. Ask one question** (0:52) | Now I ask what's blocking the launch. This connection reads business data without changing it. |
-| **5. Verify the answer** (1:27) | I compare the answer with the app. The blocker is evidence, not a launch approval. |
-| **Close** (1:38) | Copilot Studio comes later for more integration and control. Today I extended Copilot with business knowledge. All data is simulated. |
+| **Set the stage** (0:00) | My launch data lives in Power Apps. This excerpt shows a two-turn Microsoft Copilot demo. |
+| **1. Check enablement** (0:08) | Business Applications in Work IQ is already enabled for this demo's users and environment. |
+| **2. Describe the app** (0:22) | Native forms and views expose the four tables' evidence. I customize those before regenerating the model. Five glossary terms clarify the business meaning. A recorded risk is not automatically a blocked task. |
+| **3. Focus the declarative agent** (0:48) | This declarative draft uses the selected app and natural-language instructions. I have not added a write workflow. |
+| **4. Show the two-turn result** (1:03) | First I asked for status and blockers. Then I asked the app's Tasks view for explicit task evidence. The answers identify partner security evidence review and link to source records. This excerpt skips the response waits. |
+| **5. Verify in the app** (1:28) | I check the reason and responsibility in the app. That is evidence, not a launch approval. |
+| **Close** (1:38) | Enable and describe the app. Select knowledge and verify. Episode fourteen covers Studio. All data is simulated. |
 
 ## Set the stage (over the opening slide)
 
-> My launch data lives in Power Apps. I want answers inside Microsoft 365 Copilot.
+> My launch data lives in Power Apps. This excerpt shows a two-turn Microsoft Copilot demo.
 
 ## Script
 
-### 1. Check enablement (0:00-0:18)
+### 1. Check enablement (0:00-0:14)
 
-*On screen:* Pilot availability in Microsoft 365, then Work IQ enabled in the
-intended Power Platform environment. Do not disable and re-enable for filming.
+*On screen:* Existing Microsoft 365 business-data audience and environment
+Work IQ settings. Do not change settings for filming.
 
-- **0:00** First I check Business Applications in Work IQ for my pilot users.
-- **0:09** Then I check the environment. Work IQ is already enabled here.
+- **0:00** Business Applications in Work IQ is already enabled for this demo's users and environment.
 
-### 2. Select the app (0:18-0:30)
+### 2. Describe the app (0:14-0:40)
 
-*On screen:* Launch Control's M365 Copilot app setting, then that app selected
-under Dynamics 365 and Power Apps knowledge in Agent Builder. Use this line
-only after approved app enablement, publication, and discovery are verified.
+*On screen:* App indexing On, four-table native evidence, semantic Overview,
+and Glossary.
 
-- **0:18** App indexing is enabled. I select Launch Control as knowledge. These records were prepared earlier.
+- **0:14** Native forms and views expose the four tables' evidence. I customize those before regenerating the model.
+- **0:27** Five glossary terms clarify the business meaning. A recorded risk is not automatically a blocked task.
 
-### 3. Configure the declarative agent (0:30-0:44)
+### 3. Focus the declarative agent (0:40-0:55)
 
-*On screen:* Launch Readiness Checker instructions in Microsoft 365 Agent
-Builder, not the old Studio agent.
+*On screen:* Launch Readiness Checker draft with Launch Control Demo selected
+under Dynamics 365 and Power Apps. No publication action.
 
-- **0:30** This is a declarative agent. I supply instructions and knowledge. Copilot handles the orchestration.
+- **0:40** This declarative draft uses the selected app and natural-language instructions. I have not added a write workflow.
 
-### 4. Ask one question (0:44-1:19)
+### 4. Show the two-turn result (0:55-1:20)
 
-*On screen:* Fresh Try it conversation. Ask "What's the current status, and
-what is blocking it?" Keep its real wait. This window is not a latency claim.
+*On screen:* Completed status answer, then completed Tasks-view follow-up.
+Keep the result-excerpt label visible. These shots omit the interactions.
+Use result copy only after the new recorded take passes source comparison.
 
-- **0:44** Now I ask what's blocking the launch. This connection reads business data without changing it.
+- **0:55** First I asked for status and blockers. Then I asked the app's Tasks view for explicit task evidence.
+- **1:07** The answers identify partner security evidence review and link to source records. This excerpt skips the response waits.
 
-### 5. Verify the answer (1:19-1:30)
+### 5. Verify in the app (1:20-1:30)
 
-*On screen:* Completed answer, then matching source records. Use this copy
-only after the declarative-agent result passes the comparison.
+*On screen:* Matching native task record.
 
-- **1:19** I compare the answer with the app. The blocker is evidence, not a launch approval.
+- **1:20** I check the reason and responsibility in the app. That is evidence, not a launch approval.
 
 ## Close (over the closing slide)
 
-> Copilot Studio comes later for more integration and control. Today I extended Copilot with business knowledge. All data is simulated.
+> Enable and describe the app. Select knowledge and verify. Episode fourteen covers Studio. All data is simulated.
 
 ## Timing and publication boundary
 
-At roughly 140 spoken words per minute, this copy leaves room for quiet
-response time. Word count alone does not prove the complete video fits.
-Measure the new run and verify the final file is below 120 seconds.
-
-If the full wait does not fit, shorten setup and narration first. Otherwise
-produce an explicitly labeled result excerpt that omits the interaction and
-retains the full run separately. Do not speed up the response, conceal a cut
-inside the wait, or reuse a Studio answer. Retest and retime after any edits.
-
-Generate narration audio and subtitles only against the new cut. The
-under-two-minute duration, spoken fit, and footage are not yet verified.
-No publication or external upload is authorized by this script.
+Build the full edition before deriving this excerpt. Actual video length,
+spoken fit, synchronized subtitles, and footage remain unverified. Never speed
+up responses or imply the two full turns fit this budget. No publication,
+external upload, or new access grant is authorized by this script.

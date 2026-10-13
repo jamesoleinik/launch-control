@@ -2,7 +2,7 @@
 
 **A Product Launch Coordinator built with Microsoft Dataverse: from data model to agents to dashboard.**
 
-This repo is the companion to the **Launch Control** LinkedIn series by [James Oleinik](https://www.linkedin.com/in/james-oleinik/), Product Director for Microsoft Dataverse. Over 15 episodes (3/week for ~5 weeks), we build a complete product launch coordination system from scratch, and open-source every line of code.
+This repo is the companion to the **Launch Control** LinkedIn series by [James Oleinik](https://www.linkedin.com/in/james-oleinik/), Product Director for Microsoft Dataverse. Across 17 episodes, we build a complete product launch coordination system from scratch, and open-source every line of code.
 
 ## The Problem
 
@@ -50,6 +50,7 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [14](episodes/ep-14-copilot-studio/)            | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
 | [15](episodes/ep-15-workiq-api-devtools/)       | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
 | [16](episodes/ep-16-external-agents/)           | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
+| [17](episodes/ep-17-filter-based-security/)     | Filter-based Security in Dataverse (Public Preview) | Evaluate attribute-based row access with a scoped, testable filter |
 
 Each episode is also tagged in git: `git checkout ep-08` to see the repo as it was at that episode's ship. The original Season 1 agent builds (declarative agent, autonomous Sentinel, code-first Python agent, generative dashboard) moved to [`episodes/archive/`](episodes/archive/) and are absorbed as the Season 2 runtimes; see [`episodes/README.md`](episodes/README.md) for the full multi-season arc.
 
@@ -80,7 +81,7 @@ python episodes/ep-05-custom-tools/preflight.py
 
 ```
 launch-control/
-├── episodes/                  # 16 per-episode folders + archive/ (READMEs + preflights + scripts)
+├── episodes/                  # 17 per-episode folders + archive/ (READMEs + supporting assets)
 ├── datamodel/                 # Table definitions, mappings, sample data
 ├── solutions/LaunchControl/   # Exported managed solution
 ├── business-skills/           # Launch readiness, escalation, status rules

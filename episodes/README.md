@@ -1,6 +1,6 @@
 # Episodes
 
-The "Launch Control" LinkedIn series: building one project end-to-end, told as a multi-series story. Each folder is self-contained: the episode README is the spec, `preflight.py` is the local test harness, and any episode-specific scripts live alongside. Numbering is flat (`ep-NN`); the **seasons** below are narrative groupings, not separate folders.
+The "Launch Control" LinkedIn series: building one project end-to-end, told as a multi-series story. Each folder is self-contained: the episode README is the spec, with a preflight harness and supporting scripts where applicable. Numbering is flat (`ep-NN`); the **seasons** below are narrative groupings, not separate folders.
 
 > **What is the project?** A launch-management system whose source of truth is **Microsoft Dataverse**, surfaced through agents and native Copilot, and increasingly shown as **better together** with the rest of the Microsoft data and intelligence stack. Built incrementally; every episode adds one capability.
 
@@ -21,7 +21,7 @@ The "Launch Control" LinkedIn series: building one project end-to-end, told as a
 
 ### Season 2: Dataverse, Business Apps, and Work IQ
 
-The thesis: Dataverse is not an island. Episode 12 starts with environment enablement, app selection, and a declarative agent in Microsoft 365 Copilot. Episodes 13-16 explore Cowork, Copilot Studio, Work IQ API and developer tools, and external agents. The Studio build belongs to Episode 14, not a second build inside Episode 12. The former Web IQ, Foundry IQ, Convergence, Agentic Administration, and Full Orchestra beats are preserved as deferred drafts in their episode folders.
+The thesis: Dataverse is not an island. Episode 12 starts with environment enablement, app selection, and a declarative agent in Microsoft 365 Copilot. Episodes 13-16 explore Cowork, Copilot Studio, Work IQ API and developer tools, and external agents. The Studio build belongs to Episode 14, not a second build inside Episode 12. Episode 17 returns to Dataverse security with filter-based security in Public Preview. The former Web IQ, Foundry IQ, Convergence, Agentic Administration, and Full Orchestra beats are preserved as deferred drafts in their episode folders.
 
 | # | Episode | Hero capability |
 |---|---|---|
@@ -33,6 +33,12 @@ The thesis: Dataverse is not an island. Episode 12 starts with environment enabl
 | [14](ep-14-copilot-studio/) | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
 | [15](ep-15-workiq-api-devtools/) | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
 | [16](ep-16-external-agents/) | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
+
+### Season 3: Dataverse Security
+
+| # | Episode | Hero capability |
+|---|---|---|
+| [17](ep-17-filter-based-security/) | Filter-based Security in Dataverse (Public Preview) | Evaluate attribute-based row access with a scoped, testable filter |
 
 ### Deferred storylines
 

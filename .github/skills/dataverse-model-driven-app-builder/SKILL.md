@@ -83,6 +83,10 @@ Verify:
 4. navigation contains exactly the requested table entries in order
 5. each entry opens the intended table and default view
 6. intended forms, views, and BPFs are app components
+   For table components, compare the actual component metadata IDs with the
+   declared tables, not just their count. `AddAppComponents` must use each
+   table's own OData type and resolved primary-key attribute. Referencing
+   `entities(<metadata-id>)` adds the generic Entity table instead.
 7. no unrelated table appears in navigation
 8. app, site map, tables, forms, views, and processes belong to the unmanaged
    solution

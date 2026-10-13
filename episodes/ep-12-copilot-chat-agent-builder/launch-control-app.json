@@ -5,13 +5,94 @@
   "solution": "LaunchControl",
   "icon_webresource_name": "msdyn_/Images/AppModule_Default_Icon.png",
   "area_title": "Launch Control",
-  "group_title": "Launches",
+  "group_title": "Launch Evidence",
   "navigation": [
     {
       "table": "lc_launch",
       "label": "Launches",
-      "form": "Information",
-      "view": "Active lc_launchs"
+      "form": "Episode 12 Launch Evidence",
+      "view": "Episode 12 Active Launches",
+      "source_view": "Active lc_launchs",
+      "evidence_description": "Active launches with business owner, launch status, target date and recorded risk summary. Quality gate fields are recorded review results, not inferred readiness.",
+      "fields": {
+        "lc_name": "Launch name",
+        "lc_code": "Launch code",
+        "lc_launchstatus": "Launch status",
+        "lc_ownerid": "Launch business owner",
+        "lc_targetdate": "Target launch date",
+        "lc_releasewindow": "Release window",
+        "lc_priority": "Priority",
+        "lc_risksummary": "Recorded launch risks",
+        "lc_description": "Launch description",
+        "lc_qualitygatestatus": "Recorded quality gate status",
+        "lc_qualitygatescore": "Recorded quality gate score",
+        "lc_qualitygatefeedback": "Recorded quality gate feedback",
+        "lc_qualitygatecheckedon": "Quality gate checked on"
+      },
+      "view_fields": ["lc_name", "lc_code", "lc_launchstatus", "lc_ownerid", "lc_targetdate", "lc_priority", "lc_risksummary"],
+      "sort_field": "lc_name"
+    },
+    {
+      "table": "lc_milestone",
+      "label": "Milestones",
+      "form": "Episode 12 Milestone Evidence",
+      "view": "Episode 12 Active Milestones",
+      "source_view": "Active lc_milestones",
+      "evidence_description": "Active launch milestones with the related launch, milestone business owner, due date, status and recorded description.",
+      "fields": {
+        "lc_name": "Milestone name",
+        "lc_launchid": "Related launch",
+        "lc_milestonestatus": "Milestone status",
+        "lc_ownerid": "Milestone business owner",
+        "lc_duedate": "Milestone due date",
+        "lc_quarter": "Quarter",
+        "lc_description": "Milestone description"
+      },
+      "view_fields": ["lc_name", "lc_launchid", "lc_milestonestatus", "lc_ownerid", "lc_duedate", "lc_description"],
+      "sort_field": "lc_duedate"
+    },
+    {
+      "table": "lc_task",
+      "label": "Tasks",
+      "form": "Episode 12 Task Evidence",
+      "view": "Episode 12 Active Tasks",
+      "source_view": "Active lc_tasks",
+      "evidence_description": "Active launch work items with related launch and milestone, assignee, task status, due date, explicit blocked flag and recorded blocker reason. Active records can include completed tasks; use task status to distinguish unfinished work.",
+      "fields": {
+        "lc_title": "Task title",
+        "lc_launchid": "Related launch",
+        "lc_milestoneid": "Related milestone",
+        "lc_assignedtoid": "Task assignee",
+        "lc_taskstatus": "Task status",
+        "lc_isblocked": "Task is blocked",
+        "lc_blockerreason": "Recorded blocker reason",
+        "lc_duedate": "Task due date",
+        "lc_priority": "Priority",
+        "lc_notes": "Task notes"
+      },
+      "view_fields": ["lc_title", "lc_launchid", "lc_milestoneid", "lc_assignedtoid", "lc_taskstatus", "lc_isblocked", "lc_blockerreason", "lc_duedate"],
+      "sort_field": "lc_duedate"
+    },
+    {
+      "table": "lc_statusupdate",
+      "label": "Status Updates",
+      "form": "Episode 12 Status Update Evidence",
+      "view": "Episode 12 Active Status Updates",
+      "source_view": "Active lc_statusupdates",
+      "evidence_description": "Saved launch updates ordered newest first, with related launch, optional milestone or task, author, posted time, reported health and the recorded narrative summary.",
+      "fields": {
+        "lc_title": "Update title",
+        "lc_launchid": "Related launch",
+        "lc_milestoneid": "Related milestone",
+        "lc_taskid": "Related task",
+        "lc_authorid": "Update author",
+        "lc_postedat": "Update posted at",
+        "lc_health": "Reported launch health",
+        "lc_summary": "Recorded status update"
+      },
+      "view_fields": ["lc_title", "lc_launchid", "lc_authorid", "lc_postedat", "lc_health", "lc_summary", "lc_milestoneid", "lc_taskid"],
+      "sort_field": "lc_postedat",
+      "sort_descending": true
     }
   ]
 }

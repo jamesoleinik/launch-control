@@ -9,6 +9,8 @@
 a365.config.json
 a365.generated.config.json
 .artifacts/
+# Private browser snapshots and diagnostic logs
+.playwright-mcp/
 # Ingest temp payloads
 scripts/cli/.tmp-*.json
 
