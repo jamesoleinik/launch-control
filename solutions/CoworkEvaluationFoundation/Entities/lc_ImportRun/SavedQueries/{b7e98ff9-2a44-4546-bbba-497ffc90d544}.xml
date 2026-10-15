@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{b7e98ff9-2a44-4546-bbba-497ffc90d544}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="lc_name" select="1" icon="1" preview="1">
+        <row name="result" id="lc_importrunid">
+          <cell name="lc_name" width="300" />
+          <cell name="createdon" width="125" />
+          <cell name="lc_startedat" width="150" />
+          <cell name="lc_recordsprocessed" width="150" />
+          <cell name="lc_status" width="150" />
+          <cell name="lc_notes" width="150" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lc_importrun">
+          <attribute name="lc_importrunid" />
+          <attribute name="lc_name" />
+          <attribute name="createdon" />
+          <order attribute="lc_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="lc_startedat" />
+          <attribute name="lc_recordsprocessed" />
+          <attribute name="lc_status" />
+          <attribute name="lc_notes" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Import Runs" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{c65a0452-d6fc-4b77-a299-55bf98d54561}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="lc_title" select="1" icon="1" preview="1">
+        <row name="result" id="lc_taskid">
+          <cell name="lc_title" width="300" />
+          <cell name="createdon" width="125" />
+          <cell name="lc_duedate" width="150" />
+          <cell name="lc_description" width="150" />
+          <cell name="lc_isblocked" width="150" />
+          <cell name="lc_blockerreason" width="150" />
+          <cell name="lc_taskstatus" width="150" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lc_task">
+          <attribute name="lc_taskid" />
+          <attribute name="lc_title" />
+          <attribute name="createdon" />
+          <order attribute="lc_title" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="lc_duedate" />
+          <attribute name="lc_description" />
+          <attribute name="lc_isblocked" />
+          <attribute name="lc_blockerreason" />
+          <attribute name="lc_taskstatus" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Tasks" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{e8d37051-1b0b-4445-9fca-9030e5c9ccc6}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{41838ddc-db6a-4ea3-99e5-32fc667120c9}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{cb6fbca2-4fb3-4b36-837f-992fe0154562}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{dc515ab8-bf31-421b-a736-cc47d09608ee}">
+                        <labels>
+                          <label description="Initiative" languagecode="1033" />
+                        </labels>
+                        <control id="lc_initiative" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="lc_initiative" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{d782aeb2-a967-45c1-af88-0e23270b1f78}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{3d7e1032-b155-4df9-86e9-52cfdd631f80}">
+                        <labels>
+                          <label description="SourceRowId" languagecode="1033" />
+                        </labels>
+                        <control id="lc_sourcerowid" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_sourcerowid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9492ae2b-3b93-4766-9012-886fb813ea0c}">
+                        <labels>
+                          <label description="OwnerEmail" languagecode="1033" />
+                        </labels>
+                        <control id="lc_owneremail" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_owneremail" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{f13a4af3-6422-470e-baa8-0c1ee0989d51}">
+                        <labels>
+                          <label description="Quarter" languagecode="1033" />
+                        </labels>
+                        <control id="lc_quarter" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_quarter" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9a594e58-0c0c-4e69-966b-92d0f92661b5}">
+                        <labels>
+                          <label description="Status" languagecode="1033" />
+                        </labels>
+                        <control id="lc_status" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_status" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{6315c344-596b-4df6-994f-694f1835dc4a}">
+                        <labels>
+                          <label description="SourceSystem" languagecode="1033" />
+                        </labels>
+                        <control id="lc_sourcesystem" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_sourcesystem" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{645b2001-6475-4e45-885b-5edd6328af46}">
+                        <labels>
+                          <label description="SourceFilename" languagecode="1033" />
+                        </labels>
+                        <control id="lc_sourcefilename" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_sourcefilename" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{f53d2c25-d4e5-4d85-8248-bdcda5c6ea8e}">
+                        <labels>
+                          <label description="SourceRowHash" languagecode="1033" />
+                        </labels>
+                        <control id="lc_sourcerowhash" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_sourcerowhash" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a2513a70-cec9-4b73-bdb2-1c1619852d28}">
+                        <labels>
+                          <label description="NeedsManualReview" languagecode="1033" />
+                        </labels>
+                        <control id="lc_needsmanualreview" classid="{67fac785-cd58-4f9f-abb3-4b7ddc6ed5ed}" datafieldname="lc_needsmanualreview" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{6e23ff90-697d-4ea6-90e6-7d8f63772608}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{a88f774a-996c-4976-9bbe-0d3f3fc33323}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{baf558eb-2160-4688-89fc-9792eee03179}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{377406b9-9303-4339-8db1-a6fd3131ecb1}">
+                        <labels>
+                          <label description="Title" languagecode="1033" />
+                        </labels>
+                        <control id="lc_title" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="lc_title" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{64ac1768-cd4d-4f1e-95b9-660fc310fced}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{163aa485-e7d9-420a-b030-22cd9526e4b7}">
+                        <labels>
+                          <label description="DueDate" languagecode="1033" />
+                        </labels>
+                        <control id="lc_duedate" classid="{5b773807-9fb2-42db-97c3-7a91eff8adff}" datafieldname="lc_duedate" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{839b9849-050d-43c7-8753-402554dd07e3}">
+                        <labels>
+                          <label description="Description" languagecode="1033" />
+                        </labels>
+                        <control id="lc_description" classid="{e0dece4b-6fc8-4a8f-a065-082708572369}" datafieldname="lc_description" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{9ccee6d4-2e28-4a81-b88c-56f06873c36a}">
+                        <labels>
+                          <label description="IsBlocked" languagecode="1033" />
+                        </labels>
+                        <control id="lc_isblocked" classid="{67fac785-cd58-4f9f-abb3-4b7ddc6ed5ed}" datafieldname="lc_isblocked" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{6eba208a-0a98-44fd-a59b-7ec711b774a9}">
+                        <labels>
+                          <label description="BlockerReason" languagecode="1033" />
+                        </labels>
+                        <control id="lc_blockerreason" classid="{4273edbd-ac1d-40d3-9fb2-095c621b552d}" datafieldname="lc_blockerreason" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{a56262e8-8a6c-4be1-88af-adc44ee86ca5}">
+                        <labels>
+                          <label description="TaskStatus" languagecode="1033" />
+                        </labels>
+                        <control id="lc_taskstatus" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_taskstatus" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

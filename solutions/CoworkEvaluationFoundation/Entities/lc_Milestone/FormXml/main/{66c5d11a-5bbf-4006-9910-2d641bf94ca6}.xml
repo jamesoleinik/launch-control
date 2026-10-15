@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{66c5d11a-5bbf-4006-9910-2d641bf94ca6}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form>
+      <tabs>
+        <tab verticallayout="true" id="{5cf6fff7-0b65-4435-b70a-e0a0ec8bc028}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{eb75aa6a-b7d5-41b2-8eeb-14a93e95e94f}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{911f256e-c0b8-414a-b772-c84322cdcc80}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="lc_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="lc_name" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{462fd8f3-4309-4079-aebc-d57b5a537c65}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{0572c340-4bd9-41b4-a021-4b8835d0d57c}">
+                        <labels>
+                          <label description="DueDate" languagecode="1033" />
+                        </labels>
+                        <control id="lc_duedate" classid="{5b773807-9fb2-42db-97c3-7a91eff8adff}" datafieldname="lc_duedate" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{b115aeec-0ab4-4785-8ff5-d793bf11fa58}">
+                        <labels>
+                          <label description="SortOrder" languagecode="1033" />
+                        </labels>
+                        <control id="lc_sortorder" classid="{c6d124ca-7eda-4a60-aea9-7fb8d318b68f}" datafieldname="lc_sortorder" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{154b2b5f-4330-4232-80e2-e87fc0222734}">
+                        <labels>
+                          <label description="MilestoneStatus" languagecode="1033" />
+                        </labels>
+                        <control id="lc_milestonestatus" classid="{3ef39988-22bb-4f0b-bbbe-64b5a3748aee}" datafieldname="lc_milestonestatus" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

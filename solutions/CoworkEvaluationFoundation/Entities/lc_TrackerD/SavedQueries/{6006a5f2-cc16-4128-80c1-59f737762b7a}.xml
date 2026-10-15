@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{6006a5f2-cc16-4128-80c1-59f737762b7a}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="lc_tool" select="1" icon="1" preview="1">
+        <row name="result" id="lc_trackerdid">
+          <cell name="lc_tool" width="300" />
+          <cell name="createdon" width="125" />
+          <cell name="lc_sourcerowid" width="150" />
+          <cell name="lc_owneremail" width="150" />
+          <cell name="lc_priority" width="150" />
+          <cell name="lc_notes" width="150" />
+          <cell name="lc_milestone" width="150" />
+          <cell name="lc_sourcesystem" width="150" />
+          <cell name="lc_sourcefilename" width="150" />
+          <cell name="lc_sourcerowhash" width="150" />
+          <cell name="lc_needsmanualreview" width="150" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="lc_trackerd">
+          <attribute name="lc_trackerdid" />
+          <attribute name="lc_tool" />
+          <attribute name="createdon" />
+          <order attribute="lc_tool" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="lc_sourcerowid" />
+          <attribute name="lc_owneremail" />
+          <attribute name="lc_priority" />
+          <attribute name="lc_notes" />
+          <attribute name="lc_milestone" />
+          <attribute name="lc_sourcesystem" />
+          <attribute name="lc_sourcefilename" />
+          <attribute name="lc_sourcerowhash" />
+          <attribute name="lc_needsmanualreview" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Tracker Ds" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
