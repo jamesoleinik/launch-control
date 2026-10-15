@@ -85,6 +85,11 @@
       <RootComponent type="1" schemaName="lc_milestone" behavior="0" />
       <RootComponent type="1" schemaName="lc_sourcefile" behavior="0" />
       <RootComponent type="1" schemaName="lc_statusupdate" behavior="0" />
+      <RootComponent type="1" schemaName="lc_stg_tracker_a" behavior="0" />
+      <RootComponent type="1" schemaName="lc_stg_tracker_b" behavior="0" />
+      <RootComponent type="1" schemaName="lc_stg_tracker_c" behavior="0" />
+      <RootComponent type="1" schemaName="lc_stg_tracker_d" behavior="0" />
+      <RootComponent type="1" schemaName="lc_stg_tracker_e" behavior="0" />
       <RootComponent type="1" schemaName="lc_task" behavior="0" />
       <RootComponent type="1" schemaName="lc_teammember" behavior="0" />
       <RootComponent type="1" schemaName="lc_trackera" behavior="0" />
