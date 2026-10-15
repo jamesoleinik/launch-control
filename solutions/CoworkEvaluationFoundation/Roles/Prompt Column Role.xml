@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Role id="{e7f8a9b0-c1d2-4e3f-b4a5-c6d7e8f90123}" name="Prompt Column Role" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <IsAutoAssigned>0</IsAutoAssigned>
+  <RolePrivileges>
+    <RolePrivilege name="prvCreateSharePointData" level="Global" />
+    <RolePrivilege name="prvReadAsyncOperation" level="Global" />
+    <RolePrivilege name="prvReadAttribute" level="Global" />
+    <RolePrivilege name="prvReadEntity" level="Global" />
+    <RolePrivilege name="prvReadlc_Launch" level="Global" />
+    <RolePrivilege name="prvReadmsdyn_AIModel" level="Global" />
+    <RolePrivilege name="prvReadmsdyn_AITemplate" level="Global" />
+    <RolePrivilege name="prvReadPluginAssembly" level="Global" />
+    <RolePrivilege name="prvReadPluginType" level="Global" />
+    <RolePrivilege name="prvReadRelationship" level="Global" />
+    <RolePrivilege name="prvReadSdkMessage" level="Global" />
+    <RolePrivilege name="prvReadSdkMessageProcessingStep" level="Global" />
+    <RolePrivilege name="prvReadSdkMessageProcessingStepImage" level="Global" />
+    <RolePrivilege name="prvReadSharePointData" level="Global" />
+    <RolePrivilege name="prvReadSharePointDocument" level="Global" />
+    <RolePrivilege name="prvWriteActivity" level="Global" />
+    <RolePrivilege name="prvWriteAttribute" level="Global" />
+    <RolePrivilege name="prvWriteEntity" level="Global" />
+    <RolePrivilege name="prvWritelc_Launch" level="Global" />
+    <RolePrivilege name="prvWriteRelationship" level="Global" />
+    <RolePrivilege name="prvWriteSharePointData" level="Global" />
+    <RolePrivilege name="prvWriteSolution" level="Global" />
+  </RolePrivileges>
+</Role>

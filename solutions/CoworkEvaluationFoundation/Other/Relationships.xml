@@ -30,8 +30,15 @@
   <EntityRelationship Name="lc_importrun_lc_trackere_lc_ImportRunId" />
   <EntityRelationship Name="lc_launch_lc_milestone_lc_LaunchId" />
   <EntityRelationship Name="lc_launch_lc_statusupdate_lc_LaunchId" />
+  <EntityRelationship Name="lc_launch_lc_task_lc_LaunchId" />
   <EntityRelationship Name="lc_launch_lc_teammember_lc_LaunchId" />
   <EntityRelationship Name="lc_milestone_lc_task_lc_MilestoneId" />
+  <EntityRelationship Name="lc_stg_tracker_a_lc_task_lc_SourceStagingAId" />
+  <EntityRelationship Name="lc_stg_tracker_b_lc_task_lc_SourceStagingBId" />
+  <EntityRelationship Name="lc_stg_tracker_c_lc_milestone_lc_SourceStagingCId" />
+  <EntityRelationship Name="lc_stg_tracker_d_lc_task_lc_SourceStagingDId" />
+  <EntityRelationship Name="lc_stg_tracker_e_lc_milestone_lc_SourceStagingEId" />
+  <EntityRelationship Name="lc_teammember_lc_milestone_lc_OwnerId" />
   <EntityRelationship Name="lc_teammember_lc_task_lc_AssignedToId" />
   <EntityRelationship Name="lk_lc_importrun_createdby" />
   <EntityRelationship Name="lk_lc_importrun_modifiedby" />

@@ -97,7 +97,16 @@
       <RootComponent type="1" schemaName="lc_trackerc" behavior="0" />
       <RootComponent type="1" schemaName="lc_trackerd" behavior="0" />
       <RootComponent type="1" schemaName="lc_trackere" behavior="0" />
+      <RootComponent type="20" id="{e7f8a9b0-c1d2-4e3f-b4a5-c6d7e8f90123}" behavior="0" />
+      <RootComponent type="401" id="{c2a95ae3-f179-47ed-87fa-4a1e2e915561}" behavior="0" />
     </RootComponents>
-    <MissingDependencies />
+    <MissingDependencies>
+      <MissingDependency>
+        <Required type="20" displayName="Prompt Column Role" solution="S2SApplicationRoles (1.0.0.135)" id="{e7f8a9b0-c1d2-4e3f-b4a5-c6d7e8f90123}">
+          <package appName="Microsoft S2SCDSCoreApplication Package" version="1.0.1.31">MicrosoftS2SApplicationIdentitiesCoreTst (1.0.1.31)</package>
+        </Required>
+        <Dependent type="20" displayName="Prompt Column Role" id="{e7f8a9b0-c1d2-4e3f-b4a5-c6d7e8f90123}" />
+      </MissingDependency>
+    </MissingDependencies>
   </SolutionManifest>
 </ImportExportXml>

@@ -1,0 +1,15 @@
+<aiskillconfig uniquename="ais_FormFillFieldOptOut_lc_launch_lc_risksummary">
+  <aiskill>FormFillFieldOptOut</aiskill>
+  <attribute>
+    <entityid.logicalname>lc_launch</entityid.logicalname>
+    <logicalname>lc_risksummary</logicalname>
+  </attribute>
+  <description>lc_launch - Risk Summary Form fill opt out</description>
+  <entity>
+    <logicalname>lc_launch</logicalname>
+  </entity>
+  <iscustomizable>1</iscustomizable>
+  <scope>1</scope>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+</aiskillconfig>
