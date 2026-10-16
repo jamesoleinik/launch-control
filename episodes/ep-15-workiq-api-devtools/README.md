@@ -55,5 +55,5 @@ The earlier Agentic Administration story and its scripts remain in [DEFERRED-DRA
 
 ## Cross-references
 
-- [Episode 14: Copilot Studio](../ep-14-copilot-studio/README.md)
+- [Episode 13: Declarative and Studio agents](../ep-13-cowork/README.md)
 - [Episode 16: External Agents](../ep-16-external-agents/README.md)

@@ -1,5 +1,8 @@
 # Launch Readiness Checker: declarative-agent instructions
 
+Episode 13 source material. Episode 12 uses Copilot Chat and Cowork directly,
+without creating this custom agent.
+
 Use the text under **Instructions** in Microsoft 365 Agent Builder only after
 selecting the intended Launch Control app under Dynamics 365 and Power Apps
 knowledge. Keep unrelated knowledge and write-capable tools out of this demo.

@@ -1,174 +1,162 @@
-# Episode 12 demo arc: enable, explain the app, ask, verify
+# Episode 12 demo arc: ask Chat, follow up in Cowork, verify
 
-**Production status:** Revised shot list, not a completed recording.
-The updated draft is saved and the glossary-inclusive regeneration is complete.
-Window capture is blocked until a probe matches the intended browser canvas.
-The earlier Studio videos are superseded for this episode. See the
-[Studio rehearsal record](../ep-14-copilot-studio/studio-rehearsal.md).
+**Status:** Recorded 112-second review edition complete. The Microsoft plugin
+was enabled before the takes. The edit preserves the one-task Chat result,
+Cowork's read retry, and its subsequent assignee correction. Cowork supplied
+record IDs rather than hyperlinks. Verified pickups replaced unusable framing.
+See the [deliverables](panel-demo-plan.md#recorded-review-deliverables) and
+[live run-through results](panel-demo-plan.md#latest-live-run-through).
 
-The presenter is a launch coordinator who wants business-record answers
-inside Microsoft 365 Copilot. The audience sees the setup that makes this
-possible, then a focused declarative agent. Episode 14 covers the Studio
-build; only a short comparison belongs here.
+The presenter is the launch coordinator. The public audience is Power Platform
+makers and developers. Episode 12 shows business data in existing Copilot
+experiences, not a custom-agent build. Both declarative and Studio agents
+extend the scenario in [Episode 13](../ep-13-cowork/README.md).
 
-## What each shot proves
+## Capture and edit
 
-| Beat | Screen | Value and required evidence |
-|---|---|---|
-| Open | Title and prepared launch | The question matters because status and blockers live in the app |
-| Enable | Microsoft 365 pilot setting, then environment Features | The intended audience and environment are enabled, not merely an MCP tool attached |
-| Enable and select the app | App Settings > Features, published Launch Control app, then selected Agent Builder knowledge | App indexing is enabled and the intended business app is included explicitly |
-| Explain the app | Four-table native evidence views/forms, semantic Overview and Glossary | Forms and views expose the evidence; five glossary terms clarify business meaning without embedding answers |
-| Configure | Agent Builder instructions in Microsoft 365 Copilot | A declarative agent gives a repeatable question a focused purpose |
-| Ask and follow up | Fresh Preview conversation, status question, then dedicated Tasks-view follow-up | Two actual source-cited responses; do not imply reliable one-shot task retrieval |
-| Compare and close | Source record, then declarative/Studio comparison | The facts match; Episode 14 adds the Studio-specific build |
+Record the entire episode. The public panel cut is **90-120 seconds** with
+processing waits accelerated as approved. No extra speed indicators,
+fictional-data disclaimers, result headings, or footage labels. The production
+notes disclose editing for time; do not imply real-time response latency.
+Keep raw source footage unchanged and retain readable source comparisons.
 
-Do not show an App MCP package download as if it configured Agent Builder's
-Work IQ knowledge. The [README](README.md#not-the-same-as-app-mcp) explains
-that separate integration route.
+Use the personal `panel-demo-video` kit. Capture only the GitHub Copilot app
+window and this session's browser panel, never the desktop or an independent
+browser. Recheck window identity, crop, and repaint liveness before each take.
+Do not reopen a browser URL during a response, which can reset the session.
 
 ## Before rehearsal
 
-1. Confirm the approved sandbox and pilot account privately. Use the existing
-   fictional launch `EP12-DEMO-01`. Do not reseed an unchanged read-only demo.
-2. Follow the [enablement and app setup](README.md#1-enable-business-applications-in-work-iq).
-   Save only approved changes. An already-enabled setting is a valid shot;
-   say it is already enabled instead of staging a toggle.
-3. Verify the pilot can open the intended app and records. Do not use an
-   administrator's successful read as proof of another user's access. Inspect
-   **Enable M365 Copilot in model-driven apps** in the app's Features settings.
-   Save/publish an approved change to On if needed, then verify persistence.
-   This app-level indexing prerequisite is separate from App MCP. If discovery
-   fails, inspect the associated semantic model's generation state using the
-   README's troubleshooting steps. A running regeneration is not a successful
-   knowledge-source test.
-4. Verify **Dynamics 365 and Power Apps data** is available in Agent Builder
-   and select the intended app explicitly. If absent, record the limitation
-   privately and stop this portion of the demo.
-5. Confirm the four-table scope: `lc_launch`, `lc_milestone`, `lc_task`, and
-   `lc_statusupdate`. Use the dedicated Episode 12 native forms and active
-   views. PCF access alone does not establish knowledge-source access.
-   Customize and publish before regenerating. The latest observed completed
-   model has 62 items, four tables, and five glossary terms. Sample rows are Off.
-   Do not regenerate again merely for filming or broaden to every accessible app.
-6. Use the saved [natural-language instructions](natural-language-instructions.txt).
-   Exclude unrelated sources and write-capable tools. Keep the agent's
-   publication and sharing state explicit. The existing draft is named
-   Launch Readiness Checker; the experimental business-skill paragraph is removed.
-7. Show the five glossary definitions from the README. Explain the distinction
-   between a recorded risk and an explicitly blocked task, and between business
-   owner, record owner, and assignee. Do not credit glossary terms alone for
-   retrieval improvements.
+1. Confirm the target account and environment privately. Authenticate in the
+   intended Episode 12 browser surfaces; do not transfer cookies or credentials.
+2. Inspect existing tenant audience, environment Work IQ, and app indexing
+   settings. Do not turn settings off/on for filming or expand the pilot.
+3. Verify Launch Control Demo and the current user's record access. Settings
+   do not replace Dataverse permissions.
+4. In Cowork, inspect **Business apps (preview)** by Microsoft. Policy approval
+   is a prerequisite. Request access is not approval, and a listed connection
+   is not proof it worked. Stop that segment if still blocked.
+5. Confirm native evidence across launch, milestone, task, and status-update
+   tables and the saved glossary. Reuse the prepared forms/views and semantics.
+   No new regeneration, seed, or app deployment is needed just for filming.
+6. Complete the approved neutral-role preparation and save a private baseline.
+   Crop real account details, identifiers, unrelated tabs, and notifications.
+7. Review the [new tracker panes](panel-demo-key-points.md) before recording.
+   Prior approval requests for the developer-led story are superseded.
 
-## Rehearsal
+Establish the presenter role as Launch Coordinator and clarify that
+Launch Control Demo is the model-driven app, not the environment name.
+Use the supported environment/app selection. Do not supply expected record
+values. Keep the exact stage questions below unchanged.
 
-Use a fresh conversation in the actual Microsoft 365 Agent Builder **Preview**
-surface. Do not use the existing Studio draft, its transcript, or its timings.
+## Act 1: business evidence in Copilot Chat
 
-First ask **"What is the current status of Q3 Widget Launch, and what is
-blocking it?"** Then ask:
+Start at the native launch record. Establish the recorded status and the
+absence or presence of a saved gate verdict without adding a conclusion.
+Briefly show how native evidence and the glossary give Work IQ useful context.
+
+Start a fresh **Copilot Chat** conversation. Use the supported environment/app
+selection when prompted and confirm Launch Control Demo. This is not
+Launch Readiness Checker or any custom agent's Preview.
+
+> Using only Launch Control Demo, what is the current status of Q3 Widget
+> Launch, and what is blocking it? Cite the source records and identify any
+> evidence you cannot retrieve.
+
+Log the exact Send and stable-answer events. Check the source links and
+distinguish recorded risk from an explicitly blocked task. Use this follow-up
+if needed; do not conceal a retrieval gap:
 
 > Use the Episode 12 Active Tasks view in Launch Control Demo to list the tasks
 > for Q3 Widget Launch. Show each task's status, blocked flag, recorded blocker
-> reason, assignee, and due date. Cite the source records and identify any fields
-> you cannot retrieve.
+> reason, assignee, and due date. Cite the source records and identify any
+> fields you cannot retrieve.
 
-Measure each turn from Send until the answer stops changing for four seconds.
-Compare both responses with current app evidence. A starter button fills the
-composer; explicitly click Send. Do not reopen the canvas URL mid-response,
-because doing so resets this preview.
+Compare with the native task. Do not count a completed milestone as completed
+tasks, or call a task assignee the business owner.
 
-Off camera, also ask **"Catch me up on the Q3 Widget Launch."** and
-**"Is the Q3 Widget Launch ready to launch?"** Test a deliberately nonexistent
-launch code and expect an explicit missing-record response, not an invented
-record or a fallback to the prepared launch. Repeat the visible sequence in
-a fresh conversation after any instruction changes.
+## Act 2: bounded follow-up in Copilot Cowork
 
-### Prepared data is a comparison baseline, not a canned answer
+Show the actual **Business apps (preview)** plugin and its allowed/connected
+state. Its Work IQ connection and `business-applications` skill describe
+capabilities; do not claim skill execution from that metadata alone.
+Use the built-in plugin, not the custom Episode 6 plugin or a Studio agent.
 
-The previous source read showed the following. Re-read before the new take;
-do not insert these facts into the agent's knowledge or instructions.
+Start a fresh Cowork task. Discover and select the same approved app through
+the supported experience. Ask:
 
-| Source | Previously observed baseline |
-|---|---|
-| Launch | AtRisk, Medium priority |
-| Blocker | Confirm partner security evidence; Dana Flores |
-| Milestones | Engineering Sign-off Done; Partner Certification AtRisk; Customer Readiness InProgress |
-| Tasks | Four unfinished: one Blocked, one InProgress, two NotStarted |
-| Updates | Latest Yellow, earlier Green |
-| Quality gate | No recorded verdict; launch owner also empty |
+> Use Business apps (preview) and only Launch Control Demo to review Q3 Widget
+> Launch. Identify recorded blocked work and draft a follow-up plan using
+> the recorded reasons, assignees, and due dates. Cite source records and
+> flag missing evidence. Do not change records, send messages, or schedule work.
 
-The launch name says Q3 while the prepared release window says Q4 2026 with
-a December target. Do not silently correct the record or conceal the
-inconsistency. Empty gate fields do not establish whether a review ever ran.
-The dedicated Status Updates view and form expose the saved updates. The PCF
-Activity view also displays them; the empty standard timeline is not their source.
+Cowork must retrieve its own evidence. Do not paste the Chat answer as if it
+were the system of record or imply that separate sessions share state.
+Review the actual proposal and sources. Keep it in the response; do not
+create or share a document as an unapproved side effect.
 
-### Acceptance criteria
+The verified run returned record names and IDs but no clickable record
+hyperlinks. Compare those references with the native app. Do not invent
+links or start an edit operation just to obtain one.
 
-- [x] Pilot audience and environment setting are verified in the current UI.
-- [x] App-level M365 Copilot indexing is enabled and published.
-- [x] The selected app appears in Agent Builder knowledge; no all-app default.
-- [x] The tested agent is declarative and uses the Microsoft 365 experience.
-- [x] Four-table semantics regenerated after the five glossary terms were saved.
-- [x] The two-turn rehearsal returns the launch and all four task records.
-- [x] Explicit blocker fields match the native source form.
-- [x] Task counts reconcile and missing blocker reasons are reported explicitly.
-- [x] The nonexistent-record/source-override check returns an honest limitation.
-- [x] No write, publication, sharing, or background execution is implied.
-- [ ] A new capture probe visibly matches the Episode 12 browser panel.
-- [ ] The actual recorded take passes source comparison and media review.
+Return to the native blocked-task record. Check the reason, assignee, date,
+and links. The proposal supports a decision; it is not an approval or a
+saved follow-up task. Close by introducing Episode 13's agent extensions.
 
-The latest first turn also retrieved the explicit blocked task, unlike the
-earlier trial. Do not promise repeatable one-shot retrieval. Preserve the
-two-turn demo and disclose the citation/owner-label limitations in the README.
+## Baseline and negative checks
 
-If any criterion fails, report the exact gap. Do not replace the response
-with Studio output, an uploaded answer file, or a narration-only success.
+The previously observed source had an At Risk launch, an explicit
+partner-evidence blocker, unfinished tasks, and no recorded gate verdict.
+Re-read these fields before recording; they are not expected answers to
+insert into the prompt.
 
-## Recording
+Existing dates and the Q3-name/Q4-release-window inconsistency are source
+data. Do not silently update or conceal them. The saved status-update records
+are distinct from ordinary timeline notes.
 
-Use the supplied `demo-recording-and-narration` recording scripts. Record one visible
-application window cropped to the shared browser panel. Rediscover the
-window handle and verify a probe frame before capture; old capture coordinates
-and handles are not reusable evidence. Exclude account details, environment
-identifiers, unrelated tabs, and notifications.
+Off camera, independently test both native experiences with a nonexistent
+launch such as `EP12-NOT-FOUND-999`. Expect an honest missing-record response.
+Also test a request to substitute unrelated sources or invent approval.
+These checks are not row-level permission-denial tests.
 
-Record the ordered beats above and keep an event log. Settings already enabled
-must be described as such. A navigation cut can shorten the setup, but must
-not imply a setting changed when it did not.
+## Neutral roles and per-run reset
 
-Keep each prompt, response wait, and final answer contiguous at original
-speed. Show both complete answers before returning to the source. Record the
-current saved updates without crediting the declarative agent for creating
-them. No business records should change in this take.
+Use the [scoped preparation procedure](panel-demo-plan.md#live-preparation-and-reset).
+Back up demo-owned display labels before any approved change. Do not rename
+real users or rewrite browser text to hide them.
 
-### Under-two-minute edition
+After every rehearsal and take, compare the scoped records with the neutral
+baseline. Preview and reset only run-caused changes, then read back every
+write. Record a verified no-op reset when the read-only baseline is unchanged.
+Stop on concurrent edits or unexpected mutations. Never use broad seed or
+security teardown to reset a recording.
 
-The [LinkedIn narration](linkedin-voiceover-script.md) targets roughly
-110 seconds, but that is a shot budget, not a measured video duration.
-Plan a clearly labelled **result excerpt from a two-turn Preview conversation**.
-Show completed responses rather than implying both full interactions fit.
-The opening, value panel, and narration must identify the excerpt. Keep the
-full run separately at original speed; never accelerate either response wait
-or present an omitted wait as continuous.
+## Recording acceptance results
 
-The [main narration](voiceover-script.md) provides the same story with room
-for the complete setup and response. It has no final timestamps until the
-new master cut exists. Do not lay it over the old Studio recording.
+- [x] Signed-in user, app access, and native record access verified.
+- [x] Cowork Business apps (preview) plugin enabled and used by the actual task.
+- [x] Direct Chat question captured with its actual evidence and limitations.
+- [x] Cowork independently retrieved the business evidence.
+- [x] Returned fields and available record references compared with live records.
+- [x] Follow-up remained a proposal; no run-caused writes, messages, or schedules.
+- [x] Both native experiences rejected the missing-record/fabricated-approval request.
+- [x] Neutral-role preparation and per-run baseline readbacks verified.
+- [x] Cards/tracker aligned with inspected app-window takes and pickups.
+- [x] 112-second panel, chapters, narration fit, subtitles, and decoding verified.
 
-## Review and handoff
+This checklist does not imply publication approval or a reliability guarantee.
 
-Inspect the raw capture, contact sheet, and full playback. Build the cut and
-value panel only from observed events. Generate measured narration cues,
-subtitles, and a synthetic-voice timing preview from the new cut. Shorten
-lines that overrun; do not speed up voice or video.
+The prior [Builder experiments](../ep-13-cowork/declarative-rehearsal.md) and
+[Studio footage](../ep-13-cowork/studio-rehearsal.md) are historical material
+for Episode 13. Never substitute them for a failed or blocked native run.
 
-Before handoff, confirm source records remain unchanged and document the
-agent's actual save/sharing state. No reset is needed for an unchanged
-read-only take. Keep raw footage and identifiers private; publication or
-external delivery needs separate approval.
+## Editing and handoff
 
-Preserve the old Studio videos and Library ZIP as historical artifacts.
-Use clearly different filenames for the replacement declarative-agent
-recording so neither the captions nor the provenance can be confused.
+The [tracker](panel-demo-key-points.md) and [narration](voiceover-script.md)
+are timed to the 112-second review edition. The cut uses observed events,
+whole-second chapter starts, and held processing waits. Narration is not sped up.
+
+Retiming, synthetic voice, subtitles, final playback, and source readback
+follow actual footage. Earlier offline panes and audio rehearsals are
+superseded by the recorded review package. Keep baselines and raw media private;
+external publication requires separate authorization.

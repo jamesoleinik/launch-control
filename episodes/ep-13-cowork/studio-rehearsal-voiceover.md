@@ -1,7 +1,7 @@
 # Archived Studio rehearsal voiceover: Launch Readiness Checker
 
 **Superseded for Episode 12.** This script remains tied to the original Studio
-recording. It is reference material for Episode 14, not its final narration
+recording. It is reference material for Episode 13, not its final narration
 and not evidence of a declarative agent in Microsoft 365 Copilot.
 
 **Edition:** Recorded read-only run in Copilot Studio draft Preview.

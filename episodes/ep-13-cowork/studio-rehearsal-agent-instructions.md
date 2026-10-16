@@ -1,8 +1,8 @@
 # Studio rehearsal: Launch Readiness Checker instructions
 
 These instructions belong to the earlier unpublished Copilot Studio draft,
-not the Episode 12 declarative agent. They preserve the Work IQ MCP rehearsal
-configuration as Episode 14 reference material. Revalidate the connection,
+not the direct Chat/Cowork experience in Episode 12. They preserve the Work IQ
+MCP rehearsal configuration as Episode 13 reference material. Revalidate the connection,
 scope, and observed behavior before reusing them.
 
 For the current Work IQ-only test, select only `do_action`, `get_schema`,

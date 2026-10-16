@@ -45,14 +45,17 @@ Full series index with links to each episode's README, preflight, and scripts: *
 | [9](episodes/ep-09-dataverse-fno/)        | Dataverse + F&O               | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](episodes/ep-10-dataverse-fabriciq/)  | Dataverse + Fabric IQ         | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](episodes/ep-11-agent-quality-gate/)  | Agent Quality Gate            | A governed Agent 365 worker with its own identity executes a launch approval gate |
-| [12](episodes/ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Enablement + Declarative Agent | Enable the environment, select the app, and extend Microsoft 365 Copilot |
-| [13](episodes/ep-13-cowork/)                    | Business Apps in Work IQ: Cowork | Explore business context and approval boundaries in Cowork |
-| [14](episodes/ep-14-copilot-studio/)            | Business Apps in Work IQ: Copilot Studio | Build and verify a governed assistant experience |
+| [12](episodes/ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Cowork | Use app evidence directly in Chat and Cowork through Business apps (preview) |
+| [13](episodes/ep-13-cowork/)                    | Business Apps in Work IQ: Declarative + Studio Agents | Extend the same launch scenario with focused agents and controlled follow-up |
 | [15](episodes/ep-15-workiq-api-devtools/)       | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
 | [16](episodes/ep-16-external-agents/)           | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
 | [17](episodes/ep-17-filter-based-security/)     | Filter-based Security in Dataverse (Public Preview) | Evaluate attribute-based row access with a scoped, testable filter |
 
 Each episode is also tagged in git: `git checkout ep-08` to see the repo as it was at that episode's ship. The original Season 1 agent builds (declarative agent, autonomous Sentinel, code-first Python agent, generative dashboard) moved to [`episodes/archive/`](episodes/archive/) and are absorbed as the Season 2 runtimes; see [`episodes/README.md`](episodes/README.md) for the full multi-season arc.
+
+Studio is now part of Episode 13 rather than a separate Episode 14. Later
+episode numbers and historical folder paths are unchanged; Episode 14 has
+no replacement topic assigned.
 
 ## Quick Start
 
@@ -87,7 +90,7 @@ launch-control/
 ├── business-skills/           # Launch readiness, escalation, status rules
 ├── data/knowledge/            # Sanitized KB articles for RAG
 ├── agents/
-│   ├── launch-coordinator/    # Declarative Copilot Studio agent (archived; absorbed into Ep 12)
+│   ├── launch-coordinator/    # Archived agent source; reference for Ep 13
 │   ├── launch-sentinel/       # Autonomous agent runtime (Ep 10 Fabric IQ)
 │   ├── launch-coordinator-py/ # Code-first agent runtime (Ep 13 Foundry IQ)
 │   └── agent-flows/           # Agent flow configurations

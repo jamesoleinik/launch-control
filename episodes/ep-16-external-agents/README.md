@@ -52,4 +52,4 @@ The earlier Full Orchestra finale remains in [DEFERRED-DRAFT.md](DEFERRED-DRAFT.
 ## Cross-references
 
 - [Episode 15: Developer Tools](../ep-15-workiq-api-devtools/README.md)
-- [Episode 12: Enablement + Declarative Agent](../ep-12-copilot-chat-agent-builder/README.md)
+- [Episode 12: Copilot Chat and Cowork](../ep-12-copilot-chat-agent-builder/README.md)

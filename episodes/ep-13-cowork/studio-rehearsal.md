@@ -1,9 +1,9 @@
 # Studio rehearsal retained from the earlier Episode 12 build
 
-**Superseded for Episode 12.** The revised episode demonstrates environment
-enablement and a declarative agent in Microsoft 365 Copilot. This earlier
+**Superseded for Episode 12.** That episode now demonstrates direct Copilot
+Chat and Cowork use of Business Applications in Work IQ. This earlier
 recording demonstrates an unpublished Copilot Studio draft. Keep it as
-reference for Episode 14, not as proof that either new episode is complete.
+reference for Episode 13, not as proof that either new episode is complete.
 
 ## What actually ran
 
@@ -82,14 +82,14 @@ Both voiced previews and the ZIP were delivered locally through the session
 Library. No external upload or new recipient access was granted. No business
 records changed, no reset was needed, and the agent remained unpublished.
 
-## Handoff to Episode 14
+## Handoff to Episode 13
 
 - [Original full timed narration](studio-rehearsal-voiceover.md)
 - [Original short timed narration](studio-rehearsal-linkedin-voiceover.md)
 - [Studio rehearsal instructions](studio-rehearsal-agent-instructions.md)
-- [Active Episode 14 specification](README.md)
+- [Active Episode 13 specification](README.md)
 - [Revised Episode 12 specification](../ep-12-copilot-chat-agent-builder/README.md)
 
 Revalidate the current Studio connection, identity, scope, and answer before
-recording Episode 14. These artifacts do not verify Agent Builder, a published
+recording Episode 13. These artifacts do not verify Agent Builder, a published
 Microsoft 365 agent, autonomous execution, or an approved write operation.

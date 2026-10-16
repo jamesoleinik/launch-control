@@ -1,7 +1,8 @@
 # Archived Studio rehearsal: short LinkedIn voiceover
 
 **Superseded for Episode 12.** Preserve this script with the original Studio
-excerpt. It is not narration for the revised declarative-agent episode.
+excerpt. It is not narration for the revised Chat/Cowork episode or the new
+Episode 13 agent comparison.
 
 **Duration:** 1:37, below the two-minute target.
 **Format:** A clearly labeled excerpt of the full recorded draft conversation,

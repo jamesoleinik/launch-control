@@ -1,6 +1,7 @@
-# Episode 14 voiceover: Copilot Studio
+# Episode 13 segment draft: Copilot Studio
 
-**Estimated duration:** About 90 seconds
+**Scope:** Supporting copy for the Studio portion of Episode 13, not an
+independently approved edition or final timing.
 **Status:** Planned narration. Revalidate and record the Studio experience
 before treating these result lines as observed evidence.
 
