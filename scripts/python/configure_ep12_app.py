@@ -29,7 +29,7 @@ CLASS_IDS = {
     "Integer": "{C6D124CA-7EDA-4a60-AEA9-7FB8D318B68F}",
     "Boolean": "{67FAC785-CD58-4f9f-ABB3-4B7DDC6ED5ED}",
 }
-SPEC = ROOT / "episodes/ep-12-business-apps-work-iq/launch-control-app.json"
+SPEC = Path(__file__).with_name("launch-control-app.json")
 
 
 def one(rows, description, *, optional=False):

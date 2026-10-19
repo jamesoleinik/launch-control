@@ -107,7 +107,7 @@ with the launch-level comparison below. In a detailed walkthrough, click
 into **Q3 Widget Launch** to inspect the saved status, risks, gate fields,
 and related work; the short edition also returns to the saved launch form
 to verify Section 3's write-back. Reuse the
-[app specification](launch-control-app.json). Additional fictional launches
+[app specification](../../scripts/python/launch-control-app.json). Additional fictional launches
 were prepared with the approved, marker-scoped
 [`seed_ep12_extra_launches.py`](../../scripts/python/seed_ep12_extra_launches.py).
 The helper supports `--dry-run` and `--apply` with per-record read-back.
@@ -364,14 +364,9 @@ Launch Control Demo and prevent changes to records or duplicate sends.
 The presenter-supplied final export runs **2:24**. It uses the app-first,
 four-section walkthrough and closes with three takeaways beside the Work IQ
 diagram. It is edited for time, not a real-time response-performance test.
-The earlier 2:10 synthetic preview, [tracker](short-key-points.md), and
-[narration](short-voiceover.md) are production sources, not exact timestamps
-for that final export. Superseded drafts and take histories are available
-in Git history rather than alongside the current episode.
-
-The [source pack](revision-b-source-pack.json) contains prepared fictional
-content. The [saved Chat instructions](chat-custom-instructions.md) document
-the source-routing customization used for the demo.
+Supporting conversations and documents were prepared fictional content.
+The saved Chat conversation used source-routing instructions. Production
+scripts, trackers, and narration drafts are not part of this public guide.
 
 ### Rehearse and verify
 

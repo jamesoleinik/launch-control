@@ -104,7 +104,7 @@ the intended user's access in the new rehearsal.
 
 The app in this episode is **Launch Control Demo**, with the fictional
 **Q3 Widget Launch** identified by `EP12-DEMO-01`. The model-driven app spec
-is [`launch-control-app.json`](../ep-12-business-apps-work-iq/launch-control-app.json).
+is [`launch-control-app.json`](../../scripts/python/launch-control-app.json).
 
 Verify the published app, its Launch form and view, and the pilot user's
 access. The app's table component must resolve to `lc_launch`, not the generic
