@@ -1,149 +1,37 @@
-# Launch Control: Business Applications in Work IQ, Copilot Chat and Cowork
+# Episode 12: Business Applications in Work IQ
 
 > *My business app remains the system of record. Business Applications in
 > Work IQ brings its business context together with workplace information
 > in Copilot, so I can understand what needs attention and review the next action.*
 
-**Status: 2:10 highlights edition complete.** The final video shows the
-populated app and saved setup settings, a sourced Copilot Chat review,
-a reviewed Cowork update saved back to Dataverse, and a separately recorded
-one-time scheduled briefing received in Outlook. The detailed prompts below
-document the underlying workflow; the short video does not show complete
-conversations at readable speed.
-The [re-record map](readme-re-record.md) preserves acceptance evidence and
-the history of earlier editions.
+## The hook
 
-## What this episode shows
+Business questions rarely fit inside one app. Launch Control records the
+launch status and risks, while conversations and documents explain the
+work around them.
 
-| Video | Business outcome |
-|---|---|
-| 0:00-0:30 | Put the existing app to work in Copilot using app, environment, and tenant prerequisites. |
-| 0:30-1:00 | Understand launch status using business records together with relevant Microsoft 365 conversations and documents. |
-| 1:00-1:30 | Enable and connect the Business apps plugin, review a focused proposal, and verify the saved Dataverse update in the native app. |
-| 1:30-2:00 | Bring the next review into the flow of work with a scheduled briefing delivered to Outlook. |
-| 2:00-2:10 | Close on connected context, reviewed write-back, scheduled follow-up, and the preview rollout. |
+Business Applications in Work IQ brings those sources together in Copilot.
+Cowork can propose a focused update for review, save the approved change
+back to Dataverse, and deliver a scheduled briefing to Outlook. The app
+remains the system of record, and people stay in control of changes.
 
-The plugin segment shows its saved enabled and connected state, not a new
-installation or sign-in. The scheduled briefing is a separate earlier run,
-not an automation triggered by the newly saved follow-up.
+> **Preview note:** Business Applications in Work IQ and its Cowork plugin
+> are preview capabilities. Validate current availability, licensing,
+> permissions, and setup. Preview features are not meant for production use.
 
-## Reference documentation
-
-- [Business Applications in Work IQ](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq):
-  business semantics, supported systems, Copilot entry points, and governed
-  discovery, reading, and actions alongside Microsoft Graph-backed information.
-- [Use the Business Applications in Work IQ plugin in Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-work-iq):
-  administrator installation, user connection, discovery prompts, and existing
-  role-based permissions.
-
-Both references identify the capability as **preview**. The Power Apps guide
-says preview features are not meant for production use and may have restricted
-functionality. Check current licensing, tenant policies, app support, and
-availability before following this demo. These guides describe product
-capabilities; the recording is the evidence for this episode's saved update
-and delivered briefing. Neither guide proves unattended recurring execution.
-
-## Final video and narration
-
-The latest edition is
-`.local/recordings/launch-control/ep12-slower-15-panel-voiced.mp4` (2:10).
-Its four steps each last 30 seconds, followed by a 10-second outro. It starts
-directly on the populated app, without opening cards. The narration welcomes
-viewers back to Launch Control and introduces the new Business Applications
-in Work IQ preview. Its outcome is asking about business data and acting on
-records within existing permissions. Section 1 shows
-the app-designer Copilot setting, environment Work IQ enablement, tenant
-Copilot business-data access, and the Copilot Chat opening screen. Recorded navigation and reviews
-are edited and sped up with the presenter's approval; this is a highlights
-edition, not real-time response performance or a full readable transcript.
-The [short tracker](short-key-points.md) and [short narration](short-voiceover.md)
-match this edition. Narration is a timed synthetic preview, not the presenter's
-final voice recording. The latest script has 368 words at about 170 words
-per minute, 15 percent slower than the preceding edition. The longest measured
-pause is below one second. The 10:13 focused walkthrough remains available as
-`ep12-focused-panel-voiced.mp4` in the same folder.
-The received email ends the four-step demonstration. The 10-second outro
-opens [Microsoft Learn](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq#how-business-applications-extend-work-iq)
-and scrolls to the productivity-and-business-data diagram beside the takeaways.
-It then slowly zooms toward the diagram. The three takeaways are business
-records combined with Microsoft 365 context, reviewed updates back into
-Dataverse and scheduled briefings, and the worldwide preview rollout in
-Microsoft Copilot and Cowork. The Learn references in this README inform the
-context and governed-action wording. This is rollout wording, not a guarantee of
-availability in every tenant: the [Microsoft announcement](https://www.microsoft.com/en-us/dynamics-365/blog/it-professional/2026/09/25/work-iq-business-and-workplace-intelligence-in-the-flow-of-work/)
-says rollout continues through October, and Learn still identifies the
-capability as preview. Licensing, permissions, and setup requirements apply.
-
-All four short panels explain a reusable business-process benefit, rather
-than enumerate portal controls: put app data to work, understand status in
-context, save a reviewed update, and bring the next review to the user.
-The demonstrated source is an existing model-driven app. Cowork saves a
-single-field risk-summary update after review, and the app shows the saved
-follow-up. The blocked task remains blocked; saving a next step does not
-mean the evidence was requested or received. The scheduled email is a
-separate, earlier verified action, not a reaction to this new write.
-
-Window-only takes cover the setup clicks, the four-launch list and opened
-Q3 Widget Launch, and a focused Chat comparison of launch-level status and risk
-with communications. The Chat Sources panel loaded successfully and cited the
-launch, matching Teams post, certification brief, draft handoff, and the
-received readiness briefing. With the presenter's approval, Cowork's Microsoft Business apps
-(preview) plugin is enabled and connected. A fresh exact-prompt conversation
-retrieved the launch-specific blocker, its recorded owner and due date, and
-a review-only follow-up plan. A new Section 3 pickup now shows a real
-reviewed write-back and its verification in the app. The demo field was
-backed up and restored after the take using a conditional single-field reset.
-The native one-time briefing ran at its scheduled
-trigger, required attended Business apps read approvals, and sent one email to
-the signed-in user's mailbox. Automations shows one completed run and the
-one-time schedule is paused. Outlook Inbox contains the received HTML briefing
-with an executive summary, highlighted blocked/overdue work, role owners,
-due dates, proposed steps, and missing evidence. It names the source records
-but has no clickable record links, because the app did not return them.
-
-The [source pack](revision-b-source-pack.json) contains prepared fictional
-content. Its Teams post and SharePoint brief were published earlier; its
-handoff email remains an unsent draft, separate from the requested scheduled
-email. The [saved Chat instructions](chat-custom-instructions.md) document the
-existing source-routing customization. Use native Chat and Cowork, not the
-separate Work IQ MCP tool. Historical editions and experiments remain in
-[Revision B](revision-b-demo-arc.md) and the [panel plan](panel-demo-plan.md);
-they are not substitutes for the replacement.
-
-**Season:** Business Apps in Work IQ
-
-**Hero surfaces:** Microsoft 365 Copilot Chat and Copilot Cowork, with
-Launch Control as the source of truth.
-
-**Target result:** Start with the saved launch evidence, combine business and
-productivity context in Chat, save a reviewed update with Cowork, then verify a
-scheduled readiness email in the current user's Outlook. Report only the
-parts actually verified; a proposal or draft is not a saved action or delivery.
-
-## Episode boundary
+## The walkthrough: four sections
 
 ```text
-Show the existing app and its app-designer Copilot setting
-  -> Enable environment Work IQ and tenant Copilot business-data access
-  -> Open Copilot and combine business and productivity context in Chat
-  -> Use Business apps (preview) in Cowork to review and save one scoped update
-  -> Schedule approved follow-up with Cowork and verify its email in Outlook
-  -> Episode 13: extend this scenario with declarative and Studio agents
+Section 1  Existing app  -> Enable business context in Copilot
+Section 2  Copilot Chat -> Understand status with workplace context
+Section 3  Cowork       -> Review and save a Dataverse update
+Section 4  Follow-up    -> Receive a scheduled briefing in Outlook
 ```
 
-Episode 12 does not build a declarative agent, use Agent Builder Preview,
-provision a developer package, or build a Studio agent. Those belong to
-[Episode 13](../ep-13-cowork/README.md). The episode now lives in
-`ep-12-business-apps-work-iq`. Shared authentication retains aliases for older
-episode selectors; repository links and script defaults use the new path.
-
-Edition A is read-only. Cowork proposed follow-up work in its answer; that
-proposal was not a saved task, sent message, schedule, or approval. Its
-90-120-second edit target and processing-wait approval apply to that recorded
-edition only. Revisit the target for Revision B after read-only rehearsal.
-No extra speed indicators, fictional-data disclaimers, or result headings
-were used in Edition A. Its production notes disclose that the recording is
-edited for time.
+The evidence task remains blocked. Saving a follow-up does not resolve it.
+The briefing is a separate one-time run that required attended read approvals,
+not proof of unattended recurring execution. Building custom agents comes
+next in [Episode 13](../ep-13-cowork/README.md).
 
 ## 1. Enable Business Applications in Work IQ
 
@@ -471,7 +359,21 @@ its trigger. The final video also shows its completed run and received email.
 It runs once, not daily or weekly. Its instructions limit business reads to
 Launch Control Demo and prevent changes to records or duplicate sends.
 
-## Rehearse, record, and verify
+## Recording notes
+
+The presenter-supplied final export runs **2:24**. It uses the app-first,
+four-section walkthrough and closes with three takeaways beside the Work IQ
+diagram. It is edited for time, not a real-time response-performance test.
+The earlier 2:10 synthetic preview, [tracker](short-key-points.md), and
+[narration](short-voiceover.md) are production sources, not exact timestamps
+for that final export. Detailed take history and checks belong in the
+[recording map](readme-re-record.md).
+
+The [source pack](revision-b-source-pack.json) contains prepared fictional
+content. The [saved Chat instructions](chat-custom-instructions.md) document
+the source-routing customization used for the demo.
+
+### Rehearse and verify
 
 Use the [eight-point re-record map](readme-re-record.md) as the acceptance
 checklist. The current [tracker](short-key-points.md) and
@@ -515,3 +417,9 @@ walkthrough. Their files remain historical artifacts, not current deliverables.
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
 - [Episode 13: Declarative and Studio agents](../ep-13-cowork/README.md)
 - [Deferred Web IQ storyline](DEFERRED-DRAFT.md), not the current episode.
+
+## Reference documentation
+
+- [Business Applications in Work IQ](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq)
+- [Use the Business Applications in Work IQ plugin in Cowork](https://learn.microsoft.com/microsoft-365/copilot/cowork/cowork-work-iq)
+- [Work IQ: Business and workplace intelligence in the flow of work](https://www.microsoft.com/en-us/dynamics-365/blog/it-professional/2026/09/25/work-iq-business-and-workplace-intelligence-in-the-flow-of-work/)
