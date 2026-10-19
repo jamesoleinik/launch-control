@@ -4,8 +4,8 @@ Read-only. Exits non-zero if the agent's external-signal source is not reachable
 or the required `web` tool is not entitled to the key.
 
 Run:
-    # PowerShell: $env:LC_ENV = "ep-12-copilot-chat-agent-builder"
-    python episodes/ep-12-copilot-chat-agent-builder/preflight.py
+    # PowerShell: $env:LC_ENV = "ep-12-business-apps-work-iq"
+    python episodes/ep-12-business-apps-work-iq/preflight.py
 """
 
 import sys
@@ -20,7 +20,7 @@ NICE_TO_HAVE = {"news", "browse", "videos", "images"}
 
 def main():
     try:
-        client = WebIqClient(env_name="ep-12-copilot-chat-agent-builder")
+        client = WebIqClient(env_name="ep-12-business-apps-work-iq")
     except WebIqError as exc:
         print(f"FAIL: {exc}")
         return 1

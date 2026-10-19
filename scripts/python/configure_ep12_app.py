@@ -29,7 +29,7 @@ CLASS_IDS = {
     "Integer": "{C6D124CA-7EDA-4a60-AEA9-7FB8D318B68F}",
     "Boolean": "{67FAC785-CD58-4f9f-ABB3-4B7DDC6ED5ED}",
 }
-SPEC = ROOT / "episodes/ep-12-copilot-chat-agent-builder/launch-control-app.json"
+SPEC = ROOT / "episodes/ep-12-business-apps-work-iq/launch-control-app.json"
 
 
 def one(rows, description, *, optional=False):
@@ -65,6 +65,19 @@ def view(client, table, name, *, optional=False):
         f"{table} view {name}",
         optional=optional,
     )
+
+
+def named_surface(reader, client, entry, kind, key):
+    current = reader(client, entry["table"], entry[kind], optional=True)
+    previous_name = entry.get(f"previous_{kind}")
+    if previous_name and previous_name != entry[kind]:
+        previous = reader(client, entry["table"], previous_name, optional=True)
+        if current and previous and current[key] != previous[key]:
+            raise RuntimeError(
+                f"{entry['table']}: both current and previous {kind} names exist"
+            )
+        current = current or previous
+    return current
 
 
 def native_form(xml, entry, columns):
@@ -159,7 +172,7 @@ def plan(client, spec):
         required = set(entry["fields"]) | set(entry["view_fields"]) | {entry["sort_field"]}
         if required - columns.keys():
             raise RuntimeError(f"{table}: missing columns {required - columns.keys()}")
-        current_form = form(client, table, entry["form"], optional=True)
+        current_form = named_surface(form, client, entry, "form", "formid")
         source_form = form(client, table, "Information")
         template = current_form or source_form
         form_body = {
@@ -169,7 +182,7 @@ def plan(client, spec):
             "formpresentation": source_form["formpresentation"],
             "formactivationstate": source_form["formactivationstate"],
         }
-        current_view = view(client, table, entry["view"], optional=True)
+        current_view = named_surface(view, client, entry, "view", "savedqueryid")
         source_view = view(client, table, entry["source_view"])
         view_body = {
             "name": entry["view"],

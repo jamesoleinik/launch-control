@@ -38,7 +38,7 @@ episode titles below as the current scope, not the historical folder slugs.
 | [9](ep-09-dataverse-fno/) | Dataverse + F&O | CRM and ERP on one platform; the launch record gains budget and supply signal |
 | [10](ep-10-dataverse-fabriciq/) | Dataverse + Fabric IQ | Autonomous agent reasoning over the semantic baseline; is this launch a statistical outlier? |
 | [11](ep-11-agent-quality-gate/) | Agent Quality Gate | A local Agent 365 worker with its own governed identity runs the launch approval quality gate |
-| [12](ep-12-copilot-chat-agent-builder/) | Business Apps in Work IQ: Copilot Chat + Cowork | Use the prepared app directly; verify Chat and the Cowork Business apps (preview) plugin |
+| [12](ep-12-business-apps-work-iq/) | Business Apps in Work IQ: Copilot Chat + Cowork | Use the prepared app directly; verify Chat and the Cowork Business apps (preview) plugin |
 | [13](ep-13-cowork/) | Business Apps in Work IQ: Declarative + Studio Agents | Extend the same launch scenario with focused agents and controlled follow-up |
 | [15](ep-15-workiq-api-devtools/) | Business Apps in Work IQ: Work IQ API + Developer Tools | Verify developer access and evaluate agent behavior |
 | [16](ep-16-external-agents/) | Business Apps in Work IQ: External Agents | Evaluate a source-grounded route for external agents |
@@ -53,7 +53,7 @@ episode titles below as the current scope, not the historical folder slugs.
 
 The earlier Web IQ, Foundry IQ, convergence, administration, and finale storylines are postponed, not removed. Their README drafts and supporting assets remain in the original folders:
 
-- [Web IQ draft](ep-12-copilot-chat-agent-builder/DEFERRED-DRAFT.md), with its existing plan, instructions, client, and demo code.
+- [Web IQ draft](ep-12-business-apps-work-iq/DEFERRED-DRAFT.md), with its existing plan, instructions, client, and demo code.
 - [Foundry IQ draft](ep-13-cowork/DEFERRED-DRAFT.md).
 - [Convergence draft](ep-14-copilot-studio/DEFERRED-DRAFT.md).
 - [Agentic Administration draft](ep-15-workiq-api-devtools/DEFERRED-DRAFT.md), with capacity, audit, cleanup, and blast-radius assets.

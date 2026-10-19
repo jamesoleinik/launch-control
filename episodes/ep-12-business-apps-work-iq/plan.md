@@ -30,13 +30,13 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
      built in the main "Product Launch 2.0" env).
    - `WEBIQ_API_KEY` (request from your Microsoft rep; never commit it).
    - `TENANT_ID`.
-2. Select this env in any script: PowerShell `$env:LC_ENV = "ep-12-copilot-chat-agent-builder"`.
+2. Select this env in any script: PowerShell `$env:LC_ENV = "ep-12-business-apps-work-iq"`.
 3. Set `$env:PYTHONIOENCODING="utf-8"` before running Python.
 
 ## Build checklist
 
 ### A. Verify the substrate (scriptable, do this first)
-- [ ] `python episodes/ep-12-copilot-chat-agent-builder/preflight.py` exits 0 (endpoint
+- [ ] `python episodes/ep-12-business-apps-work-iq/preflight.py` exits 0 (endpoint
       reachable, key entitled to `web`). If it fails, the key is wrong or not
       entitled; stop and fix before building the agent.
 - [ ] Confirm the Dataverse env has the Q3 Widget Launch with **two blockers**
@@ -44,7 +44,7 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
       (`scripts/seed_q3_widget_launch.py`, `scripts/seed_q3_sample_tasks.py`) or
       verify with `scripts/python/inspect_launches.py`. The internal half must be
       deterministic so the demo is repeatable.
-- [ ] `python episodes/ep-12-copilot-chat-agent-builder/fuse_external_signal.py --dataverse --max 5`
+- [ ] `python episodes/ep-12-business-apps-work-iq/fuse_external_signal.py --dataverse --max 5`
       produces a cited briefing from live blocked tasks. This is the exact logic
       the agent reproduces.
 
@@ -77,7 +77,7 @@ signal), and fuses them into one cited "outside-in" risk briefing for a launch.
 
 ## Deliverables this session should produce
 
-1. `episodes/ep-12-copilot-chat-agent-builder/agent-instructions.md` (paste-ready Instructions,
+1. `episodes/ep-12-business-apps-work-iq/agent-instructions.md` (paste-ready Instructions,
    same shape as Ep 9's).
 2. A short note in `README.md` under a "Build status" line recording that the
    agent is built + the headline result validated (date, model picked).

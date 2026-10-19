@@ -3,7 +3,7 @@
 **Historical evidence, not the current episode specification.** This work was
 originally prepared for Episode 12. The presenter moved all agent authoring
 to [Episode 13](README.md), including both declarative agents and Copilot
-Studio. [Episode 12](../ep-12-copilot-chat-agent-builder/README.md) now covers
+Studio. [Episode 12](../ep-12-business-apps-work-iq/README.md) now covers
 direct Copilot Chat and Cowork usage. Old episode-number references below
 describe the earlier plan, not the current series order.
 
@@ -104,7 +104,7 @@ the intended user's access in the new rehearsal.
 
 The app in this episode is **Launch Control Demo**, with the fictional
 **Q3 Widget Launch** identified by `EP12-DEMO-01`. The model-driven app spec
-is [`launch-control-app.json`](../ep-12-copilot-chat-agent-builder/launch-control-app.json).
+is [`launch-control-app.json`](../ep-12-business-apps-work-iq/launch-control-app.json).
 
 Verify the published app, its Launch form and view, and the pilot user's
 access. The app's table component must resolve to `lc_launch`, not the generic
@@ -586,6 +586,6 @@ and Library ZIP remain unchanged. Their
 are retained as Episode 13 reference material, not a completed episode.
 
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
-- [Episode 12: Copilot Chat and Cowork](../ep-12-copilot-chat-agent-builder/README.md)
+- [Episode 12: Copilot Chat and Cowork](../ep-12-business-apps-work-iq/README.md)
 - [Episode 13: Declarative and Studio agents](README.md)
-- [Deferred Web IQ storyline](../ep-12-copilot-chat-agent-builder/DEFERRED-DRAFT.md), not the active build.
+- [Deferred Web IQ storyline](../ep-12-business-apps-work-iq/DEFERRED-DRAFT.md), not the active build.

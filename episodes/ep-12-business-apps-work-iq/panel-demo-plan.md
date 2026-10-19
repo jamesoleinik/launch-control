@@ -1,4 +1,4 @@
-# Episode 12 panel-demo plan: Copilot Chat and Cowork
+# Launch Control panel-demo plan: Copilot Chat and Cowork
 
 **Status: recorded 112-second review edition complete; not externally published.**
 Episode 12 is about Business Applications in Work IQ directly in Copilot
@@ -6,6 +6,31 @@ Chat and Copilot Cowork. Cowork uses the Microsoft-published
 **Business apps (preview)** plugin. Custom-agent authoring has moved to
 [Episode 13](../ep-13-cowork/README.md), covering declarative and Studio agents.
 The prior developer-led Episode 12 plan, panes, and audio are superseded.
+
+The presenter later requested a broader story: a launch 360 view in Chat that
+combines productivity context with live business status, followed by Cowork
+coordinating tasks and scheduled monitoring. That is now documented as
+[Revision B](revision-b-demo-arc.md), with a
+[draft tracker](revision-b-key-points.md) and
+[draft voice-over](revision-b-voiceover.md). These are editorial drafts only.
+The existing Edition A evidence does not prove retrieval of email, Teams
+conversations, or files, nor does it prove task creation or scheduled
+monitoring. No such operation was attempted. The new story requires read-only
+verification, presenter review, and separate explicit approval before any
+live write, schedule, reset, or recording.
+
+### Revision B offline review
+
+The draft tracker rendered successfully with two opening cards, eight steps,
+28 panel states, and a 195-second proposed demo timeline. The contact sheet
+is in the gitignored local folder
+`artifacts\ep12-panel-demo\chat-cowork\revision-b-panes\contact-sheet.jpg`.
+Its draft-result labels and provisional timings are not observed evidence.
+The Revision B voice-over table was generated and its table/lint check passed
+with the house comma limit configured to two. No footage exists for this
+revision, so read-aloud review, synthetic-voice fit, live source verification,
+and final timing remain outstanding. The generated pane images are local
+review artifacts and are not committed.
 
 ## Recorded review deliverables
 

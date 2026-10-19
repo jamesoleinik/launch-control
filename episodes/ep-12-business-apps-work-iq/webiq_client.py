@@ -49,9 +49,9 @@ class WebIqClient:
         self._id = 0
         if not self.api_key:
             raise WebIqError(
-                "WEBIQ_API_KEY is not set. Copy episodes/ep-12-copilot-chat-agent-builder/"
+                "WEBIQ_API_KEY is not set. Copy episodes/ep-12-business-apps-work-iq/"
                 ".env.example to .env, add your key, and select it with "
-                "LC_ENV=ep-12-copilot-chat-agent-builder.")
+                "LC_ENV=ep-12-business-apps-work-iq.")
 
     def _rpc(self, method, params=None):
         self._id += 1

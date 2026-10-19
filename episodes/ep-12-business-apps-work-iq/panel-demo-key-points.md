@@ -1,4 +1,8 @@
-# Episode 12: business apps in Chat and Cowork
+# Launch Control: business apps in Chat and Cowork
+
+> Historical tracker for the completed 112-second Edition A. For the
+> unverified expanded story, use the separate
+> [Revision B draft tracker](revision-b-key-points.md).
 
 **Status: tracker timed to the recorded Chat/Cowork review edition.**
 The Microsoft plugin was enabled before the takes. The edit uses actual
@@ -18,7 +22,7 @@ The recording is edited for time, not a response-latency demonstration.
 $env:PYTHONIOENCODING = "utf-8"
 $scripts = Join-Path $HOME ".copilot\skills\panel-demo-video\scripts"
 python "$scripts\build_panel_video.py" `
-  --doc episodes\ep-12-copilot-chat-agent-builder\panel-demo-key-points.md `
+  --doc episodes\ep-12-business-apps-work-iq\panel-demo-key-points.md `
   --panes-only artifacts\ep12-panel-demo\chat-cowork\panes `
   --close-seconds 12 --result-label "" --footer "" `
   --agenda-subtitle "Ask in Chat. Follow up in Cowork."

@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import Mock, patch
 from xml.etree import ElementTree as ET
 
-from configure_ep12_app import CLASS_IDS, matches, native_form, native_view, plan
+from configure_ep12_app import CLASS_IDS, matches, named_surface, native_form, native_view, plan
 
 
 class NativeSurfacesTests(unittest.TestCase):
@@ -114,6 +114,31 @@ class NativeSurfacesTests(unittest.TestCase):
             changes = plan(client, {"navigation": [entry]})
         self.assertEqual(changes[0][4]["formpresentation"], 1)
         self.assertEqual(changes[0][4]["formactivationstate"], 1)
+
+    def test_rename_reuses_previous_surface_id(self):
+        reader = Mock(side_effect=[None, {"formid": "existing"}])
+        entry = {"table": "lc_task", "form": "Launch Control Task Evidence",
+                 "previous_form": "Episode 12 Task Evidence"}
+        self.assertEqual(
+            named_surface(reader, Mock(), entry, "form", "formid"),
+            {"formid": "existing"},
+        )
+
+    def test_renamed_surface_is_reused_on_rerun(self):
+        reader = Mock(side_effect=[{"formid": "existing"}, None])
+        entry = {"table": "lc_task", "form": "Launch Control Task Evidence",
+                 "previous_form": "Episode 12 Task Evidence"}
+        self.assertEqual(
+            named_surface(reader, Mock(), entry, "form", "formid"),
+            {"formid": "existing"},
+        )
+
+    def test_rename_conflict_fails_without_selecting_either_surface(self):
+        reader = Mock(side_effect=[{"formid": "new"}, {"formid": "old"}])
+        entry = {"table": "lc_task", "form": "Launch Control Task Evidence",
+                 "previous_form": "Episode 12 Task Evidence"}
+        with self.assertRaisesRegex(RuntimeError, "both current and previous"):
+            named_surface(reader, Mock(), entry, "form", "formid")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 {
   "name": "Launch Control Demo",
   "unique_name": "lc_Episode12LaunchControl",
-  "description": "Fictional Q3 Widget Launch demo app for Episode 12.",
+  "description": "Fictional Q3 Widget Launch demo app for Launch Control.",
   "solution": "LaunchControl",
   "icon_webresource_name": "msdyn_/Images/AppModule_Default_Icon.png",
   "area_title": "Launch Control",
@@ -10,8 +10,10 @@
     {
       "table": "lc_launch",
       "label": "Launches",
-      "form": "Episode 12 Launch Evidence",
-      "view": "Episode 12 Active Launches",
+      "form": "Launch Control Launch Evidence",
+      "previous_form": "Episode 12 Launch Evidence",
+      "view": "Launch Control Active Launches",
+      "previous_view": "Episode 12 Active Launches",
       "source_view": "Active lc_launchs",
       "evidence_description": "Active launches with business owner, launch status, target date and recorded risk summary. Quality gate fields are recorded review results, not inferred readiness.",
       "fields": {
@@ -35,8 +37,10 @@
     {
       "table": "lc_milestone",
       "label": "Milestones",
-      "form": "Episode 12 Milestone Evidence",
-      "view": "Episode 12 Active Milestones",
+      "form": "Launch Control Milestone Evidence",
+      "previous_form": "Episode 12 Milestone Evidence",
+      "view": "Launch Control Active Milestones",
+      "previous_view": "Episode 12 Active Milestones",
       "source_view": "Active lc_milestones",
       "evidence_description": "Active launch milestones with the related launch, milestone business owner, due date, status and recorded description.",
       "fields": {
@@ -54,8 +58,10 @@
     {
       "table": "lc_task",
       "label": "Tasks",
-      "form": "Episode 12 Task Evidence",
-      "view": "Episode 12 Active Tasks",
+      "form": "Launch Control Task Evidence",
+      "previous_form": "Episode 12 Task Evidence",
+      "view": "Launch Control Active Tasks",
+      "previous_view": "Episode 12 Active Tasks",
       "source_view": "Active lc_tasks",
       "evidence_description": "Active launch work items with related launch and milestone, assignee, task status, due date, explicit blocked flag and recorded blocker reason. Active records can include completed tasks; use task status to distinguish unfinished work.",
       "fields": {
@@ -76,8 +82,10 @@
     {
       "table": "lc_statusupdate",
       "label": "Status Updates",
-      "form": "Episode 12 Status Update Evidence",
-      "view": "Episode 12 Active Status Updates",
+      "form": "Launch Control Status Update Evidence",
+      "previous_form": "Episode 12 Status Update Evidence",
+      "view": "Launch Control Active Status Updates",
+      "previous_view": "Episode 12 Active Status Updates",
       "source_view": "Active lc_statusupdates",
       "evidence_description": "Saved launch updates ordered newest first, with related launch, optional milestone or task, author, posted time, reported health and the recorded narrative summary.",
       "fields": {

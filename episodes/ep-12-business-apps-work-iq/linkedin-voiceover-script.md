@@ -1,4 +1,8 @@
-# Episode 12 short public edition
+# Launch Control short public edition
+
+> This short-edition note describes the completed 112-second Edition A. The
+> expanded story is only a draft; see the
+> [Revision B plan](revision-b-demo-arc.md).
 
 Use [voiceover-script.md](voiceover-script.md) as the single narration source
 and [panel-demo-key-points.md](panel-demo-key-points.md) as the tracker.

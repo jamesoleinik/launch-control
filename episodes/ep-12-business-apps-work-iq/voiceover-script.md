@@ -1,4 +1,8 @@
-# Episode 12 voice-over: business apps in Chat and Cowork
+# Launch Control voice-over: business apps in Chat and Cowork
+
+> Historical narration for the completed 112-second Edition A. For the
+> unverified expanded story, use the separate
+> [Revision B draft voice-over](revision-b-voiceover.md).
 
 **Status: narration for the recorded Chat/Cowork review edition.**
 The Microsoft Business apps (preview) plugin was enabled before capture.

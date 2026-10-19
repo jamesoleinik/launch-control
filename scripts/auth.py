@@ -30,7 +30,8 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 _LEGACY_EPISODE_ENV_NAMES = {
-    "ep-12-dataverse-webiq": "ep-12-copilot-chat-agent-builder",
+    "ep-12-dataverse-webiq": "ep-12-business-apps-work-iq",
+    "ep-12-copilot-chat-agent-builder": "ep-12-business-apps-work-iq",
     "ep-13-dataverse-foundryiq": "ep-13-cowork",
     "ep-14-convergence": "ep-14-copilot-studio",
     "ep-15-agentic-admin": "ep-15-workiq-api-devtools",

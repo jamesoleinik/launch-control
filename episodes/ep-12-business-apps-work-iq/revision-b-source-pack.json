@@ -1,0 +1,32 @@
+{
+  "status": "partially_published",
+  "fictional": true,
+  "launch_name": "Q3 Widget Launch",
+  "launch_code": "EP12-DEMO-01",
+  "publication_rules": [
+    "Resolve the intended demo account, launch record URL, Teams destination, and document destination before publishing.",
+    "Obtain confirmation of the exact writes and destinations.",
+    "Read existing sources first and reuse matching marker-scoped content instead of duplicating it.",
+    "Use actual publication timestamps. Do not backdate or impersonate a fictional role as an authenticated sender.",
+    "Read back saved content and retain its actual source URL privately.",
+    "Do not change Dataverse status, owners, dates, or quality-gate fields to make the story appear complete."
+  ],
+  "email": {
+    "status": "draft_saved_not_sent",
+    "verification": "Native Outlook displayed the saved draft with a self-recipient. Fresh native Chat retrieved and cited it as a draft, not a sent commitment. Send confirmation was unavailable; no send was performed.",
+    "subject": "Launch Control: Q3 Widget Launch partner certification handoff",
+    "body": "Prepared fictional Launch Control demo content. Q3 Widget Launch (EP12-DEMO-01): partner certification evidence remains under review. Partner Review Lead coordinates the review. The launch record is the authority for current status and target date. The existing Confirm partner security evidence task tracks the blocker. Proposed follow-up: assemble an evidence index and identify the outstanding reviewer questions. This message does not grant approval or change the task. Consult the launch record before making a readiness decision."
+  },
+  "teams_message": {
+    "status": "published_read_back",
+    "destination": "AppVerse > Launch Control (private)",
+    "verification": "Native Teams displayed the exact message with the actual signed-in author and a 2:18 PM timestamp. No members were added.",
+    "body": "Prepared fictional Episode 12 demo content. Q3 Widget Launch / EP12-DEMO-01 coordination note: Partner Review Lead needs an evidence index and a list of unresolved certification questions. Launch Coordinator needs that review outcome before completing the readiness briefing. Please keep certification follow-up linked to the existing Confirm partner security evidence task rather than creating another copy of that blocker. Owners and due dates in proposed new work require review. No certification or launch approval is recorded by this message."
+  },
+  "document": {
+    "status": "saved_reopened_read_back",
+    "verification": "The native SharePoint text editor reopened the renamed file and displayed the authored certification brief. A later fresh unchanged Chat stage prompt retrieved and cited the file alongside the launch, blocker and unsent email draft. Teams retrieval remains unverified. No sharing or permission changes were made.",
+    "name": "Launch-Control-Q3-Widget-Launch-certification-brief.md",
+    "content": "# Q3 Widget Launch certification brief\n\nPrepared fictional Launch Control demo content.\n\nLaunch code: EP12-DEMO-01. Business app: Launch Control Demo.\n\n## Scope\n\nSupporting work for the partner certification review. This brief is not a certification artifact, an approval, or a substitute for live business records.\n\n## Coordination roles\n\nPartner Review Lead coordinates the evidence review. Launch Coordinator prepares the readiness briefing. Consult the business app for saved assignments and dates.\n\n## Proposed completion signals\n\nAn evidence index should list each required artifact, its source link, review state, and unresolved question. A review handoff should identify the reviewer, disposition, and remaining conditions. The readiness briefing should cite the saved review outcome and current launch record.\n\n## Dependencies\n\nEvidence indexing precedes the review handoff. The readiness briefing depends on a recorded review outcome. Until that outcome exists, describe certification as under review, not approved.\n\n## Source of truth\n\nRetrieve live status, blocked work, assignees, due dates, and quality-gate fields from Launch Control Demo. Missing gate fields do not imply approval."
+  }
+}

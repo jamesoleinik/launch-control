@@ -12,7 +12,7 @@
 
 **Status:** ✍️ Draft · 🎬 Not yet recorded
 
-**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-12-copilot-chat-agent-builder/.env and re-run preflight (2026-06-28)
+**Build status:** Blocked: WEBIQ_API_KEY not set locally; set episodes/ep-12-business-apps-work-iq/.env and re-run preflight (2026-06-28)
 **Season:** 2 (Dataverse, Better Together)
 **Features:** ⭐ Copilot Studio agent in the new unified builder (model picker, Tools, Knowledge, Memory) · ⭐ Dataverse MCP Server (internal state) · ⭐ Web IQ MCP Server (live external signal) · ⭐ Two MCP servers composed in one agent
 **Layer:** 🟣 Layer 3 (the conversational surface), reaching data that does not live in the tenant at all
@@ -100,7 +100,7 @@ the web does not know your launch has a CDN milestone. The agent is the join.
 
 > **Local config.** Copy `.env.example` in this folder to `.env` (gitignored),
 > fill in your values (including `WEBIQ_API_KEY`), and select it with
-> `LC_ENV=ep-12-copilot-chat-agent-builder`. Never commit a real Web IQ key.
+> `LC_ENV=ep-12-business-apps-work-iq`. Never commit a real Web IQ key.
 
 1. **Create the agent**, give it the outside-in instructions (role: connect
    internal launch blockers to live external signal; always cite the source;
@@ -156,10 +156,10 @@ a real key.
 | `fuse_external_signal.py` | The outside-in demo: joins each internal launch blocker with live Web IQ signal and prints a citable briefing. Runs on a bundled sample by default, or `--dataverse` to read live blocked tasks. |
 
 ```bash
-# PowerShell: $env:LC_ENV = "ep-12-copilot-chat-agent-builder"
-python episodes/ep-12-copilot-chat-agent-builder/preflight.py
-python episodes/ep-12-copilot-chat-agent-builder/fuse_external_signal.py
-python episodes/ep-12-copilot-chat-agent-builder/fuse_external_signal.py --dataverse --max 5
+# PowerShell: $env:LC_ENV = "ep-12-business-apps-work-iq"
+python episodes/ep-12-business-apps-work-iq/preflight.py
+python episodes/ep-12-business-apps-work-iq/fuse_external_signal.py
+python episodes/ep-12-business-apps-work-iq/fuse_external_signal.py --dataverse --max 5
 ```
 
 The same `web` / `news` calls and the same fusion prompt then drop straight into

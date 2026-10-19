@@ -88,7 +88,7 @@ records changed, no reset was needed, and the agent remained unpublished.
 - [Original short timed narration](studio-rehearsal-linkedin-voiceover.md)
 - [Studio rehearsal instructions](studio-rehearsal-agent-instructions.md)
 - [Active Episode 13 specification](README.md)
-- [Revised Episode 12 specification](../ep-12-copilot-chat-agent-builder/README.md)
+- [Revised Episode 12 specification](../ep-12-business-apps-work-iq/README.md)
 
 Revalidate the current Studio connection, identity, scope, and answer before
 recording Episode 13. These artifacts do not verify Agent Builder, a published

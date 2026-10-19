@@ -1,4 +1,9 @@
-# Episode 12 demo arc: ask Chat, follow up in Cowork, verify
+# Launch Control demo arc: ask Chat, follow up in Cowork, verify
+
+> Historical runbook for the completed 112-second Edition A. The expanded
+> story is a separate, unverified draft in
+> [Revision B](revision-b-demo-arc.md). Do not treat the prompts or acceptance
+> results below as evidence for Revision B.
 
 **Status:** Recorded 112-second review edition complete. The Microsoft plugin
 was enabled before the takes. The edit preserves the one-task Chat result,

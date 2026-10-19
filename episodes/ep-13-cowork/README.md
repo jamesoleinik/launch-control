@@ -16,7 +16,7 @@ declarative agent and a separately verified Studio flow.
 
 The folder retains its former `ep-13-cowork` name for existing links.
 Direct Cowork usage has moved into
-[Episode 12](../ep-12-copilot-chat-agent-builder/README.md).
+[Episode 12](../ep-12-business-apps-work-iq/README.md).
 
 ## The progression
 
@@ -127,5 +127,5 @@ instead of treating one answer as a reliability guarantee.
 
 ## Cross-references
 
-- [Episode 12: Copilot Chat and Cowork](../ep-12-copilot-chat-agent-builder/README.md)
+- [Episode 12: Copilot Chat and Cowork](../ep-12-business-apps-work-iq/README.md)
 - [Episode 15: Work IQ API and Developer Tools](../ep-15-workiq-api-devtools/README.md)

@@ -11,7 +11,7 @@
 
 ## Why this matters
 
-[Episode 12](../ep-12-copilot-chat-agent-builder/README.md) uses the business app
+[Episode 12](../ep-12-business-apps-work-iq/README.md) uses the business app
 directly in Copilot Chat and Cowork. [Episode 13](README.md) extends that
 scenario with both declarative agents and Copilot Studio. This portion
 explores why a maker might need more control over integrations, multi-step
@@ -73,6 +73,6 @@ Its material does not establish this Studio integration.
 
 ## Cross-references
 
-- [Episode 12: Copilot Chat and Cowork](../ep-12-copilot-chat-agent-builder/README.md)
+- [Episode 12: Copilot Chat and Cowork](../ep-12-business-apps-work-iq/README.md)
 - [Episode 13: Declarative and Studio agents](README.md)
 - [Episode 15: Developer Tools](../ep-15-workiq-api-devtools/README.md)
