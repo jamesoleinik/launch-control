@@ -366,8 +366,8 @@ four-section walkthrough and closes with three takeaways beside the Work IQ
 diagram. It is edited for time, not a real-time response-performance test.
 The earlier 2:10 synthetic preview, [tracker](short-key-points.md), and
 [narration](short-voiceover.md) are production sources, not exact timestamps
-for that final export. Detailed take history and checks belong in the
-[recording map](readme-re-record.md).
+for that final export. Superseded drafts and take histories are available
+in Git history rather than alongside the current episode.
 
 The [source pack](revision-b-source-pack.json) contains prepared fictional
 content. The [saved Chat instructions](chat-custom-instructions.md) document
@@ -375,26 +375,18 @@ the source-routing customization used for the demo.
 
 ### Rehearse and verify
 
-Use the [eight-point re-record map](readme-re-record.md) as the acceptance
-checklist. The current [tracker](short-key-points.md) and
-[narration](short-voiceover.md) follow the 2:10 highlights edition, including
-the new Section 3 write-back pickup. The longer
-[tracker](readme-rerecord-key-points.md) and
-[narration](readme-rerecord-voiceover.md) describe the earlier 9:33 live cut;
-that panel edition adds 20 seconds of opening cards and a 20-second close. The
-[demo arc](demo-arc.md), [panel plan](panel-demo-plan.md),
-[original tracker](panel-demo-key-points.md), and
-[original narration](voiceover-script.md) document earlier work. Verify Chat
-and Cowork separately. Compare the final video with every section and exact
-prompt in this README. Record coverage timestamps and fix discrepancies
-before handover; play the final video only when all eight checks pass.
+Verify Chat and Cowork separately against the prompts in this README.
+Check saved setup settings, loaded Chat sources, the plugin connection,
+the exact reviewed update, Cowork read-back, native-app verification,
+the saved one-time schedule, and the received Outlook briefing. Compare
+the actual final export with the walkthrough before handing it over.
 
 Use neutral fictional-role names before the first take, with scoped backup
 and approval for any changes. Compare and reset only run-caused changes
 after each rehearsal/take, then read back the baseline. Record a verified
 no-op reset if read-only data is unchanged. Do not overwrite concurrent edits.
 
-## Existing app setup and historical evidence
+## Existing app setup
 
 The helper [`configure_ep12_app.py`](../../scripts/python/configure_ep12_app.py)
 supports `--dry-run`, `--apply`, and `--verify`, using the ignored root `.env`.
@@ -408,15 +400,9 @@ PCF, or solution deployment needs its normal approval and verification.
 Historical [declarative-agent experiments](../ep-13-cowork/declarative-rehearsal.md)
 and [Studio recordings](../ep-13-cowork/studio-rehearsal.md) now support
 Episode 13. They do not establish current direct Chat/Cowork behavior.
-The earlier developer-led panel/audio assets are superseded.
-The [replacement recording map](readme-re-record.md) is the source for current
-take evidence and acceptance status. Earlier short evidence editions and the
-screenshot-based review cut were rejected as substitutes for the full live
-walkthrough. Their files remain historical artifacts, not current deliverables.
 
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
 - [Episode 13: Declarative and Studio agents](../ep-13-cowork/README.md)
-- [Deferred Web IQ storyline](DEFERRED-DRAFT.md), not the current episode.
 
 ## Reference documentation
 

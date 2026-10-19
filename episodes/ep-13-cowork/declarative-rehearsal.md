@@ -588,4 +588,3 @@ are retained as Episode 13 reference material, not a completed episode.
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
 - [Episode 12: Copilot Chat and Cowork](../ep-12-business-apps-work-iq/README.md)
 - [Episode 13: Declarative and Studio agents](README.md)
-- [Deferred Web IQ storyline](../ep-12-business-apps-work-iq/DEFERRED-DRAFT.md), not the active build.

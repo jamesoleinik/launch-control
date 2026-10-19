@@ -51,9 +51,8 @@ episode titles below as the current scope, not the historical folder slugs.
 
 ### Deferred storylines
 
-The earlier Web IQ, Foundry IQ, convergence, administration, and finale storylines are postponed, not removed. Their README drafts and supporting assets remain in the original folders:
+The earlier Web IQ, Foundry IQ, convergence, administration, and finale storylines are postponed. The superseded Episode 12 Web IQ assets are available in Git history; the other drafts remain in their episode folders:
 
-- [Web IQ draft](ep-12-business-apps-work-iq/DEFERRED-DRAFT.md), with its existing plan, instructions, client, and demo code.
 - [Foundry IQ draft](ep-13-cowork/DEFERRED-DRAFT.md).
 - [Convergence draft](ep-14-copilot-studio/DEFERRED-DRAFT.md).
 - [Agentic Administration draft](ep-15-workiq-api-devtools/DEFERRED-DRAFT.md), with capacity, audit, cleanup, and blast-radius assets.
