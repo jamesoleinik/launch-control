@@ -1,20 +1,30 @@
 # Episode 13: Business Applications in Work IQ: Declarative and Studio agents
 
-> *I can already ask Copilot about the launch. Now I want a focused agent
-> that makes the review repeatable, and a supported way to extend it to one
-> reviewed update.*
+> *Historically, we tracked launch status in a weekly review meeting.
+> That is no longer enough. My team should be able to ask the launch agent
+> directly, without emailing me, and changes in the work should drive
+> updates to the records.*
+
+**Status:** Revised story in progress. Builder answers have been demonstrated.
+The separate GitHub-triggered Fixer is a proposed design, not a verified
+automatic run.
 
 ## The hook
 
 In [Episode 12](../ep-12-business-apps-work-iq/README.md), I brought my
 business app into Copilot and delegated a reviewed update to Cowork.
-People still ask me the same launch question every week, so I give that
-review to a focused agent built on the app my team already runs.
+Now the team needs targeted answers between weekly reviews, without making
+the launch lead's inbox the way to find out what is happening.
 
 Microsoft 365 Agent Builder gives the review a purpose and one selected
-business-app source. Copilot Studio extends the experience through the Work
-IQ (preview) tool, reuses the same app, and saves one change only after I
-review the exact text. The app remains the system of record.
+business-app source. People with the appropriate access can ask about status
+and blockers whenever they need to. The recorded draft is not yet published
+or shared with that audience.
+
+A separate **Launch Readiness Fixer** in Copilot Studio would respond to a
+GitHub issue event, reconcile the linked task and launch risk summary within
+agreed rules, and leave unresolved blockers intact. The app remains the
+system of record.
 
 > **Preview note:** Business Applications in Work IQ and Work IQ in Copilot
 > Studio are preview capabilities. Work IQ in Studio runs on the GitHub
@@ -24,16 +34,17 @@ review the exact text. The app remains the system of record.
 ## The walkthrough: four sections
 
 ```text
-Section 1  Agent Builder  -> Give the review a purpose and one source
-Section 2  Builder answer -> Check the answer against the app
-Section 3  Copilot Studio -> Extend the experience with Work IQ (preview)
-Section 4  Reviewed write -> Save one approved risk summary and verify it
+Section 1  Weekly review  -> Move beyond meeting-based status checks
+Section 2  Launch Checker -> Ask targeted questions without emailing the lead
+Section 3  Fixer design   -> Respond to a GitHub issue event
+Section 4  Fixer rules    -> Reconcile records without hiding blockers
 ```
 
-The evidence task remains blocked. The saved risk summary records the risk;
-it does not resolve it. Neither agent was published or shared.
+Sections 3 and 4 are design intent until the connection, mapping, permissions,
+automatic activation, and independent record verification are demonstrated.
+The earlier manually confirmed write is not evidence of a triggered run.
 
-## 1. Give the review a purpose
+## 1. Move beyond the weekly review
 
 Start with the unpublished **Launch Readiness Checker** draft in Agent
 Builder and the [natural-language instructions](natural-language-instructions.txt).
@@ -46,7 +57,7 @@ The agent should resolve the named launch, separate risk from an explicitly
 blocked task, say what evidence is missing, and cite the records. Instructions
 are guidance, not permission controls.
 
-## 2. Make the answer easier to trust
+## 2. Ask about the launch anytime
 
 Ask in a fresh Builder preview:
 
@@ -62,49 +73,61 @@ inspects the underlying work:
 > blocker reason, assignee, and due date. Cite the source records and identify
 > any fields you cannot retrieve.
 
-## 3. Extend the experience in Copilot Studio
+## 3. Respond when the work changes
 
-Follow the [Studio build guide](studio-build.md). Build a separate agent and
-add **Work IQ (preview)** from the MCP tools; do not substitute the legacy
-workload tools. Inspect the actual connection, source, and operations. The
-selected operations include a write-capable action, so read-only instructions
-are not technical enforcement. Configuration from Builder does not carry over.
+The preview Studio endpoint exposes **GitHub: Issue closed (assigned to me)**.
+The proposed Fixer uses that event and the issue-to-task relationship from
+[Episode 4](../ep-04-extending-and-enforcing/README.md). Existing mappings must
+be verified against the intended launch, not assumed or recreated for footage.
 
-Ask the same launch question in a new Studio preview chat. The agent
-discovered the existing app and answered from fresh records without any
-rebuild or reseed.
+The GitHub connector watches issues assigned to the connected user across
+supported repositories; it is not a repository-specific subscription. The
+proposed processing rules accept only the approved repository and issue.
+Those instructions do not reduce the connection's underlying permissions.
 
-## 4. Turn evidence into one reviewed update
+Use **Work IQ (preview)** for the business-app experience, not legacy
+workload tools. The [Studio build guide](studio-build.md) describes earlier
+setup work, not a completed Fixer configuration.
 
-With the presenter's approval, the Studio instructions allowed exactly one
-update: the launch's **Recorded launch risks** field. The agent proposed new
-text, showed the current value beside it, and traced each clause to a record.
-Work IQ prepares an update and then needs a second confirmation to submit it.
-After that confirmation, the agent read the saved text back, and the launch
-form showed the new value. The status stayed At risk. A separate read-back
-found only the launch row modified, with record counts and the other tables
-unchanged.
+## 4. Reconcile without hiding blockers
 
-After recording, the field and the Studio instructions were restored and read
-back. The Studio agent remains an unpublished draft.
+The proposed write boundary is the matched task's status and its parent
+launch's **Recorded launch risks** field. Re-read the issue and business
+records before acting. An issue closed without completion evidence must not
+finish a task. A blocked task stays blocked; do not clear its blocker to force
+a successful result. Preserve unrelated launch risks.
+
+Compare desired values before writing so duplicate events can be no-ops.
+Respect concurrent edits, surface partial failures, and verify saved values
+independently in the app. A successful answer or manual payload test does not
+prove automatic activation.
+
+The earlier Studio write used a prepare step followed by human confirmation.
+An unattended authorization path in this preview runtime still needs proof.
+The general event-trigger documentation is explicitly for the standard
+harness; it does not establish the preview harness's activation behavior.
 
 ## Recording notes
 
-The edited walkthrough runs about **2:51**, with four app-first sections
-and three takeaways over a moving view of the Work IQ in Copilot Studio
-documentation. Waits for agent answers are shortened and labelled on screen;
-it is not a response-performance test. Record owner names are blurred. All
-data is fictional. Production scripts, trackers, and narration drafts are not
-part of this public guide.
+The revised story review opens on the app and reuses existing Builder footage,
+then clearly labels the Fixer material as proposed design. It contains no
+footage claiming a completed trigger or automatic write. The footage is
+edited, not a response-performance test. Record owner names are blurred.
+Production scripts, trackers, and narration drafts remain local.
 
 ### Rehearse and verify
 
 Verify Builder and Studio separately against native app records, not against
-each other's answers. Before any write, back up the exact field, approve the
-exact target and text, and confirm only that change. Afterwards, verify the
-saved value and unchanged record counts, then restore and read back the
-baseline. Publication, sharing, connections, schedules, and messages are
-separately gated and were not used.
+each other's answers. Before the Fixer test, approve the exact event, record
+mapping, write rules, connection scope, and reset. Verify wrong-issue rejection,
+blocker preservation, duplicate handling, and concurrent-edit behavior.
+Trace one real event through run history to independent app readback, then
+disable the test trigger and restore only test-caused changes with approval.
+Publication, sharing, connections, writes, and recording are separately gated.
+
+The earlier manual-write rehearsal was restored after capture, including the
+field and read-only Studio instructions. It remains historical, not the
+revised episode's automatic-write proof.
 
 ## Existing material
 
@@ -124,4 +147,6 @@ The folder keeps its former `ep-13-cowork` name for existing links.
 
 - [Add knowledge to an agent in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge)
 - [Work IQ in Copilot Studio (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/add-work-iq)
+- [GitHub connector events and limitations](https://learn.microsoft.com/connectors/github/)
+- [Event triggers, standard harness](https://learn.microsoft.com/microsoft-copilot-studio/authoring-trigger-event)
 - [Business Applications in Work IQ](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq)
