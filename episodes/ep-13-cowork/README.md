@@ -104,8 +104,22 @@ prove automatic activation.
 
 The earlier Studio write used a prepare step followed by human confirmation.
 An unattended authorization path in this preview runtime still needs proof.
-The general event-trigger documentation is explicitly for the standard
-harness; it does not establish the preview harness's activation behavior.
+The [preview trigger guide](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
+documents the activation sequence: configure the connection and trigger
+options, add the trigger, and test every trigger before publishing. Publishing
+alone is not the final activation step. **Activate for myself** opens Agent
+management, where the maker turns on the agent using their own credentials.
+Sharing instead requires recipients to set up their own connections and
+activation. These are documented capabilities, not completed steps in this
+episode.
+
+Adding a trigger, testing it against an event, publishing, and turning on the
+agent are separate approval gates. A test can invoke tools and change data,
+even before autonomous activation. Keep the Fixer unpublished and inactive
+until the exact mapping, actions, identity, permissions and failure policy
+are verified and approved. Broad GitHub tool exposure and Work IQ's
+write-capable action must be reviewed before activation; instructions alone
+do not establish least privilege.
 
 ## Recording notes
 
@@ -148,5 +162,5 @@ The folder keeps its former `ep-13-cowork` name for existing links.
 - [Add knowledge to an agent in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge)
 - [Work IQ in Copilot Studio (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/add-work-iq)
 - [GitHub connector events and limitations](https://learn.microsoft.com/connectors/github/)
-- [Event triggers, standard harness](https://learn.microsoft.com/microsoft-copilot-studio/authoring-trigger-event)
+- [Add triggers, GitHub Copilot harness (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
 - [Business Applications in Work IQ](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq)
