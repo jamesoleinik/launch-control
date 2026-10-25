@@ -1,6 +1,8 @@
 import copy
 import json
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import unittest
 from unittest.mock import patch
@@ -214,9 +216,57 @@ class ReconcileTests(unittest.TestCase):
             self.assertEqual('If-Match:W/"12"', args[args.index("--header") + 1])
             self.assertEqual({"lc_taskstatus": DONE}, json.loads(args[args.index("--body") + 1]))
             self.assertEqual(self.mapping.environment_url, args[args.index("--environment") + 1])
-            self.assertEqual(f"/api/data/v9.2/lc_tasks({self.mapping.task_id})",
-                             args[args.index("--path") + 1])
+            self.assertEqual(
+                f"{self.mapping.environment_url}/api/data/v9.2/lc_tasks({self.mapping.task_id})",
+                args[args.index("--path") + 1],
+            )
             self.assertFalse(run.call_args.kwargs.get("shell", False))
+
+    def test_read_transport_uses_pinned_https_urls_not_platform_file_paths(self):
+        with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+             patch("reconcile_launch_issue.subprocess.run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = "{}"
+            adapter = Dataverse(self.mapping)
+            for read, endpoint in (
+                (adapter.identity, "WhoAmI"),
+                (adapter.task, f"lc_tasks({self.mapping.task_id})"),
+                (adapter.launch, f"lc_launchs({self.mapping.launch_id})"),
+            ):
+                with self.subTest(endpoint=endpoint):
+                    read()
+                    args = run.call_args.args[0]
+                    url = args[args.index("--path") + 1]
+                    self.assertEqual(
+                        f"{self.mapping.environment_url}/api/data/v9.2/{endpoint}",
+                        url.split("?")[0],
+                    )
+                    self.assertEqual(
+                        self.mapping.environment_url, args[args.index("--environment") + 1],
+                    )
+                    self.assertNotIn("--method", args)
+                    self.assertNotIn("--body", args)
+
+    @unittest.skipUnless(shutil.which("dataverse.cmd") or shutil.which("dataverse"),
+                         "Managed CLI is not installed")
+    def test_installed_cli_rejects_file_uri_and_foreign_host_before_network(self):
+        executable = shutil.which("dataverse.cmd") or shutil.which("dataverse")
+        for url, host in (
+            ("file:///api/data/v9.2/WhoAmI", ""),
+            ("https://other.invalid/api/data/v9.2/WhoAmI", "other.invalid"),
+        ):
+            with self.subTest(url=url):
+                result = subprocess.run(
+                    [executable, "api", "request", "--target", "dataverse",
+                     "--environment", self.mapping.environment_url, "--path", url],
+                    capture_output=True, text=True, check=False, timeout=30,
+                )
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn(
+                    f"Absolute URL host '{host}' does not match the environment host "
+                    "'example.crm.dynamics.com'",
+                    result.stdout + result.stderr,
+                )
 
     def test_transport_failure_is_not_success(self):
         with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \

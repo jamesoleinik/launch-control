@@ -92,7 +92,9 @@ class Dataverse:
     def request(self, path, *, changes=None, etag=None):
         args = [
             self.executable, "api", "request", "--target", "dataverse",
-            "--environment", self.mapping.environment_url, "--path", f"/api/data/v9.2/{path}",
+            "--environment", self.mapping.environment_url,
+            # On Linux the CLI treats a leading slash as an absolute file URI.
+            "--path", f"{self.mapping.environment_url}/api/data/v9.2/{path}",
         ]
         if changes is not None:
             require(etag is not None, "Refusing an unconditional update")

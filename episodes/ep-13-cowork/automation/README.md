@@ -1,9 +1,12 @@
 # Issue-completion backend
 
 This is a separate deterministic GitHub Actions backend, not an unattended
-Work IQ form save or evidence that the Studio agent ran. It is implemented
-locally but has not been deployed or demonstrated. The existing Studio draft
-remains preparation-only.
+Work IQ form save or evidence that the Studio agent ran. A disabled deployment
+has been published. The first event-driven attempt authenticated through
+federation but failed on its initial CLI request, before any business update.
+A local transport correction awaits publication and a separately approved
+runtime attempt. Successful task reconciliation has not been demonstrated.
+The existing Studio draft remains preparation-only.
 
 The workflow is off unless repository variable `LC_FIXER_ENABLED` is exactly
 `true`. It handles
@@ -83,6 +86,11 @@ The workflow installs the official `@microsoft/dataverse` CLI at version
 `api request` surface because the
 installed Python SDK's `records.update` and changeset helpers do not expose
 per-request `If-Match`.
+
+Requests use an explicit HTTPS URL constructed from the validated, pinned
+environment origin. A slash-prefixed path was interpreted as an absolute file
+URI by the Linux CLI, although the Windows preflight accepted it. The CLI
+checks the absolute request host against the supplied environment host.
 
 The Linux runner explicitly permits a cleartext CLI authentication cache in its
 ephemeral filesystem and removes that named profile during cleanup. No cache is

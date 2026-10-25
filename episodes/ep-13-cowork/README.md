@@ -6,9 +6,11 @@
 > updates to the records.*
 
 **Status:** Revised story in progress. Builder answers have been demonstrated.
-The separate GitHub-triggered Fixer is a proposed design, not a verified
-automatic run. A [separate bounded automation backend](automation/README.md)
-is prepared locally; it is not deployed and is not a Work IQ unattended save.
+The [separate bounded automation backend](automation/README.md) is published
+but disabled. Its first issue-triggered attempt authenticated through federation,
+then failed before any business update because the Linux CLI rejected its
+request path. A local transport correction is not yet published. Automatic task
+completion remains unverified; this is not a Work IQ unattended save.
 
 ## The hook
 
