@@ -9,8 +9,10 @@
 The [separate bounded automation backend](automation/README.md) is published
 but disabled. Its first issue-triggered attempt authenticated through federation,
 then failed before any business update because the Linux CLI rejected its
-request path. A local transport correction is not yet published. Automatic task
-completion remains unverified; this is not a Work IQ unattended save.
+request path. The separately approved corrected attempt passed that boundary
+but failed on CLI output parsing, also before a business update. A local
+logging-channel fix awaits approval. Automatic task completion remains
+unverified; this is not a Work IQ unattended save.
 
 ## The hook
 

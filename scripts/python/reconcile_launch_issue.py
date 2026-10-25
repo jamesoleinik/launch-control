@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 from uuid import UUID
 
@@ -91,7 +92,7 @@ class Dataverse:
 
     def request(self, path, *, changes=None, etag=None):
         args = [
-            self.executable, "api", "request", "--target", "dataverse",
+            self.executable, "--log-file", "api", "request", "--target", "dataverse",
             "--environment", self.mapping.environment_url,
             # On Linux the CLI treats a leading slash as an absolute file URI.
             "--path", f"{self.mapping.environment_url}/api/data/v9.2/{path}",
@@ -102,19 +103,33 @@ class Dataverse:
                 "--method", "PATCH", "--header", f"If-Match:{etag}",
                 "--body", json.dumps(changes, separators=(",", ":")),
             ])
-        result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=120)
+        # The CLI's default console logger mixes headless auth warnings into stdout.
+        # File logging keeps the HTTP body separate, without stripping arbitrary text.
+        with tempfile.TemporaryDirectory(prefix="lc-cli-") as folder:
+            result = subprocess.run(
+                args, capture_output=True, text=True, check=False, timeout=120,
+                env={**os.environ, "TMP": folder, "TEMP": folder, "TMPDIR": folder},
+            )
         require(
             result.returncode == 0,
             f"Dataverse {'PATCH' if changes is not None else 'GET'} failed. "
             "Inspect the CLI error locally; do not retry an uncertain write without readback. "
             f"{result.stderr.strip()}",
         )
-        payload = json.loads(result.stdout) if result.stdout.strip() else None
+        try:
+            payload = json.loads(result.stdout) if result.stdout.strip() else None
+        except json.JSONDecodeError as error:
+            raise BoundaryError(
+                f"Dataverse {'PATCH' if changes is not None else 'GET'} returned non-JSON "
+                f"stdout (line {error.lineno}, column {error.colno}); no retry was attempted."
+            ) from None
         require(not isinstance(payload, dict) or "error" not in payload,
                 "Dataverse returned an error envelope. Inspect before retrying.")
         if changes is None:
             require(isinstance(payload, dict), "Dataverse GET did not return a JSON object")
             return payload
+        require(payload is None or isinstance(payload, dict),
+                "Dataverse PATCH returned an unexpected response body; inspect before retrying.")
         return None
 
     def identity(self):
@@ -175,8 +190,7 @@ def validate_task(mapping, task):
             "A real task ETag is required")
 
 
-def reconcile(mapping, event, repository, github, dataverse, *, apply=False):
-    validate_event(mapping, event, repository)
+def inspect_current(mapping, github, dataverse):
     require(dataverse.identity().get("OrganizationId") == mapping.organization_id,
             "Dataverse organization differs from pinned organization")
     validate_issue(mapping, github.issue(mapping))
@@ -186,6 +200,12 @@ def reconcile(mapping, event, repository, github, dataverse, *, apply=False):
     require(launch.get("lc_launchid") == mapping.launch_id, "Launch identity mismatch")
     require(all(field in launch for field in ("lc_risksummary", "lc_launchstatus")),
             "Launch risk/status evidence unavailable")
+    return task, launch
+
+
+def reconcile(mapping, event, repository, github, dataverse, *, apply=False):
+    validate_event(mapping, event, repository)
+    task, launch = inspect_current(mapping, github, dataverse)
     receipt = {
         "repository": mapping.repository, "issue": mapping.issue,
         "task_id": mapping.task_id, "launch_id": mapping.launch_id,
@@ -218,8 +238,21 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--apply", action="store_true", help="Perform the conditional status update")
     mode.add_argument("--dry-run", action="store_true", help="Read-only preview (default)")
+    mode.add_argument("--inspect", action="store_true", help="Read current records without an event or write")
     args = parser.parse_args()
     mapping = Mapping.load(os.environ["LC_FIXER_CONFIG"])
+    require(os.environ["GITHUB_REPOSITORY"] == mapping.repository,
+            "Runner repository differs from allowlist")
+    if args.inspect:
+        task, launch = inspect_current(
+            mapping, GitHub(os.environ["GITHUB_TOKEN"]), Dataverse(mapping),
+        )
+        print(json.dumps({
+            "outcome": "inspection_only", "task_status": task["lc_taskstatus"],
+            "task_etag": task["@odata.etag"], "launch_status": launch["lc_launchstatus"],
+            "launch_risks": launch["lc_risksummary"], "launch_write": False,
+        }, sort_keys=True))
+        return
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
     # Validate before constructing authenticated adapters.
     validate_event(mapping, event, os.environ["GITHUB_REPOSITORY"])

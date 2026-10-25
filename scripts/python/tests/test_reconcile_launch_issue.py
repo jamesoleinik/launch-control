@@ -1,15 +1,20 @@
 import copy
+import contextlib
+import io
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from reconcile_launch_issue import (  # noqa: E402
-    BoundaryError, Dataverse, DONE, IN_PROGRESS, Mapping, RejectRedirects, reconcile,
+    BoundaryError, Dataverse, DONE, IN_PROGRESS, Mapping, RejectRedirects, inspect_current, main,
+    reconcile,
 )
 
 
@@ -105,6 +110,30 @@ class ReconcileTests(unittest.TestCase):
         )
         self.assertEqual("dry_run", result["outcome"])
         self.assertEqual([], self.dataverse.writes)
+
+    def test_inspection_checks_current_records_without_event_or_write(self):
+        task, launch = inspect_current(self.mapping, self.github, self.dataverse)
+        self.assertEqual(IN_PROGRESS, task["lc_taskstatus"])
+        self.assertEqual(self.dataverse.launch_value, launch)
+        self.assertEqual(1, self.github.calls)
+        self.assertEqual([], self.dataverse.writes)
+
+    def test_inspect_cli_needs_no_event_file_and_cannot_select_apply(self):
+        environment = {
+            "LC_FIXER_CONFIG": json.dumps(vars(self.mapping)),
+            "GITHUB_REPOSITORY": self.mapping.repository, "GITHUB_TOKEN": "offline-fixture",
+        }
+        with patch.dict(os.environ, environment, clear=True), \
+             patch("sys.argv", ["reconcile_launch_issue.py", "--inspect"]), \
+             patch("reconcile_launch_issue.GitHub", return_value=self.github), \
+             patch("reconcile_launch_issue.Dataverse", return_value=self.dataverse), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            main()
+        self.assertEqual("inspection_only", json.loads(output.getvalue())["outcome"])
+        self.assertEqual([], self.dataverse.writes)
+        with patch("sys.argv", ["reconcile_launch_issue.py", "--inspect", "--apply"]), \
+             contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            main()
 
     def test_only_status_is_written_and_duplicate_is_noop(self):
         before = copy.deepcopy(self.dataverse.launch_value)
@@ -220,6 +249,7 @@ class ReconcileTests(unittest.TestCase):
                 f"{self.mapping.environment_url}/api/data/v9.2/lc_tasks({self.mapping.task_id})",
                 args[args.index("--path") + 1],
             )
+            self.assertIn("--log-file", args)
             self.assertFalse(run.call_args.kwargs.get("shell", False))
 
     def test_read_transport_uses_pinned_https_urls_not_platform_file_paths(self):
@@ -249,24 +279,108 @@ class ReconcileTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("dataverse.cmd") or shutil.which("dataverse"),
                          "Managed CLI is not installed")
-    def test_installed_cli_rejects_file_uri_and_foreign_host_before_network(self):
+    def test_installed_cli_raw_request_rejects_json_switch_before_authentication(self):
         executable = shutil.which("dataverse.cmd") or shutil.which("dataverse")
-        for url, host in (
-            ("file:///api/data/v9.2/WhoAmI", ""),
-            ("https://other.invalid/api/data/v9.2/WhoAmI", "other.invalid"),
+        with tempfile.TemporaryDirectory(prefix="lc-cli-test-") as folder:
+            result = subprocess.run(
+                [executable, "--log-file", "api", "request", "--target", "dataverse",
+                 "--environment", self.mapping.environment_url,
+                 "--path", self.mapping.environment_url + "/api/data/v9.2/WhoAmI", "--json"],
+                capture_output=True, text=True, check=False, timeout=30,
+                env={**os.environ, "TMP": folder, "TEMP": folder, "TMPDIR": folder},
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertEqual("", result.stdout)
+            self.assertIn("Unknown option: --json", result.stderr)
+
+    def test_raw_get_body_preserves_etag_and_ignores_stderr_diagnostics(self):
+        body = {
+            "@odata.context": self.mapping.environment_url + "/api/data/v9.2/$metadata",
+            "@odata.etag": 'W/"12"', "lc_taskid": self.mapping.task_id,
+        }
+        with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+             patch("reconcile_launch_issue.subprocess.run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = json.dumps(body) + "\n"
+            run.return_value.stderr = "A diagnostic, not part of the HTTP body\n"
+            self.assertEqual(body, Dataverse(self.mapping).task())
+
+    def test_stdout_progress_or_html_is_rejected_not_stripped(self):
+        for output in (
+            'warn: DataverseCli.Auth.PacAuthApplicationFactory[0] cache warning\n{"ok":true}',
+            "<html>Authentication required</html>",
+            '{"ok":true}\nprogress',
         ):
-            with self.subTest(url=url):
-                result = subprocess.run(
-                    [executable, "api", "request", "--target", "dataverse",
-                     "--environment", self.mapping.environment_url, "--path", url],
-                    capture_output=True, text=True, check=False, timeout=30,
-                )
-                self.assertNotEqual(0, result.returncode)
-                self.assertIn(
-                    f"Absolute URL host '{host}' does not match the environment host "
-                    "'example.crm.dynamics.com'",
-                    result.stdout + result.stderr,
-                )
+            for update in (False, True):
+                with self.subTest(output=output, update=update), \
+                     patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+                     patch("reconcile_launch_issue.subprocess.run") as run:
+                    run.return_value.returncode = 0
+                    run.return_value.stdout = output
+                    adapter = Dataverse(self.mapping)
+                    with self.assertRaisesRegex(BoundaryError, "non-JSON stdout"):
+                        if update:
+                            adapter.complete_task('W/"12"')
+                        else:
+                            adapter.identity()
+                    self.assertEqual(1, run.call_count)
+
+    def test_http_failure_exit_rejected_even_if_body_looks_successful(self):
+        for output in ('{"error":{"code":"AccessDenied"}}', '{"ok":true}', ""):
+            with self.subTest(output=output), \
+                 patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+                 patch("reconcile_launch_issue.subprocess.run") as run:
+                run.return_value.returncode = 1
+                run.return_value.stdout = output
+                run.return_value.stderr = ""
+                with self.assertRaisesRegex(BoundaryError, "GET failed"):
+                    Dataverse(self.mapping).identity()
+                self.assertEqual(1, run.call_count)
+
+    def test_patch_allows_no_content_or_object_but_not_other_json(self):
+        for body in ("", " \n", '{"@odata.etag":"W/\\"13\\""}', "[]", '"ok"', "true"):
+            with self.subTest(body=body), \
+                 patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+                 patch("reconcile_launch_issue.subprocess.run") as run:
+                run.return_value.returncode = 0
+                run.return_value.stdout = body
+                if body in ("[]", '"ok"', "true"):
+                    with self.assertRaisesRegex(BoundaryError, "unexpected response body"):
+                        Dataverse(self.mapping).complete_task('W/"12"')
+                else:
+                    self.assertIsNone(Dataverse(self.mapping).complete_task('W/"12"'))
+
+    def test_temporary_cli_logs_are_removed_on_success_failure_and_timeout(self):
+        for failure in (None, "exit", "timeout"):
+            with self.subTest(failure=failure), \
+                 patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+                 patch("reconcile_launch_issue.subprocess.run") as run:
+                folders = []
+
+                def execute(args, **kwargs):
+                    folder = Path(kwargs["env"]["TMPDIR"])
+                    folders.append(folder)
+                    self.assertTrue(folder.is_dir())
+                    self.assertEqual(str(folder), kwargs["env"]["TMP"])
+                    self.assertEqual(str(folder), kwargs["env"]["TEMP"])
+                    (folder / "DataverseCli_test.log").write_text("offline diagnostic")
+                    if failure == "timeout":
+                        raise subprocess.TimeoutExpired(args, 120)
+                    return subprocess.CompletedProcess(
+                        args, int(failure == "exit"), stdout="{}", stderr="",
+                    )
+
+                run.side_effect = execute
+                if failure == "exit":
+                    with self.assertRaises(BoundaryError):
+                        Dataverse(self.mapping).identity()
+                elif failure == "timeout":
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        Dataverse(self.mapping).identity()
+                else:
+                    self.assertEqual({}, Dataverse(self.mapping).identity())
+                self.assertEqual(1, len(folders))
+                self.assertFalse(folders[0].exists())
 
     def test_transport_failure_is_not_success(self):
         with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \

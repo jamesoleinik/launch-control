@@ -3,6 +3,7 @@ name: Reconcile completed launch issue
 on:
   issues:
     types: [closed]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,8 +16,10 @@ concurrency:
 jobs:
   reconcile:
     if: >-
-      vars.LC_FIXER_ENABLED == 'true' &&
-      github.event.issue.state_reason == 'completed'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       vars.LC_FIXER_ENABLED == 'true' &&
+       github.event.issue.state_reason == 'completed')
     runs-on: ubuntu-latest
     environment: launch-reconciliation
     permissions:
@@ -49,10 +52,16 @@ jobs:
           dataverse auth create --name launch-reconciliation \
             --environment "$environment_url" --tenant "$LC_FIXER_TENANT_ID" \
             --applicationId "$LC_FIXER_CLIENT_ID" --githubFederated --accept-cleartext-caching
-      - name: Reconcile allowlisted issue
+      - name: Inspect or reconcile allowlisted issue
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python scripts/python/reconcile_launch_issue.py --apply
+        shell: bash
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            python scripts/python/reconcile_launch_issue.py --inspect
+          else
+            python scripts/python/reconcile_launch_issue.py --apply
+          fi
       - name: Remove ephemeral authentication profile
         if: always()
         run: dataverse auth remove --name launch-reconciliation

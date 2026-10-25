@@ -4,13 +4,16 @@ This is a separate deterministic GitHub Actions backend, not an unattended
 Work IQ form save or evidence that the Studio agent ran. A disabled deployment
 has been published. The first event-driven attempt authenticated through
 federation but failed on its initial CLI request, before any business update.
-A local transport correction awaits publication and a separately approved
-runtime attempt. Successful task reconciliation has not been demonstrated.
+The separately approved path correction was published; its single retry passed
+URL validation but rejected non-JSON CLI stdout before any business update.
+A local logging-channel correction awaits publication and a separately approved
+read-only verification. Successful task reconciliation has not been demonstrated.
 The existing Studio draft remains preparation-only.
 
-The workflow is off unless repository variable `LC_FIXER_ENABLED` is exactly
-`true`. It handles
-issue-close events on the repository default branch. It does not close issues,
+Issue-driven writes are off unless repository variable `LC_FIXER_ENABLED` is
+exactly `true`. The workflow also supports a manual, read-only inspection
+with that flag left false. It handles issue-close events on the repository
+default branch. It does not close issues,
 publish an agent, add a Studio trigger, or write to GitHub.
 
 ## Boundary
@@ -92,6 +95,15 @@ environment origin. A slash-prefixed path was interpreted as an absolute file
 URI by the Linux CLI, although the Windows preflight accepted it. The CLI
 checks the absolute request host against the supplied environment host.
 
+The installed CLI's `api request` command writes the raw HTTP body to stdout
+and returns a nonzero exit code for HTTP failure. It does not accept `--json`.
+Its default console logger also writes headless authentication warnings to
+stdout, so automation uses the supported global `--log-file` option with an
+isolated temporary directory, removed after each call. It never strips progress
+text from a response to find a plausible JSON object. A GET must return one JSON
+object; a successful PATCH may return no content or one JSON object. Non-JSON
+output, error envelopes and nonzero exits fail explicitly without retry.
+
 The Linux runner explicitly permits a cleartext CLI authentication cache in its
 ephemeral filesystem and removes that named profile during cleanup. No cache is
 uploaded. This must be included in deployment approval; do not reuse the workflow
@@ -108,6 +120,14 @@ The runner defaults to `--dry-run`, but that still performs authenticated live
 reads and requires a separately authorized inspection. Supply the mapping,
 `GITHUB_REPOSITORY`, a real `GITHUB_EVENT_PATH`, a GitHub read token and a
 configured CLI identity. `--apply` is a live conditional write.
+
+The manual workflow-dispatch route runs only `--inspect`, not `--apply`.
+It reads the current issue, organization, task and launch using the same
+federated identity and transport, without manufacturing an issue-close event.
+The issue must currently be closed as completed and the normal record
+boundaries still apply. Its receipt says `inspection_only`; it is not
+evidence of an autonomous write. Approve workflow publication, temporary
+enablement and that read-only run separately. Leave the issue-write flag false.
 
 ## Runtime gate and rollback
 
