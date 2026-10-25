@@ -7,7 +7,8 @@
 
 **Status:** Revised story in progress. Builder answers have been demonstrated.
 The separate GitHub-triggered Fixer is a proposed design, not a verified
-automatic run.
+automatic run. A [separate bounded automation backend](automation/README.md)
+is prepared locally; it is not deployed and is not a Work IQ unattended save.
 
 ## The hook
 
@@ -21,10 +22,12 @@ business-app source. People with the appropriate access can ask about status
 and blockers whenever they need to. The recorded draft is not yet published
 or shared with that audience.
 
-A separate **Launch Readiness Fixer** in Copilot Studio would respond to a
-GitHub issue event, reconcile the linked task and launch risk summary within
-agreed rules, and leave unresolved blockers intact. The app remains the
-system of record.
+A separate **Launch Readiness Fixer** draft was prepared in Copilot Studio.
+Its inspected Work IQ update route requires human confirmation. The selected
+automation route is therefore a separate deterministic backend: respond to a
+GitHub issue event, finish the explicitly mapped unblocked task, and leave
+unresolved launch risks intact. The app remains the system of record. This
+does not demonstrate autonomous execution by the Studio agent.
 
 > **Preview note:** Business Applications in Work IQ and Work IQ in Copilot
 > Studio are preview capabilities. Work IQ in Studio runs on the GitHub
@@ -75,15 +78,12 @@ inspects the underlying work:
 
 ## 3. Respond when the work changes
 
-The preview Studio endpoint exposes **GitHub: Issue closed (assigned to me)**.
-The proposed Fixer uses that event and the issue-to-task relationship from
-[Episode 4](../ep-04-extending-and-enforcing/README.md). Existing mappings must
-be verified against the intended launch, not assumed or recreated for footage.
-
-The GitHub connector watches issues assigned to the connected user across
-supported repositories; it is not a repository-specific subscription. The
-proposed processing rules accept only the approved repository and issue.
-Those instructions do not reduce the connection's underlying permissions.
+The prepared backend uses GitHub Actions issue-close events in one repository
+and accepts only the configured issue. It independently fetches current
+completion evidence. There is no live GitHub virtual-table relationship in
+the inspected environment; the task and parent launch are explicitly mapped.
+Do not imply that the earlier relationship from
+[Episode 4](../ep-04-extending-and-enforcing/README.md) exists here.
 
 Use **Work IQ (preview)** for the business-app experience, not legacy
 workload tools. The [Studio build guide](studio-build.md) describes earlier
@@ -91,8 +91,9 @@ setup work, not a completed Fixer configuration.
 
 ## 4. Reconcile without hiding blockers
 
-The proposed write boundary is the matched task's status and its parent
-launch's **Recorded launch risks** field. Re-read the issue and business
+The prepared backend's write boundary is only the matched task's status.
+Its parent launch's **Recorded launch risks** field is preserved, not rewritten.
+Re-read the issue and business
 records before acting. An issue closed without completion evidence must not
 finish a task. A blocked task stays blocked; do not clear its blocker to force
 a successful result. Preserve unrelated launch risks.
@@ -102,24 +103,12 @@ Respect concurrent edits, surface partial failures, and verify saved values
 independently in the app. A successful answer or manual payload test does not
 prove automatic activation.
 
-The earlier Studio write used a prepare step followed by human confirmation.
-An unattended authorization path in this preview runtime still needs proof.
-The [preview trigger guide](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
-documents the activation sequence: configure the connection and trigger
-options, add the trigger, and test every trigger before publishing. Publishing
-alone is not the final activation step. **Activate for myself** opens Agent
-management, where the maker turns on the agent using their own credentials.
-Sharing instead requires recipients to set up their own connections and
-activation. These are documented capabilities, not completed steps in this
-episode.
-
-Adding a trigger, testing it against an event, publishing, and turning on the
-agent are separate approval gates. A test can invoke tools and change data,
-even before autonomous activation. Keep the Fixer unpublished and inactive
-until the exact mapping, actions, identity, permissions and failure policy
-are verified and approved. Broad GitHub tool exposure and Work IQ's
-write-capable action must be reviewed before activation; instructions alone
-do not establish least privilege.
+The inspected Studio update schema and current Business Apps user guidance
+require explicit human confirmation. The backend does not forge that
+confirmation or disable the gate. Keep the Studio draft unpublished and
+inactive. The backend needs a separately approved deployment, dedicated
+identity, restricted record grants, event test and reset. Its local code and
+offline tests are not proof of an activated workflow or saved business update.
 
 ## Recording notes
 
