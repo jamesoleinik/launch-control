@@ -206,6 +206,7 @@ class ReconcileTests(unittest.TestCase):
         with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
              patch("reconcile_launch_issue.subprocess.run") as run:
             run.return_value.returncode = 0
+            run.return_value.stdout = ""
             adapter = Dataverse(self.mapping)
             adapter.complete_task('W/"12"')
             args = run.call_args.args[0]
@@ -232,6 +233,23 @@ class ReconcileTests(unittest.TestCase):
             with self.assertRaises(BoundaryError):
                 Dataverse(self.mapping).request("lc_tasks(any)", changes={"lc_taskstatus": DONE})
             run.assert_not_called()
+
+    def test_transport_error_envelope_fails_even_with_zero_exit_code(self):
+        with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+             patch("reconcile_launch_issue.subprocess.run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = '{"error":{"message":"Precondition failed"}}'
+            with self.assertRaisesRegex(BoundaryError, "error envelope"):
+                Dataverse(self.mapping).complete_task('W/"12"')
+            self.assertEqual(1, run.call_count)
+
+    def test_transport_rejects_missing_read_response(self):
+        with patch("reconcile_launch_issue.shutil.which", return_value="dataverse"), \
+             patch("reconcile_launch_issue.subprocess.run") as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = ""
+            with self.assertRaisesRegex(BoundaryError, "JSON object"):
+                Dataverse(self.mapping).identity()
 
     def test_github_redirects_never_forward_credentials(self):
         with self.assertRaises(BoundaryError):

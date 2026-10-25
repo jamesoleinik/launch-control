@@ -107,8 +107,12 @@ class Dataverse:
             "Inspect the CLI error locally; do not retry an uncertain write without readback. "
             f"{result.stderr.strip()}",
         )
+        payload = json.loads(result.stdout) if result.stdout.strip() else None
+        require(not isinstance(payload, dict) or "error" not in payload,
+                "Dataverse returned an error envelope. Inspect before retrying.")
         if changes is None:
-            return json.loads(result.stdout)
+            require(isinstance(payload, dict), "Dataverse GET did not return a JSON object")
+            return payload
         return None
 
     def identity(self):
