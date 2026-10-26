@@ -1,146 +1,140 @@
-# Episode 13: Business Applications in Work IQ: Declarative and Studio agents
+# Episode 13: Build agents on Work IQ
 
-> *Historically, we tracked launch status in a weekly review meeting.
-> That is no longer enough. My team should be able to ask the launch agent
-> directly, without emailing me, and changes in the work should drive
-> updates to the records.*
-
-**Status:** Revised story in progress. Builder answers have been demonstrated.
-The [separate bounded automation backend](automation/README.md) is published
-but disabled. Its first issue-triggered attempt authenticated through federation,
-then failed before any business update because the Linux CLI rejected its
-request path. The separately approved corrected attempt passed that boundary
-but failed on CLI output parsing, also before a business update. A local
-logging-channel fix awaits approval. Automatic task completion remains
-unverified; this is not a Work IQ unattended save.
+> *My team keeps asking the same question: are we ready to launch? Work IQ
+> gives every agent I build the same business context, so a focused agent can
+> answer it, follow how we work, and start when the work changes.*
 
 ## The hook
 
 In [Episode 12](../ep-12-business-apps-work-iq/README.md), I brought my
-business app into Copilot and delegated a reviewed update to Cowork.
-Now the team needs targeted answers between weekly reviews, without making
-the launch lead's inbox the way to find out what is happening.
+business app into Copilot and reviewed an update with Cowork. This episode
+treats Work IQ as the platform underneath the agents I build.
 
-Microsoft 365 Agent Builder gives the review a purpose and one selected
-business-app source. People with the appropriate access can ask about status
-and blockers whenever they need to. The recorded draft is not yet published
-or shared with that audience.
+Agent Builder gives a repeatable launch question its own focused agent,
+grounded in the Launch Control app through Business Applications in Work IQ.
+A business skill keeps our review process beside the app. Copilot Studio adds
+the Business apps workload to an agent built on Work IQ, then lets an event
+start the review. The app remains the system of record, and each run is
+checked for what it actually did.
 
-A separate **Launch Readiness Fixer** draft was prepared in Copilot Studio.
-Its inspected Work IQ update route requires human confirmation. The selected
-automation route is therefore a separate deterministic backend: respond to a
-GitHub issue event, finish the explicitly mapped unblocked task, and leave
-unresolved launch risks intact. The app remains the system of record. This
-does not demonstrate autonomous execution by the Studio agent.
+> **Preview note:** Work IQ is generally available in Copilot Studio and runs
+> on the GitHub Copilot harness with Copilot Credits. Its **Business apps**
+> workload, Business Applications in Work IQ, and business skills are preview
+> capabilities. Validate availability, licensing, permissions, and setup.
+> Preview features are not meant for production use.
 
-> **Preview note:** Business Applications in Work IQ and Work IQ in Copilot
-> Studio are preview capabilities. Work IQ in Studio runs on the GitHub
-> Copilot harness and uses Copilot Credits. Verify availability, licensing,
-> billing, permissions, and the supported connection before using them.
-
-## The walkthrough: four sections
+## The walkthrough: three acts
 
 ```text
-Section 1  Weekly review  -> Move beyond meeting-based status checks
-Section 2  Launch Checker -> Ask targeted questions without emailing the lead
-Section 3  Fixer design   -> Respond to a GitHub issue event
-Section 4  Fixer rules    -> Reconcile records without hiding blockers
+Act 1     Focused agent  -> Ask about the launch anytime
+Act 2     Business skill -> Teach the agent how we work, then add Business apps
+Act 3     Event trigger  -> Let the work start the review, then check the run
+Epilogue  Demo prep      -> See the launch ready to go
 ```
 
-Sections 3 and 4 are design intent until the connection, mapping, permissions,
-automatic activation, and independent record verification are demonstrated.
-The earlier manually confirmed write is not evidence of a triggered run.
+The recorded Studio run is a read-only Preview on one closed issue. The
+ready answer follows a separate, approved update of the fictional records,
+not the agent.
 
-## 1. Move beyond the weekly review
+## What the docs say about Work IQ as a platform
 
-Start with the unpublished **Launch Readiness Checker** draft in Agent
-Builder and the [natural-language instructions](natural-language-instructions.txt).
-Select **Launch Control Demo** under Dynamics 365 and Power Apps knowledge
-and leave the other sources off. The
-[instruction template](launch-readiness-agent-instructions.md) is reference
-material, not the tested text.
+From [Add knowledge in Agent Builder: Dynamics 365 and Power Apps data](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge#dynamics-365-and-power-apps-data):
 
-The agent should resolve the named launch, separate risk from an explicitly
-blocked task, say what evidence is missing, and cite the records. Instructions
-are guidance, not permission controls.
+- Business Applications in Work IQ gives agents context from Dynamics 365 and
+  Power Platform data and processes, within existing permissions and controls.
+- An admin enables it in the Microsoft 365 admin center and for each Power
+  Platform environment.
+- The agent gets **read-only** access. You choose which apps it uses; without a
+  selection, it queries every app the user can access.
+- Dataverse security applies to every answer. People without access to a
+  record get no response from it.
 
-## 2. Ask about the launch anytime
+From [Work IQ in Copilot Studio](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/add-work-iq):
 
-Ask in a fresh Builder preview:
+- Work IQ is the intelligence layer that grounds Microsoft Copilot and your
+  agents: data, memory, and inference through Work IQ MCP tools.
+- New agents on the GitHub Copilot harness get Work IQ by default, with all
+  generally available workloads selected.
+- **Business apps** is a preview workload. Turn on **Enable preview
+  workloads** in the agent's Work IQ settings to add it.
+- Use Work IQ, not legacy workload tools, which use a different harness and
+  billing. Write operations are on by default, subject to your permissions
+  and policies, so instructions alone are not a permission control.
+
+## 1. Ask about the launch anytime
+
+Open the **Launch Readiness Checker** draft in Agent Builder with the
+[natural-language instructions](natural-language-instructions.txt). Under
+Dynamics 365 and Power Apps knowledge, select **+** to see the business apps
+Work IQ lists, and choose only **Launch Control Demo**. Then ask:
 
 > What is the current status of Q3 Widget Launch, and what is blocking it?
 
-Then open the cited records in the app. The demonstrated answer named the
-blocked partner security evidence task and the at-risk certification
-milestone, and did not treat missing evidence as approval. A second starter
-inspects the underlying work:
+Check the answer against the app's records. The recorded answer said the
+launch was at risk: partner security evidence was still under review and the
+release checklist was still in progress. A second starter lists the work behind it:
 
 > Use the Launch Control Active Tasks view in Launch Control Demo to list the
 > tasks for Q3 Widget Launch. Show each task's status, blocked flag, recorded
 > blocker reason, assignee, and due date. Cite the source records and identify
 > any fields you cannot retrieve.
 
-## 3. Respond when the work changes
+## 2. Teach the agent how we work
 
-The prepared backend uses GitHub Actions issue-close events in one repository
-and accepts only the configured issue. It independently fetches current
-completion evidence. There is no live GitHub virtual-table relationship in
-the inspected environment; the task and parent launch are explicitly mapped.
-Do not imply that the earlier relationship from
-[Episode 4](../ep-04-extending-and-enforcing/README.md) exists here.
+What was missing is reconciliation: work closed in GitHub never reached the
+matching Launch Control task. Author that process once as a business skill in the same Power Apps
+environment as the app. The
+[reconciliation skill](../../business-skills/github-task-reconciliation.md)
+spells out the evidence to check, the record mapping, and when to stop. It is
+guidance, not permission to change records.
 
-Use **Work IQ (preview)** for the business-app experience, not legacy
-workload tools. The [Studio build guide](studio-build.md) describes earlier
-setup work, not a completed Fixer configuration.
+Agent Builder answers when you ask. To react when work changes, build a
+second agent in Copilot Studio on the same Work IQ platform. Open its Work IQ
+settings and confirm the
+**Business apps** workload is selected. A selected workload is configuration;
+check what the running agent can actually use. The
+[Studio build guide](studio-build.md) covers the setup.
 
-## 4. Reconcile without hiding blockers
+## 3. Let the work start the review
 
-The prepared backend's write boundary is only the matched task's status.
-Its parent launch's **Recorded launch risks** field is preserved, not rewritten.
-Re-read the issue and business
-records before acting. An issue closed without completion evidence must not
-finish a task. A blocked task stays blocked; do not clear its blocker to force
-a successful result. Preserve unrelated launch risks.
+Add an issue-closed GitHub trigger so a change in the work starts the agent.
+Then check the agent's session history for the tools it called and what it
+read or changed. The recorded Preview run on one closed issue retrieved the
+business skill first, then read Launch Control records through Work IQ. Its
+prompt was read only, so it changed nothing. The Work IQ MCP server can also
+prepare updates for a person to confirm.
 
-Compare desired values before writing so duplicate events can be no-ops.
-Respect concurrent edits, surface partial failures, and verify saved values
-independently in the app. A successful answer or manual payload test does not
-prove automatic activation.
+## 4. See the launch ready to go
 
-The inspected Studio update schema and current Business Apps user guidance
-require explicit human confirmation. The backend does not forge that
-confirmation or disable the gate. Keep the Studio draft unpublished and
-inactive. The backend needs a separately approved deployment, dedicated
-identity, restricted record grants, event test and reset. Its local code and
-offline tests are not proof of an activated workflow or saved business update.
+For the epilogue, the fictional records were updated with approval: four
+tasks and three milestones Done, the launch On Track, and a new dated status
+note. Asked again, the Agent Builder agent pulled the live status: On Track
+with nothing blocking. No agent made that update, and it is not a real launch
+approval.
 
 ## Recording notes
 
-The revised story review opens on the app and reuses existing Builder footage,
-then clearly labels the Fixer material as proposed design. It contains no
-footage claiming a completed trigger or automatic write. The footage is
-edited, not a response-performance test. Record owner names are blurred.
-Production scripts, trackers, and narration drafts remain local.
+The final export runs **2:39** in 4K. It follows the three acts and epilogue,
+then closes with three takeaways beside the Work IQ in Copilot Studio page.
+Separate takes are not one continuous run. Response waits were cut, not sped
+up, so it is not a latency test. Configuration was inspected, not recreated.
+Personal names are masked. Production scripts, trackers, and narration drafts
+are not part of this public guide.
 
 ### Rehearse and verify
 
-Verify Builder and Studio separately against native app records, not against
-each other's answers. Before the Fixer test, approve the exact event, record
-mapping, write rules, connection scope, and reset. Verify wrong-issue rejection,
-blocker preservation, duplicate handling, and concurrent-edit behavior.
-Trace one real event through run history to independent app readback, then
-disable the test trigger and restore only test-caused changes with approval.
-Publication, sharing, connections, writes, and recording are separately gated.
-
-The earlier manual-write rehearsal was restored after capture, including the
-field and read-only Studio instructions. It remains historical, not the
-revised episode's automatic-write proof.
+Verify Agent Builder and Copilot Studio separately against the app's records,
+not against each other's answers. Publishing, sharing, connections, writes,
+event tests, resets, and recording each need separate approval. Neither a
+selected workload nor another session's success proves an unattended business
+update.
 
 ## Existing material
 
 - [Declarative preparation and experiments](declarative-rehearsal.md).
 - [Studio rehearsal provenance](studio-rehearsal.md). Historical rehearsals
   are not footage or evidence of this episode.
+- [Disabled automation backend](automation/README.md), earlier work only.
 - [Deferred Foundry IQ storyline](DEFERRED-DRAFT.md), not this build.
 
 The folder keeps its former `ep-13-cowork` name for existing links.
@@ -152,8 +146,10 @@ The folder keeps its former `ep-13-cowork` name for existing links.
 
 ## Reference documentation
 
-- [Add knowledge to an agent in Agent Builder](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge)
-- [Work IQ in Copilot Studio (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/add-work-iq)
-- [GitHub connector events and limitations](https://learn.microsoft.com/connectors/github/)
-- [Add triggers, GitHub Copilot harness (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
+- [Add knowledge in Agent Builder: Dynamics 365 and Power Apps data](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge#dynamics-365-and-power-apps-data)
+- [Work IQ in Copilot Studio](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/add-work-iq)
 - [Business Applications in Work IQ](https://learn.microsoft.com/power-apps/maker/data-platform/business-applications-work-iq)
+- [Business Applications in Work IQ documentation (preview)](https://learn.microsoft.com/power-platform/business-applications-work-iq/)
+- [Dataverse and Work IQ at PPCC 2026](https://www.microsoft.com/power-platform/blog/2026/10/23/dataverse-and-workiq-ppcc-2026/)
+- [Add triggers, GitHub Copilot harness (preview)](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
+- [GitHub connector events and limitations](https://learn.microsoft.com/connectors/github/)
