@@ -1,0 +1,42 @@
+---
+config:
+  look: handDrawn
+  handDrawnSeed: 7
+  theme: base
+  flowchart:
+    wrappingWidth: 300
+    padding: 18
+  themeVariables:
+    fontFamily: "Segoe Print, Comic Sans MS, cursive"
+    fontSize: "17px"
+    primaryColor: "#ffffff"
+    primaryBorderColor: "#1e1e1e"
+    lineColor: "#1e1e1e"
+    edgeLabelBackground: "#ffffff"
+---
+flowchart TB
+    subgraph Agents["Agents you build"]
+        direction LR
+        AB["Agent Builder<br/>Launch Readiness Checker<br/>answers when you ask"]
+        CS["Copilot Studio agent<br/>Business apps workload<br/>starts when work changes"]
+    end
+    GH["GitHub<br/>issue closed"] -- "event trigger" --> CS
+    subgraph WIQ["Work IQ"]
+        BA["Business Applications in Work IQ (preview)<br/>Work IQ MCP tools"]
+    end
+    subgraph DV["Microsoft Dataverse: Launch Control app"]
+        direction LR
+        SK["Business skills<br/>GitHub task reconciliation"]
+        REC["Business records<br/>launches, tasks, milestones,<br/>status updates"]
+        SM["Semantic model<br/>tables, relationships,<br/>business terms"]
+    end
+    AB -- "read-only knowledge" --> BA
+    CS -- "retrieve skill, read records" --> BA
+    BA --> SK
+    BA --> REC
+    BA --> SM
+    style Agents fill:#e7f5ff,stroke:#1971c2,stroke-width:2px
+    style WIQ fill:#ebfbee,stroke:#2f9e44,stroke-width:2px
+    style DV fill:#fff4e6,stroke:#e8590c,stroke-width:2px
+    style GH fill:#f8f0fc,stroke:#9c36b5
+
