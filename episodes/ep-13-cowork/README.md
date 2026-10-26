@@ -38,29 +38,9 @@ not the agent.
 
 ## Architecture: two agents, one platform
 
-```mermaid
-flowchart TB
-    subgraph Agents["Agents you build"]
-        direction LR
-        AB["Agent Builder<br/>Launch Readiness Checker<br/>answers when you ask"]
-        CS["Copilot Studio agent<br/>Business apps workload<br/>starts when work changes"]
-    end
-    GH["GitHub<br/>issue closed"] -- "event trigger" --> CS
-    subgraph WIQ["Work IQ"]
-        BA["Business Applications in Work IQ (preview)<br/>Work IQ MCP tools"]
-    end
-    subgraph DV["Microsoft Dataverse: Launch Control app"]
-        direction LR
-        SK["Business skills<br/>GitHub task reconciliation"]
-        REC["Business records<br/>launches, tasks, milestones,<br/>status updates"]
-        SM["Semantic model<br/>tables, relationships,<br/>business terms"]
-    end
-    AB -- "read-only knowledge" --> BA
-    CS -- "retrieve skill, read records" --> BA
-    BA --> SK
-    BA --> REC
-    BA --> SM
-```
+![Architecture: an Agent Builder agent and a Copilot Studio agent (started by a GitHub issue-closed trigger) sit on Work IQ, which reaches the Launch Control app in Microsoft Dataverse: business skills, business records, and the semantic model](images/architecture.png)
+
+Diagram source: [architecture.mmd](images/architecture.mmd).
 
 - **Agents on top.** Each agent has one job. The Agent Builder agent answers
   the launch question on demand. The Copilot Studio agent starts from a GitHub
