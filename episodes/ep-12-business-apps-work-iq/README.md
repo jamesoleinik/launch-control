@@ -392,10 +392,6 @@ creating another. Legacy unique names and scenario codes remain stable.
 It configures the app, not Cowork policy or a custom agent. Any schema, form,
 PCF, or solution deployment needs its normal approval and verification.
 
-Historical [declarative-agent experiments](../ep-13-cowork/declarative-rehearsal.md)
-and [Studio recordings](../ep-13-cowork/studio-rehearsal.md) now support
-Episode 13. They do not establish current direct Chat/Cowork behavior.
-
 - [Episode 11: Agent Quality Gate](../ep-11-agent-quality-gate/README.md)
 - [Episode 13: Declarative and Studio agents](../ep-13-cowork/README.md)
 

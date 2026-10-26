@@ -40,8 +40,6 @@ not the agent.
 
 ![Architecture: an Agent Builder agent and a Copilot Studio agent (started by a GitHub issue-closed trigger) sit on Work IQ, which reaches the Launch Control app in Microsoft Dataverse: business skills, business records, and the semantic model](images/architecture.png)
 
-Diagram source: [architecture.mmd](images/architecture.mmd).
-
 - **Agents on top.** Each agent has one job. The Agent Builder agent answers
   the launch question on demand. The Copilot Studio agent starts from a GitHub
   event and follows the reconciliation skill.
@@ -105,15 +103,28 @@ spells out the evidence to check, the record mapping, and when to stop. It is
 guidance, not permission to change records.
 
 Agent Builder answers when you ask. To react when work changes, build a
-second agent in Copilot Studio on the same Work IQ platform. Open its Work IQ
-settings and confirm the
-**Business apps** workload is selected. A selected workload is configuration;
-check what the running agent can actually use. The
-[Studio build guide](studio-build.md) covers the setup.
+second agent in Copilot Studio on the same Work IQ platform:
+
+1. In [Copilot Studio](https://copilotstudio.microsoft.com/), create a new
+   agent. Agents on the GitHub Copilot harness get Work IQ by default.
+2. Open the agent's **Work IQ** settings, turn on **Enable preview
+   workloads**, and select **Business apps**. Keep only the workloads the
+   agent needs.
+3. In the agent's instructions, tell it to retrieve the reconciliation skill
+   before acting, read the matching Launch Control records through Work IQ,
+   and stop and report when something doesn't match.
+4. Test it in Preview with one closed issue, then open the session history
+   to confirm it retrieved the skill and which records it read.
+
+A selected workload is configuration; check what the running agent can
+actually use.
 
 ## 3. Let the work start the review
 
-Add an issue-closed GitHub trigger so a change in the work starts the agent.
+In the Studio agent,
+[add an event trigger](https://learn.microsoft.com/microsoft-copilot-studio/agents-experience/authoring-add-event-trigger)
+with the GitHub connector's issue-closed event, scoped to your repository, so
+a change in the work starts the agent.
 Then check the agent's session history for the tools it called and what it
 read or changed. The recorded Preview run on one closed issue retrieved the
 business skill first, then read Launch Control records through Work IQ. Its
@@ -128,32 +139,15 @@ note. Asked again, the Agent Builder agent pulled the live status: On Track
 with nothing blocking. No agent made that update, and it is not a real launch
 approval.
 
-## Recording notes
-
-The final export runs **2:39** in 4K. It follows the three acts and epilogue,
-then closes with three takeaways beside the Work IQ in Copilot Studio page.
-Separate takes are not one continuous run. Response waits were cut, not sped
-up, so it is not a latency test. Configuration was inspected, not recreated.
-Personal names are masked. Production scripts, trackers, and narration drafts
-are not part of this public guide.
-
-### Rehearse and verify
+## Verify what you build
 
 Verify Agent Builder and Copilot Studio separately against the app's records,
 not against each other's answers. Publishing, sharing, connections, writes,
-event tests, resets, and recording each need separate approval. Neither a
-selected workload nor another session's success proves an unattended business
-update.
+and event tests each need their own approval. Neither a selected workload nor
+one successful run proves an unattended business update.
 
-## Existing material
-
-- [Declarative preparation and experiments](declarative-rehearsal.md).
-- [Studio rehearsal provenance](studio-rehearsal.md). Historical rehearsals
-  are not footage or evidence of this episode.
-- [Disabled automation backend](automation/README.md), earlier work only.
-- [Deferred Foundry IQ storyline](DEFERRED-DRAFT.md), not this build.
-
-The folder keeps its former `ep-13-cowork` name for existing links.
+The video's separate takes are not one continuous run, and response waits
+were cut, so it is not a latency test.
 
 ## Cross-references
 
