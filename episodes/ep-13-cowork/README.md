@@ -36,6 +36,42 @@ The recorded Studio run is a read-only Preview on one closed issue. The
 ready answer follows a separate, approved update of the fictional records,
 not the agent.
 
+## Architecture: two agents, one platform
+
+```mermaid
+flowchart TB
+    subgraph Agents["Agents you build"]
+        direction LR
+        AB["Agent Builder<br/>Launch Readiness Checker<br/>answers when you ask"]
+        CS["Copilot Studio agent<br/>Business apps workload<br/>starts when work changes"]
+    end
+    GH["GitHub<br/>issue closed"] -- "event trigger" --> CS
+    subgraph WIQ["Work IQ"]
+        BA["Business Applications in Work IQ (preview)<br/>Work IQ MCP tools"]
+    end
+    subgraph DV["Microsoft Dataverse: Launch Control app"]
+        direction LR
+        SK["Business skills<br/>GitHub task reconciliation"]
+        REC["Business records<br/>launches, tasks, milestones,<br/>status updates"]
+        SM["Semantic model<br/>tables, relationships,<br/>business terms"]
+    end
+    AB -- "read-only knowledge" --> BA
+    CS -- "retrieve skill, read records" --> BA
+    BA --> SK
+    BA --> REC
+    BA --> SM
+```
+
+- **Agents on top.** Each agent has one job. The Agent Builder agent answers
+  the launch question on demand. The Copilot Studio agent starts from a GitHub
+  event and follows the reconciliation skill.
+- **Work IQ in the middle.** Both agents get the same business context through
+  Business Applications in Work IQ, so neither rebuilds it agent by agent.
+- **Dataverse underneath.** The Launch Control app holds the business records,
+  the semantic model that explains how they relate, and the business skill
+  that describes how we work. Dataverse security applies to every answer.
+  The app stays the system of record; changes need a person to confirm them.
+
 ## What the docs say about Work IQ as a platform
 
 From [Add knowledge in Agent Builder: Dynamics 365 and Power Apps data](https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder-add-knowledge#dynamics-365-and-power-apps-data):
